@@ -42,20 +42,86 @@ number (`parseFloat` on it is `NaN`).
 
 What never scales, with or without the scale: the 1.5px rest epsilon and every millisecond duration.
 
-## 3. Entrance distances stay fixed px, and centring uses `translate`
+## 3. Distances: small entrances stay fixed, travel scales
 
-- `--hero-drop`, `--hero-settle`, `--hero-lift` are **fixed px, never fluid**, even on a scaled
-  page. Engines resolve `var()` once, at animation start, so a scaled offset goes stale on resize;
-  for a 24–40px offset that is not worth solving. Vary them per breakpoint with a plain utility
-  (`[--hero-lift:20px] lg:[--hero-lift:24px]`).
-- **No property collides.** Animation writes `transform` and `opacity`; the scale writes
-  `font-size`, `padding`, `gap`, `width` and `height`, and recomputes on resize only, never per
-  frame or during a scroll.
-- **Static offsets on an animated element go through `translate`.** A stage item's `transform` is
-  owned by its variant. `fluid-design`'s `fluid-translate-x/y-*` utilities write the independent
-  `translate` property for exactly this reason, so they compose with the engine's `transform`.
-  Without the scale, write `translate` yourself (`[translate:-50%_0]`), never
-  `transform: translateX(-50%)` (`motion-architecture.md` §7).
+A drawn distance means a fraction of the composition. On a fluid page the composition is 1.6×
+larger at 2560×1440 than at 1440×900, so a `600` that crosses half the hero at 1440 crosses a
+third of it at 2560 and ends in the wrong place. Fixed px is fine only for small entrance offsets.
+
+**Small entrance offsets stay fixed px.** `--hero-drop`, `--hero-settle`, `--hero-lift` and every
+24–40px reveal offset are **never fluid**, even on a scaled page. Engines resolve `var()` once, at
+animation start, so a scaled offset goes stale on resize; for a 24–40px nudge that is not worth
+solving. Vary them per breakpoint with a plain utility (`[--hero-lift:20px] lg:[--hero-lift:24px]`).
+
+**Travel scales.** Anything that moves by a distance read off the drawing does: a product
+crossing the hero, a parallax range, a horizontal track, an object landing on a drawn spot, a
+ScrollTrigger `start`/`end` offset, a marquee's speed. Three patterns, in order of preference:
+
+1. **CSS multiplies, the engine writes progress** (any engine, no unit maths in JS). The engine
+   writes a unitless 0..1 to `--scene-p` on the element (registered in `motion-base.css`) and CSS
+   turns it into a length. It stays right through a resize with no refresh, because the unit is
+   resolved by CSS on every frame.
+
+   ```css
+   .peel { translate: calc(var(--scene-p) * 240 * var(--fluid, 1px)) 0; }
+   ```
+   ```ts
+   // GSAP
+   gsap.to('.peel', { '--scene-p': 1, ease: 'none',
+     scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } })
+   // Motion
+   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
+   <m.div className="peel" style={{ '--scene-p': scrollYProgress } as MotionStyle} />
+   ```
+   Cost: one style recalc of that element per frame (`inherits: false` keeps it off the subtree),
+   plus layout if the property is not `translate`/`transform`/`opacity`. Keep it to those.
+
+2. **GSAP function values** when the distance must be a tween property (a timeline with several
+   steps, `motionPath`, a `Flip` offset). Import `fluidValue`/`fluidEnd`/`fluidPx` from
+   `assets/gsap/src/fluid.ts` and set `invalidateOnRefresh: true`, so ScrollTrigger re-reads them
+   on the refresh it already runs after every resize:
+
+   ```ts
+   gsap.to('.peel', { x: fluidValue(240), ease: 'none',
+     scrollTrigger: { trigger: '.hero', start: 'top top', end: fluidEnd(900), scrub: true,
+                      invalidateOnRefresh: true } })
+   ```
+   A plain `x: 240` or `end: '+=900'` freezes at the size the page loaded at.
+
+3. **Motion with the unit as a MotionValue** when the distance feeds other maths:
+   `const f = useFluidUnit(); const x = useTransform(() => p.get() * 240 * f.get())`
+   (`assets/react-motion/hooks/useFluidUnit.ts`). It re-scales on resize without a remount.
+
+**Measured distances need nothing.** A value read from layout (`track.scrollWidth - innerWidth`,
+`el.offsetLeft`, a `getBoundingClientRect()` span) is already in scaled px. In GSAP make it a
+function with `invalidateOnRefresh`; in Motion re-measure on resize. Only drawn numbers typed into
+motion code need a unit.
+
+**Text split into lines re-wraps on resize.** Fluid type changes size continuously, so line
+splits go stale. Use GSAP SplitText's `autoSplit: true` with an `onSplit()` that returns the
+animation (3.13+), or split at authored breaks (`fluid-design`'s `typography.md` hard breaks)
+rather than rendered ones.
+
+**Scaled `start`/`end` offsets** follow the same rule: `start: 'top top+=120'` is fixed px; write
+`start: () => 'top top+=' + fluidPx(120)` when the 120 is a drawn header height or margin.
+
+**Static offsets on an animated element go through `translate`.** A stage item's `transform` is
+owned by its variant. `fluid-design`'s `fluid-translate-x/y-*` utilities write the independent
+`translate` property for exactly this reason, so they compose with the engine's `transform`.
+Without the scale, write `translate` yourself (`[translate:-50%_0]`), never
+`transform: translateX(-50%)` (`motion-architecture.md` §7). Pattern 1 above uses `translate` for
+the same reason, so it composes with an entrance the engine runs on `transform`.
+
+**With GSAP, never on an element GSAP tweens.** GSAP folds an element's CSS `translate`/`rotate`/
+`scale` into its own transform on its first transform tween, keeping a plain % (as `xPercent`) but
+freezing any px or `calc()` value: a `fluid-translate-*` offset stops following resizes and a
+`--scene-p` drift never moves (measured: the Vite example's peel drift sat at 0 until it moved from
+the entrance-tweened wrapper to the `<img>` inside it). Put the drift, and any scaled static offset,
+on a child or wrapper that GSAP does not tween. Motion is unaffected.
+
+**No property collides.** Animation writes `transform`, `translate` and `opacity`; the scale writes
+`font-size`, `padding`, `gap`, `width` and `height`, and recomputes on resize only, never per frame
+or during a scroll.
 
 ## 4. Pins in `lvh`, sections in `svh`
 
@@ -92,8 +158,10 @@ anchor targets an explicit `scroll-margin-top`.
 - [ ] The engage constant comes from the fluid config when there is one; otherwise it is kept in one
   file (§1).
 - [ ] Without `--fluid`, the scroll well's thresholds are plain reference px, which is expected (§2).
-- [ ] No fluid entrance distances (§3).
+- [ ] No fluid entrance offsets (24–40px), but every drawn travel distance scales (§3).
+- [ ] GSAP distances and `end` offsets are functions with `invalidateOnRefresh: true` (§3).
 - [ ] No `transform` for static offsets on animated elements; use `translate` (§3).
+- [ ] With GSAP, a `calc()`/px `translate` or `--scene-p` drift sits on a child GSAP never tweens (§3).
 - [ ] The pin is never expressed in fluid units (§4).
 - [ ] No hard-coded progress fractions for acts that are fluid-height; thresholds come from the
   measured range (§5).

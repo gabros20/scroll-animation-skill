@@ -178,6 +178,7 @@ function buildContext(files, contents) {
   let hasLazyMotionStrict = false
   let hasSmoothScrollBehavior = false
   let hasLenis = false
+  let hasFluid = false
 
   for (const f of files) {
     const ext = extname(f)
@@ -191,9 +192,11 @@ function buildContext(files, contents) {
     }
     if (/<LazyMotion\b[^>]*\bstrict\b/.test(c)) hasLazyMotionStrict = true
     if (/\bnew\s+Lenis\s*\(/.test(c) || /from\s+['"](?:@studio-freight\/)?lenis['"]/.test(c)) hasLenis = true
+    // A fluid-scaled page: the fluid-design units or utilities anywhere.
+    if (/var\(--fluid\b|\bfluid-(?:p|px|py|m|mt|mb|w|h|gap|display|copy|text|cap)-\d|\bfd\.fluid\(|\bfluid\(\s*\d/.test(c)) hasFluid = true
   }
 
-  return { hasLazyMotionStrict, hasSmoothScrollBehavior, hasLenis }
+  return { hasLazyMotionStrict, hasSmoothScrollBehavior, hasLenis, hasFluid }
 }
 
 // ── rule helpers ────────────────────────────────────────────────────────
@@ -322,6 +325,37 @@ const rules = [
           why: 'This file has a GSAP pin: true alongside a ScrubStage scene (data-scrub-stage/<ScrubStage>). The scene\'s pin is CSS position: sticky, not a ScrollTrigger pin -- nesting it inside a GSAP pin-spacer breaks both systems\' scroll-progress maths (references/brownfield-coexistence.md).',
           fix: 'Make sure this pin: true does not target an ancestor of the scrub scene. If the pinned element and the scene are unrelated, scope them clearly (e.g. separate files/components) so this heuristic stops flagging the coincidence.'
         })
+      }
+    }
+  },
+
+  {
+    // On a fluid-scaled page the composition is 1.6x larger at 2560x1440
+    // than at the 1440x900 reference, so a drawn travel distance typed as a
+    // plain number (`x: 600`, `end: '+=1800'`, a useTransform output of 600)
+    // lands short on big screens and overshoots on small ones. Entrance
+    // offsets of 24-40px stay fixed on purpose, so only |n| >= 80 is flagged
+    // (references/fluid-interop.md §3).
+    id: 'fixed-travel-on-fluid',
+    ext: (e) => ['.ts', '.tsx', '.js', '.jsx'].includes(e),
+    run(content, file, ctx, acc) {
+      if (!ctx.hasFluid) return
+      const why = 'This project is on a fluid scale, and this drawn travel distance is a fixed number. It is right at the 1440x900 reference and wrong everywhere else (1.6x too short at 2560x1440). Small entrance offsets (24-40px) may stay fixed; travel scales (references/fluid-interop.md §3).'
+      const checks = [
+        // GSAP tween vars: x: 600 / y: -240 (not xPercent/yPercent)
+        { re: /\b(?:x|y)\s*:\s*(-?\d+(?:\.\d+)?)(?![\w%.])/g, n: 1, fix: 'Use x: fluidValue(N) (assets/gsap/src/fluid.ts) with invalidateOnRefresh: true, or tween --scene-p and let CSS multiply: translate: calc(var(--scene-p) * N * var(--fluid)) 0.' },
+        // ScrollTrigger end/start offsets: '+=1800', 'top top+=120'
+        { re: /\b(?:end|start)\s*:\s*['"`][^'"`]*?[+-]=\s*(\d+)(?!\s*%)[^'"`]*['"`]/g, n: 1, fix: 'Use end: fluidEnd(N), or a function: start: () => `top top+=${fluidPx(N)}`, with invalidateOnRefresh: true.' },
+        // Motion useTransform output range with a big literal
+        { re: /useTransform\([^)]*?\[[^\]]*\]\s*,\s*\[([^\]]*)\]/g, n: 1, list: true, fix: 'Map progress to a unitless 0..1 and multiply by the unit: useTransform(() => p.get() * N * f.get()) with f = useFluidUnit(), or write --scene-p and let CSS multiply.' }
+      ]
+      for (const c of checks) {
+        let m
+        while ((m = c.re.exec(content))) {
+          const nums = c.list ? (m[c.n].match(/-?\d+(?:\.\d+)?(?![\w%.])/g) ?? []).map(Number) : [Number(m[c.n])]
+          if (!nums.some((n) => Math.abs(n) >= 80)) continue
+          pushFinding(acc, { rule: this.id, file, content, index: m.index, matchLen: m[0].length, severity: 'warn', why, fix: c.fix })
+        }
       }
     }
   },

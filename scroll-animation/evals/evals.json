@@ -8,10 +8,22 @@
       "expected_output": "Diagnoses a non-all-intra (long-GOP) encode, not a scrub/pin bug — a scrubbed video needs to seek to an arbitrary frame every rAF, and a long-GOP clip can only seek cleanly to its I-frames, so every seek in between decodes from the nearest prior keyframe and reads as stuck-then-jump. Points at the all-intra re-encode (ffmpeg -g 1) and does not propose editing ScrubStage's progress/pin math.",
       "files": [],
       "assertions": [
-        { "text": "identifies a non-all-intra / long-GOP encode as the cause, not the pin or scroll math", "check": "response mentions all-intra/keyframe/GOP as the cause" },
-        { "text": "gives the ffmpeg re-encode fix (-g 1 or equivalent all-intra flag)", "check": "response contains an ffmpeg command with -g 1 or -x264-params keyint=1" },
-        { "text": "does not propose editing ScrubStage's scroll/progress math as the fix", "check": "no code edit to ScrubStage's progress or rAF logic suggested as the fix" },
-        { "text": "explains why an arbitrary-frame seek needs every frame to be a keyframe", "check": "response explains seek-to-arbitrary-frame requires all-intra" }
+        {
+          "text": "identifies a non-all-intra / long-GOP encode as the cause, not the pin or scroll math",
+          "check": "response mentions all-intra/keyframe/GOP as the cause"
+        },
+        {
+          "text": "gives the ffmpeg re-encode fix (-g 1 or equivalent all-intra flag)",
+          "check": "response contains an ffmpeg command with -g 1 or -x264-params keyint=1"
+        },
+        {
+          "text": "does not propose editing ScrubStage's scroll/progress math as the fix",
+          "check": "no code edit to ScrubStage's progress or rAF logic suggested as the fix"
+        },
+        {
+          "text": "explains why an arbitrary-frame seek needs every frame to be a keyframe",
+          "check": "response explains seek-to-arbitrary-frame requires all-intra"
+        }
       ]
     },
     {
@@ -21,10 +33,22 @@
       "expected_output": "Asks (or states the default) keep/adapt/replace for the existing GSAP timelines and Lenis rather than assuming a rip-and-replace; recommends keeping Lenis site-wide but disabling it (or suspending it) over the new scroll well's range, since Lenis and the well are both scroll-position writers; keeps the new ScrubStage's pin as CSS position: sticky and explicitly does not nest it inside a GSAP ScrollTrigger pin: true; calls ScrollTrigger.refresh() after the new section's layout is measured.",
       "files": [],
       "assertions": [
-        { "text": "surfaces the keep/adapt/replace choice for existing GSAP timelines and Lenis instead of silently replacing them", "check": "response asks or states keep/adapt/replace for existing motion" },
-        { "text": "recommends disabling or suspending Lenis over the scroll well's range, not running both unmodified", "check": "response mentions disabling/suspending Lenis or routing through lenis.scrollTo for the well" },
-        { "text": "keeps ScrubStage's pin as CSS sticky, not a GSAP ScrollTrigger pin", "check": "response does not wrap ScrubStage in pin: true" },
-        { "text": "mentions ScrollTrigger.refresh() after adding the new section", "check": "response contains ScrollTrigger.refresh" }
+        {
+          "text": "surfaces the keep/adapt/replace choice for existing GSAP timelines and Lenis instead of silently replacing them",
+          "check": "response asks or states keep/adapt/replace for existing motion"
+        },
+        {
+          "text": "recommends disabling or suspending Lenis over the scroll well's range, not running both unmodified",
+          "check": "response mentions disabling/suspending Lenis or routing through lenis.scrollTo for the well"
+        },
+        {
+          "text": "keeps ScrubStage's pin as CSS sticky, not a GSAP ScrollTrigger pin",
+          "check": "response does not wrap ScrubStage in pin: true"
+        },
+        {
+          "text": "mentions ScrollTrigger.refresh() after adding the new section",
+          "check": "response contains ScrollTrigger.refresh"
+        }
       ]
     },
     {
@@ -34,9 +58,43 @@
       "expected_output": "Checks that every section (including the dark stats band) carries data-header-theme, diagnoses a missing or misspelled attribute on the offending section rather than a bug in the probe/hook itself, and explains the probe reads the section currently under the header (not the one in view), so a section with no attribute silently falls through to whatever the last resolved value was.",
       "files": [],
       "assertions": [
-        { "text": "checks/asks whether the dark stats band carries data-header-theme=\"dark\"", "check": "response checks for or mentions data-header-theme on the dark section" },
-        { "text": "diagnoses a missing/misspelled attribute on the section, not a bug in useHeaderTheme/headerTheme.ts itself", "check": "response identifies a missing or wrong data-header-theme value as the cause" },
-        { "text": "explains the probe reads whichever section is currently under the header, and a section with no attribute falls through to the last resolved value", "check": "response explains the under-header probe / fall-through behaviour" }
+        {
+          "text": "checks/asks whether the dark stats band carries data-header-theme=\"dark\"",
+          "check": "response checks for or mentions data-header-theme on the dark section"
+        },
+        {
+          "text": "diagnoses a missing/misspelled attribute on the section, not a bug in useHeaderTheme/headerTheme.ts itself",
+          "check": "response identifies a missing or wrong data-header-theme value as the cause"
+        },
+        {
+          "text": "explains the probe reads whichever section is currently under the header, and a section with no attribute falls through to the last resolved value",
+          "check": "response explains the under-header probe / fall-through behaviour"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "scaled-travel-on-fluid-layout",
+      "prompt": "Our site uses the fluid-design scale. I added a GSAP ScrollTrigger so the hero bottle slides 600px to the right as you scroll (x: 600, end: '+=1200'), and it looks right on my 1440 laptop but on the 27-inch iMac it only moves a bit and stops too early. The bottle also has an entrance animation and I centred it with lg:fluid-translate-x-[-50%]... What's wrong?",
+      "expected_output": "Explains that drawn travel must scale on a fluid layout (1.6x at 2560x1440); rewrites with fluidValue(600)/fluidEnd(1200) and invalidateOnRefresh, or the --scene-p CSS pattern; warns that GSAP folds CSS translate into its transform on elements it tweens, so the drift/any calc translate goes on a child or wrapper (a pure % centring survives); mentions audit-motion's fixed-travel-on-fluid rule.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "identifies fixed px travel as the cause",
+          "check": "response says x: 600 / end '+=1200' do not scale"
+        },
+        {
+          "text": "uses fluidValue/fluidEnd or --scene-p",
+          "check": "response contains fluidValue or fluidEnd or --scene-p"
+        },
+        {
+          "text": "sets invalidateOnRefresh when using function values",
+          "check": "response contains invalidateOnRefresh"
+        },
+        {
+          "text": "warns about GSAP folding translate on the tweened element",
+          "check": "response mentions GSAP folding translate / putting the offset on a child or wrapper"
+        }
       ]
     }
   ]

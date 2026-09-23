@@ -254,8 +254,16 @@ static offset (`translateX(-50%)` to centre it horizontally, say), write it with
 `translate` property instead: `className="[translate:-50%_0]"` (or the equivalent inline style).
 `transform: translateX(-50%)` on the same element is silently overwritten the moment the hidden
 state applies, and again by whatever drives the reveal. `translate` composes with `transform`
-rather than fighting it for the one declaration. This applies identically to the GSAP port:
-`assets/gsap/motion.css`'s own variant rules make the same `transform` claim on `[data-stage-item]`.
+rather than fighting it for the one declaration.
+
+**The GSAP port folds it, with one safe case.** GSAP's first tween of an element's transform reads
+the element's CSS `translate`/`rotate`/`scale`, bakes them into its own `transform` and sets them
+to `none` inline. A plain percentage survives (as `xPercent`/`yPercent`), so `translate: -50% 0`
+centring on a `[data-stage-item]` still works. A px or `calc()` value, including every
+`fluid-translate-*` and any `--scene-p` drift (`fluid-interop.md` §3), is frozen at the moment of
+the first tween and never updates again. Measured on a GSAP 3.15 build: every entrance-tweened
+element carried an inline `translate: none`. On the GSAP port, keep anything but a pure-% offset on
+a child or wrapper of the stage item. Motion writes only `transform` and leaves `translate` alone.
 
 ## 8. The entrance curve and fade are measured
 

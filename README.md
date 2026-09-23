@@ -25,15 +25,19 @@ scroll-animation/                  the skill: copy this folder into your skills 
                                    performance, verification, attribute contract, fluid interop)
   assets/
     react-motion/                  React + Motion primitives: Stage/StageItem/StageVeil, CountUp, FadeOnExit,
-                                   ScrubStage, PullToCentre, InViewLoopVideo, useHeaderTheme
-    gsap/                          the same primitives for GSAP, framework-agnostic and attribute-driven
-    motion-base.css                smooth scroll, reduced-motion scene collapse, @property --fill, <noscript> rule
+                                   ScrubStage, PullToCentre, InViewLoopVideo, useHeaderTheme, useFluidUnit
+                                   (lib/fluid.ts: the fluid units as numbers)
+    gsap/                          the same primitives for GSAP, framework-agnostic and attribute-driven,
+                                   plus src/fluid.ts (fluidPx, fluidValue, fluidEnd) for scaled travel
+    motion-base.css                smooth scroll, reduced-motion scene collapse, @property --fill and
+                                   --scene-p, <noscript> rule
   scripts/
     audit-motion.mjs               static scan for the silent motion failure modes (self-tested)
     verify-motion.mjs              Playwright: every reveal fires, scene state at progress 0…1
     anchor-check.mjs               Playwright: anchor links land under real smooth scrolling and scroll wells
   evals/evals.json                 test prompts used to validate the skill
-tests/                             npm test: typechecks both engines, GSAP smoke page, audit self-test
+tests/                             npm test: typechecks both engines, GSAP smoke page, scaled-travel
+                                   distance check at four viewports, audit self-test
 ```
 
 ## Install

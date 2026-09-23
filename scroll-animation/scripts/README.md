@@ -37,7 +37,10 @@ well` (warn — Lenis alongside the scroll well; both are scroll-position
 writers), `gsap-pin-with-sticky-scene` (error — a GSAP `pin: true` in the
 same file as a `ScrubStage`/`data-scrub-stage`; the scene's pin is CSS
 `position: sticky`, never nest it in a GSAP pin), `fractional-amount` (warn),
-`contents-reveal` (error), `video-attrs` (warn).
+`contents-reveal` (error), `video-attrs` (warn), `fixed-travel-on-fluid` (warn — on a
+fluid-scaled project, a GSAP `x`/`y` or ScrollTrigger `start`/`end` offset or a Motion
+`useTransform` output typed as a plain number of 80+ px; drawn travel must scale,
+`references/fluid-interop.md` §3).
 
 `--selftest` runs the scanner over `fixtures/audit/<rule-id>/{positive,negative}`
 for every rule and asserts each positive fixture trips the rule and each

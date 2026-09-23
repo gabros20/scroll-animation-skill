@@ -89,6 +89,7 @@ export function initFluidMotion(root: ParentNode = document, options: FluidMotio
 }
 
 export { ENGAGE_PX, ENGAGE_QUERY } from './config'
+export { fluidPx, fluidUnits, onFluidChange, fluidValue, fluidEnd, type FluidUnit, type FluidUnits } from './fluid'
 export { registerEases, EASE_NAMES, MOTION, TRIGGERS, SCROLL_SPRING, prefersReducedMotion } from './eases'
 export { initStages, type StageController } from './stage'
 export { initVeil, type VeilController } from './veil'

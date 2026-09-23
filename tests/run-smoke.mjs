@@ -64,6 +64,13 @@ async function main() {
         resolve(2)
       })
     })
+    if (status === 0) {
+      status = await new Promise((resolve) => {
+        const child = spawn(process.execPath, [join(__dirname_, 'distance-check.mjs'), url], { cwd: repoRoot, stdio: 'inherit' })
+        child.on('exit', (code) => resolve(code ?? 2))
+        child.on('error', () => resolve(2))
+      })
+    }
   } finally {
     await new Promise((resolve) => server.httpServer.close(resolve))
   }

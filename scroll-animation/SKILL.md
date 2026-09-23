@@ -20,7 +20,8 @@ read its why before bending it; the cheap-looking alternative has usually been t
 | Piece | Where |
 |---|---|
 | The method, the rules and the reasons behind them | `references/*.md` (read on demand; see the map below) |
-| React + Motion primitives: `Stage`/`StageItem`/`StageVeil`, `CountUp`, `FadeOnExit`, `ScrubStage`, `PullToCentre`, `InViewLoopVideo`, `useHeaderTheme` | `assets/react-motion/` (README inside) |
+| React + Motion primitives: `Stage`/`StageItem`/`StageVeil`, `CountUp`, `FadeOnExit`, `ScrubStage`, `PullToCentre`, `InViewLoopVideo`, `useHeaderTheme`, `useFluidUnit` | `assets/react-motion/` (README inside) |
+| Scaled travel on a fluid layout: `fluidPx`, `fluidValue`, `fluidEnd`, `useFluidUnit`, `--scene-p` | `assets/{gsap/src,react-motion/lib}/fluid.ts`, `references/fluid-interop.md` §3 |
 | The same primitives for GSAP, framework-agnostic and attribute-driven | `assets/gsap/` (README inside) |
 | Base motion CSS: smooth scroll, reduced-motion collapse, `@property --fill`, the `<noscript>` rule | `assets/motion-base.css` |
 | Static motion audit, runtime reveal and scene verifier, real-smooth-scroll anchor check | `scripts/{audit-motion,verify-motion,anchor-check}.mjs` |
@@ -90,7 +91,9 @@ most expensive. Above the fold, use trigger only.
   `AT_REST_TRIGGER` under a scroll well), **never a fractional `amount`**, which can't be satisfied
   on content taller than the viewport and leaves phones blank.
 - Distances go in CSS variables on the item (`[--hero-lift:20px] lg:[--hero-lift:24px]`), in fixed
-  px. Centre an item with `translate`, never `transform`.
+  px. Centre an item with `translate`, never `transform`. On the GSAP port only a plain % survives
+  there: GSAP folds `translate` into its transform and freezes px/`calc()` values
+  (`references/motion-architecture.md` §7).
 - Split line entrances at the authored breaks, one item per line.
 - A stage item never gets its own `initial`/`animate`/trigger; the section stays a server component.
 

@@ -99,6 +99,18 @@ html {
   initial-value: 0;
 }
 
+/* Scene progress for scaled distances (references/fluid-interop.md §3). The
+   engine writes a unitless 0..1 to --scene-p on the moving element, and CSS
+   multiplies it into a length: translate: calc(var(--scene-p) * 600 *
+   var(--fluid, 1px)) 0. The distance then follows the fluid scale live
+   through a resize, with no unit maths in JS. inherits: false keeps the
+   per-frame write from invalidating the element's whole subtree. */
+@property --scene-p {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
 /*
   <noscript> RULE — put this in the document <head>, not in a stylesheet:
   it has to apply even when this file never loads.
