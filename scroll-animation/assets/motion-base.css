@@ -1,0 +1,122 @@
+/*
+ * scroll-animation's motion base layer: smooth-scroll setup, reduced
+ * motion's structural half, and the one @property this system needs.
+ * Include it once, after your reset/preflight (and after the fluid-design
+ * skill's `assets/motion-base.css`, if that skill is also installed — this file
+ * is the MOTION half only; box-sizing, the sticky/overflow trap and the
+ * other render-layer rules live there).
+ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/*
+  Next.js App Router note: since Next intercepts same-page and route
+  navigation to manage scroll restoration itself, a plain
+  `html { scroll-behavior: smooth }` is not enough — Next forces an instant
+  jump unless the router is told to respect it. Add
+  `<html data-scroll-behavior="smooth">` in the root layout so Next's own
+  scroll handling defers to this CSS instead of overriding it.
+*/
+
+/* Reduced motion, the STRUCTURAL half. A scroll-driven (scrubbed)
+   animation is not a CSS/JS "animation" that a motion library's own
+   prefers-reduced-motion handling can degrade by itself — it is a
+   transform written every frame as a pure function of scroll position.
+   The motion layer's JS half publishes a "reduced" flag so a scrubbed
+   track renders its settled end state; this is the other half, collapsing
+   the scroll scene's own shell so a visitor who asked for less motion
+   isn't left scrolling a multi-viewport runway past a frozen composition.
+   Written as a plain media query, not motion-reduce: utilities, so it
+   can't lose a specificity fight against a component's own runway rules —
+   a media query doesn't care which one was written last.
+
+   !important is required on all rules here, for a reason narrower than
+   "beat the runway rules" above: the React port (assets/react-motion)
+   writes [data-scrub-pin]'s sticky geometry as an inline style, and an
+   inline style beats ANY non-!important stylesheet declaration regardless
+   of selector specificity or source order. The GSAP port keys the same
+   geometry off this same selector in its own motion.css (also
+   !important, same reason it has to win over a component's runway rules)
+   so both engines collapse identically under this one rule set.
+
+   [data-scrub-pin] gets height: 100svh, NOT height: auto. The pin holds the
+   settled frame (the JS half freezes the camera and the head-loop's first
+   frame — see the motion layer's "reduced" flag above), and that frame is
+   an absolutely-positioned <video> inside the pin. `auto` on a box whose
+   only content is absolutely positioned measures to ZERO — an
+   absolutely-positioned descendant is out of flow and contributes nothing
+   to its parent's auto height — so the held frame a reader is meant to see
+   collapses to a box with nothing in it. `100svh` gives the pin the exact
+   box the frame was framed for (the same unit ScrubStage's live geometry
+   uses), so the reduced-motion "no movement, but still see the shot" state
+   actually shows something instead of a blank strip.
+
+   [data-scrub-spacer] collapses to ZERO height, not auto. It marks an
+   empty pacing act inside the scene — an act with no camera move or copy
+   of its own, added only to give the FULL-MOTION composition room to
+   linger — so under reduced motion there is nothing in it worth the space:
+   collapsing it removes exactly the blank band a reader with no camera
+   movement would otherwise have to scroll through for no reason (measured:
+   an unmarked 2-viewport spacer left an 1800px empty dark band). Mark every
+   spacer act with this attribute — see references/attribute-contract.md and
+   references/scroll-scenes.md §10. */
+@media (prefers-reduced-motion: reduce) {
+  [data-scrub-stage] {
+    height: auto !important;
+  }
+  [data-scrub-pin] {
+    position: static !important;
+    height: 100svh !important;
+    overflow: visible !important;
+  }
+  [data-scrub-content] {
+    margin-top: 0 !important;
+  }
+  [data-scrub-spacer] {
+    height: 0 !important;
+  }
+}
+
+/* Registers --fill as a typed, animatable <number> instead of an opaque
+   string. Without this, a WebKit mask-gradient driven by --fill "pops"
+   between values instead of interpolating — Chromium animates an untyped
+   custom property fine either way, this is a WebKit-only gap.
+   syntax: '<number>' is what makes the browser treat updates as a typed,
+   animatable value. Use this shape for any other custom property that
+   feeds a gradient, filter or other property that needs to tween a
+   number, not just for --fill itself. */
+@property --fill {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+/*
+  <noscript> RULE — put this in the document <head>, not in a stylesheet:
+  it has to apply even when this file never loads.
+
+    <noscript>
+      <style>
+        [data-stage-item] { opacity: 1 !important; transform: none !important; }
+        [data-stage-veil] { display: none !important; }
+      </style>
+    </noscript>
+
+  Every entrance-triggered element is server-rendered in its HIDDEN state
+  (opacity 0 + a transform) so the entrance is flash-free — that state is
+  only ever cleared by JS. Without this rule, a reader with JS disabled, or
+  whose script failed to load, gets the hero and then a permanently blank
+  page below it: a scrubbed track's opacity is a pure function of scroll,
+  so with no JS it has no way to ever leave 0. [data-stage-veil] is the
+  page-load overlay and must be hidden the same way, for the same reason.
+  !important is required on both — it has to beat inline styles a motion
+  library writes per frame.
+*/

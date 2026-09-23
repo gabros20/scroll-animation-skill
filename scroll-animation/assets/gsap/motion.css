@@ -1,0 +1,200 @@
+/**
+ * fluid-design / gsap — SSR/no-flash base layer.
+ *
+ * This file gives every attribute in the DOM contract (`references/attribute-contract.md` §3) its
+ * pre-JS resting state, so a static page never flashes the settled layout
+ * before `initFluidMotion` runs, and never shows a permanently broken one
+ * if JS is unavailable. Include it once, before any page content, on every
+ * page that uses `assets/gsap/src`.
+ *
+ * Everything here is keyed off attributes, not classes — the same contract
+ * the react-motion port's `variants.ts` shares, down to the CSS custom
+ * property names (`--hero-drop`/`--hero-settle`/`--hero-lift`), so the two
+ * engines can sit in the same design system without diverging vocabulary.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Stage entrances — [data-stage-item][data-variant]                   */
+/* ------------------------------------------------------------------ */
+
+[data-stage-item] {
+  will-change: transform, opacity;
+}
+
+/* Every variant below sets `transform` (a `translateY`/`scaleY`/`scaleX`).
+   That means `transform` is SPOKEN FOR on any element carrying
+   [data-variant] — if you also need to centre or otherwise offset that same
+   element (e.g. `translateX(-50%)` to centre it horizontally), do it with
+   the independent `translate` property instead of `transform`:
+
+     [data-stage-item] { translate: -50% 0; }
+
+   `transform: translateX(-50%)` on the same element is silently overwritten
+   the moment this hidden state applies, and again by whatever GSAP tween
+   drives the reveal — `translate` composes with `transform` instead of
+   fighting it for the one declaration, the same reason fluid.css's
+   `fluid-translate-x/y-*` utilities write `translate`, not `transform`. */
+
+[data-stage-item][data-variant='drop'] {
+  transform: translateY(var(--hero-drop, -96px));
+}
+[data-stage-item][data-variant='settle'] {
+  transform: translateY(var(--hero-settle, -24px));
+}
+[data-stage-item][data-variant='settleFade'] {
+  transform: translateY(var(--hero-settle, -24px));
+  opacity: 0;
+}
+[data-stage-item][data-variant='lift'] {
+  transform: translateY(var(--hero-lift, 32px));
+}
+[data-stage-item][data-variant='liftFade'] {
+  transform: translateY(var(--hero-lift, 32px));
+  opacity: 0;
+}
+/* scaleY, not height — a filled rect growing from its own base. Requires
+   origin-bottom or it grows from the middle. */
+[data-stage-item][data-variant='growY'] {
+  transform: scaleY(0);
+  transform-origin: bottom;
+}
+/* Same move on the other axis — requires origin-left. */
+[data-stage-item][data-variant='growX'] {
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+/* Without JS, `initStages` never runs and every [data-stage-item] would sit
+   in its hidden state forever. Ship this rule verbatim on any page using
+   the stage system: */
+/*
+  <noscript><style>[data-stage-item]{transform:none!important;opacity:1!important}</style></noscript>
+*/
+
+/* ------------------------------------------------------------------ */
+/* The load veil — [data-stage-veil]                                   */
+/* ------------------------------------------------------------------ */
+
+[data-stage-veil] {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  opacity: 1;
+  pointer-events: none;
+  /* This rule paints NOTHING by itself — no background-color/-image here on
+     purpose, since the right colour is a page decision (usually a surface
+     token: `background-color: var(--color-surface-dark)` or similar), not
+     this stack-agnostic file's to hardcode. Without ONE being set somewhere
+     that applies to this element, the veil is a fully transparent fixed
+     layer: `opacity: 1` on nothing is still nothing, so the page-load flash
+     this element exists to prevent is invisible right up until you go
+     looking for why it isn't hiding anything. Add the paint at the call
+     site, e.g. `<div data-stage-veil class="bg-surface-dark">`. */
+}
+
+/* Server-rendered opaque over the whole viewport — without JS to fade it
+   the page is permanently blank. Ship this verbatim next to the veil
+   element on any page using it: */
+/*
+  <noscript><style>[data-stage-veil]{display:none}</style></noscript>
+*/
+
+/* ------------------------------------------------------------------ */
+/* The scrub stage — [data-scrub-stage] / [data-scrub-pin] / …         */
+/* ------------------------------------------------------------------ */
+
+[data-scrub-stage] {
+  position: relative;
+}
+
+[data-scrub-pin] {
+  position: sticky;
+  top: 0;
+  /* `lvh`, not `svh`: on a mobile browser mid-scroll the toolbar is
+     collapsed, and a pin measured in `svh` falls short of the true screen
+     height by the toolbar's own height — the page background then shows as
+     a band along the bottom edge. `lvh` is the largest of the three, so the
+     pin covers the screen in both toolbar states and simply overhangs
+     (clipped by overflow: hidden) when the toolbar is showing. */
+  height: 100lvh;
+  width: 100%;
+  overflow: hidden;
+  pointer-events: none; /* never eat clicks meant for the content riding over it */
+}
+
+[data-scrub-gutter] {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(to bottom, var(--scrub-g-top, #9a9a9a), var(--scrub-g-bottom, #0a0a0a));
+}
+
+[data-scrub-video] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Undoes a common Preflight-style `video { max-width: 100% }` reset,
+     which would silently clamp a deliberately oversized, transform-framed
+     video back to the container width. Symptom if this is missing:
+     `offsetWidth` equals the container width exactly while height (driven
+     by the same box) stays correct — looks merely mis-cropped, not broken. */
+  max-width: none;
+  object-fit: cover;
+  transform-origin: top left;
+}
+
+[data-scrub-content] {
+  position: relative;
+  /* Exactly cancels the pin's contribution to the range wrapper's height,
+     so the measured scroll range is as tall as the content and the pin
+     travels exactly that far. Must stay the SAME viewport unit as the pin
+     above — mixing svh/lvh here measures one toolbar-height wrong. */
+  margin-top: -100lvh;
+}
+
+/* ------------------------------------------------------------------ */
+/* Reduced motion                                                      */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Movement removed, opacity kept — a fade communicates arrival without
+     asking a motion-sensitive visitor to track anything moving. */
+  [data-stage-item][data-variant='drop'],
+  [data-stage-item][data-variant='settle'],
+  [data-stage-item][data-variant='settleFade'],
+  [data-stage-item][data-variant='lift'],
+  [data-stage-item][data-variant='liftFade'] {
+    transform: none;
+  }
+  [data-stage-item][data-variant='growY'],
+  [data-stage-item][data-variant='growX'] {
+    transform: none;
+  }
+
+  /* Structure collapses too: release the pin, collapse the runway. A
+     scroll-driven pan/zoom held on a static frame is still a scroll-driven
+     pan/zoom — the JS layer already freezes the camera and holds a single
+     frame (scrubStage.ts), but the PIN itself has no business consuming
+     scroll length once nothing under it is animating. */
+  [data-scrub-pin] {
+    position: relative;
+    /* No longer pinned, so it no longer needs to cover the whole runway —
+       one viewport-height block holding the settled frame is enough. `svh`
+       here (not `lvh`): this block sits in normal flow now, so it should
+       not overhang and get clipped the way the sticky layer deliberately did. */
+    height: 100svh;
+  }
+  [data-scrub-content] {
+    margin-top: 0;
+  }
+  /* An empty pacing act (no camera move, no copy of its own — marked by
+     hand with data-scrub-spacer) has nothing left in it once the camera is
+     frozen. Collapse it, or a reduced-motion reader scrolls through however
+     many viewports of blank band it was drawn at for no reason (measured:
+     1800px on a 2-viewport spacer). See references/scroll-scenes.md §10. */
+  [data-scrub-spacer] {
+    height: 0;
+  }
+}
