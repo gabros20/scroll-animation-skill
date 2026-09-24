@@ -12,7 +12,7 @@
  *
  * ```html
  * <div data-scrub-stage>
- *   <div data-scrub-pin>                          <!-- sticky, motion.css -->
+ *   <div data-scrub-pin>                          <!-- sticky, motion.gsap.css -->
  *     <div data-scrub-gutter aria-hidden="true"></div>   <!-- backdrop, optional -->
  *     <video data-scrub-video muted playsinline preload="none"
  *            disablepictureinpicture disableremoteplayback aria-hidden="true"
@@ -22,7 +22,7 @@
  * </div>
  * ```
  *
- * `motion.css` supplies the pin's `position: sticky`, the content wrapper's
+ * `motion.gsap.css` supplies the pin's `position: sticky`, the content wrapper's
  * negative margin that cancels the pin's contribution to the range's
  * height, and the reduced-motion structural collapse. This module wires
  * behaviour onto whatever markup already carries these attributes; it

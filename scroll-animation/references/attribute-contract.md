@@ -73,8 +73,8 @@ verification harness. The **On** column calls out where an attribute is GSAP-onl
 | `data-fade-on-exit` | a group | GSAP-only: fades out as it scrolls above the viewport, tuned with `--exit-from`/`--exit-to`. React's `FadeOnExit` reads the same two CSS variables directly, no attribute needed |
 | `data-pull-to-centre` | a marker, first child of the box to attract | GSAP-only: optional `data-clamp` (selector), `data-threshold`, `data-threshold-lg`. React's `PullToCentre` takes `clamp`/`threshold`/`thresholdLg`/`disabled` props |
 | `data-scrub-stage` | a scroll scene's range wrapper | both engines: the outer element the scrub logic measures. React's `ScrubStage` always emits it |
-| `data-scrub-pin` | the sticky pinned layer, inside the range wrapper | both engines: CSS owns the pin's resting geometry (`assets/gsap/motion.css` for GSAP; `assets/motion-base.css`'s reduced-motion collapse for both). React's `ScrubStage` emits it on the `position: sticky` div; see the note below on why that div's other styles stay inline |
-| `data-scrub-video` | the `<video>` inside the pin | GSAP-only: `data-src`/`data-mobile-src`, `poster`/`data-mobile-poster` drive tier selection; GSAP's `motion.css` also styles the box off this attribute. React's `ScrubStage` positions and sizes its `<video>` with an inline `style` and a `src` prop instead |
+| `data-scrub-pin` | the sticky pinned layer, inside the range wrapper | both engines: CSS owns the pin's resting geometry (`assets/styles/motion/motion.gsap.css` for GSAP; `assets/styles/motion/motion.css`'s reduced-motion collapse for both). React's `ScrubStage` emits it on the `position: sticky` div; see the note below on why that div's other styles stay inline |
+| `data-scrub-video` | the `<video>` inside the pin | GSAP-only: `data-src`/`data-mobile-src`, `poster`/`data-mobile-poster` drive tier selection; GSAP's `motion.gsap.css` also styles the box off this attribute. React's `ScrubStage` positions and sizes its `<video>` with an inline `style` and a `src` prop instead |
 | `data-scrub-gutter` | optional backdrop element, inside the pin | GSAP-only, on the DOM: painted from `backdropStops`. React's `ScrubStage` targets the same backdrop element with a `ref`, not an attribute |
 | `data-scrub-content` | the flow wrapper riding over the pin | both engines: cancels the pin's height contribution (a `-100lvh` margin); also the reduced-motion reset target (`margin-top: 0`). React's `ScrubStage` emits it on that wrapper div |
 | `data-scrub-spacer` | an empty pacing act inside `data-scrub-content` | both engines: marks an act with no camera move or copy of its own, added only to give the full-motion composition room to linger, so the reduced-motion collapse can zero its height instead of leaving a blank band the length of that act (measured: an unmarked 2-viewport spacer left 1800px of empty dark band under reduced motion). Neither engine emits it; author it by hand. See `scroll-scenes.md` §10 |
@@ -92,7 +92,7 @@ React's `ScrubStage` writes the pin's `position: sticky; top: 0; height: 100lvh;
 overflow: hidden` as an inline `style`, not through a class, because that geometry is load-bearing
 and framework-agnostic and must ship regardless of the host's styling system. An inline style beats
 **any** non-`!important` stylesheet declaration, regardless of selector specificity or source
-order, so the reduced-motion structural collapse in `assets/motion-base.css` declares its rules
+order, so the reduced-motion structural collapse in `assets/styles/motion/motion.css` declares its rules
 `!important`:
 
 ```css
@@ -115,7 +115,7 @@ an ordering assumption this skill does not want to make. The pin's `position`/`h
 are the same on every instance, so `!important` on the one shared rule is both simpler and more
 robust than trying to out-order a per-instance tag.
 
-GSAP's own `motion.css` uses the identical selectors and the identical `!important` reasoning for
+GSAP's own `motion.gsap.css` uses the identical selectors and the identical `!important` reasoning for
 the same collapse, so both engines end up structurally identical under reduced motion even though
 only one of them is fighting an inline style to get there.
 

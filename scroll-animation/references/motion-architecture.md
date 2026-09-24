@@ -372,7 +372,7 @@ directly to `style` is not an animation (the runtime simply writes it), and a ha
 pinned scrub scene holds its opening loop's first frame and freezes its camera at the first shot; a
 scroll-fader pins its opacity to 1. Structure collapses too (release the pin, collapse the runway),
 and that half belongs in a plain `@media (prefers-reduced-motion: reduce)` block in the base
-stylesheet (`assets/motion-base.css`) rather than scattered as utility classes, because a utility
+stylesheet (`assets/styles/motion/motion.css`) rather than scattered as utility classes, because a utility
 collides with the runway utilities at equal specificity and which one wins becomes a build-order
 accident. Mechanics in `scroll-scenes.md` §10.
 

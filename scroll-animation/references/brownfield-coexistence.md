@@ -154,10 +154,10 @@ gsap.ticker.lagSmoothing(0)
 (If Lenis was created with `autoRaf: true`, don't also add it to the ticker: that runs it twice per
 frame.)
 
-**`scroll-behavior: smooth` must be off while Lenis runs.** `motion-base.css` sets
+**`scroll-behavior: smooth` must be off while Lenis runs.** `motion.css` sets
 `html { scroll-behavior: smooth }`; under Lenis, every per-frame write would become a native smooth
 scroll chasing the last one. Include Lenis's own stylesheet (it forces `scroll-behavior: auto` while
-Lenis is active), or drop the rule from `motion-base.css`.
+Lenis is active), or drop the rule from `motion.css`.
 
 **The scroll well conflicts: disable it, or route it through Lenis.** The well reads the scroll
 position and writes `position + step` with `window.scrollTo({ behavior: 'instant' })` every frame.

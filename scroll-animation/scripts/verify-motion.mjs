@@ -149,7 +149,7 @@ async function resolvePlaywrightModule() {
 async function checkReveal(page) {
   await page.evaluate(async () => {
     // Force instant scrolling for the duration of this stepping. A page
-    // that sets `html { scroll-behavior: smooth }` (motion-base.css's
+    // that sets `html { scroll-behavior: smooth }` (motion.css's
     // default) queues a smooth animation on every `scrollTo` below; the
     // NEXT step's `scrollTo` then cancels that animation before it arrives
     // -- same mechanism as scrollPull's `instant` writes cancelling an

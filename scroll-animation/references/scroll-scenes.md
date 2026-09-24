@@ -354,7 +354,7 @@ composition) and any duration in milliseconds (a gesture doesn't get faster beca
 shorter).
 
 `behavior: 'instant'` on every write the well makes is load-bearing wherever the page also sets
-smooth-scroll behaviour globally (`assets/motion-base.css` does). Left to a smooth default, every
+smooth-scroll behaviour globally (`assets/styles/motion/motion.css` does). Left to a smooth default, every
 frame of the well's own loop would queue a new smooth animation against the one before it.
 
 **Trap: that same `instant` write cancels a smooth scroll the well did not start.** `instant`
@@ -424,7 +424,7 @@ same small set of data attributes documented in `attribute-contract.md` (`data-s
 debug-marker stylesheet can hook the DOM without touching layout, and so the two animation engines
 expose an identical shape to tooling regardless of which one drives them.
 
-**Reduced motion's structural half lives in the base stylesheet (`assets/motion-base.css`), not in
+**Reduced motion's structural half lives in the base stylesheet (`assets/styles/motion/motion.css`), not in
 component logic:**
 
 ```css

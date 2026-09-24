@@ -59,7 +59,7 @@ crossing the hero, a parallax range, a horizontal track, an object landing on a 
 ScrollTrigger `start`/`end` offset, a marquee's speed. Three patterns, in order of preference:
 
 1. **CSS multiplies, the engine writes progress** (any engine, no unit maths in JS). The engine
-   writes a unitless 0..1 to `--scene-p` on the element (registered in `motion-base.css`) and CSS
+   writes a unitless 0..1 to `--scene-p` on the element (registered in `motion.css`) and CSS
    turns it into a length. It stays right through a resize with no refresh, because the unit is
    resolved by CSS on every frame.
 

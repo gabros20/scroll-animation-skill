@@ -1,10 +1,12 @@
 /*
- * scroll-animation's motion base layer: smooth-scroll setup, reduced
- * motion's structural half, and the one @property this system needs.
- * Include it once, after your reset/preflight (and after the fluid-design
- * skill's `assets/motion-base.css`, if that skill is also installed — this file
- * is the MOTION half only; box-sizing, the sticky/overflow trap and the
- * other render-layer rules live there).
+ * styles/motion/motion.css — scroll-animation's base layer, for both
+ * engines: smooth-scroll setup, reduced motion's structural half, and the
+ * one @property this system needs. The one import every project takes
+ * (GSAP adds motion.gsap.css from the same folder). Include it once, after
+ * your reset/preflight; with fluid-design installed, right after
+ * styles/fluid/fluid.css. This file is the MOTION half only: box-sizing,
+ * the sticky/overflow trap and the other render-layer rules are
+ * fluid-design's base layer.
  */
 
 html {
@@ -43,7 +45,7 @@ html {
    writes [data-scrub-pin]'s sticky geometry as an inline style, and an
    inline style beats ANY non-!important stylesheet declaration regardless
    of selector specificity or source order. The GSAP port keys the same
-   geometry off this same selector in its own motion.css (also
+   geometry off this same selector in its own motion.gsap.css (also
    !important, same reason it has to win over a component's runway rules)
    so both engines collapse identically under this one rule set.
 

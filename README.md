@@ -29,8 +29,10 @@ scroll-animation/                  the skill: copy this folder into your skills 
                                    (lib/fluid.ts: the fluid units as numbers)
     gsap/                          the same primitives for GSAP, framework-agnostic and attribute-driven,
                                    plus src/fluid.ts (fluidPx, fluidValue, fluidEnd) for scaled travel
-    motion-base.css                smooth scroll, reduced-motion scene collapse, @property --fill and
-                                   --scene-p, <noscript> rule
+    styles/motion/                 the CSS → a project's src/styles/motion/ (beside fluid-design's
+                                   src/styles/fluid/): motion.css (both engines: smooth scroll,
+                                   reduced-motion scene collapse, @property --fill and --scene-p) and
+                                   motion.gsap.css (GSAP's pre-JS resting states)
   scripts/
     audit-motion.mjs               static scan for the silent motion failure modes (self-tested)
     verify-motion.mjs              Playwright: every reveal fires, scene state at progress 0…1

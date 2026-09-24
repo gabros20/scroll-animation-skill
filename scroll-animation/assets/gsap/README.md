@@ -21,17 +21,19 @@ skill's `references/` for the full note).
 
 ## Setup
 
-1. Include `motion.css` before any page content:
+1. Include `motion.gsap.css` (in the skill's `assets/styles/motion/`, copied to
+   `src/styles/motion/` with `motion.css`) right after `motion.css`, before any page content:
 
-   ```html
-   <link rel="stylesheet" href="/path/to/motion.css" />
+   ```ts
+   import './styles/motion/motion.css'
+   import './styles/motion/motion.gsap.css'
    ```
 
    It gives every attribute below its pre-JS resting state, so nothing
    flashes the settled layout before the script below runs, and nothing is
    permanently broken if JS never runs.
 
-2. Ship the two `<noscript>` snippets `motion.css` calls out, next to the
+2. Ship the two `<noscript>` snippets `motion.gsap.css` calls out, next to the
    elements they cover — one page using `[data-stage-item]` and
    `[data-stage-veil]`:
 
@@ -79,7 +81,7 @@ area; there is no separate props API.
 | `data-stage="view"\|"mount"` | a triggered entrance group | `view` fires on scroll-in, `mount` fires immediately |
 | `data-stage-margin` / `data-stage-margin-lg` | a stage | IntersectionObserver `rootMargin`; `-lg` overrides from `ENGAGE_QUERY` up, resolved once |
 | `data-stage-repeat` | a stage | presence replays the group on every re-entry instead of once |
-| `data-stage-item` | an item SSR'd/authored in its hidden state | required for `motion.css`'s hidden-state rules and the `<noscript>` override |
+| `data-stage-item` | an item SSR'd/authored in its hidden state | required for `motion.gsap.css`'s hidden-state rules and the `<noscript>` override |
 | `data-variant` | a stage item | `drop \| settle \| settleFade \| lift \| liftFade \| growY \| growX` |
 | `data-delay` | a stage item | seconds after the stage fires |
 | `data-stage-veil` | the page-load overlay | self-driving; fades on mount regardless of any stage |
@@ -87,21 +89,21 @@ area; there is no separate props API.
 | `data-fade-on-exit` | a group | fades out as it scrolls above the viewport; tune with `--exit-from`/`--exit-to` |
 | `data-pull-to-centre` | a marker, first child of the box to attract | optional `data-clamp` (selector), `data-threshold`, `data-threshold-lg` |
 | `data-scrub-stage` | a scroll scene's range wrapper | the outer element `scrubStage.ts` measures |
-| `data-scrub-pin` | the sticky pinned layer, inside the range wrapper | CSS owns the pin; see `motion.css` |
+| `data-scrub-pin` | the sticky pinned layer, inside the range wrapper | CSS owns the pin; see `motion.gsap.css` |
 | `data-scrub-video` | the `<video>` inside the pin | `data-src`/`data-mobile-src`, `poster`/`data-mobile-poster` |
 | `data-scrub-gutter` | optional backdrop element, inside the pin | painted from `backdropStops` |
 | `data-scrub-content` | the flow wrapper riding over the pin | cancels the pin's height contribution |
-| `data-scrub-spacer` | an empty pacing act inside `data-scrub-content` | mark any act with no camera move or copy of its own so `motion.css`'s/`motion-base.css`'s reduced-motion collapse can zero its height, instead of leaving a blank band the length of that act. Author it by hand — neither engine infers it |
+| `data-scrub-spacer` | an empty pacing act inside `data-scrub-content` | mark any act with no camera move or copy of its own so `motion.gsap.css`'s/`motion.css`'s reduced-motion collapse can zero its height, instead of leaving a blank band the length of that act. Author it by hand — neither engine infers it |
 | `data-motion-state` | a machine root (the scrub video) | current mode, written only on transition |
 | `data-header-theme="light"\|"dark"` | a section | what a themed header should read while this section is under it; `--header-theme` overrides per breakpoint |
 | `data-loop-video` | a background loop `<video>` | optional `data-loop-from-frame` + `data-fps` for the seam-loop policy |
 
 Distances live in CSS custom properties on the animated element —
-`--hero-drop`, `--hero-settle`, `--hero-lift` (signed lengths, `motion.css`
+`--hero-drop`, `--hero-settle`, `--hero-lift` (signed lengths, `motion.gsap.css`
 reads them with the reference build's own defaults). Scalar ranges for
 `FadeOnExit` are `--exit-from`/`--exit-to`.
 
-## Two things `motion.css` cannot do for you
+## Two things `motion.gsap.css` cannot do for you
 
 - **The load veil needs a background from the page.** `[data-stage-veil]` is
   positioned, `z-index`ed and set to `opacity: 1`, but it paints nothing —
@@ -111,7 +113,7 @@ reads them with the reference build's own defaults). Scalar ranges for
   data-stage-veil class="bg-surface-dark">` (or an inline
   `background-color`).
 - **Centring a stage item needs `translate`, not `transform`.** Every
-  `[data-variant]` rule in `motion.css` sets `transform`
+  `[data-variant]` rule in `motion.gsap.css` sets `transform`
   (`translateY`/`scaleY`/`scaleX`), so `transform` is already spoken for on
   any element carrying one. A `transform: translateX(-50%)` meant to centre
   that same element is silently overwritten the instant the hidden-state

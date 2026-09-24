@@ -156,7 +156,7 @@ contract.
   drives each `[data-scrub-stage]` to progress `[0, 0.25, 0.5, 0.75, 1]` and records
   `data-motion-state` at each step. **It forces `document.documentElement.style.scrollBehavior =
   'auto'` for the duration of its stepped `scrollTo` calls and restores the old value afterwards.**
-  A page with `html { scroll-behavior: smooth }` (`motion-base.css`'s default) would otherwise have
+  A page with `html { scroll-behavior: smooth }` (`motion.css`'s default) would otherwise have
   each step's `scrollTo` cancel the previous step's still-in-flight smooth animation (the same
   mechanism as the scroll-well trap, `scroll-scenes.md` §8), and the harness would stall partway
   down the page. Measured: this made the reveal check fail in every cell (30/54 items read as

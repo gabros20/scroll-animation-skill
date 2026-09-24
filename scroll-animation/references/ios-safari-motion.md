@@ -100,7 +100,7 @@ Chromium interpolates a plain custom property either way; this is specifically a
 
 `syntax: '<number>'` (matched to whatever type the value actually is) is what makes the browser
 treat updates to it as a typed, animatable value instead of an opaque string token.
-`assets/motion-base.css` registers `--fill`; use the same shape for any other custom property that
+`assets/styles/motion/motion.css` registers `--fill`; use the same shape for any other custom property that
 feeds a gradient, filter or other paint input that needs to tween a number.
 
 ## 5. Overscroll and smooth scroll
@@ -112,12 +112,12 @@ latch (`scroll-scenes.md` §3, §5). It is a global decision, set once on the do
 `fluid-design` skill's base layer is installed it already sets this, for a rendering reason as well:
 no canvas gap behind the page.)
 
-`html { scroll-behavior: smooth }` (in `assets/motion-base.css`, reset to `auto` under reduced
+`html { scroll-behavior: smooth }` (in `assets/styles/motion/motion.css`, reset to `auto` under reduced
 motion) makes anchor jumps glide. It has two motion consequences: every write a scroll well makes
 must pass `behavior: 'instant'`, and any stepped harness must force `auto` while it steps
 (`scroll-scenes.md` §8, `verification.md` §5). Next.js App Router additionally wants
 `data-scroll-behavior="smooth"` on `<html>` so its own route-change scroll jumps instantly instead of
-gliding; the comment in `motion-base.css` has the detail.
+gliding; the comment in `motion.css` has the detail.
 
 ## 6. Device discipline for video and scroll
 

@@ -1450,7 +1450,7 @@ export function ScrubStage({
         data-scrub-pin
         /* Inline styles beat ANY non-`!important` stylesheet rule, source
            order and specificity notwithstanding. The reduced-motion
-           structural collapse in `assets/motion-base.css` (keyed off
+           structural collapse in `assets/styles/motion/motion.css` (keyed off
            `[data-scrub-pin]`) therefore declares its overrides
            `!important` rather than trying to out-order this — see that
            file's comment for why `!important` was chosen over moving this

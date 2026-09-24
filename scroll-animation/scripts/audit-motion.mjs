@@ -185,7 +185,7 @@ function buildContext(files, contents) {
     const c = contents.get(f)
     if (ext === '.css' || ext === '.scss') {
       // Anywhere, not just on html/:root -- scroll-behavior only meaningfully
-      // applies to the scrolling root, and this skill's own motion-base.css
+      // applies to the scrolling root, and this skill's own motion.css
       // sets it there. False positives on an unrelated element's rule are
       // harmless: the finding below is informational, not an error.
       if (/scroll-behavior\s*:\s*smooth\b/.test(c)) hasSmoothScrollBehavior = true
@@ -245,7 +245,7 @@ const rules = [
   },
 
   {
-    // A page-wide `scroll-behavior: smooth` (motion-base.css sets this on
+    // A page-wide `scroll-behavior: smooth` (motion.css sets this on
     // `html` by default) means the scroll well's own per-frame
     // `behavior: 'instant'` writes cancel any smooth scroll passing through
     // its target one rAF at a time -- an anchor click that should land 900px
