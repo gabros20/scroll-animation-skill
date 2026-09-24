@@ -43,7 +43,9 @@ gsap.to('#fold-canary', { y: 1, duration: 0.01 })
 ;(window as unknown as { __fluidPxScoped: number }).__fluidPxScoped = fluidPx(
   48,
   'ui',
-  document.getElementById('fluid-el-scope')!
+  // A CHILD of the scope: the registered mirror doesn't inherit, so fluidPx
+  // must walk up to #fluid-el-scope to find it.
+  document.getElementById('fluid-el-child')!
 )
 
 // Exposed for tests/distance-check.mjs diagnostics.

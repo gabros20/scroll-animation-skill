@@ -193,4 +193,4 @@ route it through `lenis.scrollTo`.
 `fluid-design` makes the desktop composition scale as one drawing from both viewport axes. It owns
 layout, type, tokens and rendering, including iOS render fixes and media sizing. When both are
 installed, each points to the other by name. They meet only at the fluid units, the engage
-breakpoint and `--header-h` (`references/fluid-interop.md`).
+breakpoint and `--fluid-header-h` (`references/fluid-interop.md`).

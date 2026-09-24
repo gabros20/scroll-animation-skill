@@ -15,8 +15,10 @@
  * `--fluid-zoom`), notifying `onFluidChange` listeners.
  *
  * `fluidPx`'s optional `el` skips the probe: it reads `--_fluid-m-<unit>`, a
- * REGISTERED length the fluid-design engine mirrors on every scope, so
- * getComputedStyle resolves it straight to a number at that element.
+ * REGISTERED, NON-inherited length the fluid-design engine sets on :root and
+ * every scope (0px elsewhere), walking up from `el` to the first element
+ * that has one. Non-inherited because an inherited viewport-dependent length
+ * made WebKit re-resolve every element on every resize.
  *
  * `references/fluid-interop.md` §3 has the GSAP and Motion recipes.
  */
@@ -111,14 +113,16 @@ export function fluidUnits(): FluidUnits {
 
 /** `n` drawn px on `unit` (default 'fluid'), in CSS px at the current viewport. `'chrome'` is an
  * alias of `'ui'`. Pass `el` to read the unit as it applies AT that element: inside a limit or a
- * scope (fluid-grow-until-1680, fluid-off, fluid-scope) the units differ from the page's. That
- * read is a getComputedStyle of a registered length the engine mirrors on every scope; it costs a
- * style read per call, so cache it per frame, not per tween tick. */
+ * scope (fluid-grow-until-1680, fluid-off, fluid-scope, an SCSS mixin scope) the units differ
+ * from the page's. It walks up to the nearest element carrying the engine's mirror: one style
+ * read per ancestor, so cache it per frame, not per tween tick. */
 export function fluidPx(n = 1, unit: FluidUnit = 'fluid', el?: Element): number {
   const key = ALIASES[unit] ?? (unit as MeasuredUnit)
   if (el && typeof getComputedStyle !== 'undefined') {
-    const v = parseFloat(getComputedStyle(el).getPropertyValue(`--_fluid-m-${key}`))
-    if (v > 0 && Number.isFinite(v)) return (n * v) / 1000
+    for (let e: Element | null = el; e; e = e.parentElement) {
+      const v = parseFloat(getComputedStyle(e).getPropertyValue(`--_fluid-m-${key}`))
+      if (v > 0 && Number.isFinite(v)) return (n * v) / 1000
+    }
   }
   if (typeof document === 'undefined') return n * ONE[key]
   ensureProbes()

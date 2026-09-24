@@ -70,7 +70,7 @@ owned by someone. Take over only what the new work needs, and only where it does
   `transition-colors`, don't add `THEME_FADE` alongside it: two `transition-*` declarations on one
   element both set `transition-property`, and which wins is stylesheet order. Use one, at one
   duration, on every themed part.
-- **Sizing is separate.** Header height, insets and `--header-h` are layout (the `fluid-design`
+- **Sizing is separate.** Header height, insets and `--fluid-header-h` are layout (the `fluid-design`
   skill converts them). Converting sizing never requires touching the header's animation or colour
   code.
 

@@ -95,7 +95,7 @@ usage error or playwright could not be resolved/launched.
 
 ```
 node anchor-check.mjs <url> [--selector 'a[href^="#"]']
-  [--viewports 1440x900,390x844] [--limit 5] [--header-var --header-h]
+  [--viewports 1440x900,390x844] [--limit 5] [--header-var --fluid-header-h]
   [--tolerance 2]
 node anchor-check.mjs --help
 ```
@@ -113,7 +113,7 @@ the current page's and it carries a hash), up to `--limit` per viewport (default
 clicks it with the page's own `scroll-behavior` left alone, waits for `scrollend` or for `scrollY` to
 sit unchanged for 300ms (10s cap), then asserts the target's landed `rect.top` is within
 `--tolerance` px (default 2) of whichever offset mechanism it actually uses — `scroll-margin-top` (+
-the root's `scroll-padding-top`), or the `--header-var` custom property (default `--header-h`) read
+the root's `scroll-padding-top`), or the `--header-var` custom property (default `--fluid-header-h`, then the pre-namespace `--header-h`) read
 as a fallback when the CSS ones are both zero. A viewport width `<= 480` is emulated as touch/mobile.
 
 Exit codes: `0` every anchor in every viewport landed within tolerance, `1` at least one did not (or

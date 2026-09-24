@@ -6,7 +6,7 @@ doesn't, and need to know which parts depend on the scale.
 **Skip when:** neither applies: you're only tuning an entrance or a video.
 **Depends on:** `scroll-scenes.md` §1, §2, §8.
 
-The two skills meet at three things only: the fluid units, the engage breakpoint, and `--header-h`.
+The two skills meet at three things only: the fluid units, the engage breakpoint, and `--fluid-header-h`.
 Everything else is independent, and every primitive here runs on a plain px layout.
 
 ## 1. The engage breakpoint: one number, one source
@@ -153,12 +153,15 @@ pinned render, but it changes two things:
   well's extremes land exactly on progress 0 and 1 (`scroll-scenes.md` §8). Without the scale the
   same applies to any act shorter than the viewport.
 
-## 6. `--header-h`
+## 6. `--fluid-header-h`
 
-`fluid-design` emits `--header-h` (the header's resting inset, safe area and row height).
-`anchor-check.mjs` reads it as a fallback when an anchor target has no `scroll-margin-top`, and the
-header-ink probe is independent of it. Without the scale, either define `--header-h` yourself or give
-anchor targets an explicit `scroll-margin-top`.
+`fluid-design` emits `--fluid-header-h` (the header's resting inset, safe area and row height).
+Earlier versions called it `--header-h`; a fluid-design project with `aliases: true` (every
+migrated v1 project) still emits that name too, and a hand-built site may define it itself.
+Motion code and `anchor-check.mjs` therefore read `var(--fluid-header-h, var(--header-h, 0px))`.
+The anchor check uses it as a fallback when an anchor target has no `scroll-margin-top`, and the
+header-ink probe is independent of it. Without the scale, either define `--fluid-header-h`
+yourself or give anchor targets an explicit `scroll-margin-top`.
 
 ## Traps
 

@@ -19,16 +19,16 @@
 //   2. wait for `scrollend`, or for `window.scrollY` to sit unchanged for
 //      300ms, whichever comes first (10s cap so a broken page can't hang)
 //   3. read the target's rect.top, its own scroll-margin-top, the root's
-//      scroll-padding-top, and --header-h (or --header-var)
+//      scroll-padding-top, and --fluid-header-h (or --header-h, or --header-var)
 //   4. PASS if the landed rect.top is within `--tolerance` px (default 2) of
 //      EITHER offset mechanism the page might be using: scroll-margin-top +
-//      scroll-padding-top, or the --header-h custom property — whichever a
+//      scroll-padding-top, or the --fluid-header-h custom property — whichever a
 //      given anchor's target actually relies on, accounting for the page
 //      bottom clamping the scroll short of the full offset.
 //
 // Usage:
 //   node anchor-check.mjs <url> [--selector 'a[href^="#"]']
-//     [--viewports 1440x900,390x844] [--limit 5] [--header-var --header-h]
+//     [--viewports 1440x900,390x844] [--limit 5] [--header-var --fluid-header-h]
 //     [--tolerance 2]
 //   node anchor-check.mjs --help
 //
@@ -39,11 +39,11 @@
 import { join } from 'node:path'
 
 const USAGE = `anchor-check.mjs — click same-page anchors with smooth scrolling on and
-assert the browser lands where scroll-margin-top/--header-h say it should.
+assert the browser lands where scroll-margin-top/--fluid-header-h say it should.
 
 Usage:
   node anchor-check.mjs <url> [--selector 'a[href^="#"]']
-    [--viewports 1440x900,390x844] [--limit 5] [--header-var --header-h]
+    [--viewports 1440x900,390x844] [--limit 5] [--header-var --fluid-header-h]
     [--tolerance 2]
 
 Options:
@@ -54,7 +54,7 @@ Options:
                        viewport (default: 5; 0 = no limit)
   --header-var <name> the custom property read as the fallback landing
                        offset when scroll-margin-top/scroll-padding-top are
-                       both 0 (default: --header-h)
+                       both 0 (default: --fluid-header-h, then --header-h)
   --tolerance <px>    allowed drift between landed and expected top (default: 2)
   -h, --help          print this message and exit
 
@@ -66,7 +66,7 @@ function parseArgs(argv) {
     selector: 'a[href^="#"]',
     viewports: '1440x900,390x844',
     limit: 5,
-    headerVar: '--header-h',
+    headerVar: null, // --fluid-header-h, falling back to the pre-namespace --header-h
     tolerance: 2,
     help: false
   }
@@ -211,7 +211,7 @@ async function checkOneAnchor(page, hash, headerVar, tolerance) {
       const cs = getComputedStyle(el)
       const root = getComputedStyle(document.documentElement)
       const probe = document.createElement('div')
-      probe.style.cssText = `height:var(${headerVar}, 0px);position:fixed;visibility:hidden;`
+      probe.style.cssText = `height:${headerVar ? `var(${headerVar}, 0px)` : 'var(--fluid-header-h, var(--header-h, 0px))'};position:fixed;visibility:hidden;`
       document.body.appendChild(probe)
       const headerH = probe.getBoundingClientRect().height
       probe.remove()
@@ -227,7 +227,7 @@ async function checkOneAnchor(page, hash, headerVar, tolerance) {
   if (!r) return { hash, ok: false, error: 'target disappeared before measurement' }
 
   // Two candidate offset mechanisms — scroll-margin/padding (the CSS-native
-  // way) or a --header-h custom property a page reads in JS instead. Accept
+  // way) or a --fluid-header-h custom property a page reads in JS instead. Accept
   // whichever the landed position is actually closer to, since a given
   // anchor only ever uses one. If the page bottom clamps the scroll short of
   // the full offset (a target near the end of the document), the achievable

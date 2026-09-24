@@ -169,7 +169,7 @@ contract.
   anchor (href starts with `#`, or same path with a hash), up to a per-viewport limit, it clicks with
   smooth scrolling left on, waits for `scrollend` or for `scrollY` to sit still for 300ms (10s cap),
   and asserts the target's landed `rect.top` matches its `scroll-margin-top` (plus the root's
-  `scroll-padding-top`), or a `--header-h` fallback when both are zero, within 2px. Viewports at
+  `scroll-padding-top`), or a `--fluid-header-h` fallback when both are zero, within 2px. Viewports at
   480px wide or less are emulated as touch.
 
 Both browser scripts resolve Playwright from the target project's `node_modules` first (run them from

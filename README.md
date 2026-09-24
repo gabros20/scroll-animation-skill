@@ -75,7 +75,7 @@ each of those choices is what it is.
 [`fluid-design`](https://github.com/gabros20/fluid-design-skill) makes a desktop composition scale
 as one drawing from both viewport axes, so it matches the design frame at every screen size. It owns
 layout, type, tokens and rendering; this skill owns everything that moves. Each skill works alone.
-Installed together, they meet only at the fluid units, the engage breakpoint and `--header-h`
+Installed together, they meet only at the fluid units, the engage breakpoint and `--fluid-header-h`
 (`scroll-animation/references/fluid-interop.md`).
 
 The integration examples live in that repository and use both skills together:

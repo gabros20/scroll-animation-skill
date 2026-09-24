@@ -5,7 +5,7 @@ that carries a distance or scalar range, or a motion constant, checked against w
 rather than remembered.
 **Skip when:** you already know the name and need the *why* behind it: that lives in
 `motion-architecture.md`, `scroll-scenes.md`, `header-theme.md` and `video.md`. Layout names (the
-fluid config keys, `--fluid*` custom properties, `fluid-*` utilities, `data-fit`, `--header-h`) are
+fluid config keys, `--fluid*` custom properties, `fluid-*` utilities, `data-fit`, `--fluid-header-h`) are
 the `fluid-design` skill's contract.
 **Depends on:** nothing. This is the leaf reference every other doc here cites for exact names.
 
@@ -24,8 +24,8 @@ on this page, not a bug in the primitive.
 ## 1. Layout names
 
 The fluid config keys, the `--fluid*` custom properties, the `fluid-*` utilities, `data-fit`,
-`data-verify-grid` and `--header-h` belong to the `fluid-design` skill's contract. The only ones
-motion code reads are `--fluid` (the scroll well's length unit) and `--header-h` (the anchor check's
+`data-verify-grid` and `--fluid-header-h` belong to the `fluid-design` skill's contract. The only ones
+motion code reads are `--fluid` (the scroll well's length unit) and `--fluid-header-h` (the anchor check's
 fallback offset); see `fluid-interop.md` §2 and §6. The section numbers below are kept stable
 because the shipped code cites them.
 

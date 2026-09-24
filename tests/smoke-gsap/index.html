@@ -68,7 +68,8 @@
        --_fluid-m-ui as a calc() off --fluid-ui, but a literal length reads
        identically through getComputedStyle, so this needs no fluid-design
        stylesheet. main.ts reads it with `el` and window.__fluidPxScoped. -->
-  <div id="fluid-el-scope" style="--_fluid-m-ui: 500px; display: none;"></div>
+  <style>@property --_fluid-m-ui { syntax: '<length>'; inherits: false; initial-value: 0px; }</style>
+  <div id="fluid-el-scope" style="--_fluid-m-ui: 500px; display: none;"><span id="fluid-el-child"></span></div>
 
   <div style="height: 50vh;"></div>
 

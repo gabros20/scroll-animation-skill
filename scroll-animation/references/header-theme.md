@@ -6,7 +6,7 @@ header ink is wrong over some band ("the nav disappears over the dark section").
 **Skip when:** the header paints an opaque bar of its own, or the page has no fixed header. If the
 site already has a script that switches header colours, read `brownfield-coexistence.md` §2 first.
 **Depends on:** `scroll-scenes.md` §3 for the "state per transition, not per frame" rule this obeys.
-Header *sizing* (`--header-h`, the resting inset, safe areas) is layout and belongs to the
+Header *sizing* (`--fluid-header-h`, the resting inset, safe areas) is layout and belongs to the
 `fluid-design` skill when it is installed (`fluid-interop.md` §6).
 
 A transparent fixed header has no surface of its own, so its ink cannot belong to the page. A black
