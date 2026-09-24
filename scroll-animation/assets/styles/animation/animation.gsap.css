@@ -1,6 +1,6 @@
 /**
- * styles/motion/motion.gsap.css — the GSAP engine's SSR/no-flash layer.
- * GSAP projects only; import it right after motion.css from this folder.
+ * styles/animation/animation.gsap.css — the GSAP engine's SSR/no-flash layer.
+ * GSAP projects only; import it right after animation.css from this folder.
  *
  * This file gives every attribute in the DOM contract (`references/attribute-contract.md` §3) its
  * pre-JS resting state, so a static page never flashes the settled layout

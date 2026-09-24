@@ -23,7 +23,7 @@ read its why before bending it; the cheap-looking alternative has usually been t
 | React + Motion primitives: `Stage`/`StageItem`/`StageVeil`, `CountUp`, `FadeOnExit`, `ScrubStage`, `PullToCentre`, `InViewLoopVideo`, `useHeaderTheme`, `useFluidUnit` | `assets/react-motion/` (README inside) |
 | Scaled travel on a fluid layout: `fluidPx`, `fluidValue`, `fluidEnd`, `useFluidUnit`, `--scene-p` | `assets/{gsap/src,react-motion/lib}/fluid.ts`, `references/fluid-interop.md` §3 |
 | The same primitives for GSAP, framework-agnostic and attribute-driven | `assets/gsap/` (README inside) |
-| The CSS, one folder: `motion.css` (both engines: smooth scroll, reduced-motion collapse, `@property --fill`) and `motion.gsap.css` (GSAP's pre-JS resting states) | `assets/styles/motion/` (README inside) → the project's `src/styles/motion/` |
+| The CSS, one folder: `animation.css` (both engines: smooth scroll, reduced-motion collapse, `@property --fill`) and `animation.gsap.css` (GSAP's pre-JS resting states) | `assets/styles/animation/` (README inside) → the project's `src/styles/animation/` |
 | Static motion audit, runtime reveal and scene verifier, real-smooth-scroll anchor check | `scripts/{audit-motion,verify-motion,anchor-check}.mjs` |
 
 Copy the prepared artifacts; do not rewrite them from memory. They carry measured numbers and
@@ -62,11 +62,11 @@ most expensive. Above the fold, use trigger only.
 1. Copy the engine folder into the project: `assets/react-motion/` or `assets/gsap/`. Follow its
    README. React: mount `MotionProvider` once at the root (`LazyMotion strict`, so write `m.div`,
    never `motion.div`). GSAP: call `initFluidMotion()` once.
-2. Copy `assets/styles/motion/` to `src/styles/motion/`, beside fluid-design's `src/styles/fluid/`
-   (React: delete `motion.gsap.css`). Import `motion.css` once, after your reset and after
+2. Copy `assets/styles/animation/` to `src/styles/animation/`, beside fluid-design's `src/styles/fluid/`
+   (React: delete `animation.gsap.css`). Import `animation.css` once, after your reset and after
    `fluid.css`; with Tailwind v4, into `layer(base)`. It holds `scroll-behavior: smooth` (reset
    under reduced motion; the file notes Next.js's `data-scroll-behavior`), the reduced-motion
-   collapse of any scroll scene, and `@property --fill`. GSAP: import `motion.gsap.css` right
+   collapse of any scroll scene, and `@property --fill`. GSAP: import `animation.gsap.css` right
    after it, before any page content. The folder's README has the import lines per stack.
 3. Put the `<noscript>` rule in the document `<head>`, not in a stylesheet. Without it, a reader
    whose JS failed gets a permanently blank page below the hero:
@@ -167,7 +167,7 @@ route it through `lenis.scrollTo`.
    sized in (`lvh`).
 7. **Reveals trigger on `margin`, never on a fractional `amount`.**
 8. **Every hand-written style write handles reduced motion itself**; the structural collapse lives in
-   `motion.css` with `!important`.
+   `animation.css` with `!important`.
 9. **Only `transform` and `opacity` on scroll paths.** Keep the video's `translateZ(0)` anchor inside
    its composed transform string, and add no other permanent `will-change`.
 10. **A component is extracted at its second consumer, never its first.**

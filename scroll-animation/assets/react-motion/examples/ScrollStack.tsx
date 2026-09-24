@@ -56,7 +56,7 @@ export function ScrollStack() {
           render transforms underneath — see the geometry rule above.
           `data-scrub-spacer` marks it as exactly that: an empty pacing act,
           not content. Under reduced motion there is no camera move left to
-          give this space to, so `assets/styles/motion/motion.css` collapses it to zero
+          give this space to, so `assets/styles/animation/animation.css` collapses it to zero
           height instead of leaving an 1800px blank band for a reduced-motion
           reader to scroll through for nothing (references/scroll-scenes.md
           §10, references/attribute-contract.md). */}

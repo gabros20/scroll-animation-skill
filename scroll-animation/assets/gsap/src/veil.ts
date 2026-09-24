@@ -17,7 +17,7 @@ import { MOTION, registerEases } from './eases'
  * ## The `<noscript>` rule is not optional
  *
  * This element is server-rendered (or static-HTML-authored) OPAQUE over the
- * whole viewport — `motion.gsap.css` gives it `opacity: 1`. Without this module
+ * whole viewport — `animation.gsap.css` gives it `opacity: 1`. Without this module
  * running there is nothing to fade it, so a no-JS visitor sees a permanently
  * blank page. Every page using this module must ship, verbatim, in the
  * document `<head>` or immediately after the veil element:
