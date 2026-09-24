@@ -16,11 +16,12 @@ Both engines keep one constant for "where the desktop composition starts":
 `ENGAGE_PX`/`ENGAGE_QUERY` in `assets/gsap/src/config.ts`. Stages read it for `marginLg`/
 `data-stage-margin-lg`, the scroll well for `thresholdLg`, the scrub scene for its desktop crop.
 
-- **With `fluid-design`:** its `fluid.config.json` `engageAt` is the source. Generate the TS
-  constants with that skill's generator (`--stack ts`, which emits `fluid.config.ts` exporting
-  `ENGAGE_PX` and `ENGAGE_QUERY`) and re-export them from the constants file instead of the literal.
-  Nothing in these files reads the config at runtime, so a hand-kept `1024` silently stops matching
-  the moment `engageAt` changes.
+- **With `fluid-design` v2:** its `fluid.config.json` `bands.desktop.minWidth` is the source.
+  `fluid generate` writes it into the generated `fluid.ts` (in the fluid output folder, e.g.
+  `src/styles/fluid/fluid.ts`) as `DESKTOP_PX`/`DESKTOP_QUERY` (plus `ENGAGE_PX`/`ENGAGE_QUERY`
+  aliases of the same values) — import those and re-export them from the constants file instead of
+  the literal. Nothing in these files reads the config at runtime, so a hand-kept `1024` silently
+  stops matching the moment `bands.desktop.minWidth` changes.
 - **Without it:** set the literal to the site's own desktop breakpoint (Tailwind's `lg`, your SCSS
   `$desktop`, whatever marks the same width). Three copies of one number drift; keep it in this one
   file and import it everywhere else.

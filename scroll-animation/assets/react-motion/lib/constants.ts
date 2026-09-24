@@ -8,11 +8,12 @@
  * here.
  *
  * `1024` below is a DEFAULT desktop breakpoint, not a measured fact. If the
- * project uses the `fluid-design` skill, replace it with the output of its
- * `node scripts/generate-fluid.mjs --stack ts` and import `ENGAGE_PX`/
- * `ENGAGE_QUERY` from the generated `fluid.config.ts` instead, replacing
- * both constants below at this one file; otherwise set it to your desktop
- * breakpoint.
+ * project has `fluid-design` v2 installed, import `DESKTOP_QUERY` (or its
+ * `ENGAGE_QUERY` alias) from the generated `fluid.ts` in its fluid output
+ * folder instead (e.g. `'@/styles/fluid/fluid'`) — it comes from
+ * `fluid.config.json`'s `bands.desktop.minWidth`, so it cannot drift from
+ * the CSS. Replace both constants below with that import at this one file;
+ * otherwise set them to your desktop breakpoint.
  */
 export const ENGAGE_BREAKPOINT_PX = 1024
 

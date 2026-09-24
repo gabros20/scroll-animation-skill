@@ -139,9 +139,9 @@ Source of truth: `assets/react-motion/lib/transitions.ts` + `lib/constants.ts` +
   (required: without it the spring animates up from 0 on mount, so a page restored mid-scroll
   visibly slides into position)
 - `ENGAGE_BREAKPOINT_PX` (React) / `ENGAGE_PX` (GSAP): 1024, with `ENGAGE_QUERY` derived from it.
-  It must equal the width where the desktop composition starts: the fluid config's `engageAt` and
-  the CSS breakpoint token for the same width. See `fluid-interop.md` §1 for where the value comes
-  from.
+  It must equal the width where the desktop composition starts: the fluid config's
+  `bands.desktop.minWidth` and the CSS breakpoint token for the same width. See `fluid-interop.md`
+  §1 for where the value comes from.
 
 ## Traps
 

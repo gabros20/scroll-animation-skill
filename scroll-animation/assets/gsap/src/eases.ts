@@ -6,7 +6,7 @@ import { ENGAGE_PX, ENGAGE_QUERY } from './config'
 // Re-exported for existing imports of `ENGAGE_QUERY` from this module (and
 // `index.ts`'s barrel export) — the constant itself is declared once, in
 // `./config`, not here. See that file's docblock for why, and for how to
-// point it at a non-default `engageAt`.
+// point it at a non-default `bands.desktop.minWidth`.
 export { ENGAGE_PX, ENGAGE_QUERY }
 
 /**

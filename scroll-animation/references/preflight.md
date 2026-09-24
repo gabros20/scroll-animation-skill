@@ -81,8 +81,9 @@ them: **never run two writers on one property**.
 
 ### 5. The engage breakpoint source
 
-Default: the fluid config's `engageAt` if one exists, otherwise the site's own desktop breakpoint
-(`fluid-interop.md` §1). Not a question for the user unless the codebase has two candidates.
+Default: the fluid config's `bands.desktop.minWidth` if one exists, otherwise the site's own
+desktop breakpoint (`fluid-interop.md` §1). Not a question for the user unless the codebase has two
+candidates.
 
 ## Phrasing the questions
 

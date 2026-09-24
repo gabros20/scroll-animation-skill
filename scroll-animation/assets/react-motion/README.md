@@ -190,9 +190,10 @@ correct for someone else's:
   reference-px tuning numbers multiplied by this unit, and falls back to a
   flat `1` when `--fluid` is absent, so this kit works without it. If the
   project has it, see the `fluid-design` skill (`references/fluid-scale.md`).
-- **`ENGAGE_QUERY`** (`lib/constants.ts`) — if the project uses the
-  `fluid-design` skill, replace with its `generate-fluid.mjs --stack ts`
-  output so this matches `fluid.config.json`'s `engageAt`; otherwise set it
-  to your desktop breakpoint. Whatever the source, it should also match
-  whatever token your CSS calls the same width (Tailwind's `lg` in the
-  reference build).
+- **`ENGAGE_QUERY`** (`lib/constants.ts`) — if the project has `fluid-design`
+  v2 installed, import `DESKTOP_QUERY` (its `ENGAGE_QUERY` alias) from the
+  generated `fluid.ts` in the fluid output folder instead (e.g.
+  `'@/styles/fluid/fluid'`), so this matches `fluid.config.json`'s
+  `bands.desktop.minWidth`; otherwise set it to your desktop breakpoint.
+  Whatever the source, it should also match whatever token your CSS calls the
+  same width (Tailwind's `lg` in the reference build).

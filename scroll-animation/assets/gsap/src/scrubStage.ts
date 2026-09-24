@@ -326,9 +326,10 @@ function mountOne(rangeEl: HTMLElement, options: ScrubStageOptions): (() => void
   // Default to the shared ENGAGE_QUERY (references/attribute-contract.md §4)
   // rather than a hand-typed literal — the reference build's earlier
   // '(min-width: 1024px)' here drifted silently from any project whose
-  // fluid.config.json engageAt wasn't 1024. See ./config's own docblock: a
-  // project with a non-default engageAt should regenerate fluid.config.ts
-  // (`--stack ts`) and pass its ENGAGE_QUERY through `mobileBreakpoint`.
+  // fluid.config.json bands.desktop.minWidth wasn't 1024. See ./config's own
+  // docblock: a project with a non-default minWidth should import
+  // DESKTOP_QUERY from fluid-design v2's generated fluid.ts and pass it
+  // through `mobileBreakpoint`.
   const mobileBreakpoint = options.mobileBreakpoint ?? ENGAGE_QUERY
   const backdropStops = options.backdropStops ?? DEFAULT_BACKDROP
 
