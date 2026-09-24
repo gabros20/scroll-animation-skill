@@ -14,7 +14,7 @@
      has a unit to scale by (this skill does not ship the scale itself). */
   :root { --fluid: 1px; }
   @media (width >= 1024px) {
-    :root { --fluid: max(0.58px, min(calc(100svh / 900), calc(100vw / 1440))); }
+    :root { --fluid: calc(max(580px, min(calc(100svh * 1000 / 900), calc(100vw * 1000 / 1440))) / 1000); }
   }
   /* Scaled travel, fluid-interop.md §3: pattern 1 (CSS multiplies --scene-p)
      and pattern 2 (a GSAP function value). Both must end 240 drawn px along. */
