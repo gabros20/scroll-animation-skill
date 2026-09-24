@@ -70,6 +70,15 @@ for (const vp of steps) {
 const folded = await page.evaluate(() => document.getElementById('fold-canary').style.translate === 'none')
 console.log(`gsap folds CSS translate into its transform (documented behaviour): ${folded ? 'yes, as documented' : 'NO: update motion-architecture.md §7 and fluid-interop.md §3'}`)
 if (!folded) fail++
+
+// fluidPx's `el` param (fluid-interop.md §3): main.ts read #fluid-el-scope's
+// literal --_fluid-m-ui (500px/1000) through `el`, which must win over
+// whatever the page's own `ui` unit resolves to at this viewport.
+const scoped = await page.evaluate(() => window.__fluidPxScoped)
+const scopedPass = Math.abs(scoped - 24) <= TOL
+console.log(`fluidPx(48, 'ui', el) reads the element's own mirror: ${scoped} ${scopedPass ? 'PASS' : 'FAIL (expected 24)'}`)
+if (!scopedPass) fail++
+
 await browser.close()
 console.log(fail ? 'distance-check FAIL' : 'distance-check PASS')
 process.exit(fail ? 1 : 0)

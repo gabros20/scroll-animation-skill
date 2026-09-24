@@ -106,6 +106,12 @@ rather than rendered ones.
 **Scaled `start`/`end` offsets** follow the same rule: `start: 'top top+=120'` is fixed px; write
 `start: () => 'top top+=' + fluidPx(120)` when the 120 is a drawn header height or margin.
 
+**Pass `el` when the pinned or animated element sits inside a limit.** `fluidPx`, `fluidValue` and
+`fluidEnd` take an optional third argument. A header with `fluid-ui-grow-until-1680` reports its
+own, capped `ui` value only to something that reads it *at* the header —
+`fluidPx(48, 'ui', headerEl)` — not to a bare `fluidPx(48, 'ui')`, which reads the root's uncapped
+one and drifts once the window passes 1680.
+
 **Static offsets on an animated element go through `translate`.** A stage item's `transform` is
 owned by its variant. `fluid-design`'s `fluid-translate-x/y-*` utilities write the independent
 `translate` property for exactly this reason, so they compose with the engine's `transform`.
@@ -161,6 +167,8 @@ anchor targets an explicit `scroll-margin-top`.
 - [ ] Without `--fluid`, the scroll well's thresholds are plain reference px, which is expected (§2).
 - [ ] No fluid entrance offsets (24–40px), but every drawn travel distance scales (§3).
 - [ ] GSAP distances and `end` offsets are functions with `invalidateOnRefresh: true` (§3).
+- [ ] `fluidPx`/`fluidValue`/`fluidEnd` pass `el` for anything pinned or animated inside a limited
+  subtree (§3).
 - [ ] No `transform` for static offsets on animated elements; use `translate` (§3).
 - [ ] With GSAP, a `calc()`/px `translate` or `--scene-p` drift sits on a child GSAP never tweens (§3).
 - [ ] The pin is never expressed in fluid units (§4).

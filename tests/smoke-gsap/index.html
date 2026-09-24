@@ -63,6 +63,13 @@
     <div id="fold-canary" class="travel" style="translate: calc(10 * var(--fluid, 1px)) 0"></div>
   </section>
 
+  <!-- Stand-in for a fluid-design limit's registered mirror (fluid-interop.md
+       §3, `fluidPx`'s `el`): a real fluid-grow-until scope writes
+       --_fluid-m-ui as a calc() off --fluid-ui, but a literal length reads
+       identically through getComputedStyle, so this needs no fluid-design
+       stylesheet. main.ts reads it with `el` and window.__fluidPxScoped. -->
+  <div id="fluid-el-scope" style="--_fluid-m-ui: 500px; display: none;"></div>
+
   <div style="height: 50vh;"></div>
 
   <script type="module" src="./main.ts"></script>
