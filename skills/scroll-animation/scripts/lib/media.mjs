@@ -4,7 +4,7 @@
 // dependency.
 
 import { spawnSync } from 'node:child_process'
-import { openSync, closeSync, readSync, statSync, mkdirSync, writeFileSync } from 'node:fs'
+import { openSync, closeSync, readSync, statSync, mkdirSync, writeFileSync, unlinkSync } from 'node:fs'
 import { dirname, extname, join } from 'node:path'
 
 /** Throws a plain Error (the CLI layer turns it into a CliError, exit 1) naming whichever of
@@ -36,29 +36,47 @@ function hasWebpEncoder() {
   if (webpSupported === undefined) webpSupported = run('ffmpeg', ['-hide_banner', '-encoders']).includes('libwebp')
   return webpSupported
 }
+// Without libwebp in ffmpeg, Google's `cwebp` (brew install webp) still gets real WebP: ffmpeg writes a lossless
+// PNG and cwebp encodes it. Only when neither exists do stills stay PNG (several times larger for photographic
+// frames, which matters for an image sequence).
+let cwebpAvailable
+function hasCwebp() {
+  if (cwebpAvailable === undefined) cwebpAvailable = spawnSync('cwebp', ['-version'], { stdio: 'ignore' }).status === 0
+  return cwebpAvailable
+}
+function cwebp(pngPath, webpPath, quality) {
+  run('cwebp', ['-quiet', '-q', String(quality), '-metadata', 'none', pngPath, '-o', webpPath])
+  unlinkSync(pngPath)
+}
 let warnedWebpFallback = false
 function warnWebpFallback() {
   if (warnedWebpFallback) return
   warnedWebpFallback = true
-  process.stderr.write('media: this ffmpeg build has no libwebp encoder — writing PNG stills instead.\n')
+  process.stderr.write(
+    hasCwebp()
+      ? 'media: this ffmpeg build has no libwebp encoder; encoding WebP with cwebp instead.\n'
+      : 'media: no libwebp in ffmpeg and no cwebp on PATH: writing PNG stills (brew install webp for WebP).\n',
+  )
 }
-/** webp if this ffmpeg build has it, else png — decided once, used for every frame of one call
- * (sequence's frames all share one format; mixing would make the manifest a lie). */
+/** The still format for one call, decided once (a sequence's frames all share one format; mixing would make the
+ * manifest a lie). `viaCwebp`: ffmpeg writes PNG, then cwebp converts it. */
 function stillFormat() {
-  if (hasWebpEncoder()) return { ext: 'webp', codec: 'libwebp' }
+  if (hasWebpEncoder()) return { ext: 'webp', codec: 'libwebp', viaCwebp: false }
   warnWebpFallback()
-  return { ext: 'png', codec: 'png' }
+  if (hasCwebp()) return { ext: 'webp', codec: 'png', viaCwebp: true }
+  return { ext: 'png', codec: 'png', viaCwebp: false }
 }
-/** The codec (and, if libwebp is unavailable, the corrected path) for one explicit `out` path:
- * .jpg/.jpeg → mjpeg, .png → png, anything else (including .webp) → webp when available, else png
+/** The codec (and, if WebP can't be written at all, the corrected path) for one explicit `out` path:
+ * .jpg/.jpeg → mjpeg, .png → png, anything else (including .webp) → webp (ffmpeg's libwebp, or cwebp), else png
  * — with the path's extension swapped to match what actually got written. */
 function stillOut(desiredPath) {
   const ext = extname(desiredPath).slice(1).toLowerCase()
-  if (ext === 'jpg' || ext === 'jpeg') return { path: desiredPath, codec: 'mjpeg' }
-  if (ext === 'png') return { path: desiredPath, codec: 'png' }
-  if (hasWebpEncoder()) return { path: desiredPath, codec: 'libwebp' }
+  if (ext === 'jpg' || ext === 'jpeg') return { path: desiredPath, codec: 'mjpeg', viaCwebp: false }
+  if (ext === 'png') return { path: desiredPath, codec: 'png', viaCwebp: false }
+  if (hasWebpEncoder()) return { path: desiredPath, codec: 'libwebp', viaCwebp: false }
   warnWebpFallback()
-  return { path: desiredPath.replace(/\.[^./]+$/, '.png'), codec: 'png' }
+  if (hasCwebp()) return { path: desiredPath.replace(/\.[^./]+$/, '.webp'), codec: 'png', viaCwebp: true }
+  return { path: desiredPath.replace(/\.[^./]+$/, '.png'), codec: 'png', viaCwebp: false }
 }
 
 // ── path helpers ────────────────────────────────────────────────────────
@@ -186,15 +204,31 @@ function scaleFilters({ width, fps }) {
   return f
 }
 
+/** Video encodes: tag BT.709 in the stream itself. ffmpeg 8 ignores -color_primaries / -color_trc on output for
+ * these streams; untagged, Safari and Chrome can pick different matrices and the same file shifts colour. */
+const BT709 = 'setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709'
+function videoFilters({ width, fps }) {
+  return [...scaleFilters({ width, fps }), BT709]
+}
+
+/** Stills from a video: an accurate limited-to-full-range conversion. ffmpeg's fast YUV→RGB path lands 2–3 levels
+ * dark (paper 243,239,230 instead of 245,241,233), so a poster visibly steps when the video starts over it. */
+function stillFilters({ width }) {
+  const size = width ? `w=${width}:h=-2:` : ''
+  return [`scale=${size}flags=lanczos+accurate_rnd+full_chroma_int:in_range=tv:out_range=pc`, 'format=rgb24']
+}
+
 /** One frame to webp/jpg/png (by `out`'s extension — webp falls back to png when this ffmpeg
  * build has no libwebp encoder), from `input` at `at` seconds. Input-side -ss is both fast
  * (keyframe-adjacent) and frame-accurate on modern ffmpeg. Returns the path actually written,
  * which only differs from `out` on that fallback. */
 export function extractPoster(input, out, { at = 0, width } = {}) {
-  const { path: dest, codec } = stillOut(out)
+  const { path: dest, codec, viaCwebp } = stillOut(out)
   ensureDirFor(dest)
-  const filters = scaleFilters({ width })
-  ffmpeg(['-ss', String(at), '-i', input, '-frames:v', '1', ...(filters.length ? ['-vf', filters.join(',')] : []), '-c:v', codec, dest])
+  const filters = stillFilters({ width })
+  const written = viaCwebp ? dest.replace(/\.webp$/, '.tmp.png') : dest
+  ffmpeg(['-ss', String(at), '-i', input, '-frames:v', '1', '-vf', filters.join(','), '-c:v', codec, written])
+  if (viaCwebp) cwebp(written, dest, 82)
   return dest
 }
 
@@ -205,8 +239,8 @@ export function encodeScrub(input, { out, width, crf = 23, fps, mobile, posterAt
   const primary = out ?? defaultOut(input, 'scrub')
   const encode = (dest, w) => {
     ensureDirFor(dest)
-    const filters = scaleFilters({ width: w, fps })
-    ffmpeg(['-i', input, '-c:v', 'libx264', '-preset', 'slow', '-crf', String(crf), '-x264-params', 'keyint=1:min-keyint=1:scenecut=0:qcomp=1', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', ...(filters.length ? ['-vf', filters.join(',')] : []), dest])
+    const filters = videoFilters({ width: w, fps })
+    ffmpeg(['-i', input, '-c:v', 'libx264', '-preset', 'slow', '-crf', String(crf), '-x264-params', 'keyint=1:min-keyint=1:scenecut=0:qcomp=1', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', '-vf', filters.join(','), dest])
     return dest
   }
   const primaryOut = encode(primary, width)
@@ -220,8 +254,12 @@ export function encodeScrub(input, { out, width, crf = 23, fps, mobile, posterAt
 export function encodeLoop(input, { out, width, fps, crf = 23, posterAt = 0 } = {}) {
   const primary = out ?? defaultOut(input, 'loop')
   ensureDirFor(primary)
-  const filters = scaleFilters({ width, fps })
-  ffmpeg(['-i', input, '-c:v', 'libx264', '-preset', 'slow', '-crf', String(crf), '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', ...(filters.length ? ['-vf', filters.join(',')] : []), primary])
+  const filters = videoFilters({ width, fps })
+  // references/video.md §13: qcomp=1 so byte-identical frames at the seam quantize alike (no pop at the wrap), and
+  // one GOP per loop so the loop point is the keyframe.
+  const probed = probeVideo(input)
+  const gop = probed.frames > 0 ? probed.frames : Math.max(1, Math.round(probed.duration * (fps || probed.fps)))
+  ffmpeg(['-i', input, '-c:v', 'libx264', '-profile:v', 'high', '-preset', 'slow', '-crf', String(crf), '-g', String(gop), '-x264-params', 'qcomp=1', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', '-vf', filters.join(','), primary])
   const poster = extractPoster(primary, posterFor(primary), { at: posterAt })
   return { primary, poster }
 }
@@ -231,33 +269,55 @@ function evenHeight(srcW, srcH, width) {
   return h % 2 === 0 ? h : h + 1
 }
 
-/** N evenly spaced (centred: (i+0.5)/N of the duration) frames as 0001.webp… (png if this ffmpeg
- * build has no libwebp — see stillFormat), plus manifest.json. --mobile-width writes a second,
+/** N evenly spaced frames, first and last included, as 0001.webp… (WebP via libwebp or cwebp, else PNG — see
+ * stillFormat), plus manifest.json with the source frame indices. --mobile-width writes a second,
  * independent set (its own manifest) under <out>/mobile/. */
 export function extractSequence(input, outDir, { frames = 24, width, quality = 80, mobileWidth } = {}) {
   const probed = probeVideo(input)
   const q = Math.max(0, Math.min(100, quality))
-  const { ext, codec } = stillFormat() // decided once: every frame of every set shares one format
+  const { ext, codec, viaCwebp } = stillFormat() // decided once: every frame of every set shares one format
+  // Pick exact source frames on the output side, in one pass: evenly spaced indices that include the first and the
+  // last frame, so scroll progress 0 and 1 land on the clip's true ends. (Seeking to centred timestamps per frame
+  // could land past the last frame's pts on a short clip, where ffmpeg writes nothing and still exits 0.)
+  const total = probed.frames > 0 ? probed.frames : Math.max(1, Math.round(probed.duration * probed.fps))
+  const count = Math.max(1, Math.min(frames, total))
+  const indices = Array.from({ length: count }, (_, i) => (count === 1 ? 0 : Math.round((i * (total - 1)) / (count - 1))))
+  const select = `select=${indices.map((n) => `eq(n\\,${n})`).join('+')}`
   const buildSet = (dir, w) => {
     mkdirSync(dir, { recursive: true })
-    const names = []
+    const filters = [select, ...stillFilters({ width: w })]
+    const qualityArgs = codec === 'libwebp' ? ['-q:v', String(q)] : []
+    const writtenExt = viaCwebp ? 'png' : ext
+    ffmpeg(['-i', input, '-vf', filters.join(','), '-fps_mode', 'vfr', '-c:v', codec, ...qualityArgs, join(dir, `%04d.${writtenExt}`)])
+    const names = indices.map((_, i) => `${String(i + 1).padStart(4, '0')}.${ext}`)
+    if (viaCwebp) {
+      for (const name of names) {
+        const png = join(dir, name.replace(/\.webp$/, '.png'))
+        try {
+          statSync(png)
+        } catch {
+          break // the count check below reports the shortfall
+        }
+        cwebp(png, join(dir, name), q)
+      }
+    }
     let bytes = 0
-    for (let i = 0; i < frames; i++) {
-      const t = ((i + 0.5) * probed.duration) / frames
-      const name = `${String(i + 1).padStart(4, '0')}.${ext}`
-      const dest = join(dir, name)
-      const filters = scaleFilters({ width: w })
-      const qualityArgs = codec === 'libwebp' ? ['-q:v', String(q)] : []
-      ffmpeg(['-ss', String(t), '-i', input, '-frames:v', '1', ...(filters.length ? ['-vf', filters.join(',')] : []), '-c:v', codec, ...qualityArgs, dest])
-      bytes += statSync(dest).size
-      names.push(name)
+    for (const name of names) {
+      let size
+      try {
+        size = statSync(join(dir, name)).size
+      } catch {
+        throw new Error(`media sequence: ffmpeg wrote ${names.indexOf(name)} of ${count} frames into ${dir} (the source has ${total}); nothing past ${name}`)
+      }
+      bytes += size
     }
     const manifest = {
-      count: frames,
+      count,
       width: w ?? probed.width,
       height: w ? evenHeight(probed.width, probed.height, w) : probed.height,
       format: ext,
       frames: names,
+      sourceFrames: indices,
       bytes
     }
     writeFileSync(join(dir, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n')
