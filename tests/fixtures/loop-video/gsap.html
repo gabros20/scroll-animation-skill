@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>loop-video fixture (gsap)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #111;
+        color: #eee;
+        font-family: system-ui, sans-serif;
+      }
+      .spacer {
+        height: 150vh;
+      }
+      .video-wrap {
+        position: relative;
+        width: 480px;
+        height: 270px;
+        margin: 0 auto;
+      }
+      .video-wrap video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .video-wrap button {
+        position: absolute;
+        right: 8px;
+        bottom: 8px;
+      }
+      .tail {
+        height: 150vh;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Tall enough that the video starts well outside even the warm (800px) margin. -->
+    <div class="spacer" id="top"></div>
+    <div class="video-wrap">
+      <!--
+        data-controls="true" forces the WCAG control on regardless of the
+        clip's real (2s) duration, so every check below is deterministic —
+        this fixture is not exercising the duration-default heuristic, only
+        the playback/gating behaviour. No [data-loop-toggle] button is
+        authored here on purpose: this fixture also exercises loop-video.ts's
+        auto-created-button path (see the file docblock).
+      -->
+      <video
+        id="fx-video"
+        data-loop-video
+        muted
+        playsinline
+        preload="none"
+        poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBTAA7"
+        disablepictureinpicture
+        disableremoteplayback
+        aria-hidden="true"
+        data-controls="true"
+      >
+        <source src="/clip.mp4" type="video/mp4" />
+      </video>
+    </div>
+    <div class="tail"></div>
+    <script type="module" src="./src/gsap-entry.ts"></script>
+  </body>
+</html>

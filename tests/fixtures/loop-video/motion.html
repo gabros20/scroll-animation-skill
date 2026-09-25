@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>loop-video fixture (motion)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #111;
+        color: #eee;
+        font-family: system-ui, sans-serif;
+      }
+      .spacer {
+        height: 150vh;
+      }
+      #root {
+        position: relative;
+        width: 480px;
+        height: 270px;
+        margin: 0 auto;
+      }
+      #root video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      #root button {
+        position: absolute;
+        right: 8px;
+        bottom: 8px;
+      }
+      .tail {
+        height: 150vh;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Tall enough that the video starts well outside even the warm (800px) margin. -->
+    <div class="spacer" id="top"></div>
+    <div id="root"></div>
+    <div class="tail"></div>
+    <script type="module" src="./src/motion-entry.tsx"></script>
+  </body>
+</html>
