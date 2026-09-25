@@ -32,8 +32,12 @@ export interface SmoothScrollProps {
 }
 
 export function SmoothScroll({ authority, driver, lenis, anchors, children }: SmoothScrollProps) {
+  // Latest props for the authority effect, without restarting the authority when a driver object is recreated.
+  // Written in an effect, never during render (react-hooks/refs).
   const config = useRef({ driver, lenis, anchors })
-  config.current = { driver, lenis, anchors }
+  useIsomorphicLayoutEffect(() => {
+    config.current = { driver, lenis, anchors }
+  })
 
   useIsomorphicLayoutEffect(() => {
     if (authority === 'native') {

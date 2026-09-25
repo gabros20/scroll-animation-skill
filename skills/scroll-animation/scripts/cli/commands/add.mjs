@@ -113,7 +113,8 @@ function mergeResolved(registry, engineByBlock) {
 }
 
 function printPackages(merged, root, pkg) {
-  const packages = [...new Set(merged.flatMap((m) => m.packages))].sort()
+  const have = new Set([...Object.keys(pkg?.dependencies ?? {}), ...Object.keys(pkg?.devDependencies ?? {})])
+  const packages = [...new Set(merged.flatMap((m) => m.packages))].filter((name) => !have.has(name)).sort()
   if (!packages.length) return
   const pm = detectPackageManager(root, pkg)
   console.log(`\n${c.bold('Install')}: ${installCommand(pm, packages)}`)

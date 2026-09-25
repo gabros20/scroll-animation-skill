@@ -22,7 +22,7 @@
  */
 import Lenis, { type LenisOptions } from 'lenis'
 
-import { HEADER_HEIGHT_VAR, prefersReducedMotion } from '../config'
+import { prefersReducedMotion } from '../config'
 import {
   clearAuthority,
   nativeHandle,
@@ -51,6 +51,8 @@ interface ScrollTriggerLike {
  * Chromium and WebKit; without the `scroll` hookup ScrollTrigger is exactly 1 frame behind, S4a). `lagSmoothing(0)` stops
  * GSAP from skipping elapsed time after a stall, which would otherwise make Lenis jump. The tick function is stored so
  * `ticker.remove` removes the function that was added (removing `lenis.raf` instead is a common, silent leak).
+ * `destroy()` restores GSAP's DEFAULT lag smoothing (500, 33): GSAP has no getter, so a page that set its own value
+ * must set it again after destroying the authority.
  */
 export function gsapDriver(gsap: GsapLike, ScrollTrigger: ScrollTriggerLike): Driver {
   return (lenis) => {
@@ -79,13 +81,21 @@ interface MotionFrameLike {
  * the browser dispatches that event in the frame AFTER Lenis's scrollTo, so driving Lenis from `frame.update` leaves
  * every `useScroll` value exactly one frame behind. Running Lenis in `frame.setup` (before Motion's read step) and
  * dispatching `scroll` on each Lenis scroll puts the read in the same frame: 0 frames late in Chromium and WebKit.
- * Lenis ignores the synthetic event while it is smoothing. This leans on Motion's current internals; the verify
- * harness catches a regression.
+ * This leans on Motion's current internals; tests/foundation.mjs catches a regression.
  */
 export function motionDriver(frame: MotionFrameLike, cancelFrame: (cb: FrameCallback) => void): Driver {
   return (lenis) => {
     const tick: FrameCallback = ({ timestamp }) => lenis.raf(timestamp)
-    const onScroll = () => window.dispatchEvent(new Event('scroll'))
+    // Lenis handles its own synthetic `scroll` whenever it isn't mid-smoothing (keyboard, scrollbar, touch, restore,
+    // and the reset that ends every smooth scroll) and emits again: without this guard that recurses until the stack
+    // overflows.
+    let dispatching = false
+    const onScroll = () => {
+      if (dispatching) return
+      dispatching = true
+      window.dispatchEvent(new Event('scroll'))
+      dispatching = false
+    }
     frame.setup(tick, true)
     const off = lenis.on('scroll', onScroll)
     return () => {
@@ -112,7 +122,10 @@ export interface SmoothScrollOptions {
   driver: Driver
   /** Lenis options. `autoRaf` is always false (the driver is the clock); `anchors` is handled below. */
   lenis?: Omit<LenisOptions, 'autoRaf' | 'anchors'>
-  /** Same-page `#hash` links scroll through Lenis, offset by the fixed header (HEADER_HEIGHT_VAR). Default true. */
+  /**
+   * Same-page `#hash` links scroll through Lenis. They land below the page's `scroll-padding-top` (css/animation.css sets
+   * it from --header-h) and the target's `scroll-margin-top`, like a native anchor jump. Default true.
+   */
   anchors?: boolean
 }
 
@@ -137,6 +150,7 @@ export function createSmoothScroll(options: SmoothScrollOptions): SmoothScrollHa
   const handle: SmoothScrollHandle = {
     authority: 'lenis',
     scrollTo(target, opts = {}) {
+      // Lenis applies scroll-padding-top and scroll-margin-top to element targets; `offset` shifts further.
       lenis.scrollTo(target as never, { offset: opts.offset ?? 0, immediate: opts.immediate })
     },
     stop: () => lenis.stop(),
@@ -155,16 +169,6 @@ export function createSmoothScroll(options: SmoothScrollOptions): SmoothScrollHa
   return handle
 }
 
-/** The fixed header's current height, resolved by layout (the variable may hold a calc()). */
-function headerHeightPx(): number {
-  const probe = document.createElement('div')
-  probe.style.cssText = `position:absolute;visibility:hidden;pointer-events:none;height:var(${HEADER_HEIGHT_VAR}, 0px)`
-  document.body.appendChild(probe)
-  const h = probe.getBoundingClientRect().height
-  probe.remove()
-  return h
-}
-
 function wireAnchors(lenis: Lenis): () => void {
   const onClick = (event: MouseEvent) => {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return
@@ -173,7 +177,8 @@ function wireAnchors(lenis: Lenis): () => void {
     const target = document.getElementById(decodeURIComponent(link.hash.slice(1)))
     if (!target) return
     event.preventDefault()
-    lenis.scrollTo(target, { offset: -headerHeightPx() })
+    // Lenis 1.3 subtracts the root's scroll-padding-top and the target's scroll-margin-top itself.
+    lenis.scrollTo(target)
     history.pushState(null, '', link.hash)
   }
   document.addEventListener('click', onClick)

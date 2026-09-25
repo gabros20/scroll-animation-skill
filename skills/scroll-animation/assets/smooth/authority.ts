@@ -10,7 +10,11 @@ export type ScrollAuthority = 'native' | 'lenis' | 'smoother'
 
 export interface SmoothScrollHandle {
   authority: ScrollAuthority
-  /** Scroll to an element, a selector or a y offset, through whoever owns scrolling. */
+  /**
+   * Scroll to an element, a selector or a y position, through whoever owns scrolling. Element targets land like a native
+   * anchor jump: below the page's `scroll-padding-top` (the fixed header) and the target's `scroll-margin-top`.
+   * `offset` then shifts the landing (negative leaves more room above), the same under every owner.
+   */
   scrollTo(target: string | number | Element, options?: { offset?: number; immediate?: boolean }): void
   /** Freeze page scrolling (a modal is open) and give it back. */
   stop(): void
@@ -62,7 +66,7 @@ export function nativeHandle(): SmoothScrollHandle {
   const handle: SmoothScrollHandle = {
     authority: 'native',
     scrollTo(target, options = {}) {
-      const y = resolveY(target) + (options.offset ?? 0)
+      const y = resolveY(target) - anchorInset(target) + (options.offset ?? 0)
       window.scrollTo({ top: y, behavior: options.immediate ? 'instant' : 'smooth' })
     },
     stop() {
@@ -85,4 +89,14 @@ export function resolveY(target: string | number | Element): number {
   const el = typeof target === 'string' ? document.querySelector(target) : target
   if (!el) return window.scrollY
   return el.getBoundingClientRect().top + window.scrollY
+}
+
+/** The space an anchor jump leaves above an element target: the root's scroll-padding-top plus its scroll-margin-top. */
+export function anchorInset(target: string | number | Element): number {
+  if (typeof target === 'number') return 0
+  const el = typeof target === 'string' ? document.querySelector(target) : target
+  if (!el) return 0
+  const padding = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0
+  const margin = parseFloat(getComputedStyle(el).scrollMarginTop) || 0
+  return padding + margin
 }

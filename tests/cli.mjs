@@ -125,7 +125,7 @@ try {
   writeFileSync(join(m, 'package.json'), JSON.stringify({ dependencies: { motion: '^12.0.0', react: '^19.0.0' } }))
 
   r = run(m, 'add', 'stage')
-  expect(r.code === 0 && r.out.includes('Install: npm install motion'), 'add auto-picks the engine matching an installed dependency', r.out)
+  expect(r.code === 0 && !/Install: .*\bmotion\b/.test(r.out), 'add auto-picks the engine matching an installed dependency and skips packages already installed', r.out)
   const stageFiles = resolveTransitive(REG, ['stage'], 'motion').flatMap((entry) => entry.files)
   expect(stageFiles.includes('motion/components/Stage.tsx') && stageFiles.includes('css/animation.css'), 'stage (motion) resolves its own files plus its requires across engines')
   for (const f of stageFiles) expect(existsSync(join(m, 'src/animation', f)), `add copied ${f} (stage + its requires)`)

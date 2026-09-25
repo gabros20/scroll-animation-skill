@@ -21,6 +21,7 @@
  */
 import { prefersReducedMotion } from '../config'
 import {
+  anchorInset,
   clearAuthority,
   nativeHandle,
   registerHandle,
@@ -76,9 +77,11 @@ export function createSmoother(ScrollSmoother: ScrollSmootherStatic, options: Sm
       if (typeof target === 'number') {
         smoother.scrollTo(target + (opts.offset ?? 0), !opts.immediate)
       } else {
-        const offset = opts.offset ?? 0
-        // ScrollSmoother positions are "<element edge> <viewport edge>" strings; an offset shifts the viewport edge.
-        smoother.scrollTo(target, !opts.immediate, `top ${offset ? `${-offset}px` : 'top'}`)
+        // "<element edge> <viewport edge>": the element's top lands `inset - offset` px below the viewport's top, the
+        // same landing as a native anchor jump (scroll-padding-top + scroll-margin-top), shifted by `offset`.
+        const inset = anchorInset(target) - (opts.offset ?? 0)
+        const el = typeof target === 'string' ? document.querySelector(target) : target
+        smoother.scrollTo(el ?? target, !opts.immediate, `top ${inset}px`)
       }
     },
     stop: () => void smoother.paused(true),
