@@ -93,9 +93,9 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
  * the reduced-motion gate and is used that way elsewhere in this pack
  * (`FadeOnExit.tsx`). It is NOT live: it seeds a `useState` from
  * `prefersReducedMotion.current` once and never updates it (confirmed
- * against the installed `framer-motion` — the hook's own source has a
- * `// TODO See if people miss automatically updating` next to the call,
- * and its docstring's "actively responds to changes" claim does not match
+ * against the installed `framer-motion` — the hook's own source leaves a
+ * to-do comment next to the call about not updating automatically, and
+ * its docstring's "actively responds to changes" claim does not match
  * what the code does). Since this file's brief is specifically a LIVE
  * gate, it reads `matchMedia` itself instead.
  */
