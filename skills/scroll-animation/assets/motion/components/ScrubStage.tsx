@@ -360,6 +360,29 @@ function modeFromProgress(p: number, b: Bounds): Mode {
   return 'scrub'
 }
 
+/**
+ * The live edge + hysteresis stepper: from `mode`, cross every boundary that
+ * raw progress `p` has passed, until the mode holds. Each end enters and exits
+ * on opposite sides of its hysteresis gap, so a jump that lands inside a gap
+ * keeps the side it came from, exactly as a slow scroll would. Stepping until
+ * stable is what takes a jump from the head loop to the end straight to `tail`
+ * on its one progress event; one step per event parked it in `scrub` until the
+ * next. Bounded at three steps; ordered bounds settle within two.
+ */
+export function stepMode(mode: Mode, p: number, b: Bounds): Mode {
+  let current = mode
+  for (let i = 0; i < 3; i++) {
+    let next = current
+    if (current === 'head' && p > b.headExit) next = 'scrub'
+    else if (current === 'scrub' && p < b.headEnter) next = 'head'
+    else if (current === 'scrub' && p > b.tailEnter) next = 'tail'
+    else if (current === 'tail' && p < b.tailExit) next = 'scrub'
+    if (next === current) break
+    current = next
+  }
+  return current
+}
+
 /** Playhead seconds implied by scroll progress (snap target for rehydrate). */
 function targetTimeFromProgress(p: number, b: Bounds, tl: Timeline): number {
   if (p <= b.headExit) return tl.headLoopFrom
@@ -676,13 +699,8 @@ export function ScrubStage({
     // also proof that a `false` here is stale, and it costs no layout read.
     if (p > 0 && p < 1) wake(true)
 
-    const { headExit, headEnter, tailEnter, tailExit } = bounds()
     const current = modeRef.current
-    let next = current
-    if (current === 'head' && p > headExit) next = 'scrub'
-    else if (current === 'scrub' && p < headEnter) next = 'head'
-    else if (current === 'scrub' && p > tailEnter) next = 'tail'
-    else if (current === 'tail' && p < tailExit) next = 'scrub'
+    const next = stepMode(current, p, bounds())
     if (next !== current) {
       modeRef.current = next
       setMode(next)

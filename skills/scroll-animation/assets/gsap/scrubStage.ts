@@ -226,6 +226,29 @@ interface Bounds {
   tailExit: number
 }
 
+/**
+ * The live mode machine: from `mode`, cross every boundary that raw progress
+ * `p` has passed, until the mode holds. Each end enters and exits on opposite
+ * sides of its hysteresis gap, so a jump that lands inside a gap keeps the
+ * side it came from, exactly as a slow scroll would. Stepping until stable is
+ * what takes a jump from the head loop to the end straight to `tail` on its
+ * one progress event; one step per event parked it in `scrub` until the next.
+ * Bounded at three steps; ordered bounds settle within two.
+ */
+export function stepMode(mode: Mode, p: number, b: Bounds): Mode {
+  let current = mode
+  for (let i = 0; i < 3; i++) {
+    let next = current
+    if (current === 'head' && p > b.headExit) next = 'scrub'
+    else if (current === 'scrub' && p < b.headEnter) next = 'head'
+    else if (current === 'scrub' && p > b.tailEnter) next = 'tail'
+    else if (current === 'tail' && p < b.tailExit) next = 'scrub'
+    if (next === current) break
+    current = next
+  }
+  return current
+}
+
 type Rgb = [number, number, number]
 const toRgb = (h: string): Rgb => [
   Number.parseInt(h.slice(1, 3), 16),
@@ -529,12 +552,7 @@ function mountOne(rangeEl: HTMLElement, options: ScrubStageOptions): (() => void
     if (p > 0 && p < 1) wake(true)
 
     const b = boundsFromRangePx(rangePx)
-    let next = mode
-    if (mode === 'head' && p > b.headExit) next = 'scrub'
-    else if (mode === 'scrub' && p < b.headEnter) next = 'head'
-    else if (mode === 'scrub' && p > b.tailEnter) next = 'tail'
-    else if (mode === 'tail' && p < b.tailExit) next = 'scrub'
-    setMode(next)
+    setMode(stepMode(mode, p, b))
 
     const t = (p - b.headExit) / (b.tailEnter - b.headExit)
     const clamped = clamp01(Number.isFinite(t) ? t : 0)
