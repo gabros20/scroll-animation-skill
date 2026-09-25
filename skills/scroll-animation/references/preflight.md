@@ -1,124 +1,153 @@
-# Preflight: settle the motion decisions before any code
+# Preflight: settle the motion decisions before code
 
-**Purpose:** Settle the motion decisions before code: engine, scroll scene, header, existing motion.
+**Purpose:** Decide the profile, the scroll authority per route, the engines, the budgets and the layout scale
+before writing motion, and record them with a scene ledger in `ANIMATION.md`.
 
-**Read when:** starting any animation task, greenfield or brownfield.
-**Skip when:** a `MOTION.md` decision log already exists and the task stays inside its decisions.
+**Read when:** you're building or redesigning a page or a site (the third lane), or a task would change a recorded
+decision (a new engine, a smoother, a 3D scene).
+**Skip when:** you're debugging one symptom (start at [verification.md](verification.md)), or adding one effect to a
+project that already has `ANIMATION.md` and the effect fits its decisions.
 
-Inspect the project first and ask second. Every question below has a default and a detection hint.
-Ask only when detection is inconclusive **and** the answer changes the output. Put all the open
-questions into one short batch; never ask one per turn. Record the answers in a short `MOTION.md` at
-the project root (or in `FLUID.md` if the `fluid-design` skill already keeps one there): the engine,
-the scene if there is one, the header behaviour, and what was decided about existing motion.
-
-**Inputs:** the project (package.json, source, existing motion).
-**Produces:** the decisions recorded in `MOTION.md`, with one batched question for what can't be inferred.
+**Inputs:** the project: `package.json`, the source, existing motion, media files, and the brief.
+**Produces:** `ANIMATION.md` at the project root with the decisions and a scene ledger, plus one batched question
+for anything detection can't answer.
 
 ## Contents
 
-1. [Detection pass (about two minutes, read-only)](#detection-pass-about-two-minutes-read-only)
-2. [The decisions](#the-decisions)
-3. [Phrasing the questions](#phrasing-the-questions)
-4. [Traps](#traps)
+1. [Which lane you're in](#1-which-lane-youre-in)
+2. [Detection pass](#2-detection-pass)
+3. [The decisions](#3-the-decisions)
+4. [ANIMATION.md and the scene ledger](#4-animationmd-and-the-scene-ledger)
+5. [Asking the questions](#5-asking-the-questions)
+6. [Traps](#traps)
 
-## Detection pass (about two minutes, read-only)
+## 1. Which lane you're in
+
+| Task | Do this |
+|---|---|
+| Debug ("the pin jumps on iPhone", "the scrub holds frame one") | skip preflight; find the symptom in [verification.md](verification.md) |
+| Add one effect ("fade these cards in") | read the decisions in `ANIMATION.md` if it exists, pick the block from the engine map in SKILL.md, add it; run the full preflight only if there is no `ANIMATION.md` and the effect needs a smoother, a pin or WebGL |
+| Build or redesign a page or site | this whole file, before any code |
+
+## 2. Detection pass
+
+Read-only, about two minutes. Inspect first, ask second.
 
 | Look at | Tells you |
 |---|---|
-| `package.json` deps | framework (next, astro, vite, remix, sveltekit, nuxt); `motion` or `framer-motion` (the same library under its old name); `gsap` (and whether `ScrollTrigger`, `SplitText` are imported); `lenis`, `@studio-freight/lenis`, `locomotive-scroll` |
-| grep `ScrollTrigger.create\|scrollTrigger:` and `pin: true` | existing GSAP scroll work, and whether anything is pinned by GSAP rather than by CSS sticky |
-| grep `new Lenis\|useLenis\|ReactLenis` | where smooth scroll is initialised and whether it is wired to GSAP's ticker |
-| CSS: `scroll-behavior`, `overscroll-behavior`, `position: sticky`, `overflow-x: hidden` | page-wide smooth scroll (a scroll-well concern), sticky elements and the overflow trap that kills them |
-| the header component | fixed or sticky? transparent or opaque? any scroll listener toggling classes, `transform`s (hide on scroll), or colours |
-| `<video>` count, their attributes, file sizes | the playback work; whether any video is scrubbed; `ffprobe` any scrub candidate for its GOP |
-| `fluid.config.json`, `--fluid` in the CSS | the page is on a fluid scale: read `fluid-interop.md` |
-| existing entrance components (`FadeIn`, `Reveal`, `AOS`, `data-aos`) | a prior entrance system to keep, adapt or replace (§4) |
+| `package.json` | framework (`next` and its version, `astro`, `vite`, `nuxt`, `@sveltejs/kit`, none); `motion` or `framer-motion` (the same library; blocks import `motion/react`); `gsap`, `@gsap/react`; `lenis`, `@studio-freight/lenis` (the old name), `locomotive-scroll`; `three`, `@react-three/fiber`, `@react-three/drei`, `@14islands/r3f-scroll-rig`; `lottie-web`, `@lottiefiles/dotlottie-web`, `@rive-app/*`; `@barba/core`, `@unseenco/taxi`, `swup`; `aos` |
+| `next.config.*` | `cacheComponents: true` means hidden routes stay mounted under `<Activity>`: every block must clean up on hide |
+| grep `ScrollTrigger`, `scrollTrigger:`, `pin: true`, `ScrollSmoother`, `new Lenis`, `ReactLenis`, `data-aos`, `IntersectionObserver` | existing motion systems and who owns scrolling today |
+| CSS: `scroll-behavior`, `scroll-snap-type`, `position: sticky`, `overflow-x: hidden`, `animation-timeline` | smooth-scroll conflicts, sticky elements, the overflow trap that kills pins and timelines |
+| the header | fixed or sticky, transparent or opaque, any scroll listener that hides it or changes its colours |
+| every `<video>`, its size and GOP (`scroll-animation media probe <file>`) | the playback work; whether a scrub candidate is all-intra |
+| `fluid.config.json` or a length-per-design-px custom property in the CSS | the layout is viewport-scaled: §3.6 |
 
-## The decisions
+## 3. The decisions
 
-### 1. Animation engine
+Each has a default. Ask only when detection is inconclusive **and** the answer changes the output.
 
-Default: **Motion (`motion/react`)** in React projects; **GSAP** otherwise, or when the user needs
-timeline-heavy choreography, SplitText-quality line reveals, or already runs GSAP.
+### 3.1 Profile
 
-- Both engines ship the same primitives, attribute contract and measured curves
-  (`assets/motion/`, `assets/gsap/`).
-- One engine per element. GSAP may enter a Motion site as a scoped island for one section
-  (`motion-architecture.md` §13).
-- `framer-motion` in the deps is the same library; the primitives import `motion/react` (v12), so
-  either add `motion` or rewrite the imports. Don't run both packages.
-- **Lenis and other smooth-scroll hijacks: never add one.** Its lerp reshapes the native velocity
-  curve that scroll-linked effects read, it breaks programmatic scroll locks, and on iOS touch it
-  gains nothing (it leaves touch scrolling native by default). Smoothing belongs on effect outputs (a
-  spring on a transform), never on the scrollbar. Tell the user this if they ask for it. **If the
-  project already runs Lenis, that is a different question (§4)**: don't rip it out uninvited.
-- Ask when: React is present and GSAP is also installed, or the user mentions timelines.
+| | Reading | Expressive | Immersive |
+|---|---|---|---|
+| Looks like | magazines, product marketing, docs | studios, launches, award sites | WebGL-led brand worlds |
+| Scroll authority | native | Lenis, or ScrollSmoother on GSAP-only pages | Lenis or ScrollSmoother |
+| Engines | CSS + Motion (React) or CSS + GSAP core | GSAP timelines and plugins, Motion for React components, CSS decoration | Three/R3F + GSAP, Motion for React UI |
+| Scenes | at most one pinned scene | several pinned acts, rails, sequences | one persistent world in chapters |
+| Page transitions | none, or cross-document CSS | view transitions, shared elements | the canvas persists across routes |
 
-### 2. Scroll-driven scene
+Default: **Reading** unless the brief asks for pinned storytelling, inertial scroll or 3D. A profile only sets
+defaults; a route may differ from the site (the journal stays Reading on an Expressive site).
 
-Default: **none**. Triggered entrances only.
+### 3.2 Scroll authority, per route
 
-- One per page at most. It needs an act structure and an all-intra video (or a canvas or image
-  sequence): `video.md` §1. Ask only if the design shows pinned or scrubbed content.
-- Ask for, or measure, the asset: is it all-intra? Does it loop at either end, and where are the
-  seams? A scrub stuck on its first frame is very often a long-GOP asset.
-- Settle the act count up front: N acts of one viewport give landmarks at 1/(N−1), so three acts
-  give halves, not thirds (`scroll-scenes.md` §2).
-- Ask whether any section in the scene should be pulled to rest (a scroll well), since that affects
-  anchors and any existing smooth-scroll library.
+Exactly one owner per page: native, Lenis or ScrollSmoother. Default by profile; the table of trade-offs is in
+[scroll-authority.md](scroll-authority.md). Record it per route (or route group), because a reading route and a
+cinematic home page often want different answers. **If the project already runs a smoother, that is a keep, adapt or
+replace question (§3.5), not a default to override.**
 
-### 3. Header behaviour
+### 3.3 Engines
 
-Default: a fixed, transparent header whose ink follows the section beneath it
-(`data-header-theme`, `header-theme.md`).
+CSS is always available. Add engines by job, not by habit:
 
-- Ask when: the design shows an opaque header bar, or no header at all, or the header already has
-  scroll behaviour (§4).
+- **Motion** in React projects for component and section motion: entrances, in-page shared elements, presence.
+- **GSAP** for timeline choreography (a section with about four or more named spans on one ruler), SplitText,
+  DrawSVG/MorphSVG, Flip in vanilla code, ScrollSmoother, and every non-React project. All plugins are free.
+- **Three.js / R3F** only for a 3D scene or WebGL-enhanced images.
+- **Bytes already paid:** when a route already loads GSAP, its entrances use GSAP rather than adding Motion, and the
+  reverse. One engine per element, and one engine per scene.
 
-### 4. Existing motion: keep, adapt or replace
+### 3.4 Budgets
 
-Only on a brownfield site that already animates. For each thing detected above (a header animation
-or colour switcher, GSAP `ScrollTrigger` timelines, Lenis, an entrance library), the options are:
+Record them; `scroll-animation verify` checks the deterministic ones.
 
-- **Keep**: leave it running untouched and build around it. Always the default for a header's
-  existing colour or hide-on-scroll logic, and for Lenis the user wants kept.
-- **Adapt**: keep it, but change the parts that conflict: route a scroll well through Lenis or turn
-  the well off, replace hard-coded px `start`/`end` with functions, move a GSAP pin off an element
-  that contains a sticky scene, feed the header's existing class from the probe.
-- **Replace**: migrate it onto these primitives. Only when the user asks, or when the existing code
-  is the bug being fixed.
+- JS transferred per route (a number in kB, per profile).
+- Pinned scenes per page and their total runway (in viewports).
+- Media bytes per route: the scrub file, sequence frames, loops.
+- The LCP element renders at first paint: never hidden until hydration.
 
-`brownfield-coexistence.md` has the concrete conflicts and fixes for each. The one rule behind all of
-them: **never run two writers on one property**.
+### 3.5 Existing motion: keep, adapt or replace
 
-### 5. The engage breakpoint source
+On a site that already animates, decide per system (header script, GSAP timelines, Lenis or ScrollSmoother, an
+entrance library): **keep** it and build around it (the default), **adapt** the parts that conflict, or **replace** it
+(only when asked, or when it is the bug). The conflicts and fixes are in
+[brownfield-coexistence.md](brownfield-coexistence.md). The rule behind all of them: never two writers on one
+property, never two scroll owners.
 
-Default: the fluid config's `bands.desktop.minWidth` if one exists, otherwise the site's own
-desktop breakpoint (`fluid-interop.md` §1). Not a question for the user unless the codebase has two
-candidates.
+### 3.6 Layout scale
 
-## Phrasing the questions
+If the layout scales with the viewport, motion distances must scale with it, and motion must switch at the layout's
+breakpoint and offset by its header height.
 
-Batch them, give each its default, and let the user answer only the ones they care about:
+- **fluid-design** (`fluid.config.json` present): in `src/animation/config.ts`, re-export `DESKTOP_QUERY` from the
+  generated `fluid.ts` and set `SCALE = FLUID_DESIGN_SCALE`; in CSS, alias the header once:
+  `:root { --header-h: var(--fluid-header-h) }`. Details in [fluid-interop.md](fluid-interop.md).
+- **Another scaled unit** (a custom property holding one design px as a length): describe it in `SCALE.units`.
+- **Plain px**: leave `SCALE = null`; `scaledPx(n)` returns `n`.
 
-> Before I set this up: (1) engine: Motion (you're on React) or GSAP? (2) any pinned or scrubbed
-> video section? If so, is the clip all-intra? (3) header: keep your current transparent header and
-> have its ink follow the section underneath? (4) you already run Lenis and a header colour script;
-> I'd keep both and switch off the scroll well, which fights Lenis. OK? I'll go with the defaults if
-> you don't mind.
+## 4. ANIMATION.md and the scene ledger
 
-For the existing-motion question, name what you found and propose the least invasive option; don't
-present a menu of three for each item:
+Write it at the project root before the first block. It is for people and agents; nothing parses it.
 
-> I found GSAP ScrollTrigger timelines on `/about` (pinned with `pin: true`) and Lenis in the root
-> layout. I'll keep both, keep your header's colour switching, and build the new hero with triggered
-> entrances only. Say if you'd rather migrate any of them.
+```md
+# Animation
+
+Profile: Expressive
+Scroll authority: / → Lenis (gsap driver) · /journal/* → native
+Engines: CSS, GSAP 3.15 (ScrollTrigger, SplitText), Motion 13 (journal reveals)
+Budgets: JS ≤ 160 kB on / · ≤ 90 kB on /journal · 1 pinned scene on / (4 viewports) · scrub file ≤ 6 MB
+Reduced motion: scenes collapse to their end state, loops show posters, smoothing off
+Layout scale: fluid-design (DESKTOP_QUERY from fluid.ts, SCALE = FLUID_DESIGN_SCALE, --header-h aliased)
+Existing motion: header colour script kept (drives data-theme); AOS replaced by Reveal
+
+## Scene ledger
+
+| # | Section | Clock | Block (engine) | Runway | Reduced motion |
+|---|---|---|---|---|---|
+| 1 | Hero | trigger | split-word hero (CSS, first paint) | none | text visible, no motion |
+| 2 | Product film | media | ScrubVideo (GSAP) on PinnedScene | 4 viewports | poster, no pin |
+| 3 | Work rail | scroll | horizontal-rail (GSAP) | track width | native horizontal scroller |
+```
+
+A section that wants the scroll clock names what the reader gains by driving it; otherwise it is a trigger.
+
+## 5. Asking the questions
+
+One batch, each with its default, only what detection couldn't settle:
+
+> Before I set this up: (1) profile: Expressive (pinned film, rail, inertial scroll) with the journal kept as a plain
+> reading page? (2) smoothing on the home page: Lenis, driven by GSAP's ticker; the journal stays native. (3) I found
+> AOS on three pages: I'd replace it with the reveal block. (4) the hero clip is not all-intra; I'll re-encode it with
+> `scroll-animation media scrub`. I'll go with these unless you say otherwise.
+
+For existing motion, name what you found and propose the least invasive option; don't offer three choices per item.
 
 ## Traps
 
-- [ ] Detection ran before any question was asked.
-- [ ] Questions went out as one batch, each with its default.
-- [ ] No smooth-scroll library added; an existing one was not removed uninvited (§1, §4).
-- [ ] At most one scroll scene, with its act count and asset settled (§2).
-- [ ] Every existing motion system has a recorded keep / adapt / replace decision (§4).
-- [ ] The decisions are written to `MOTION.md` (or `FLUID.md`).
+- [ ] Detection ran before any question was asked, and the questions went out as one batch with defaults.
+- [ ] The lane was right: no full preflight for a one-effect task or a debug session.
+- [ ] Exactly one scroll authority per route, recorded.
+- [ ] Every existing motion system has a recorded keep, adapt or replace decision.
+- [ ] On a scaled layout, `config.ts` uses the layout's breakpoint, header variable and units.
+- [ ] `ANIMATION.md` exists with the scene ledger before the first block is added.
