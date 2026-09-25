@@ -2,10 +2,7 @@
 # downloads and unpacks into public/media/. See "Media stays out of git" in
 # docs/designs/folio-art-direction.md.
 #
-# Populated once gabros20/scroll-animation-skill's `media-v1` release ships.
-# Until then this file holds the placeholder below, and fetch-media.mjs
-# refuses to run rather than guess.
-#
-# Real format, once filled in:
-# <64-hex-char sha256>  media-v1.tar.gz
-PENDING
+# Release: https://github.com/gabros20/scroll-animation-skill/releases/tag/media-v1
+# Built by media-src/ (see media-src/README.md); credits in CREDITS.md. The
+# tarball also carries its own per-file manifest.sha256 for public/media/.
+4aa3312b584b3df54dbe78e63095397552021b093d38f05e30f56acaa558bb4d  media-v1.tar.gz

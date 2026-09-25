@@ -1,0 +1,23 @@
+{
+  "name": "folio-media-src",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Renders and packages Folio's media-v1 release asset. Not part of the site build; outputs never land in the repo.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "model": "node scripts/model.mjs",
+    "render": "node scripts/render.mjs",
+    "encode": "node scripts/encode.mjs",
+    "stills": "node scripts/stills.mjs",
+    "package": "node scripts/package.mjs",
+    "all": "node scripts/model.mjs && node scripts/stills.mjs all && node scripts/render.mjs all && node scripts/encode.mjs && node scripts/package.mjs"
+  },
+  "dependencies": {
+    "@gltf-transform/cli": "4.5.0",
+    "playwright": "1.63.0",
+    "three": "0.186.1"
+  }
+}
