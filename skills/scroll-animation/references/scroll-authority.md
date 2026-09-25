@@ -59,6 +59,7 @@ From `docs/research/spikes-2026-09.md` (Chromium 153, WebKit 26.6):
 | Frame rate | native (120 Hz ProMotion) | capped at 60 fps in Safari, 30 in Low Power Mode | GSAP ticker |
 | Anchors, find-in-page | native | through `lenis.scrollTo` (our handler) | `smoother.scrollTo` |
 | Iframes | yes | wheel over an iframe doesn't scroll | yes |
+| Reduced motion (followed live) | native | Lenis torn down: native scrolling | native mode (`smooth: 0`): wrapper in flow, no effects |
 
 ## 3. Native
 
@@ -100,7 +101,9 @@ React: `<SmoothScroll authority="lenis" driver={gsapDriver(gsap, ScrollTrigger)}
   body over a playing video (Safari drops the video's layer).
 - **Nested scrollers** (a code block, a map, a chat panel): `data-lenis-prevent` on the element.
 - **Scroll-snap**: CSS snap doesn't work under Lenis; use `lenis/snap`, or keep that route native.
-- **Reduced motion**: `createSmoothScroll` returns a native handle and never creates Lenis.
+- **Reduced motion**: followed live. While it's on there is no Lenis: the page scrolls natively and the stamp reads
+  `native`. When the visitor changes the setting mid-visit, Lenis is torn down, or started again at the reader's
+  position. The handle stays the same object, and a modal's `stop()` holds across the switch.
 - **Reload mid-page**: the browser restores the scroll position before Lenis starts; `createSmoothScroll` starts
   Lenis there instead of jumping to 0.
 - **Velocity**: `lenis.velocity` is the smoothed velocity. Logic that branches on scroll speed sees the lerp's
@@ -125,6 +128,15 @@ const scroll = createSmoother(ScrollSmoother, { smooth: 1, effects: true })
 - Header ink that follows sections must read `smoother.scrollTop()`, not `window.scrollY`, which runs ahead of what the
   reader sees.
 - Print: the wrapper prints one viewport unless print CSS unwraps it (`accessibility.md` §6).
+- **Reduced motion** runs ScrollSmoother in its native mode (`smooth: 0`, the mode it already uses on touch screens
+  without `smoothTouch`): the wrapper is back in flow, nothing is transformed, no `data-speed` / `data-lag`, and the
+  handle's `scrollTo` jumps. `createSmoother` follows the setting live by re-creating the smoother on the same wrapper;
+  the stamp stays `smoother`. Never kill a ScrollSmoother alone: every ScrollTrigger made while it runs is bound to its
+  wrapper, and a kill strands them (they stop updating while the page scrolls on).
+- **Resizes**: `createSmoother` turns off ScrollSmoother's `autoResize` and runs a full `ScrollTrigger.refresh()` when
+  the content resizes. GSAP 3.15's own resize refresh covers only the smoother's trigger, so the page's other triggers
+  keep stale positions, and one landing in the first 0.5 s after creation replays the scroll from the top on a page
+  that is already scrolled (a reload mid-page).
 - ScrollSmoother is free (GSAP 3.13+). It still costs sticky, fixed and CSS timelines inside the content, which is why
   Lenis is the choice whenever the page mixes engines.
 
@@ -173,4 +185,5 @@ elements. Independent effects may keep their own IntersectionObserver-gated loop
 - [ ] Under ScrollSmoother: no sticky, no CSS timelines, no Motion `useScroll` inside the content; fixed UI outside.
 - [ ] Under Lenis in Safari: CSS timelines only for decoration.
 - [ ] Modals call `stop()` / `start()`; nested scrollers carry `data-lenis-prevent`.
+- [ ] Nothing kills a ScrollSmoother without re-creating it: its triggers are bound to the wrapper.
 - [ ] `ScrollTrigger.refresh()` runs once after layout settles on each route.
