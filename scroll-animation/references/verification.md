@@ -132,8 +132,8 @@ The check, before reading any scroll code: read back a recently-touched custom p
 stylesheet defines). A fresh, current value means keep debugging; an empty string or an older form
 means stop. **Close the tab and open a new one**; if the symptom survives, clear the build cache and
 restart the server. Closing the tab fixing it is proof the code is fine: a real bug doesn't care
-which tab you're in. (With the `fluid-design` skill installed, its `scripts/probe.mjs` automates this
-check.)
+which tab you're in. (With the `fluid-design` skill installed, `fluid probe <url>` automates this
+check: a STALE verdict means the tab holds an old stylesheet.)
 
 ## 5. The scripts
 

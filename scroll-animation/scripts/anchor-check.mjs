@@ -183,7 +183,7 @@ async function checkOneAnchor(page, hash, headerVar, tolerance) {
 
   // Settle: scrollY unchanged for 300ms, 10s cap — matches the tolerance
   // this skill uses elsewhere for "has this stopped moving" (see
-  // verify-motion.mjs's reveal step and the fluid-design skill's probe.mjs).
+  // verify-motion.mjs's reveal step and the fluid-design skill's `fluid probe`).
   await page.evaluate(
     () =>
       new Promise((resolve) => {

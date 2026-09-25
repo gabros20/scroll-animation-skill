@@ -5,8 +5,8 @@ Node 20+, ESM, zero runtime dependencies except `playwright` (needed by
 project — see below).
 
 Layout/unit/render verification (overflow, drifted fluid units, one-screen
-sections, grid columns) lives in the `fluid-design` skill's `scripts/` —
-`verify-matrix.mjs`, `probe.mjs`, `calc.mjs`, `audit.mjs` — not here.
+sections, grid columns) lives in the `fluid-design` skill's `fluid` command —
+`fluid verify`, `fluid probe`, `fluid calc`, `fluid audit` (its `scripts/tools/`) — not here.
 
 ## audit-motion.mjs — static scanner
 

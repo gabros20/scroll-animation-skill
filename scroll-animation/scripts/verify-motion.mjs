@@ -9,7 +9,7 @@
 // This is the scroll-animation half of Tier 1 (references/verification.md
 // §1: "the browser harness" — drive a real page and read numbers out of it,
 // because the bugs that matter are invisible in source). Layout/unit/
-// overflow checks live in the fluid-design skill's verify-matrix.mjs, not
+// overflow checks live in the fluid-design skill's `fluid verify` (scripts/tools/verify.mjs), not
 // here.
 //
 // Usage:
@@ -144,7 +144,7 @@ async function resolvePlaywrightModule() {
 // Step-scroll to the bottom with rAF + 200ms per step -- a fast scroll
 // outruns IntersectionObserver and gives false blanks. Then report every
 // [data-stage-item] still under opacity 0.99. Moved wholesale from the
-// fluid-design skill's verify-matrix.mjs (its --reveal), which never scanned
+// fluid-design skill's `fluid verify` (scripts/tools/verify.mjs) (its --reveal), which never scanned
 // scene state -- that half is `checkScenes` below.
 async function checkReveal(page) {
   await page.evaluate(async () => {
