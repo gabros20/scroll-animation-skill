@@ -34,7 +34,7 @@ positional movement that still tells the story:
 | Scrub video / image sequence | a poster (or the chosen end frame), no pin |
 | Horizontal rail | a native horizontal scroller with scroll-snap, or a vertical stack |
 | Parallax, velocity effects | none |
-| Smooth scroll (Lenis, ScrollSmoother) | not created: native scrolling |
+| Smooth scroll (Lenis, ScrollSmoother) | native scrolling, followed live: Lenis is torn down; ScrollSmoother runs in its native mode (`smooth: 0`, no `data-speed` / `data-lag`) |
 | Page transition | an instant swap, or a crossfade without movement |
 | WebGL world | the poster image; the canvas is never mounted |
 | Loop video, marquee | stopped, poster or first frame |
@@ -65,7 +65,8 @@ Each engine covers only its own animations. Anything you write by hand checks th
   })
   ```
 - **Motion.** `MotionConfig reducedMotion="user"` (in `MotionProvider`) drops transform and layout animation. A
-  `useMotionValueEvent` writer, a typewriter or any timing-only sequence calls `useReducedMotion()` itself.
+  `useMotionValueEvent` writer, a typewriter or any timing-only sequence reads the setting itself, live, with
+  `useReducedMotionLive()` (in `motion/usePinnedScene.ts`): Motion 13.4's `useReducedMotion()` reads it once, at mount.
 - **View Transitions.** CSS can't intercept `document.startViewTransition()`: guard the call in JS, and shorten the
   pseudo-element animations under `reduce`.
   ```css
