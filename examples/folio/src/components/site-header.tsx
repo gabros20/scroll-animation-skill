@@ -11,7 +11,7 @@ const NAV_LINKS = [
 // "header ink" row in docs/designs/folio-art-direction.md.
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between px-6 py-5 text-ink sm:px-10">
+    <header className="sticky top-0 z-40 flex h-(--header-h) items-center justify-between px-6 text-ink sm:px-10">
       <Link href="/" className="font-display text-xl tracking-tight">
         Folio
       </Link>

@@ -1,6 +1,8 @@
+import { SmoothScroll } from "@/animation/smooth/SmoothScroll";
+
 // scroll authority: native | lenis
 // this route: native (Reading profile). Covers both /journal and
-// /journal/[slug]; wired in Phase 1b, placeholder until then.
+// /journal/[slug].
 export default function JournalLayout({ children }: LayoutProps<"/journal">) {
-  return <>{children}</>;
+  return <SmoothScroll authority="native">{children}</SmoothScroll>;
 }

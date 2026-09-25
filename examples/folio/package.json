@@ -12,6 +12,7 @@
     "start": "next start",
     "lint": "eslint",
     "media": "node scripts/fetch-media.mjs",
+    "check:authority": "node scripts/check-authority.mjs",
     "verify": "echo 'wired in phase 6'"
   },
   "dependencies": {
