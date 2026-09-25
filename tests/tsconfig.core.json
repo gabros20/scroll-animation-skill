@@ -18,7 +18,8 @@
     "erasableSyntaxOnly": true
   },
   "include": [
-    "../skills/scroll-animation/assets/motion/**/*.ts",
-    "../skills/scroll-animation/assets/motion/**/*.tsx"
+    "../skills/scroll-animation/assets/*.ts",
+    "../skills/scroll-animation/assets/smooth/**/*.ts",
+    "../skills/scroll-animation/assets/smooth/**/*.tsx"
   ]
 }
