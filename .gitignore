@@ -6,3 +6,5 @@ test-results/
 playwright-report/
 tests/.scratch/
 tests/smoke-gsap/public/
+.orchestrate/
+.research/
