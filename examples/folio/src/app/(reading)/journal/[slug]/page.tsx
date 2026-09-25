@@ -98,30 +98,20 @@ export default async function JournalArticlePage(
         </figure>
 
         {/*
-          scroll-animation: LoopVideo (Phase 2). The pause button is real
-          structure — WCAG 2.2.2 requires it once the loop autoplays — but
-          has no handler yet: LoopVideo hydrates this as a small client
-          island rather than making the whole article interactive.
+          scroll-animation: loop-video (Motion). A small client island with
+          the pause control WCAG 2.2.2 requires; the article stays a Server
+          Component.
         */}
         <figure className="my-12 -mx-6 sm:mx-0">
-          <div className="relative">
-            <MediaSlot
-              kind="video"
-              src={article.loop.src}
-              poster={article.loop.poster}
-              alt={article.loop.alt}
-              width={article.loop.width}
-              height={article.loop.height}
-              className="w-full rounded-sm"
-            />
-            <button
-              type="button"
-              aria-label="Pause loop"
-              className="absolute right-3 bottom-3 rounded-full bg-ink/70 px-3 py-1.5 font-sans text-xs text-paper"
-            >
-              Pause
-            </button>
-          </div>
+          <MediaSlot
+            kind="loop"
+            src={article.loop.src}
+            poster={article.loop.poster}
+            alt={article.loop.alt}
+            width={article.loop.width}
+            height={article.loop.height}
+            className="rounded-sm"
+          />
           <figcaption className="mt-3 font-sans text-sm text-muted">
             {article.loop.caption}
           </figcaption>

@@ -1,0 +1,148 @@
+/*
+ * css/scene.css — pinned scene geometry for both engines (motion/PinnedScene.tsx, gsap/pinned-scene.ts), plus its
+ * reduced-motion collapse and print rules. Import it after animation.css.
+ *
+ *   <div data-scene-root>                        the range wrapper: the scene measures THIS, never the pin
+ *     <div data-scene-pin>                       sticky, 100lvh (data-scene-pin="gsap": ScrollTrigger pins it)
+ *       <div data-scene-gutter></div>            optional backdrop ramp, painted by media/camera.ts
+ *       <video data-scene-media …></video>       the pinned media
+ *     </div>
+ *     <div data-scene-content>                   pulled back over the pin; the acts ride over it
+ *       <section>…</section>
+ *       <section data-scene-spacer></section>    an empty pacing act
+ *     </div>
+ *   </div>
+ *
+ * The scene writes data-scene-state="head|scrub|tail" on the root, and `inert` on every [data-scene-act] that is not
+ * the active act. Mark only acts that are HIDDEN when inactive (stacked in the pin): an act in the content layer
+ * scrolls into view on its own, and making it inert would trap keyboard users above it.
+ *
+ * Nothing may animate a transform on the root, the pin or their ancestors, and no ancestor may set `overflow: hidden`
+ * (use `clip`): either turns the ancestor into the pin's containing block or scroll container, and the pin stops
+ * pinning.
+ */
+
+[data-scene-root] {
+  position: relative;
+}
+
+/* lvh, not svh: a scene is read while scrolling, which is when iOS collapses its toolbars and the visible area grows
+   to lvh. An svh pin falls short by the toolbar's height and the page shows through along the bottom; an lvh pin
+   covers both toolbar states and overhangs, clipped, when they show. Not dvh: that resizes the pin, and every framing
+   read inside it, on each toolbar animation. pointer-events: none keeps it from eating clicks meant for the acts
+   riding over it. */
+[data-scene-pin] {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100lvh;
+  overflow: hidden;
+  overflow: clip;
+  pointer-events: none;
+}
+
+/* ScrollSmoother pages: sticky never sticks inside #smooth-content, so ScrollTrigger pins the element instead. */
+[data-scene-pin='gsap'] {
+  position: relative;
+}
+
+/* Cancels the pin's own height in the root, so the range is exactly as tall as the content and the pin travels
+   exactly that far. The SAME unit as the pin: mixing svh and lvh measures one toolbar-height wrong. */
+[data-scene-content] {
+  position: relative;
+  margin-top: -100lvh;
+}
+
+[data-scene-gutter] {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(to bottom, var(--scene-g-top, transparent), var(--scene-g-bottom, transparent));
+}
+
+/* The media box. With a camera, --scene-frame-w/h size it (in svh) and the camera's transform places it; the origin
+   is the top left so the transform's x/y are its top-left corner in the pin. max-width: none undoes a reset's
+   `video { max-width: 100% }`, which silently clamps a deliberately oversized box to the pin's width. */
+[data-scene-media] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: var(--scene-frame-w, 100%);
+  height: var(--scene-frame-h, 100%);
+  max-width: none;
+  object-fit: cover;
+  transform-origin: top left;
+}
+
+/* Acts stacked in the pin take clicks again; inactive ones are inert, which removes them from hit testing too. */
+[data-scene-pin] [data-scene-act] {
+  pointer-events: auto;
+}
+
+/* Reduced motion, the structural half. A scrubbed scene is a transform written every frame from scroll, which no
+   library can degrade: the scene's JS holds the head (first frame, head shot, no loop) and this releases the pin and
+   collapses the runway, so a reader who asked for less motion never scrolls a multi-viewport range past a frozen
+   frame. !important because a pin can carry inline geometry (ScrollTrigger writes some). The pin keeps 100svh (its
+   media is absolutely positioned, and `auto` around out-of-flow content measures 0) unless acts are stacked in it;
+   then they flow. Empty pacing acts collapse: there is nothing left in them. */
+@media (prefers-reduced-motion: reduce) {
+  [data-scene-root] {
+    height: auto !important;
+  }
+  [data-scene-pin] {
+    position: relative !important;
+    top: auto !important;
+    height: 100svh !important;
+  }
+  [data-scene-pin]:has([data-scene-act]) {
+    height: auto !important;
+    min-height: 100svh;
+  }
+  [data-scene-pin] [data-scene-act] {
+    position: relative !important;
+    inset: auto !important;
+  }
+  [data-scene-act] {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  [data-scene-content] {
+    margin-top: 0 !important;
+  }
+  [data-scene-spacer] {
+    height: 0 !important;
+  }
+}
+
+/* Print: every act in flow, the media as one still above them, no spacers. */
+@media print {
+  [data-scene-root] {
+    height: auto !important;
+  }
+  [data-scene-pin] {
+    position: static !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  [data-scene-media] {
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    transform: none !important;
+  }
+  [data-scene-gutter],
+  [data-scene-spacer] {
+    display: none !important;
+  }
+  [data-scene-pin] [data-scene-act] {
+    position: relative !important;
+    inset: auto !important;
+  }
+  [data-scene-act] {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  [data-scene-content] {
+    margin-top: 0 !important;
+  }
+}

@@ -1,12 +1,13 @@
 import Image from "next/image";
+import { LoopVideo } from "@/animation/motion/LoopVideo";
 import { mediaExists, mediaSrc } from "@/lib/media";
 
 type MediaSlotProps = {
-  kind: "image" | "video";
+  kind: "image" | "loop";
   /** Path relative to public/media/, e.g. "journal/kiln-cover.avif". */
   src: string;
   alt: string;
-  /** Video only: poster path relative to public/media/. */
+  /** Loop only: poster path relative to public/media/. */
   poster?: string;
   width: number;
   height: number;
@@ -59,20 +60,23 @@ export function MediaSlot({
     );
   }
 
+  // LoopVideo (a client island) plays it in view and pauses it out of view,
+  // under reduced motion and on Save-Data. A loop never stops by itself, so it
+  // always runs past WCAG 2.2.2's five seconds: the pause control is always on.
+  // Its <video> is aria-hidden, so the description is screen-reader text.
   return (
-    <video
-      className={className}
-      width={width}
-      height={height}
-      style={{ aspectRatio: `${width} / ${height}` }}
-      poster={poster ? mediaSrc(poster) : undefined}
-      muted
-      loop
-      playsInline
-      preload="none"
-      aria-label={alt}
-    >
-      <source src={mediaSrc(src)} />
-    </video>
+    <div className="relative" style={{ aspectRatio: `${width} / ${height}` }}>
+      <p className="sr-only">{alt}</p>
+      <LoopVideo
+        poster={poster ? mediaSrc(poster) : undefined}
+        className={`h-full w-full object-cover ${className}`}
+        controls
+        playLabel="Play loop"
+        pauseLabel="Pause loop"
+        toggleClassName="absolute right-3 bottom-3 rounded-full bg-ink/70 px-3 py-1.5 font-sans text-xs text-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      >
+        <source src={mediaSrc(src)} type="video/mp4" />
+      </LoopVideo>
+    </div>
   );
 }

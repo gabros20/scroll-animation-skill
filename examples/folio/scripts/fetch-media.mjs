@@ -1,13 +1,10 @@
 #!/usr/bin/env node
 // Downloads the `media-v1` GitHub Release asset for gabros20/scroll-animation-skill,
 // verifies its SHA-256 against media/manifest.sha256, and unpacks it into
-// public/media/ (gitignored). Run as `pnpm media`.
-//
-// The release does not exist yet, so manifest.sha256 currently holds a
-// PENDING placeholder instead of a real hash. This script fails fast on
-// that placeholder rather than guessing or downloading nothing — pages
-// render with CSS-gradient placeholders (src/components/media-slot.tsx)
-// until it succeeds. See docs/designs/folio-art-direction.md.
+// public/media/ (gitignored). Run as `pnpm media`, then build: the pages are
+// prerendered, and a build made without the media renders CSS-gradient
+// placeholders (src/components/media-slot.tsx) in its place. The shot list is
+// in docs/designs/folio-art-direction.md; media-src/ is what made it.
 
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -22,9 +19,6 @@ const TAG = "media-v1";
 const ASSET = "media-v1.tar.gz";
 const DOWNLOAD_URL = `https://github.com/${OWNER}/${REPO}/releases/download/${TAG}/${ASSET}`;
 
-const NOT_PUBLISHED_MESSAGE =
-  "media release not published yet; see docs/designs/folio-art-direction.md";
-
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(scriptDir, "..");
 const manifestPath = path.join(projectRoot, "media", "manifest.sha256");
@@ -32,7 +26,7 @@ const publicMediaDir = path.join(projectRoot, "public", "media");
 
 const SHA256_LINE = /^([a-f0-9]{64})(?:\s+\S+)?$/i;
 
-/** Returns the lowercase expected hash, or null if the manifest is still the PENDING placeholder. */
+/** Returns the lowercase expected hash, or null if the manifest has no hash line. */
 function readExpectedHash() {
   const raw = readFileSync(manifestPath, "utf8");
   const line = raw
@@ -47,7 +41,7 @@ function readExpectedHash() {
 async function main() {
   const expectedHash = readExpectedHash();
   if (!expectedHash) {
-    console.error(NOT_PUBLISHED_MESSAGE);
+    console.error(`media/manifest.sha256 has no SHA-256 line for ${ASSET}`);
     process.exitCode = 1;
     return;
   }
@@ -58,14 +52,14 @@ async function main() {
   try {
     response = await fetch(DOWNLOAD_URL);
   } catch (cause) {
-    console.error(NOT_PUBLISHED_MESSAGE);
+    console.error(`Could not download ${DOWNLOAD_URL}`);
     console.error(`  network error: ${cause instanceof Error ? cause.message : cause}`);
     process.exitCode = 1;
     return;
   }
 
   if (!response.ok) {
-    console.error(NOT_PUBLISHED_MESSAGE);
+    console.error(`Could not download ${DOWNLOAD_URL}`);
     console.error(`  GitHub responded ${response.status} ${response.statusText}`);
     process.exitCode = 1;
     return;

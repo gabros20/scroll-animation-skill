@@ -98,34 +98,13 @@ html.lenis body {
 }
 
 /* ── 3. Reduced motion, the structural half ────────────────────────────────────────────────────────
- * A scrubbed scene is not a CSS or JS animation a library can degrade: it is a transform written every frame from
- * scroll. The engines' JS half renders each act's end state under reduced motion; this half collapses the scene's
- * shell, so a reader who asked for less motion never scrolls a multi-viewport runway past a frozen frame.
- *
- * !important on every rule: the React scene writes the pin's sticky geometry as an inline style, and an inline style
- * beats any non-!important declaration. The pin gets 100svh, not auto: the held frame inside it is absolutely
- * positioned, and `auto` around out-of-flow content measures 0. Empty pacing acts (data-scrub-spacer) collapse to 0:
- * with no movement there is nothing in them worth the space. */
-@media (prefers-reduced-motion: reduce) {
-  [data-scrub-stage] {
-    height: auto !important;
-  }
-  [data-scrub-pin] {
-    position: static !important;
-    height: 100svh !important;
-    overflow: visible !important;
-  }
-  [data-scrub-content] {
-    margin-top: 0 !important;
-  }
-  [data-scrub-spacer] {
-    height: 0 !important;
-  }
-}
+ * A pinned scene is not an animation a library can degrade: it is a runway written from scroll. Its structural
+ * collapse (the pin released, the runway gone, empty pacing acts at zero height) ships with the scene geometry in
+ * css/scene.css, so it comes with every scene and costs nothing on a page without one. */
 
 /* ── 4. Print ──────────────────────────────────────────────────────────────────────────────────────
- * Every act prints in flow, entrance items print visible, and a ScrollSmoother wrapper stops clipping the page to
- * one viewport. */
+ * Entrance items print visible, and a ScrollSmoother wrapper stops clipping the page to one viewport. Scenes print
+ * their acts in flow through css/scene.css. */
 @media print {
   :is([data-stage-item], [data-reveal-item]) {
     opacity: 1 !important;
@@ -133,19 +112,6 @@ html.lenis body {
     visibility: visible !important;
   }
   :is([data-stage-veil], [data-reveal-veil]) {
-    display: none !important;
-  }
-  [data-scrub-stage] {
-    height: auto !important;
-  }
-  [data-scrub-pin] {
-    position: static !important;
-    height: auto !important;
-  }
-  [data-scrub-content] {
-    margin-top: 0 !important;
-  }
-  [data-scrub-spacer] {
     display: none !important;
   }
   #smooth-wrapper {

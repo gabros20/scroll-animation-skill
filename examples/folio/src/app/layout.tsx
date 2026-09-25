@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 import "@/animation/css/animation.css";
+import "@/animation/css/scene.css";
 
 const fraunces = Fraunces({
   subsets: ["latin"],

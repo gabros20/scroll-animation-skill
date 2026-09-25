@@ -80,8 +80,13 @@ One idea per viewport, four scenes plus the hero:
 1. **Hero.** Kicker ("Folio · Issue 04"), a three-word headline ("Things, made well."), one
    sentence of dek. Server-rendered, LCP-safe: the headline is plain text now, and SplitWords
    (Phase 3) wraps it word by word without changing what a no-JS reader sees.
-2. **Pinned scrub scene.** A slow orbit around one object, the stoneware vessel from the shot list
-   below. No heading beyond a small "01 · Object" label; the video is the content.
+2. **Pinned scrub scene.** A slow orbit around one object, the antique camera from the shot list
+   below (the model `/lab` walks through). The video is the content: a small "01 · Object" label
+   pins with it, and four one-line acts ride over it, one per viewport, each over the part of the
+   turn it describes (0°, 90°, 270°, 360°). The turn wraps, so the scene holds both ends on the
+   same three-quarter front view instead of looping. Phones get a shorter frame, which keeps the
+   whole tripod in the crop, with the copy in a band below it. Reduced motion shows the poster,
+   and the acts read as plain paragraphs under it.
 3. **Horizontal rail.** Six objects (name + one-line material note), a change of pace from the
    journal's prose. Falls back to native horizontal scroll, which is also the reduced-motion
    behavior.
@@ -99,7 +104,7 @@ listener), body copy with one CSS-parallax figure roughly a third of the way thr
 video with a pause button around two-thirds through. Two articles ship now, both fictional:
 
 - **"The Kiln That Never Went Cold"** (Objects): a wood kiln that has fired every five to six
-  weeks for eleven years, and the one stoneware jar the shot list is built around.
+  weeks for eleven years, and one stoneware jar that came out of it.
 - **"What Rust Is For"** (Places): a weathering-steel library wall, ten years into rusting on
   purpose.
 
@@ -112,43 +117,45 @@ object). A rendered poster stands in for the canvas until ScrollCanvas and camer
 
 ### `/blocks`
 
-A catalogue, not a design reference: every block from the plan's registry, grouped by clock
-(foundation, trigger, scroll, media, route, render), one line each. Fixtures attach here as blocks
-ship; right now it is text only, which is correct for a repo where `src/animation/` is still
-empty.
+A catalogue, not a design reference, and labelled as one: every block from the plan's registry,
+grouped by clock (foundation, trigger, scroll, media, route, render), one line each. Fixtures
+attach below it as blocks ship, on their defaults rather than art-directed: so far the Motion
+PinnedScene with a FrameSequence of the camera's turn, the Motion ScrubVideo on the same clip `/`
+scrubs with GSAP, and a LoopVideo.
 
 ## Media shot list
 
 Everything below is gitignored under `public/media/` and arrives via `pnpm media` (see
 `scripts/fetch-media.mjs`); nothing here is committed. Paths are relative to `public/media/`.
 
-**1. Scrub clip (`hero/scrub-vessel-*`).** A static camera, slow turntable orbit around the
-stoneware vessel, ≤8s at 30fps (240 frames). Two width variants for `ScrubVideo`'s tier sources:
+**1. Scrub clip (`hero/scrub-camera-*`).** One slow turntable orbit around the antique camera
+(item 5), seen from a fixed viewpoint, 8s at 30fps (240 frames). It starts on a three-quarter
+front view and turns a full 360°, so its last frame runs back into its first. Two width variants
+for `ScrubVideo`'s tier sources:
 
 | Variant | Spec | Budget |
 |---|---|---|
-| `hero/scrub-vessel-1920.mp4` | 1920w, all-intra H.264 | 8-14 MB |
-| `hero/scrub-vessel-1080.mp4` | 1080w, all-intra H.264 | 3-6 MB |
-| `hero/scrub-vessel-poster.avif` | first frame | 150-250 KB |
+| `hero/scrub-camera-1920.mp4` | 1920w, all-intra H.264 | 8-14 MB |
+| `hero/scrub-camera-1080.mp4` | 1080w, all-intra H.264 | 3-6 MB |
+| `hero/scrub-camera-poster.avif` | first frame | 150-250 KB |
 
 All-intra costs roughly 10x a long-GOP encode of the same clip; that cost is the reason there is
 exactly one scrub scene on the site, not several. Encoded later with the CLI's `media scrub`, which
-also writes the poster. Sourcing: generated video (an image-to-video or 3D-turntable render of a
-ceramic form), or a short commissioned or CC0/Pexels-licensed clip of a real turntable shot, credited
-in `CREDITS.md` either way.
+also writes the poster. Sourcing: rendered in three.js from the CC0 model in item 5, credited in
+`CREDITS.md`.
 
-**2. Image sequence (`blocks/vessel-sequence/frame-####.webp`).** Up to 120 frames, WebP, sized for
-display rather than full 1080p (roughly 1200×675). Budget: 2.5-4 MB total plus a small
-`manifest.json`. Sourcing: extracted from the scrub clip with the CLI's `media sequence`, so it
-costs no separate shoot; this is also why it lives on `/blocks` rather than a page of its own,
-nothing in the page plans above calls for a second treatment of the same orbit.
+**2. Image sequence (`blocks/camera-sequence/0001.webp`…`0120.webp`).** 120 frames, WebP, at
+1600×900, with a 900×506 set in `mobile/` for narrow screens and a `manifest.json` beside each.
+Budget: 2.5-4 MB total. Sourcing: extracted from the scrub clip with the CLI's `media sequence`,
+so it costs no separate shoot; this is also why it lives on `/blocks` rather than a page of its
+own, nothing in the page plans above calls for a second treatment of the same orbit.
 
 **3. Two loops.** Short, seamless, muted, long-GOP (loops are never scrubbed, so all-intra buys
 nothing here):
 
 | File | Subject | Spec | Budget |
 |---|---|---|---|
-| `journal/kiln-loop.mp4` | kiln door opening at the end of a firing | 4-6s, 1280×720 | 1.5-3 MB |
+| `journal/kiln-loop.mp4` | the open kiln at the end of a firing, heat shimmering over the bricks | 4-6s, 1280×720 | 1.5-3 MB |
 | `journal/rust-loop.mp4` | rain running down the steel wall | 4-6s, 1280×720 | 1.5-3 MB |
 
 Each gets a poster (`journal/kiln-loop-poster.avif`, `journal/rust-loop-poster.avif`) generated by

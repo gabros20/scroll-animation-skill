@@ -14,16 +14,13 @@
 //
 //   node scripts/check-authority.mjs [--browsers chromium,webkit]
 
-import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { createRequire } from "node:module";
-import { createServer } from "node:net";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium, webkit } from "playwright";
+import { startServer, stopServer } from "./lib/next-server.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const NEXT_BIN = createRequire(import.meta.url).resolve("next/dist/bin/next");
 const ENGINES = { chromium, webkit };
 const VIEWPORT = { width: 1280, height: 800 };
 
@@ -37,66 +34,6 @@ function parseArgs(argv) {
   }
   for (const b of out.browsers) if (!ENGINES[b]) throw new Error(`unknown browser: ${b}`);
   return out;
-}
-
-// ── next start ──────────────────────────────────────────────────────────
-
-function freePort() {
-  return new Promise((resolve, reject) => {
-    const probe = createServer();
-    probe.on("error", reject);
-    probe.listen(0, "127.0.0.1", () => {
-      const { port } = probe.address();
-      probe.close(() => resolve(port));
-    });
-  });
-}
-
-// Its own process group off Windows, so stopping it also stops anything it spawned.
-const GROUP = process.platform !== "win32";
-
-async function startServer() {
-  const port = await freePort();
-  const child = spawn(process.execPath, [NEXT_BIN, "start", "-p", String(port), "-H", "127.0.0.1"], {
-    cwd: root,
-    stdio: ["ignore", "pipe", "pipe"],
-    detached: GROUP,
-  });
-  let log = "";
-  child.stdout.on("data", (d) => (log += d));
-  child.stderr.on("data", (d) => (log += d));
-  const base = `http://127.0.0.1:${port}`;
-  const deadline = Date.now() + 30000;
-  for (;;) {
-    if (child.exitCode !== null) throw new Error(`next start exited with ${child.exitCode}:\n${log}`);
-    try {
-      if ((await fetch(base)).ok) return { child, base };
-    } catch {
-      // not listening yet
-    }
-    if (Date.now() > deadline) {
-      await stopServer(child);
-      throw new Error(`next start did not answer within 30 s:\n${log}`);
-    }
-    await sleep(200);
-  }
-}
-
-function stopServer(child) {
-  if (!child || child.exitCode !== null || child.signalCode !== null) return Promise.resolve();
-  return new Promise((resolve) => {
-    child.once("exit", () => resolve());
-    const kill = (signal) => {
-      try {
-        if (GROUP) process.kill(-child.pid, signal);
-        else child.kill(signal);
-      } catch {
-        // already gone
-      }
-    };
-    kill("SIGTERM");
-    setTimeout(() => kill("SIGKILL"), 5000).unref();
-  });
 }
 
 // ── in the page ─────────────────────────────────────────────────────────
@@ -245,7 +182,7 @@ async function main() {
     });
   }
   try {
-    server = await startServer();
+    server = await startServer(root);
     for (const name of args.browsers) {
       browser = await ENGINES[name].launch();
       await checkBrowser(browser, server.base, (ok, what, detail) => {
