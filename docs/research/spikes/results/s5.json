@@ -1,0 +1,172 @@
+{
+ "spike": "S5",
+ "runs": [
+  {
+   "mode": "native",
+   "viewports": {
+    "1440x900": {
+     "scan": {
+      "n": 31,
+      "maxProgress": 0,
+      "maxPx": 0,
+      "p95Px": 0
+     },
+     "wheel": {
+      "n": 358,
+      "maxProgress": 0,
+      "maxPx": 0,
+      "p95Px": 0
+     },
+     "sameCallbackJump": {
+      "n": 3,
+      "maxProgress": 0.45833300000000005,
+      "maxPx": 825,
+      "p95Px": 750
+     }
+    },
+    "1280x720": {
+     "beforeRefresh": {
+      "n": 5,
+      "maxProgress": 0.1,
+      "maxPx": 144,
+      "p95Px": 144
+     },
+     "refreshAfterMs": 251,
+     "scan": {
+      "n": 31,
+      "maxProgress": 0,
+      "maxPx": 0,
+      "p95Px": 0
+     },
+     "wheel": {
+      "n": 335,
+      "maxProgress": 0,
+      "maxPx": 0,
+      "p95Px": 0
+     }
+    },
+    "390x844": {
+     "beforeRefresh": {
+      "n": 5,
+      "maxProgress": 0,
+      "maxPx": 0,
+      "p95Px": 0
+     },
+     "refreshAfterMs": 0,
+     "scan": {
+      "n": 31,
+      "maxProgress": 0,
+      "maxPx": 0,
+      "p95Px": 0
+     },
+     "wheel": {
+      "n": 348,
+      "maxProgress": 0,
+      "maxPx": 0,
+      "p95Px": 0
+     }
+    }
+   },
+   "contentAbove": {
+    "grewBy": 300,
+    "beforeRefresh": {
+     "n": 21,
+     "maxProgress": 0.166667,
+     "maxPx": 300,
+     "p95Px": 300
+    },
+    "autoRefreshed": false,
+    "afterRefresh": {
+     "n": 21,
+     "maxProgress": 0,
+     "maxPx": 0,
+     "p95Px": 0
+    }
+   }
+  },
+  {
+   "mode": "lenis",
+   "viewports": {
+    "1440x900": {
+     "scan": {
+      "n": 31,
+      "maxProgress": 0,
+      "maxPx": 0,
+      "p95Px": 0
+     },
+     "wheel": {
+      "n": 412,
+      "maxProgress": 0,
+      "maxPx": 0,
+      "p95Px": 0
+     },
+     "sameCallbackJump": {
+      "n": 3,
+      "maxProgress": 0.45833300000000005,
+      "maxPx": 825,
+      "p95Px": 750
+     }
+    },
+    "1280x720": {
+     "beforeRefresh": {
+      "n": 5,
+      "maxProgress": 0.1,
+      "maxPx": 144,
+      "p95Px": 144
+     },
+     "refreshAfterMs": 86,
+     "scan": {
+      "n": 31,
+      "maxProgress": 0,
+      "maxPx": 0,
+      "p95Px": 0
+     },
+     "wheel": {
+      "n": 326,
+      "maxProgress": 0,
+      "maxPx": 0,
+      "p95Px": 0
+     }
+    },
+    "390x844": {
+     "beforeRefresh": {
+      "n": 5,
+      "maxProgress": 0,
+      "maxPx": 0,
+      "p95Px": 0
+     },
+     "refreshAfterMs": 1,
+     "scan": {
+      "n": 31,
+      "maxProgress": 0,
+      "maxPx": 0,
+      "p95Px": 0
+     },
+     "wheel": {
+      "n": 350,
+      "maxProgress": 0,
+      "maxPx": 0,
+      "p95Px": 0
+     }
+    }
+   },
+   "contentAbove": {
+    "grewBy": 300,
+    "beforeRefresh": {
+     "n": 21,
+     "maxProgress": 0.166667,
+     "maxPx": 300,
+     "p95Px": 300
+    },
+    "autoRefreshed": false,
+    "afterRefresh": {
+     "n": 21,
+     "maxProgress": 0,
+     "maxPx": 0,
+     "p95Px": 0
+    }
+   }
+  }
+ ],
+ "version": "153.0.8010.12"
+}

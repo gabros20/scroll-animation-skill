@@ -1,0 +1,474 @@
+{
+ "spike": "S2",
+ "runs": [
+  {
+   "mode": "native",
+   "rep": 0,
+   "info": {
+    "vh": 720,
+    "H": {
+     "intro": 900,
+     "range": 1800,
+     "sticky": 200,
+     "gap": 400,
+     "view": 100,
+     "target": 300,
+     "gap2": 600,
+     "io": 200,
+     "outro": 1200
+    },
+    "targetDocTop": 3600,
+    "viewTimelineOnTarget": 0,
+    "wrapperStyle": {
+     "position": "static",
+     "overflow": "visible"
+    },
+    "contentTransform": "none"
+   },
+   "frameInterval": {
+    "n": 580,
+    "max": 33.3,
+    "p95": 16.7,
+    "median": 16.7,
+    "mean": 16.695
+   },
+   "smoothLagPx": {
+    "n": 0
+   },
+   "sticky": {
+    "framesInZone": 60,
+    "maxAbsStickyTop": 0,
+    "maxAbsStickyTopMinusRangeTop": 1500,
+    "sticks": true
+   },
+   "view": {
+    "progressRange": [
+     0,
+     1
+    ],
+    "visualRange": [
+     0,
+     1
+    ],
+    "maxAbsErrVsVisual": 0
+   },
+   "motion": {
+    "samples": 189,
+    "motionVsScrollTrigger": {
+     "n": 189,
+     "max": 0,
+     "p95": 0,
+     "median": 0,
+     "mean": 0
+    },
+    "motionVsVisual": {
+     "n": 189,
+     "max": 0,
+     "p95": 0,
+     "median": 0,
+     "mean": 0
+    },
+    "motionVsUnsmoothedLayout": {
+     "n": 189,
+     "max": 0,
+     "p95": 0,
+     "median": 0,
+     "mean": 0
+    },
+    "scrollTriggerVsVisual": {
+     "n": 189,
+     "max": 0,
+     "p95": 0,
+     "median": 0,
+     "mean": 0
+    },
+    "atRestMotionVsScrollTriggerPx": 0,
+    "unit": "px of the target range (progress diff x (vh + target height))"
+   },
+   "io": {
+    "visualEntry": {
+     "t": 4664.5,
+     "ioTop": 700,
+     "scrollY": 3800
+    },
+    "unsmoothedLayoutEntry": {
+     "t": 4664.5,
+     "scrollY": 3800
+    },
+    "ioEnter": {
+     "rectTopAtFire": 700,
+     "framesAfterVisualEntry": 0,
+     "scrollYAtFire": 3800
+    },
+    "motionEnter": {
+     "rectTopAtFire": 700,
+     "framesAfterVisualEntry": 0,
+     "scrollYAtFire": 3800
+    },
+    "ioLeave": {
+     "rectTopAtFire": 800
+    },
+    "events": [
+     "io-enter",
+     "motion-enter",
+     "io-leave",
+     "motion-leave"
+    ]
+   }
+  },
+  {
+   "mode": "native",
+   "rep": 1,
+   "info": {
+    "vh": 720,
+    "H": {
+     "intro": 900,
+     "range": 1800,
+     "sticky": 200,
+     "gap": 400,
+     "view": 100,
+     "target": 300,
+     "gap2": 600,
+     "io": 200,
+     "outro": 1200
+    },
+    "targetDocTop": 3600,
+    "viewTimelineOnTarget": 0,
+    "wrapperStyle": {
+     "position": "static",
+     "overflow": "visible"
+    },
+    "contentTransform": "none"
+   },
+   "frameInterval": {
+    "n": 578,
+    "max": 16.8,
+    "p95": 16.8,
+    "median": 16.7,
+    "mean": 16.666
+   },
+   "smoothLagPx": {
+    "n": 0
+   },
+   "sticky": {
+    "framesInZone": 60,
+    "maxAbsStickyTop": 0,
+    "maxAbsStickyTopMinusRangeTop": 1500,
+    "sticks": true
+   },
+   "view": {
+    "progressRange": [
+     0,
+     1
+    ],
+    "visualRange": [
+     0,
+     1
+    ],
+    "maxAbsErrVsVisual": 0
+   },
+   "motion": {
+    "samples": 188,
+    "motionVsScrollTrigger": {
+     "n": 188,
+     "max": 0,
+     "p95": 0,
+     "median": 0,
+     "mean": 0
+    },
+    "motionVsVisual": {
+     "n": 188,
+     "max": 0,
+     "p95": 0,
+     "median": 0,
+     "mean": 0
+    },
+    "motionVsUnsmoothedLayout": {
+     "n": 188,
+     "max": 0,
+     "p95": 0,
+     "median": 0,
+     "mean": 0
+    },
+    "scrollTriggerVsVisual": {
+     "n": 188,
+     "max": 0,
+     "p95": 0,
+     "median": 0,
+     "mean": 0
+    },
+    "atRestMotionVsScrollTriggerPx": 0,
+    "unit": "px of the target range (progress diff x (vh + target height))"
+   },
+   "io": {
+    "visualEntry": {
+     "t": 15914,
+     "ioTop": 700,
+     "scrollY": 3800
+    },
+    "unsmoothedLayoutEntry": {
+     "t": 15914,
+     "scrollY": 3800
+    },
+    "ioEnter": {
+     "rectTopAtFire": 700,
+     "framesAfterVisualEntry": 0,
+     "scrollYAtFire": 3800
+    },
+    "motionEnter": {
+     "rectTopAtFire": 700,
+     "framesAfterVisualEntry": 0,
+     "scrollYAtFire": 3800
+    },
+    "ioLeave": {
+     "rectTopAtFire": 800
+    },
+    "events": [
+     "io-enter",
+     "motion-enter",
+     "io-leave",
+     "motion-leave"
+    ]
+   }
+  },
+  {
+   "mode": "smoother",
+   "rep": 0,
+   "info": {
+    "vh": 720,
+    "H": {
+     "intro": 900,
+     "range": 1800,
+     "sticky": 200,
+     "gap": 400,
+     "view": 100,
+     "target": 300,
+     "gap2": 600,
+     "io": 200,
+     "outro": 1200
+    },
+    "targetDocTop": 3600,
+    "viewTimelineOnTarget": 0,
+    "wrapperStyle": {
+     "position": "fixed",
+     "overflow": "hidden"
+    },
+    "contentTransform": "matrix(1, 0, 0, 1, 0, 0)"
+   },
+   "frameInterval": {
+    "n": 579,
+    "max": 33.3,
+    "p95": 16.8,
+    "median": 16.7,
+    "mean": 16.695
+   },
+   "smoothLagPx": {
+    "n": 580,
+    "max": 266.721,
+    "p95": 240.542,
+    "median": 42.631,
+    "mean": 93.384
+   },
+   "sticky": {
+    "framesInZone": 64,
+    "maxAbsStickyTop": 1583.686,
+    "maxAbsStickyTopMinusRangeTop": 0,
+    "sticks": false
+   },
+   "view": {
+    "progressRange": [
+     0,
+     0
+    ],
+    "visualRange": [
+     0,
+     1
+    ],
+    "maxAbsErrVsVisual": 0.985
+   },
+   "motion": {
+    "samples": 182,
+    "motionVsScrollTrigger": {
+     "n": 182,
+     "max": 243.945,
+     "p95": 239.421,
+     "median": 28.477,
+     "mean": 87.157
+    },
+    "motionVsVisual": {
+     "n": 182,
+     "max": 243.945,
+     "p95": 239.421,
+     "median": 28.477,
+     "mean": 87.157
+    },
+    "motionVsUnsmoothedLayout": {
+     "n": 182,
+     "max": 0,
+     "p95": 0,
+     "median": 0,
+     "mean": 0
+    },
+    "scrollTriggerVsVisual": {
+     "n": 182,
+     "max": 0,
+     "p95": 0,
+     "median": 0,
+     "mean": 0
+    },
+    "atRestMotionVsScrollTriggerPx": 2.179,
+    "unit": "px of the target range (progress diff x (vh + target height))"
+   },
+   "io": {
+    "visualEntry": {
+     "t": 4792.9,
+     "ioTop": 715.44,
+     "scrollY": 4000
+    },
+    "unsmoothedLayoutEntry": {
+     "t": 4643,
+     "scrollY": 3800
+    },
+    "ioEnter": {
+     "rectTopAtFire": 715.44,
+     "framesAfterVisualEntry": 0,
+     "scrollYAtFire": 4000
+    },
+    "motionEnter": {
+     "rectTopAtFire": 715.44,
+     "framesAfterVisualEntry": 0,
+     "scrollYAtFire": 4000
+    },
+    "ioLeave": {
+     "rectTopAtFire": 730.706
+    },
+    "events": [
+     "io-enter",
+     "motion-enter",
+     "io-leave",
+     "motion-leave"
+    ]
+   }
+  },
+  {
+   "mode": "smoother",
+   "rep": 1,
+   "info": {
+    "vh": 720,
+    "H": {
+     "intro": 900,
+     "range": 1800,
+     "sticky": 200,
+     "gap": 400,
+     "view": 100,
+     "target": 300,
+     "gap2": 600,
+     "io": 200,
+     "outro": 1200
+    },
+    "targetDocTop": 3600,
+    "viewTimelineOnTarget": 0,
+    "wrapperStyle": {
+     "position": "fixed",
+     "overflow": "hidden"
+    },
+    "contentTransform": "matrix(1, 0, 0, 1, 0, 0)"
+   },
+   "frameInterval": {
+    "n": 582,
+    "max": 16.8,
+    "p95": 16.7,
+    "median": 16.7,
+    "mean": 16.666
+   },
+   "smoothLagPx": {
+    "n": 583,
+    "max": 266.721,
+    "p95": 240.268,
+    "median": 48.099,
+    "mean": 92.921
+   },
+   "sticky": {
+    "framesInZone": 66,
+    "maxAbsStickyTop": 1587.907,
+    "maxAbsStickyTopMinusRangeTop": 0,
+    "sticks": false
+   },
+   "view": {
+    "progressRange": [
+     0,
+     0
+    ],
+    "visualRange": [
+     0,
+     1
+    ],
+    "maxAbsErrVsVisual": 0.98
+   },
+   "motion": {
+    "samples": 182,
+    "motionVsScrollTrigger": {
+     "n": 182,
+     "max": 243.215,
+     "p95": 241.132,
+     "median": 25.157,
+     "mean": 87.023
+    },
+    "motionVsVisual": {
+     "n": 182,
+     "max": 243.215,
+     "p95": 241.132,
+     "median": 25.157,
+     "mean": 87.023
+    },
+    "motionVsUnsmoothedLayout": {
+     "n": 182,
+     "max": 0,
+     "p95": 0,
+     "median": 0,
+     "mean": 0
+    },
+    "scrollTriggerVsVisual": {
+     "n": 182,
+     "max": 0,
+     "p95": 0,
+     "median": 0,
+     "mean": 0
+    },
+    "atRestMotionVsScrollTriggerPx": 2.179,
+    "unit": "px of the target range (progress diff x (vh + target height))"
+   },
+   "io": {
+    "visualEntry": {
+     "t": 16042.5,
+     "ioTop": 714.969,
+     "scrollY": 4000
+    },
+    "unsmoothedLayoutEntry": {
+     "t": 15892.5,
+     "scrollY": 3800
+    },
+    "ioEnter": {
+     "rectTopAtFire": 714.969,
+     "framesAfterVisualEntry": 0,
+     "scrollYAtFire": 4000
+    },
+    "motionEnter": {
+     "rectTopAtFire": 714.969,
+     "framesAfterVisualEntry": 0,
+     "scrollYAtFire": 4000
+    },
+    "ioLeave": {
+     "rectTopAtFire": 730.317
+    },
+    "events": [
+     "io-enter",
+     "motion-enter",
+     "io-leave",
+     "motion-leave"
+    ]
+   }
+  }
+ ],
+ "version": "153.0.8010.12"
+}

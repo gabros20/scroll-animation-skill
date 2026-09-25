@@ -1,0 +1,32 @@
+{
+  "name": "scroll-animation-spikes-2026-09",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Phase 0 platform spikes (S1-S5) for scroll-animation v2. Results: ../spikes-2026-09.md",
+  "type": "module",
+  "scripts": {
+    "build": "vite build --logLevel warn",
+    "s1": "node run/s1.mjs",
+    "s2": "node run/s2.mjs",
+    "s3": "node run/s3.mjs",
+    "s4": "node run/s4.mjs",
+    "s5": "node run/s5.mjs",
+    "all": "npm run s1 && npm run s2 && npm run s3 && npm run s4 && npm run s5"
+  },
+  "dependencies": {
+    "@react-three/fiber": "9.8.1",
+    "gsap": "3.15.0",
+    "lenis": "1.3.26",
+    "motion": "13.4.4",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "jpeg-js": "0.4.4",
+    "playwright": "1.63.0",
+    "pngjs": "7.0.0",
+    "typescript": "5.9.3",
+    "vite": "7.3.6"
+  }
+}
