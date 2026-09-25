@@ -3,7 +3,7 @@
 
 import { existsSync } from 'node:fs'
 import { join, resolve as resolvePath } from 'node:path'
-import { checkFfmpeg, encodeLoop, encodeScrub, extractPoster, extractSequence, posterFor, probeVideo } from '../../lib/media.mjs'
+import { MediaRangeError, checkFfmpeg, encodeLoop, encodeScrub, extractPoster, extractSequence, formatFps, posterFor, probeVideo } from '../../lib/media.mjs'
 import { numFlag } from '../args.mjs'
 import { CliError, c, fail } from '../ui.mjs'
 
@@ -12,16 +12,21 @@ const SUBCOMMANDS = ['probe', 'scrub', 'loop', 'sequence', 'poster']
 export const MEDIA_USAGE = `scroll-animation media <command> <input> [--out <path>] [flags]
 
   media probe <input>
-      codec/profile, resolution, fps, duration, keyframes, max GOP, faststart, audio; verdicts
-      scrub-ready (all-intra or GOP <= 2) and web-safe (H.264 High/Main, yuv420p, faststart)
+      codec/profile, resolution, fps, duration, keyframes (and where, when few), max GOP,
+      faststart, audio; verdicts scrub-ready (all-intra or GOP <= 2) and web-safe (H.264
+      High/Main, yuv420p, faststart)
   media scrub <input> [--out] [--width px] [--crf 23] [--fps n] [--mobile width]
       all-intra H.264 for scrubbing (references/video.md §1) + a --mobile variant + a poster
-  media loop <input> [--out] [--width px] [--fps n] [--crf 23]
-      web-safe loop encode (normal GOP, faststart, no audio) + a poster
+  media loop <input> [--out] [--width px] [--fps n] [--crf 23] [--loop-from frame]
+      web-safe loop encode (one GOP, qcomp=1, faststart, no audio) + a poster; --loop-from N also
+      keys frame N for an intro-then-seam loop (references/video.md §10) and prints LoopVideo's
+      loopFromFrame/fps
   media sequence <input> --out <dir> [--frames 24] [--width px] [--quality 80] [--mobile-width px]
       N evenly spaced frames to <dir>/0001.webp… + manifest.json; --mobile-width adds <dir>/mobile/
   media poster <input> [--out] [--at 0]
-      one frame (webp, or jpg by --out's extension)`
+      one frame (webp, or jpg by --out's extension)
+
+  scrub and loop write <input>-scrub.mp4 / <input>-loop.mp4 next to the input unless --out is given.`
 
 function strFlag(flags, name, { required = false } = {}) {
   if (flags[name] === undefined) {
@@ -75,12 +80,20 @@ function runScrub(input, flags) {
 }
 
 function runLoop(input, flags) {
-  return encodeLoop(input, {
+  const options = {
     out: strFlag(flags, 'out'),
     width: posIntFlag(flags, 'width'),
     fps: posIntFlag(flags, 'fps'),
-    crf: numFlag(flags, 'crf', { def: 23, min: 0, max: 51, integer: true })
-  })
+    crf: numFlag(flags, 'crf', { def: 23, min: 0, max: 51, integer: true }),
+    loopFrom: posIntFlag(flags, 'loop-from')
+  }
+  try {
+    return encodeLoop(input, options)
+  } catch (err) {
+    // A seam frame the clip doesn't have is a usage error, like any other bad flag value.
+    if (err instanceof MediaRangeError) fail(`--loop-from: ${err.message}`, 2)
+    throw err
+  }
 }
 
 function runSequence(input, flags) {
@@ -104,7 +117,9 @@ function printProbe(p) {
   console.log(c.bold(p.path))
   console.log(`  codec        ${p.codec ?? 'unknown'}${p.profile ? ` (${p.profile})` : ''}, ${p.pixFmt ?? 'unknown pixel format'}`)
   console.log(`  resolution   ${p.width}x${p.height} @ ${p.fps.toFixed(2)}fps, ${p.duration.toFixed(2)}s`)
-  console.log(`  keyframes    ${p.keyframes}/${p.frames} frames, max GOP ${p.maxGop}${p.allIntra ? ' (all-intra)' : ''}`)
+  // Where the keyframes sit, when there are few enough to read (a loop's 0 and its seam, say).
+  const at = !p.allIntra && p.keyframes > 0 && p.keyframes <= 12 ? ` at ${p.keyframeIndices.join(', ')}` : ''
+  console.log(`  keyframes    ${p.keyframes}/${p.frames} frames${at}, max GOP ${p.maxGop}${p.allIntra ? ' (all-intra)' : ''}`)
   console.log(`  faststart    ${p.faststart === null ? 'unknown' : p.faststart ? 'yes' : 'no'}`)
   console.log(`  audio        ${p.audio ? 'yes' : 'no'}`)
   console.log(`  verdicts     ${p.verdicts.scrubReady ? c.green('scrub-ready') : c.dim('not scrub-ready')} · ${p.verdicts.webSafe ? c.green('web-safe') : c.dim('not web-safe')}`)
@@ -119,6 +134,10 @@ function printScrub(r) {
 function printLoop(r) {
   console.log(`${c.green('✓')} ${r.primary}`)
   console.log(`${c.green('✓')} ${r.poster} ${c.dim('(poster)')}`)
+  if (r.loopFrom === undefined) return
+  const fps = formatFps(r.fps)
+  console.log(`  keyframes at frames 0 and ${r.loopFrom} of ${r.frames}; pass the seam to LoopVideo:`)
+  console.log(`    loopFromFrame={${r.loopFrom}} fps={${fps}}   ${c.dim(`(GSAP: data-loop-from-frame="${r.loopFrom}" data-fps="${fps}")`)}`)
 }
 
 function formatBytes(n) {
