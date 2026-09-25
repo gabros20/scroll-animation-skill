@@ -1,0 +1,4 @@
+#!/usr/bin/env node
+// scroll-animation — the scroll-animation CLI. `scroll-animation help` for commands.
+import { run } from '../scripts/cli/index.mjs'
+await run(process.argv.slice(2))

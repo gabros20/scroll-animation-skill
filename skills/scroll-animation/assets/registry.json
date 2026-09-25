@@ -1,0 +1,472 @@
+{
+  "version": "1.0.0",
+  "blocks": {
+    "config": {
+      "summary": "The names and numbers every block reads (queries, header variable, scale units, measured curves, the pre-JS gate) and scaledPx for viewport-scaled layouts",
+      "clock": "none",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "agnostic": {
+          "files": [
+            "config.ts",
+            "scale.ts"
+          ],
+          "requires": [],
+          "packages": []
+        }
+      },
+      "reference": "references/preflight.md"
+    },
+    "base-css": {
+      "summary": "The base stylesheet: pre-JS gate and failsafe, Lenis's rules, reduced-motion scene collapse, print, typed custom properties",
+      "clock": "none",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "css": {
+          "files": [
+            "css/animation.css"
+          ],
+          "requires": [],
+          "packages": []
+        }
+      },
+      "reference": "references/accessibility.md"
+    },
+    "gsap-setup": {
+      "summary": "Registers GSAP once: ScrollTrigger, the measured eases, mobile resize handling, shared matchMedia conditions",
+      "clock": "none",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/setup.ts"
+          ],
+          "requires": [
+            "config"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        }
+      },
+      "reference": "references/scroll-authority.md"
+    },
+    "motion-provider": {
+      "summary": "LazyMotion strict + MotionConfig reducedMotion=\"user\" at the root of a Motion tree; marks the engine ready",
+      "clock": "none",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "motion": {
+          "files": [
+            "motion/MotionProvider.tsx"
+          ],
+          "requires": [
+            "config"
+          ],
+          "packages": [
+            "motion"
+          ]
+        }
+      },
+      "reference": "references/accessibility.md"
+    },
+    "scroll-authority": {
+      "summary": "One scroll owner per page: the handle, the <html data-scroll-authority> stamp, native scrolling as a handle",
+      "clock": "none",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "agnostic": {
+          "files": [
+            "smooth/authority.ts"
+          ],
+          "requires": [
+            "config"
+          ],
+          "packages": []
+        }
+      },
+      "reference": "references/scroll-authority.md"
+    },
+    "smooth-lenis": {
+      "summary": "Lenis as the scroll authority, driven by the page's clock (gsapDriver, motionDriver or rafDriver), with header-aware anchors",
+      "clock": "none",
+      "tier": "primitive",
+      "profiles": [
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "agnostic": {
+          "files": [
+            "smooth/lenis.ts"
+          ],
+          "requires": [
+            "scroll-authority"
+          ],
+          "packages": [
+            "lenis"
+          ]
+        }
+      },
+      "reference": "references/scroll-authority.md"
+    },
+    "smooth-smoother": {
+      "summary": "GSAP ScrollSmoother as the scroll authority, for GSAP-only pages that want data-speed and data-lag",
+      "clock": "none",
+      "tier": "primitive",
+      "profiles": [
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "agnostic": {
+          "files": [
+            "smooth/smoother.ts"
+          ],
+          "requires": [
+            "scroll-authority"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        }
+      },
+      "reference": "references/scroll-authority.md"
+    },
+    "smooth-react": {
+      "summary": "SmoothScroll: the scroll authority for one React route (native or Lenis), cleaned up on unmount and under Next's Activity",
+      "clock": "none",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "agnostic": {
+          "files": [
+            "smooth/SmoothScroll.tsx"
+          ],
+          "requires": [
+            "smooth-lenis"
+          ],
+          "packages": [
+            "react",
+            "lenis"
+          ]
+        }
+      },
+      "reference": "references/scroll-authority.md"
+    },
+    "v1-config": {
+      "summary": "v1 constants, eases and fluid helpers the v1 blocks import (replaced by config in v2)",
+      "clock": "none",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/config.ts",
+            "gsap/eases.ts",
+            "gsap/fluid.ts"
+          ],
+          "requires": [],
+          "packages": [
+            "gsap"
+          ]
+        },
+        "motion": {
+          "files": [
+            "motion/lib/constants.ts",
+            "motion/lib/fluid.ts",
+            "motion/hooks/useFluidUnit.ts"
+          ],
+          "requires": [],
+          "packages": [
+            "motion"
+          ]
+        }
+      },
+      "reference": "references/attribute-contract.md"
+    },
+    "gsap-css": {
+      "summary": "v1 GSAP resting states: hidden entrance variants, the load veil, the scrub scene's sticky geometry",
+      "clock": "none",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "css": {
+          "files": [
+            "css/animation.gsap.css"
+          ],
+          "requires": [],
+          "packages": []
+        }
+      },
+      "reference": "references/motion-architecture.md"
+    },
+    "stage": {
+      "summary": "The triggered entrance system: reveal groups, item variants and the page-load veil.",
+      "clock": "trigger",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/stage.ts",
+            "gsap/veil.ts"
+          ],
+          "requires": [
+            "base-css",
+            "gsap-css",
+            "v1-config"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        },
+        "motion": {
+          "files": [
+            "motion/components/Stage.tsx",
+            "motion/lib/transitions.ts",
+            "motion/lib/variants.ts",
+            "motion/lib/cx.ts"
+          ],
+          "requires": [
+            "base-css",
+            "v1-config"
+          ],
+          "packages": [
+            "motion"
+          ]
+        }
+      },
+      "reference": "references/motion-architecture.md"
+    },
+    "count-up": {
+      "summary": "A number that counts from 0 on first ~60% visibility.",
+      "clock": "trigger",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/countUp.ts"
+          ],
+          "requires": [
+            "v1-config"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        },
+        "motion": {
+          "files": [
+            "motion/components/CountUp.tsx"
+          ],
+          "requires": [],
+          "packages": [
+            "motion"
+          ]
+        }
+      },
+      "reference": "references/motion-architecture.md"
+    },
+    "fade-on-exit": {
+      "summary": "Fades a group out as it scrolls above the viewport; pairs with a pinned scene's riding copy.",
+      "clock": "scroll",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/fadeOnExit.ts"
+          ],
+          "requires": [],
+          "packages": []
+        },
+        "motion": {
+          "files": [
+            "motion/components/FadeOnExit.tsx"
+          ],
+          "requires": [],
+          "packages": [
+            "motion"
+          ]
+        }
+      },
+      "reference": "references/scroll-scenes.md"
+    },
+    "scrub-stage": {
+      "summary": "A pinned, scroll-scrubbed video scene with loop-scrub-loop playback.",
+      "clock": "media",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/scrubStage.ts",
+            "gsap/videoController.ts"
+          ],
+          "requires": [
+            "base-css",
+            "gsap-css",
+            "v1-config"
+          ],
+          "packages": []
+        },
+        "motion": {
+          "files": [
+            "motion/components/ScrubStage.tsx"
+          ],
+          "requires": [
+            "base-css",
+            "v1-config"
+          ],
+          "packages": [
+            "motion"
+          ]
+        }
+      },
+      "reference": "references/scroll-scenes.md"
+    },
+    "loop-video": {
+      "summary": "A plain in-view background video loop: starts on view, pauses off-screen, no scrub.",
+      "clock": "media",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/inViewLoopVideo.ts"
+          ],
+          "requires": [],
+          "packages": []
+        },
+        "motion": {
+          "files": [
+            "motion/components/InViewLoopVideo.tsx"
+          ],
+          "requires": [],
+          "packages": []
+        }
+      },
+      "reference": "references/video.md"
+    },
+    "header-theme": {
+      "summary": "Switches a transparent fixed header's ink to match the section scrolling under it.",
+      "clock": "scroll",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/headerTheme.ts"
+          ],
+          "requires": [],
+          "packages": []
+        },
+        "motion": {
+          "files": [
+            "motion/hooks/useHeaderTheme.ts",
+            "motion/hooks/header-theme.ts"
+          ],
+          "requires": [],
+          "packages": [
+            "motion"
+          ]
+        }
+      },
+      "reference": "references/header-theme.md"
+    },
+    "scroll-well": {
+      "summary": "A continuous scroll attractor that pulls its parent to a centred rest.",
+      "clock": "scroll",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/scrollPull.ts"
+          ],
+          "requires": [
+            "v1-config"
+          ],
+          "packages": []
+        },
+        "motion": {
+          "files": [
+            "motion/components/PullToCentre.tsx",
+            "motion/lib/scrollPull.ts"
+          ],
+          "requires": [
+            "v1-config"
+          ],
+          "packages": []
+        }
+      },
+      "reference": "references/scroll-scenes.md"
+    }
+  }
+}
