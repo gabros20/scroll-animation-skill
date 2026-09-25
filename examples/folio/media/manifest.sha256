@@ -1,0 +1,11 @@
+# SHA-256 of media-v1.tar.gz, the GitHub Release asset scripts/fetch-media.mjs
+# downloads and unpacks into public/media/. See "Media stays out of git" in
+# docs/designs/folio-art-direction.md.
+#
+# Populated once gabros20/scroll-animation-skill's `media-v1` release ships.
+# Until then this file holds the placeholder below, and fetch-media.mjs
+# refuses to run rather than guess.
+#
+# Real format, once filled in:
+# <64-hex-char sha256>  media-v1.tar.gz
+PENDING
