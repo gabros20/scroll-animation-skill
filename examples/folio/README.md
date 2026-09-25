@@ -8,8 +8,9 @@ scoped this skeleton is `.orchestrate/briefs/task-8-folio.md` at the repo root.
 Three profiles, one route each: `/` (Expressive), `/journal` + `/journal/[slug]` (Reading),
 `/lab` (Immersive), plus `/blocks`, the block catalogue and fixture host.
 
-This is currently a **structure-only skeleton**: real routes, headings and copy, no animation
-wired up yet. Every place a block will attach later is marked with a
+This is currently a **skeleton**: real routes, headings and copy, and the animation foundation
+wired in (the pre-JS gate, the base stylesheet, the Motion provider and each route's scroll
+authority), but no animation blocks yet. Every place a block will attach later is marked with a
 `{/* scroll-animation: ... */}` comment naming the block and the phase that adds it.
 
 ## Commands
@@ -20,6 +21,7 @@ pnpm dev      # http://localhost:3000
 pnpm build
 pnpm media    # fetch public/media/ from the media-v1 release (not published yet — see below)
 pnpm lint
+pnpm check:authority   # after pnpm build: each route's scroll authority, Chromium + WebKit
 ```
 
 ## Media
@@ -32,5 +34,13 @@ a broken image or video.
 
 ## Animation blocks
 
-`src/animation/` is where `node ../../skills/scroll-animation/bin/scroll-animation add <block>`
-copies blocks, once they exist (Phase 2 onward). It is empty now.
+`src/animation/` holds what `node ../../skills/scroll-animation/bin/scroll-animation add <block>`
+copied, with each file's hash in `src/animation/.scroll-animation.lock.json`. Add and update
+blocks with that command, not by hand. So far it holds the foundation: `config`, `base-css`,
+`gsap-setup`, `motion-provider`, `smooth-lenis` and `smooth-react`.
+
+The scroll authority is set per route group. `/` and `/lab` run Lenis on GSAP's ticker
+(`src/components/lenis-scroll.tsx`); `/journal` and `/blocks` keep native scrolling.
+`pnpm check:authority` starts `next start` and checks that each route stamps the right authority,
+that client navigation swaps it without leaving a second Lenis, and that a reload keeps the
+scroll position.

@@ -1,6 +1,7 @@
+import { LenisScroll } from "@/components/lenis-scroll";
+
 // scroll authority: native | lenis
-// this route: lenis (Expressive profile). Wired by the smooth-scroll block
-// in Phase 1b; this layout is a placeholder until then.
+// this route: lenis (Expressive profile), on GSAP's ticker.
 export default function ExpressiveLayout({ children }: LayoutProps<"/">) {
-  return <>{children}</>;
+  return <LenisScroll>{children}</LenisScroll>;
 }

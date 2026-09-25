@@ -29,6 +29,11 @@
   --folio-dark-bg: #17140f;
   --folio-dark-paper: #f5f1e8;
   --folio-dark-muted: #948c7c;
+
+  /* The sticky header's height. SiteHeader sizes itself from it, so the two
+     can't drift; animation.css reads it for scroll-padding-top, and the
+     animation blocks for anchor offsets and sticky tops. */
+  --header-h: 4.25rem;
 }
 
 @theme inline {

@@ -1,0 +1,20 @@
+{
+  "skillVersion": "1.0.0",
+  "dir": "src/animation",
+  "engines": [
+    "agnostic",
+    "css",
+    "gsap",
+    "motion"
+  ],
+  "files": {
+    "config.ts": "83ff17150c8cc8e2",
+    "scale.ts": "322b05138c6a47d1",
+    "css/animation.css": "d23084de69ffdf00",
+    "gsap/setup.ts": "974e090dcd7398d6",
+    "motion/MotionProvider.tsx": "68e3d30eb593279e",
+    "smooth/authority.ts": "51784bdfdad2a0b9",
+    "smooth/lenis.ts": "23a0c841adf48586",
+    "smooth/SmoothScroll.tsx": "746d41cf23e5307b"
+  }
+}

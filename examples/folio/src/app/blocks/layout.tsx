@@ -1,6 +1,8 @@
+import { SmoothScroll } from "@/animation/smooth/SmoothScroll";
+
 // scroll authority: native | lenis
 // this route: native. A fixture host and catalogue, not a profile page;
-// nothing on it needs smoothing. Placeholder until Phase 1b.
+// nothing on it needs smoothing.
 export default function BlocksLayout({ children }: LayoutProps<"/blocks">) {
-  return <>{children}</>;
+  return <SmoothScroll authority="native">{children}</SmoothScroll>;
 }
