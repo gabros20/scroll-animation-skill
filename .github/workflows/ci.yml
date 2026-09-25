@@ -19,3 +19,31 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm test
+
+  # Real-browser suites: the foundation (drivers in one tick, authority stamps, anchors, the pre-JS gate and
+  # failsafe, print) in Chromium and WebKit, the scene traces against the recorded v1 baseline, and the Folio
+  # example's per-route scroll authority through a production Next build.
+  browsers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run pretest
+      - run: npm run test:foundation
+      - run: npm run test:traces
+      - run: pnpm install --frozen-lockfile
+        working-directory: examples/folio
+      - run: pnpm build
+        working-directory: examples/folio
+      - run: pnpm exec playwright install chromium webkit
+        working-directory: examples/folio
+      - run: pnpm check:authority
+        working-directory: examples/folio

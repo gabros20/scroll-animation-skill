@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>foundation: pre-JS gate and failsafe</title>
+    <!-- tests/foundation.mjs replaces this with <script>GATE_SCRIPT</script>, taken from config.ts -->
+    <!--gate-script-->
+    <!-- animation.css's documented <noscript> rule for Motion's server-rendered inline styles -->
+    <noscript>
+      <style>
+        [data-stage-item], [data-reveal-item] { opacity: 1 !important; transform: none !important; }
+        [data-stage-veil], [data-reveal-veil] { display: none !important; }
+      </style>
+    </noscript>
+    <link rel="stylesheet" href="../../skills/scroll-animation/assets/css/animation.css" />
+    <link rel="stylesheet" href="./src/page.css" />
+    <style>
+      /* An engine's hidden entrance state, which only applies once the gate is on. */
+      html[data-animation='on'] [data-reveal-item] {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+    </style>
+  </head>
+  <body>
+    <p data-reveal-item id="gated">Hidden by the engine's CSS, which only applies under the gate.</p>
+    <p data-reveal-item id="inline" style="opacity: 0; transform: translateY(24px)">
+      Hidden by an inline style, the shape Motion server-renders for an entrance's initial state.
+    </p>
+    <script type="module" src="./src/gate.ts"></script>
+  </body>
+</html>

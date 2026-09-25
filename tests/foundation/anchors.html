@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>foundation: anchors under Lenis</title>
+    <style>
+      /* A calc(), so the check also covers resolving the variable by layout. 72px at a 16px root. */
+      :root {
+        --header-h: calc(3rem + 24px);
+      }
+      header {
+        position: fixed;
+        inset: 0 0 auto;
+        z-index: 1;
+        height: var(--header-h);
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        background: #222;
+      }
+      header a {
+        color: #fff;
+      }
+      #target {
+        height: 400px;
+        background: #fc9;
+      }
+    </style>
+  </head>
+  <body>
+    <header><a id="link" href="#target">To the target</a></header>
+    <main>
+      <div style="height: 1800px"></div>
+      <section id="target">Target</section>
+      <div style="height: 2400px"></div>
+    </main>
+    <script type="module" src="./src/anchors.ts"></script>
+  </body>
+</html>
