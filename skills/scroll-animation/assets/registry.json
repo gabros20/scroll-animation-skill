@@ -342,45 +342,8 @@
       },
       "reference": "references/scroll-scenes.md"
     },
-    "scrub-stage": {
-      "summary": "A pinned, scroll-scrubbed video scene with loop-scrub-loop playback.",
-      "clock": "media",
-      "tier": "primitive",
-      "profiles": [
-        "reading",
-        "expressive",
-        "immersive"
-      ],
-      "engines": {
-        "gsap": {
-          "files": [
-            "gsap/scrubStage.ts",
-            "gsap/videoController.ts"
-          ],
-          "requires": [
-            "base-css",
-            "gsap-css",
-            "v1-config"
-          ],
-          "packages": []
-        },
-        "motion": {
-          "files": [
-            "motion/components/ScrubStage.tsx"
-          ],
-          "requires": [
-            "base-css",
-            "v1-config"
-          ],
-          "packages": [
-            "motion"
-          ]
-        }
-      },
-      "reference": "references/scroll-scenes.md"
-    },
     "loop-video": {
-      "summary": "A plain in-view background video loop: starts on view, pauses off-screen, no scrub.",
+      "summary": "An in-view background video loop with a WCAG 2.2.2 pause control, live reduced-motion and Save-Data gating, a rejected-play fallback and Activity-safe hide/show",
       "clock": "media",
       "tier": "primitive",
       "profiles": [
@@ -391,17 +354,19 @@
       "engines": {
         "gsap": {
           "files": [
-            "gsap/inViewLoopVideo.ts"
+            "gsap/loop-video.ts"
           ],
           "requires": [],
           "packages": []
         },
         "motion": {
           "files": [
-            "motion/components/InViewLoopVideo.tsx"
+            "motion/LoopVideo.tsx"
           ],
           "requires": [],
-          "packages": []
+          "packages": [
+            "react"
+          ]
         }
       },
       "reference": "references/video.md"
@@ -467,6 +432,206 @@
         }
       },
       "reference": "references/scroll-scenes.md"
+    },
+    "scene-core": {
+      "summary": "A pinned scene's maths, engine-agnostic and DOM-free: bounds from px holds and a hysteresis ratio, the head/scrub/tail stepper, absolute mode for resumes, band progress, acts",
+      "clock": "scroll",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "agnostic": {
+          "files": [
+            "scene.ts"
+          ],
+          "requires": [],
+          "packages": []
+        }
+      },
+      "reference": "references/scroll-scenes.md"
+    },
+    "scene-css": {
+      "summary": "Pinned scene geometry for both engines (data-scene-root/pin/content/spacer/media/gutter/act): sticky 100lvh pin, the content pulled back over it, the reduced-motion collapse and print",
+      "clock": "scroll",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "css": {
+          "files": [
+            "css/scene.css"
+          ],
+          "requires": [
+            "base-css"
+          ],
+          "packages": []
+        }
+      },
+      "reference": "references/scroll-scenes.md"
+    },
+    "pinned-scene": {
+      "summary": "A pinned scene: sticky pin over a measured range, exact progress, head/scrub/tail modes per transition, warm/wake gating, rehydrate from scroll, acts made inert; GSAP pins with ScrollTrigger under ScrollSmoother",
+      "clock": "scroll",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "motion": {
+          "files": [
+            "motion/usePinnedScene.ts",
+            "motion/PinnedScene.tsx"
+          ],
+          "requires": [
+            "config",
+            "scene-core",
+            "scene-css"
+          ],
+          "packages": [
+            "motion",
+            "react"
+          ]
+        },
+        "gsap": {
+          "files": [
+            "gsap/pinned-scene.ts"
+          ],
+          "requires": [
+            "gsap-setup",
+            "scene-core",
+            "scene-css"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        }
+      },
+      "reference": "references/scroll-scenes.md"
+    },
+    "video-controller": {
+      "summary": "The decoder behind a scrubbed video (coalesced seeks, dt glide, rVFC loop wraps with late-callback and ended recovery, play watchdog, eviction recovery, tier sources) and the camera/backdrop framing maths",
+      "clock": "media",
+      "tier": "primitive",
+      "profiles": [
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "media": {
+          "files": [
+            "media/video-controller.ts",
+            "media/camera.ts"
+          ],
+          "requires": [
+            "config",
+            "scene-core"
+          ],
+          "packages": []
+        }
+      },
+      "reference": "references/video.md"
+    },
+    "scrub-video": {
+      "summary": "A scrubbed all-intra video on a pinned scene: head/tail loops or holds, glided handovers, a camera across the band, a backdrop ramp, desktop/mobile sources",
+      "clock": "media",
+      "tier": "primitive",
+      "profiles": [
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "motion": {
+          "files": [
+            "motion/ScrubVideo.tsx"
+          ],
+          "requires": [
+            "pinned-scene",
+            "video-controller"
+          ],
+          "packages": [
+            "motion",
+            "react"
+          ]
+        },
+        "gsap": {
+          "files": [
+            "gsap/scrub-video.ts"
+          ],
+          "requires": [
+            "pinned-scene",
+            "video-controller"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        }
+      },
+      "reference": "references/video.md"
+    },
+    "frame-sequence-core": {
+      "summary": "The canvas image-sequence player: manifest variants, compressed frames, a byte-budgeted decode window decoded in a worker, never finer than its frames, a still under reduced motion",
+      "clock": "media",
+      "tier": "primitive",
+      "profiles": [
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "media": {
+          "files": [
+            "media/frame-sequence.ts"
+          ],
+          "requires": [
+            "config"
+          ],
+          "packages": []
+        }
+      },
+      "reference": "references/video.md"
+    },
+    "frame-sequence": {
+      "summary": "An image sequence scrubbed on a canvas from a `media sequence` manifest, driven by any progress source (a pinned scene, a ScrollTrigger, a Motion value)",
+      "clock": "media",
+      "tier": "primitive",
+      "profiles": [
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "motion": {
+          "files": [
+            "motion/FrameSequence.tsx"
+          ],
+          "requires": [
+            "frame-sequence-core"
+          ],
+          "packages": [
+            "motion",
+            "react"
+          ]
+        },
+        "gsap": {
+          "files": [
+            "gsap/frame-sequence.ts"
+          ],
+          "requires": [
+            "frame-sequence-core",
+            "gsap-setup"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        }
+      },
+      "reference": "references/video.md"
     }
   }
 }
