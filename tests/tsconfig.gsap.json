@@ -11,5 +11,5 @@
     "noEmit": true,
     "isolatedModules": true
   },
-  "include": ["../scroll-animation/assets/gsap/**/*.ts"]
+  "include": ["../skills/scroll-animation/assets/gsap/**/*.ts"]
 }

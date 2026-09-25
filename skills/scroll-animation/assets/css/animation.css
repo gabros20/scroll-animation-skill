@@ -1,5 +1,5 @@
 /*
- * styles/animation/animation.css — scroll-animation's base layer, for both
+ * css/animation.css — scroll-animation's base layer, for both
  * engines: smooth-scroll setup, reduced motion's structural half, and the
  * one @property this system needs. The one import every project takes
  * (GSAP adds animation.gsap.css from the same folder). Include it once, after
@@ -41,7 +41,7 @@ html {
    a media query doesn't care which one was written last.
 
    !important is required on all rules here, for a reason narrower than
-   "beat the runway rules" above: the React port (assets/react-motion)
+   "beat the runway rules" above: the React port (assets/motion)
    writes [data-scrub-pin]'s sticky geometry as an inline style, and an
    inline style beats ANY non-!important stylesheet declaration regardless
    of selector specificity or source order. The GSAP port keys the same

@@ -18,7 +18,7 @@
 // Exit codes: 0 = no error-severity findings, 1 = at least one error-severity
 // finding, 2 = usage/invocation error.
 
-import { readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join, relative, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -37,7 +37,7 @@ skips node_modules/.git/.next/dist/build/.turbo/.cache/out).
 
 Options:
   --json          print { srcDir, findings } instead of the readable table
-  --selftest      run every rule against fixtures/audit/<rule-id>/{positive,negative}
+  --selftest      run every rule against tests/fixtures/audit/<rule-id>/{positive,negative} (repository only)
   -h, --help      print this message and exit
 
 Exit codes: 0 = no error-severity findings, 1 = at least one error-severity
@@ -343,7 +343,7 @@ const rules = [
       const why = 'This project is on a fluid scale, and this drawn travel distance is a fixed number. It is right at the 1440x900 reference and wrong everywhere else (1.6x too short at 2560x1440). Small entrance offsets (24-40px) may stay fixed; travel scales (references/fluid-interop.md §3).'
       const checks = [
         // GSAP tween vars: x: 600 / y: -240 (not xPercent/yPercent)
-        { re: /\b(?:x|y)\s*:\s*(-?\d+(?:\.\d+)?)(?![\w%.])/g, n: 1, fix: 'Use x: fluidValue(N) (assets/gsap/src/fluid.ts) with invalidateOnRefresh: true, or tween --scene-p and let CSS multiply: translate: calc(var(--scene-p) * N * var(--fluid)) 0.' },
+        { re: /\b(?:x|y)\s*:\s*(-?\d+(?:\.\d+)?)(?![\w%.])/g, n: 1, fix: 'Use x: fluidValue(N) (assets/gsap/fluid.ts) with invalidateOnRefresh: true, or tween --scene-p and let CSS multiply: translate: calc(var(--scene-p) * N * var(--fluid)) 0.' },
         // ScrollTrigger end/start offsets: '+=1800', 'top top+=120'
         { re: /\b(?:end|start)\s*:\s*['"`][^'"`]*?[+-]=\s*(\d+)(?!\s*%)[^'"`]*['"`]/g, n: 1, fix: 'Use end: fluidEnd(N), or a function: start: () => `top top+=${fluidPx(N)}`, with invalidateOnRefresh: true.' },
         // Motion useTransform output range with a big literal
@@ -521,7 +521,13 @@ function printTable(findings, root) {
 // ── selftest ────────────────────────────────────────────────────────────
 
 function selftest() {
-  const fixturesRoot = join(__dirname_, 'fixtures', 'audit')
+  // The fixtures are repository-only (tests/fixtures/audit/<rule-id>/): an
+  // installed skill has none, so say so and exit 2 instead of failing rules.
+  const fixturesRoot = join(__dirname_, '..', '..', '..', '..', 'tests', 'fixtures', 'audit')
+  if (!existsSync(fixturesRoot)) {
+    console.error('[selftest] the audit fixtures live in the scroll-animation-skill repository (tests/fixtures/audit); run --selftest from a checkout.')
+    process.exit(2)
+  }
   let pass = 0
   let fail = 0
   let caseCount = 0

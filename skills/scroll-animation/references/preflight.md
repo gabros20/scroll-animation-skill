@@ -1,5 +1,7 @@
 # Preflight: settle the motion decisions before any code
 
+**Purpose:** Settle the motion decisions before code: engine, scroll scene, header, existing motion.
+
 **Read when:** starting any animation task, greenfield or brownfield.
 **Skip when:** a `MOTION.md` decision log already exists and the task stays inside its decisions.
 
@@ -8,6 +10,16 @@ Ask only when detection is inconclusive **and** the answer changes the output. P
 questions into one short batch; never ask one per turn. Record the answers in a short `MOTION.md` at
 the project root (or in `FLUID.md` if the `fluid-design` skill already keeps one there): the engine,
 the scene if there is one, the header behaviour, and what was decided about existing motion.
+
+**Inputs:** the project (package.json, source, existing motion).
+**Produces:** the decisions recorded in `MOTION.md`, with one batched question for what can't be inferred.
+
+## Contents
+
+1. [Detection pass (about two minutes, read-only)](#detection-pass-about-two-minutes-read-only)
+2. [The decisions](#the-decisions)
+3. [Phrasing the questions](#phrasing-the-questions)
+4. [Traps](#traps)
 
 ## Detection pass (about two minutes, read-only)
 
@@ -30,7 +42,7 @@ Default: **Motion (`motion/react`)** in React projects; **GSAP** otherwise, or w
 timeline-heavy choreography, SplitText-quality line reveals, or already runs GSAP.
 
 - Both engines ship the same primitives, attribute contract and measured curves
-  (`assets/react-motion/`, `assets/gsap/`).
+  (`assets/motion/`, `assets/gsap/`).
 - One engine per element. GSAP may enter a Motion site as a scoped island for one section
   (`motion-architecture.md` §13).
 - `framer-motion` in the deps is the same library; the primitives import `motion/react` (v12), so

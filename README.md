@@ -17,19 +17,19 @@ times. Nearly every rule in `references/` records the bug it prevents and the me
 ## What's inside
 
 ```
-scroll-animation/                  the skill: copy this folder into your skills directory
+skills/scroll-animation/           the skill: ./install.sh copies this folder into your skills directory
   SKILL.md                         workflow: preflight → triage by clock → foundation → entrances →
                                    the one scene → media → header theme → brownfield coexistence → verify
   references/                      the method and its reasons (preflight, motion architecture, scroll scenes,
                                    video, header theme, brownfield coexistence, iOS Safari motion,
                                    performance, verification, attribute contract, fluid interop)
   assets/
-    react-motion/                  React + Motion primitives: Stage/StageItem/StageVeil, CountUp, FadeOnExit,
+    motion/                  React + Motion primitives: Stage/StageItem/StageVeil, CountUp, FadeOnExit,
                                    ScrubStage, PullToCentre, InViewLoopVideo, useHeaderTheme, useFluidUnit
                                    (lib/fluid.ts: the fluid units as numbers)
     gsap/                          the same primitives for GSAP, framework-agnostic and attribute-driven,
                                    plus src/fluid.ts (fluidPx, fluidValue, fluidEnd) for scaled travel
-    styles/animation/                 the CSS → a project's src/styles/animation/ (beside fluid-design's
+    css/                 the CSS → a project's src/styles/animation/ (beside fluid-design's
                                    src/styles/fluid/): animation.css (both engines: smooth scroll,
                                    reduced-motion scene collapse, @property --fill and --scene-p) and
                                    animation.gsap.css (GSAP's pre-JS resting states)
@@ -46,9 +46,9 @@ tests/                             npm test: typechecks both engines, GSAP smoke
 
 ```bash
 # Claude Code (user-level)
-cp -r scroll-animation ~/.claude/skills/scroll-animation
+./install.sh claude            # or: codex, cursor, agents, all
 # or project-level
-cp -r scroll-animation .claude/skills/scroll-animation
+cp -r skills/scroll-animation .claude/skills/scroll-animation
 ```
 
 Then ask for what you want, for example "fade these sections in as they scroll into view", "pin the
@@ -56,7 +56,7 @@ hero and scrub the video with scroll", or "the reveal never fires on my phone". 
 short preflight (engine, any scroll scene, header behaviour, and on an existing site whether to keep,
 adapt or replace its current animation) and records the answers in `MOTION.md` in your project.
 
-To run the skill's own checks, run `npm test` in `tests/` (its README lists the prerequisites).
+To run the skill's own checks: `npm ci && npm run verify` from the repository root (ffmpeg and Playwright's Chromium are prerequisites; see CONTRIBUTING.md).
 
 ## The system in one paragraph
 

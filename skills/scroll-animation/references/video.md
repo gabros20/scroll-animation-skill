@@ -1,5 +1,7 @@
 # Video
 
+**Purpose:** Ship video that scrubs, loops or autoplays conditionally and survives tab sleep.
+
 **Read when:** you're shipping a `<video>` that scrubs with scroll, loops, autoplays conditionally,
 or needs to survive a tab going to sleep mid-scene. Also when a loop pops or stutters at its seam, or
 a scrub "feels like mud".
@@ -13,6 +15,9 @@ sits inside; `performance.md` §6 for the IntersectionObserver-gating budget eve
 Every number in this document was measured against a real asset, not assumed. The measurement
 techniques (PSNR seam-matching, motion-floor loop detection, colour-curve grading) are reusable:
 re-run them on a new asset rather than eyeballing a new one's loop point or gutter colour.
+
+**Inputs:** the source video and how it should behave.
+**Produces:** the encode, the playback wiring and the checks for the seam and the scrub.
 
 ## Contents
 
@@ -391,7 +396,7 @@ one press, picture and sound together, every time.
 **Muted, decorative loops** (no audio track, purely ambient motion) are the one case where autoplay
 is uncontroversial. Give them `muted playsInline` (iOS will not play inline without both) and gate
 them on an `IntersectionObserver` (§5) rather than firing at mount, so nothing plays off-screen.
-`scripts/audit-motion.mjs`'s `video-attrs` rule flags a video missing these.
+`scripts/tools/audit-motion.mjs`'s `video-attrs` rule flags a video missing these.
 
 If a control mirrors play/pause state in the UI, make the **element** the single source of truth
 and have the UI only mirror it. Every path that can change playback (a click, a refused programmatic
@@ -523,7 +528,7 @@ Practical notes that came out of using these on real assets:
 
 ## 14. The imperative controller
 
-`assets/react-motion/lib/videoController.ts` and its GSAP twin `assets/gsap/src/videoController.ts`
+`assets/motion/lib/videoController.ts` and its GSAP twin `assets/gsap/videoController.ts`
 isolate the WebKit hardening from the scroll and easing logic, so the state machine never touches
 the element directly. It tracks a single `desiredPlaying` intent (`play()` sets it,
 `pause()`/`reset()` clear it) and owns four fixes:

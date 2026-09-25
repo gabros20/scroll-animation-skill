@@ -1,5 +1,7 @@
 # Attribute contract
 
+**Purpose:** The exact names both engines share: `data-*` attributes, distance variables and motion constants.
+
 **Read when:** you need the exact, engine-neutral name of a `data-*` attribute, a CSS variable
 that carries a distance or scalar range, or a motion constant, checked against what actually ships
 rather than remembered.
@@ -9,9 +11,12 @@ fluid config keys, `--fluid*` custom properties, `fluid-*` utilities, `data-fit`
 the `fluid-design` skill's contract.
 **Depends on:** nothing. This is the leaf reference every other doc here cites for exact names.
 
-Every name below was checked against the shipped code in `assets/react-motion` and `assets/gsap`.
+Every name below was checked against the shipped code in `assets/motion` and `assets/gsap`.
 If a name here ever stops matching the code, the code is the source of truth: treat it as a doc bug
 on this page, not a bug in the primitive.
+
+**Inputs:** a name you need to write or check.
+**Produces:** the attribute, variable or constant, with its default and owner.
 
 ## Contents
 
@@ -73,7 +78,7 @@ verification harness. The **On** column calls out where an attribute is GSAP-onl
 | `data-fade-on-exit` | a group | GSAP-only: fades out as it scrolls above the viewport, tuned with `--exit-from`/`--exit-to`. React's `FadeOnExit` reads the same two CSS variables directly, no attribute needed |
 | `data-pull-to-centre` | a marker, first child of the box to attract | GSAP-only: optional `data-clamp` (selector), `data-threshold`, `data-threshold-lg`. React's `PullToCentre` takes `clamp`/`threshold`/`thresholdLg`/`disabled` props |
 | `data-scrub-stage` | a scroll scene's range wrapper | both engines: the outer element the scrub logic measures. React's `ScrubStage` always emits it |
-| `data-scrub-pin` | the sticky pinned layer, inside the range wrapper | both engines: CSS owns the pin's resting geometry (`assets/styles/animation/animation.gsap.css` for GSAP; `assets/styles/animation/animation.css`'s reduced-motion collapse for both). React's `ScrubStage` emits it on the `position: sticky` div; see the note below on why that div's other styles stay inline |
+| `data-scrub-pin` | the sticky pinned layer, inside the range wrapper | both engines: CSS owns the pin's resting geometry (`assets/css/animation.gsap.css` for GSAP; `assets/css/animation.css`'s reduced-motion collapse for both). React's `ScrubStage` emits it on the `position: sticky` div; see the note below on why that div's other styles stay inline |
 | `data-scrub-video` | the `<video>` inside the pin | GSAP-only: `data-src`/`data-mobile-src`, `poster`/`data-mobile-poster` drive tier selection; GSAP's `animation.gsap.css` also styles the box off this attribute. React's `ScrubStage` positions and sizes its `<video>` with an inline `style` and a `src` prop instead |
 | `data-scrub-gutter` | optional backdrop element, inside the pin | GSAP-only, on the DOM: painted from `backdropStops`. React's `ScrubStage` targets the same backdrop element with a `ref`, not an attribute |
 | `data-scrub-content` | the flow wrapper riding over the pin | both engines: cancels the pin's height contribution (a `-100lvh` margin); also the reduced-motion reset target (`margin-top: 0`). React's `ScrubStage` emits it on that wrapper div |
@@ -92,7 +97,7 @@ React's `ScrubStage` writes the pin's `position: sticky; top: 0; height: 100lvh;
 overflow: hidden` as an inline `style`, not through a class, because that geometry is load-bearing
 and framework-agnostic and must ship regardless of the host's styling system. An inline style beats
 **any** non-`!important` stylesheet declaration, regardless of selector specificity or source
-order, so the reduced-motion structural collapse in `assets/styles/animation/animation.css` declares its rules
+order, so the reduced-motion structural collapse in `assets/css/animation.css` declares its rules
 `!important`:
 
 ```css
@@ -121,8 +126,8 @@ only one of them is fighting an inline style to get there.
 
 ## 4. Motion constants (identical in both engines)
 
-Source of truth: `assets/react-motion/lib/transitions.ts` + `lib/constants.ts` + `lib/triggers.ts`
-+ `lib/scroll.ts` (React), mirrored in `assets/gsap/src/eases.ts` and `assets/gsap/src/config.ts`
+Source of truth: `assets/motion/lib/transitions.ts` + `lib/constants.ts` + `lib/triggers.ts`
++ `lib/scroll.ts` (React), mirrored in `assets/gsap/eases.ts` and `assets/gsap/config.ts`
 (GSAP; its CustomEase is bundled with the `gsap` package and free to use).
 
 - `entrance`: 1.3s, `cubic-bezier(0.15, 0.6, 0.2, 1)`. Measured, frame-fitted; do not turn it into

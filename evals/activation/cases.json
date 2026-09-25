@@ -1,0 +1,67 @@
+[
+  {
+    "id": "fade-in-on-scroll",
+    "prompt": "Make the feature cards fade and slide in as they scroll into view on our Next.js landing page.",
+    "should_trigger": true
+  },
+  {
+    "id": "pin-and-scrub-video",
+    "prompt": "Pin the hero section and scrub our product video as the reader scrolls, then let the page continue.",
+    "should_trigger": true
+  },
+  {
+    "id": "scrub-holds-first-frame",
+    "prompt": "The pinned video scene holds its first frame while I scroll and then snaps to the end. What's wrong?",
+    "should_trigger": true
+  },
+  {
+    "id": "header-ink-over-dark",
+    "prompt": "Our transparent fixed header should switch to white text over the dark sections as they scroll under it.",
+    "should_trigger": true
+  },
+  {
+    "id": "gsap-lenis-brownfield",
+    "prompt": "The site already runs GSAP ScrollTrigger and Lenis. Add one more scroll-driven section without breaking the existing timelines.",
+    "should_trigger": true
+  },
+  {
+    "id": "loop-video-pops",
+    "prompt": "Our background loop video pops at the seam every time it wraps and stutters on iPhone. Fix it.",
+    "should_trigger": true
+  },
+  {
+    "id": "reveals-never-fire-mobile",
+    "prompt": "Scroll reveals work on desktop but on phones the tall sections never appear.",
+    "should_trigger": true
+  },
+  {
+    "id": "explicit-invocation",
+    "prompt": "Use $scroll-animation to add entrance animations to the pricing page.",
+    "should_trigger": true
+  },
+  {
+    "id": "button-hover",
+    "prompt": "Add a springy hover and press animation to our primary buttons.",
+    "should_trigger": false
+  },
+  {
+    "id": "toast-enter-exit",
+    "prompt": "Animate our toast notifications in and out with a slide and fade.",
+    "should_trigger": false
+  },
+  {
+    "id": "fluid-type-scale",
+    "prompt": "Set up a fluid clamp() type scale so headings shrink smoothly between 375 and 1440 wide.",
+    "should_trigger": false
+  },
+  {
+    "id": "alpha-video-encode",
+    "prompt": "Encode this product render with a transparent background so it plays over our page in Safari and Chrome.",
+    "should_trigger": false
+  },
+  {
+    "id": "carousel",
+    "prompt": "Build a swipeable image carousel with dots and arrows for the testimonials.",
+    "should_trigger": false
+  }
+]

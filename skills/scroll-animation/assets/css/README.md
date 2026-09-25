@@ -15,14 +15,14 @@ Import order, after fluid-design's `fluid.css` and before the page's own CSS:
 /* globals.css — Tailwind v4 (React + Motion) */
 @import 'tailwindcss';
 @import '../styles/fluid/fluid.css';
-@import '../styles/animation/animation.css' layer(base);
+@import '../css/animation.css' layer(base);
 ```
 
 ```ts
 // main.ts — GSAP (Vite, plain CSS or SCSS)
 import './styles/fluid/fluid.css'
-import './styles/animation/animation.css'
-import './styles/animation/animation.gsap.css'
+import './css/animation.css'
+import './css/animation.gsap.css'
 ```
 
 Or with `<link>`: the same files in the same order, before any page content.

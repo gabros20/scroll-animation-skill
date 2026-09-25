@@ -21,12 +21,12 @@ skill's `references/` for the full note).
 
 ## Setup
 
-1. Include `animation.gsap.css` (in the skill's `assets/styles/animation/`, copied to
+1. Include `animation.gsap.css` (in the skill's `assets/css/`, copied to
    `src/styles/animation/` with `animation.css`) right after `animation.css`, before any page content:
 
    ```ts
-   import './styles/animation/animation.css'
-   import './styles/animation/animation.gsap.css'
+   import './css/animation.css'
+   import './css/animation.gsap.css'
    ```
 
    It gives every attribute below its pre-JS resting state, so nothing
@@ -50,7 +50,7 @@ skill's `references/` for the full note).
 
    ```ts
    import { initFluidMotion } from 'scroll-animation/gsap'
-   // or, from source: import { initFluidMotion } from './assets/gsap/src'
+   // or, from source: import { initFluidMotion } from './assets/gsap'
 
    const motion = initFluidMotion(document, {
      headerTheme: { header: 'header' }, // omit if the page has no themed header

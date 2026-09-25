@@ -1,5 +1,7 @@
 # Scroll scenes
 
+**Purpose:** Build pinned and scrubbed sections: pin geometry, progress, latches, direct writes, camera, scroll wells.
+
 **Read when:** you're building a pinned or scrubbed section (a `position: sticky` layer whose content
 changes as a function of scroll offset), a scroll well that pulls a section to rest, or copy sections
 that ride over a pinned render.
@@ -11,6 +13,9 @@ default; `fluid-interop.md` if the page is on a fluid scale.
 
 A scroll scene is the expensive, rare case: one per page in the reference build, against ~30
 triggered sections. Every rule here earns its keep by having broken something first.
+
+**Inputs:** the scene's design and act count.
+**Produces:** the range wrapper, the pin, the mode latch and the writers.
 
 ## Contents
 
@@ -354,7 +359,7 @@ composition) and any duration in milliseconds (a gesture doesn't get faster beca
 shorter).
 
 `behavior: 'instant'` on every write the well makes is load-bearing wherever the page also sets
-smooth-scroll behaviour globally (`assets/styles/animation/animation.css` does). Left to a smooth default, every
+smooth-scroll behaviour globally (`assets/css/animation.css` does). Left to a smooth default, every
 frame of the well's own loop would queue a new smooth animation against the one before it.
 
 **Trap: that same `instant` write cancels a smooth scroll the well did not start.** `instant`
@@ -402,7 +407,7 @@ gone unchanged for `SUSPEND_STABLE_MS` (150ms), the watcher clears the suspensio
 of `scrollend` support. This is what keeps a fast jump from sitting out the rest of a conservative
 fallback window on a browser that can't tell the well "the scroll is over" any other way.
 
-`scripts/audit-motion.mjs`'s `scroll-well-vs-smooth-scroll` rule flags (informationally, not as an
+`scripts/tools/audit-motion.mjs`'s `scroll-well-vs-smooth-scroll` rule flags (informationally, not as an
 error) a project that uses a scroll well alongside a page-wide `scroll-behavior: smooth`: a reminder
 that the two automatic listeners cover anchor clicks and `hashchange` only. A router navigation or an
 imperative `scrollIntoView` outside a click handler still needs an explicit `suspend()` call around
@@ -424,7 +429,7 @@ same small set of data attributes documented in `attribute-contract.md` (`data-s
 debug-marker stylesheet can hook the DOM without touching layout, and so the two animation engines
 expose an identical shape to tooling regardless of which one drives them.
 
-**Reduced motion's structural half lives in the base stylesheet (`assets/styles/animation/animation.css`), not in
+**Reduced motion's structural half lives in the base stylesheet (`assets/css/animation.css`), not in
 component logic:**
 
 ```css

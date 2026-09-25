@@ -1,0 +1,6 @@
+interface:
+  display_name: "Scroll Animation"
+  short_description: "Scroll-driven motion for editorial and creative sites"
+  default_prompt: "Use $scroll-animation to pin this section and scrub the product video as the reader scrolls."
+policy:
+  allow_implicit_invocation: true

@@ -1,5 +1,7 @@
 # Motion architecture
 
+**Purpose:** How to build an animated section: triage by clock, the entrance primitives, curves, reduced motion, SSR, and what was rejected.
+
 **Read when:** you're deciding how a new animated section should be built (a component, a copied
 pattern, or plain library calls), or reviewing whether an existing one follows the house rules.
 **Skip when:** you already know the shape you want and only need the pin and scroll mechanics (see
@@ -11,6 +13,9 @@ This document is the *why* behind a shipped system, generalised from one product
 "the reference build" throughout). Two full generations of a more ambitious system were built and
 deleted before this shape survived contact with ~30 real sections. The rules below exist because
 something broke first, not because they sounded right in a planning doc.
+
+**Inputs:** the section's design and the project's engine.
+**Produces:** the clock, the primitive and the variants to use, with the reasons.
 
 ## Contents
 
@@ -135,7 +140,7 @@ So the section stays a *server component* and only the animated leaves are clien
 images and icons never enter the client bundle.
 
 ```tsx
-// Motion — assets/react-motion/components/Stage.tsx et al.
+// Motion — assets/motion/components/Stage.tsx et al.
 <Stage trigger="view" className="flex flex-col gap-4">
   <StageItem variant="liftFade" className="[--hero-lift:20px] lg:[--hero-lift:24px]">
     <Eyebrow>Label</Eyebrow>
@@ -148,7 +153,7 @@ images and icons never enter the client bundle.
 ```
 
 ```html
-<!-- GSAP — assets/gsap/src -->
+<!-- GSAP — assets/gsap -->
 <div data-stage="view">
   <p data-stage-item data-variant="liftFade" style="opacity:0;transform:translateY(20px)">Label</p>
   <h2>
@@ -191,7 +196,7 @@ margin = '0px 0px -20% 0px'         // GSAP's `start: 'top 80%'`
 - **`amount` as a fraction is a trap on tall content.** `0.6` of an element taller than the viewport
   can *never* be satisfied, so the reveal never fires, silently, and only on the viewport where the
   same content stacks tall (usually mobile). Desktop is fine; the phone ships permanently blank.
-  Set the trigger line with `margin` and leave `amount` alone. (`scripts/audit-motion.mjs` flags
+  Set the trigger line with `margin` and leave `amount` alone. (`scripts/tools/audit-motion.mjs` flags
   this as `fractional-amount`.)
 - **`margin` shrinks the detection box** so a reveal fires when the element is properly on screen,
   not when it grazes the bottom edge. It must be a static string: the underlying
@@ -269,7 +274,7 @@ a child or wrapper of the stage item. Motion writes only `transform` and leaves 
 
 `entrance` (a 1.3s move on `cubic-bezier(0.15, 0.6, 0.2, 1)`) and `entranceFade` (a 0.17s linear
 fade, delayed 0.13s) are not chosen. They're fitted frame-by-frame against a reference capture (see
-`attribute-contract.md` §4 for the exact numbers, and `assets/react-motion/lib/transitions.ts` for
+`attribute-contract.md` §4 for the exact numbers, and `assets/motion/lib/transitions.ts` for
 the docblocked source of truth both engines share).
 
 Two things worth carrying into any project that adopts these tokens rather than re-measuring its
@@ -372,7 +377,7 @@ directly to `style` is not an animation (the runtime simply writes it), and a ha
 pinned scrub scene holds its opening loop's first frame and freezes its camera at the first shot; a
 scroll-fader pins its opacity to 1. Structure collapses too (release the pin, collapse the runway),
 and that half belongs in a plain `@media (prefers-reduced-motion: reduce)` block in the base
-stylesheet (`assets/styles/animation/animation.css`) rather than scattered as utility classes, because a utility
+stylesheet (`assets/css/animation.css`) rather than scattered as utility classes, because a utility
 collides with the runway utilities at equal specificity and which one wins becomes a build-order
 accident. Mechanics in `scroll-scenes.md` §10.
 

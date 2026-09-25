@@ -1,0 +1,61 @@
+[
+  {
+    "id": "new-entrances",
+    "prompt": "Add entrance animations to the landing page sections (React + Motion, no existing motion).",
+    "expected_references": [
+      "references/preflight.md",
+      "references/motion-architecture.md"
+    ],
+    "forbidden_references": [
+      "references/brownfield-coexistence.md",
+      "references/video.md"
+    ]
+  },
+  {
+    "id": "scrub-scene",
+    "prompt": "Build a pinned section that scrubs a product video with scroll.",
+    "expected_references": [
+      "references/preflight.md",
+      "references/scroll-scenes.md",
+      "references/video.md"
+    ],
+    "forbidden_references": [
+      "references/header-theme.md"
+    ]
+  },
+  {
+    "id": "header-ink",
+    "prompt": "The fixed header's text colour should follow the dark and light sections underneath.",
+    "expected_references": [
+      "references/header-theme.md"
+    ],
+    "forbidden_references": [
+      "references/video.md",
+      "references/scroll-scenes.md"
+    ]
+  },
+  {
+    "id": "existing-gsap-lenis",
+    "prompt": "The site already has GSAP ScrollTrigger and Lenis; add a pinned scene next to them.",
+    "expected_references": [
+      "references/preflight.md",
+      "references/brownfield-coexistence.md",
+      "references/scroll-scenes.md"
+    ],
+    "forbidden_references": [
+      "references/header-theme.md"
+    ]
+  },
+  {
+    "id": "iphone-video-freeze",
+    "prompt": "The scrubbed video freezes on iPhone after the toolbar collapses.",
+    "expected_references": [
+      "references/ios-safari-motion.md",
+      "references/video.md"
+    ],
+    "forbidden_references": [
+      "references/header-theme.md",
+      "references/brownfield-coexistence.md"
+    ]
+  }
+]

@@ -1,5 +1,7 @@
 # Header theme: ink that follows the section underneath
 
+**Purpose:** Switch a transparent fixed header's ink as dark and light sections scroll under it.
+
 **Read when:** a fixed or sticky header floats over the page without its own background and its
 text, logo or icons must switch between light and dark ink as sections scroll under it; or the
 header ink is wrong over some band ("the nav disappears over the dark section").
@@ -12,6 +14,9 @@ Header *sizing* (`--fluid-header-h`, the resting inset, safe areas) is layout an
 A transparent fixed header has no surface of its own, so its ink cannot belong to the page. A black
 nav pinned over a black section disappears. The header needs to know the declared ink of whichever
 section is under it, continuously, as the page scrolls.
+
+**Inputs:** the header element and the sections' themes.
+**Produces:** `data-header-theme` marks, the probe hook and one shared colour transition.
 
 ## Contents
 
@@ -88,7 +93,7 @@ function resolve(scroll: number) {
 
 Every themed part of the header (logo, links, triggers, hamburger, any scrolled surface) uses **one**
 colour transition, `transition-colors duration-200 ease-out` (`THEME_FADE` in
-`assets/react-motion/hooks/header-theme.ts`). The probe flips the theme the instant it crosses a
+`assets/motion/hooks/header-theme.ts`). The probe flips the theme the instant it crosses a
 boundary, so without a shared transition the bar hard-cuts from black ink to white mid-scroll.
 
 200ms is the compromise between a theme dissolve (which wants 300ms or more) and link hover (which
@@ -99,9 +104,9 @@ arriving on its own clock. And only one `transition-*` utility per element: two 
 
 ## 5. Wiring it
 
-- **React:** `useHeaderTheme(base, headerRef)` in `assets/react-motion/hooks/useHeaderTheme.ts`
+- **React:** `useHeaderTheme(base, headerRef)` in `assets/motion/hooks/useHeaderTheme.ts`
   returns `'light' | 'dark'`; map it to classes on the header.
-- **GSAP / vanilla:** `initHeaderTheme` in `assets/gsap/src/headerTheme.ts` (or
+- **GSAP / vanilla:** `initHeaderTheme` in `assets/gsap/headerTheme.ts` (or
   `initFluidMotion(document, { headerTheme: { header: 'header', base: 'light' } })`) writes
   `data-theme` on the header element, only when it changes. Style from `header[data-theme='dark']`.
 - The resolved theme is also a natural signal for anything else that must follow the page's

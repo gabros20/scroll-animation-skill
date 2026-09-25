@@ -18,7 +18,7 @@ const __dirname_ = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(__dirname_, '..')
 const smokeRoot = join(__dirname_, 'smoke-gsap')
 const outDir = join(__dirname_, '.scratch', 'smoke-dist')
-const verifyMotion = join(repoRoot, 'scroll-animation', 'scripts', 'verify-motion.mjs')
+const verifyMotion = join(repoRoot, 'skills', 'scroll-animation', 'scripts', 'tools', 'verify-motion.mjs')
 
 async function main() {
   console.log(`[run-smoke] building ${smokeRoot} -> ${outDir}`)

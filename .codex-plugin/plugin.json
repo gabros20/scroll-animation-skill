@@ -1,0 +1,41 @@
+{
+  "name": "scroll-animation-skill",
+  "version": "1.0.0",
+  "description": "Build, fix and review scroll-driven animation for editorial and creative websites: triggered entrances, pinned scroll scenes, scrubbed video and image sequences, layered visuals, page transitions, smooth scroll and Three.js scroll experiences, with GSAP, Motion, native CSS scroll timelines and WebGL, plus the performance, accessibility and verification discipline they need.",
+  "author": {
+    "name": "gabros20",
+    "url": "https://github.com/gabros20"
+  },
+  "homepage": "https://scroll-animation-skill.vercel.app",
+  "repository": "https://github.com/gabros20/scroll-animation-skill",
+  "license": "MIT",
+  "keywords": [
+    "agent-skill",
+    "scroll-animation",
+    "scroll-driven",
+    "gsap",
+    "scrolltrigger",
+    "motion",
+    "lenis",
+    "css-scroll-timelines",
+    "threejs",
+    "react-three-fiber",
+    "creative-coding",
+    "web-animation"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Scroll Animation",
+    "shortDescription": "Scroll-driven motion for editorial and creative sites",
+    "longDescription": "A motion system for editorial and creative websites. It sorts every animation by the clock that drives it (arrival, scroll, media or a render loop), picks the right engine for each job (CSS scroll timelines, Motion for React, GSAP timelines and plugins, Three.js/R3F), keeps one scroll authority per page (native, Lenis or ScrollSmoother), and ships tested, copy-and-own blocks: reveals, split text, pinned scenes, horizontal rails, scrubbed video, image sequences, page transitions and scroll-driven 3D. It carries the iOS Safari, video-encoding, accessibility and performance fixes this work needs, and a CLI that copies blocks, prepares media and verifies the result in a real browser.",
+    "developerName": "gabros20",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": [
+      "Use $scroll-animation to pin this section and scrub the product video as the reader scrolls.",
+      "Use $scroll-animation to add smooth scroll and split-text reveals to this GSAP landing page.",
+      "Use $scroll-animation to find out why the pinned scene jumps on iPhone."
+    ],
+    "brandColor": "#c2410c"
+  }
+}
