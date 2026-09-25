@@ -63,5 +63,40 @@
     "id": "carousel",
     "prompt": "Build a swipeable image carousel with dots and arrows for the testimonials.",
     "should_trigger": false
+  },
+  {
+    "id": "add-lenis-gsap",
+    "prompt": "Add smooth inertial scrolling to our GSAP landing page without breaking the ScrollTrigger pins.",
+    "should_trigger": true
+  },
+  {
+    "id": "smoother-data-speed",
+    "prompt": "Use ScrollSmoother so the gallery images parallax at different speeds with data-speed.",
+    "should_trigger": true
+  },
+  {
+    "id": "reduced-motion-scene",
+    "prompt": "Our pinned product scene is unusable with reduced motion turned on; readers scroll past a frozen frame for three screens.",
+    "should_trigger": true
+  },
+  {
+    "id": "lenis-motion-lag",
+    "prompt": "With Lenis on, our Motion useScroll parallax trails the page by a frame and looks like it's swimming.",
+    "should_trigger": true
+  },
+  {
+    "id": "modal-open-close",
+    "prompt": "Animate the settings modal opening and closing with a scale and fade.",
+    "should_trigger": false
+  },
+  {
+    "id": "r3f-product-configurator",
+    "prompt": "Build a React Three Fiber product configurator where people pick a colour and rotate the model.",
+    "should_trigger": false
+  },
+  {
+    "id": "layout-scale-figma",
+    "prompt": "Make the page match our 1440 Figma frame on every laptop size, scaling spacing and type with the viewport.",
+    "should_trigger": false
   }
 ]

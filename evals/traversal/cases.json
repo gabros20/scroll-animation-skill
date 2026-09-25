@@ -39,6 +39,7 @@
     "prompt": "The site already has GSAP ScrollTrigger and Lenis; add a pinned scene next to them.",
     "expected_references": [
       "references/preflight.md",
+      "references/scroll-authority.md",
       "references/brownfield-coexistence.md",
       "references/scroll-scenes.md"
     ],
@@ -55,6 +56,39 @@
     ],
     "forbidden_references": [
       "references/header-theme.md",
+      "references/brownfield-coexistence.md"
+    ]
+  },
+  {
+    "id": "add-smooth-scroll",
+    "prompt": "Add Lenis smooth scrolling to the home page only; the blog stays as it is. The site uses GSAP.",
+    "expected_references": [
+      "references/scroll-authority.md"
+    ],
+    "forbidden_references": [
+      "references/video.md",
+      "references/header-theme.md"
+    ]
+  },
+  {
+    "id": "reduced-motion-review",
+    "prompt": "Review our scroll scenes for reduced motion and keyboard access before launch.",
+    "expected_references": [
+      "references/accessibility.md"
+    ],
+    "forbidden_references": [
+      "references/video.md",
+      "references/brownfield-coexistence.md"
+    ]
+  },
+  {
+    "id": "debug-stale-scrub",
+    "prompt": "After I restarted the dev server the scrubbed video holds its first frame and then snaps to the end.",
+    "expected_references": [
+      "references/verification.md"
+    ],
+    "forbidden_references": [
+      "references/preflight.md",
       "references/brownfield-coexistence.md"
     ]
   }
