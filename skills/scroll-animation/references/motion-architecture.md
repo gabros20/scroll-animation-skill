@@ -5,8 +5,8 @@
 **Read when:** you're deciding how a new animated section should be built (a component, a copied
 pattern, or plain library calls), or reviewing whether an existing one follows the house rules.
 **Skip when:** you already know the shape you want and only need the pin and scroll mechanics (see
-`scroll-scenes.md`) or a video-specific trick (see `video.md`).
-**Depends on:** `attribute-contract.md` for exact names; `fluid-interop.md` for how entrance
+`scenes.md`) or a video-specific trick (see `video.md`).
+**Depends on:** `attribute-contract.md` for exact names; `scenes.md` §12 for how entrance
 distances relate to a fluid-scaled layout, if the project has one.
 
 This document is the *why* behind a shipped system, generalised from one production build (called
@@ -50,7 +50,7 @@ Generation 2's failure mode is more interesting because it looked right on paper
 `gsap.timeline()` equivalent, so build a container of time, and that's the whole job." It got built.
 The site that shipped needed **one** scroll-driven scene, and that one scene needed none of the
 compiler. It needed mode hysteresis, a frame-accurate media wrap, a handoff glide and a camera (all
-covered in `scroll-scenes.md` and `video.md`). The timeline layer solved a problem the build didn't
+covered in `scenes.md` and `video.md`). The timeline layer solved a problem the build didn't
 have.
 
 Generation 3 survives because every piece of it is **specific**: it names a job (an entrance, a
@@ -76,7 +76,7 @@ configurable range only when a real second breakpoint needed a different one, an
 variable rather than a prop.
 
 One pattern in the reference build sits at three consumers and is *still* a documented convention,
-not a component: the direct style write (§9 below, full mechanics in `scroll-scenes.md` §6). The
+not a component: the direct style write (§9 below, full mechanics in `scenes.md` §6). The
 three call sites share no code. One subscribes to a value and writes `opacity`, one writes four
 quantised custom properties from an rAF tick, one writes a composed transform string from two clocks
 at once. A helper general enough to cover all three would be longer and harder to read than any of
@@ -101,18 +101,18 @@ and it's what determines SSR behaviour, cost and which traps apply.
 Rules that follow directly:
 
 - **Trigger is the default. Scroll is a decision.** Promoting a section from trigger to scroll
-  costs a runway, a pin, a perf slot (see `performance.md`) and every trap in `scroll-scenes.md`.
+  costs a runway, a pin, a perf slot (see `performance.md`) and every trap in `scenes.md`.
   Do it when the reader should *drive* the motion, not because the motion is elaborate.
 - **Above the fold, trigger only.** A scroll-driven fade renders at progress 0 on the server, so it
   ships invisible HTML with no recovery path. A trigger serialises its hidden state into the markup
   and a load veil covers the hydration window (§12); a scroll value can do neither.
 - **One range wrapper per stack, never one per section.** Sections handing off to each other need a
-  shared ruler; per-section rulers can't express the overlap (`scroll-scenes.md` §1).
+  shared ruler; per-section rulers can't express the overlap (`scenes.md` §1).
 - **Only 1–3 scroll-driven scenes should intersect the viewport at once.** At forty animated
   sections this triage *is* the perf budget; see `performance.md` §3.
 - **Never demote a scroll scene to a trigger silently on mobile.** If mobile wants a different
   treatment, say so explicitly in the component, and note that "different" may mean *re-framed*
-  rather than removed (the camera pattern, `scroll-scenes.md` §7).
+  rather than removed (the camera pattern, `scenes.md` §7).
 
 And crossed with **what the unit is**, because that decides who owns the geometry:
 
@@ -210,7 +210,7 @@ rather than copied per section:
 | --- | --- | --- | --- |
 | `REVEAL_TRIGGER` | `0px 0px -20% 0px` | every below-the-fold section | the general default. It was `-35%` once, which read late on tall content |
 | `PAGE_END_TRIGGER` | `0px` | the last group on the page (footer) | a negative bottom margin draws the line *inside* the viewport, so something must scroll *across* it. The terminal screenful never does, and the scroll runs out first. Measured: nine footer items never fired under the general default at 1440×900; on a 1400px-tall viewport the nav columns starved too, because the taller the viewport the further down the page that line reaches. |
-| `AT_REST_TRIGGER` | `0px` | a group whose *resting* scroll position sits below the inset line | the second way the trap above bites, and not at the end of the page. A scroll well (`scroll-scenes.md` §8) gives a section a resting position, and content low in a section taller than the viewport never scrolls across an inset line at that rest state either |
+| `AT_REST_TRIGGER` | `0px` | a group whose *resting* scroll position sits below the inset line | the second way the trap above bites, and not at the end of the page. A scroll well (`scenes.md` §8) gives a section a resting position, and content low in a section taller than the viewport never scrolls across an inset line at that rest state either |
 
 The `AT_REST_TRIGGER` case was measured on a stat grid at its resting position. Its top, as a
 fraction of the viewport: 40% at 1440×900 (fine), 58% at 768×1024 (starved), 63% at 402×874, 77% at
@@ -246,7 +246,7 @@ in) and one that starts *below* it (a CTA lifting in) are the same mechanism wit
 which is what lets two elements converge on their design gap instead of sliding in as one block.
 Vary the value with a plain breakpoint utility and zero JS, and let the runtime resolve the `var()`
 at animation start. **Keep these distances in fixed px**, even on a fluid-scaled layout: engines
-resolve `var()` once, so a scaled offset goes stale on resize (`fluid-interop.md`). Set the property
+resolve `var()` once, so a scaled offset goes stale on resize (`scenes.md` §12). Set the property
 on the animated element itself, never on a shared ancestor (`performance.md` §8).
 
 One variant, `growY`/`growX`, is the sanctioned exception to "never animate layout properties". See
@@ -265,7 +265,7 @@ rather than fighting it for the one declaration.
 the element's CSS `translate`/`rotate`/`scale`, bakes them into its own `transform` and sets them
 to `none` inline. A plain percentage survives (as `xPercent`/`yPercent`), so `translate: -50% 0`
 centring on a `[data-stage-item]` still works. A px or `calc()` value, including every
-`fluid-translate-*` and any `--scene-p` drift (`fluid-interop.md` §3), is frozen at the moment of
+`fluid-translate-*` and any `--scene-p` drift (`scenes.md` §12), is frozen at the moment of
 the first tween and never updates again. Measured on a GSAP 3.15 build: every entrance-tweened
 element carried an inline `translate: none`. On the GSAP port, keep anything but a pure-% offset on
 a child or wrapper of the stage item. Motion writes only `transform` and leaves `translate` alone.
@@ -355,7 +355,7 @@ stagger that reads beautifully on a trackpad can be imperceptible on a fast flic
 from nothing. Scale from the trigger, not the centre (modals exempt). Press feedback:
 `scale(0.97)` on `:active`, 160ms ease-out. Keep spring bounce subtle (0.1–0.3). The site's own
 scroll spring is deliberately over-damped (ζ ≈ 1.37: stiffness 120, damping 30) because a scroll
-spring that overshoots crosses boundaries it shouldn't (`scroll-scenes.md` §5).
+spring that overshoots crosses boundaries it shouldn't (`scenes.md` §4).
 
 **Interruptibility:** CSS transitions interrupt and retarget mid-flight; keyframes restart from
 zero. For anything triggered rapidly, prefer transitions. Springs maintain velocity when
@@ -379,7 +379,7 @@ scroll-fader pins its opacity to 1. Structure collapses too (release the pin, co
 and that half belongs in a plain `@media (prefers-reduced-motion: reduce)` block in the base
 stylesheet (`assets/css/animation.css`) rather than scattered as utility classes, because a utility
 collides with the runway utilities at equal specificity and which one wins becomes a build-order
-accident. Mechanics in `scroll-scenes.md` §10.
+accident. Mechanics in `scenes.md` §10.
 
 Reduced motion means **gentler, not zero.** Keep opacity and colour transitions that aid
 comprehension; remove movement.
@@ -453,11 +453,11 @@ criteria, not a taste call). For a codebase that already runs GSAP, see `brownfi
 | A tier-3 visual timeline panel | Hundreds of lines, unproven; a scripted browser harness (`verification.md`) covers more, for less code. |
 | A visual timeline editor that owns state | The source file is the editing UI. A tool may emit source; it must never persist its own values. |
 | Adding a scroll-smoothing library (Lenis-class) | Its lerp reshapes the native velocity curve anything scroll-linked reads, and gains nothing on iOS touch. Smoothing belongs on effect *outputs* (a spring on a transform), never on the scroller. An *existing* one is a different question: `brownfield-coexistence.md` §4. |
-| A momentum-handoff spring fired at a scroll crossing | Needed velocity tracking, absorb/veto budgets and a rest-detection override to avoid feeling like a scroll lock, and still read as "the page waits for you to stop, then grabs you." See the continuous attractor in `scroll-scenes.md` §8 instead. |
+| A momentum-handoff spring fired at a scroll crossing | Needed velocity tracking, absorb/veto budgets and a rest-detection override to avoid feeling like a scroll lock, and still read as "the page waits for you to stop, then grabs you." See the continuous attractor in `scenes.md` §8 instead. |
 | Stacking the whole page as one scroll-driven narrative | Monotonous and expensive past 3–4 panels. |
 | Scroll-snap or any forced beat | The scroll belongs to the reader. |
 | A responsive value as one MotionValue per breakpoint | Builds N values per property per render and discards N−1. CSS variables cost nothing (§7). |
-| "Normalised 0..1 everywhere" | Right inside a scroll scene's own progress. Wrong universally: pixels for thresholds and tolerances, seconds for media, named state for machines (`scroll-scenes.md`). |
+| "Normalised 0..1 everywhere" | Right inside a scroll scene's own progress. Wrong universally: pixels for thresholds and tolerances, seconds for media, named state for machines (`scenes.md`). |
 | Cursor followers, WebGL added to fill out the system, horizontal scroll without a content reason, shared-element FLIP between sections | Not wanted; no problem they solved. |
 
 ## Traps
@@ -472,7 +472,7 @@ criteria, not a taste call). For a codebase that already runs GSAP, see `brownfi
   render).
 - [ ] No easing on an already scroll-driven value: that's double-easing (§10).
 - [ ] No spring output feeding a boolean/threshold test: it rings true/false/true as it settles.
-  Machines read raw progress (`scroll-scenes.md` §5).
+  Machines read raw progress (`scenes.md` §4).
 - [ ] No branching of element *type* on a client-only breakpoint hook (§12).
 - [ ] No hook called inside `.map()`: it only "works" while the array length never changes. Extract
   the child component.

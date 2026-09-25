@@ -36,8 +36,9 @@ First pick the lane, then the reference:
 | Any new page, site or motion system | [preflight.md](references/preflight.md) | profile, scroll authority per route, engines, budgets, layout scale, `ANIMATION.md` |
 | Smooth or inertial scroll; Lenis or ScrollSmoother already present; anchors or modals under a smoother | [scroll-authority.md](references/scroll-authority.md) | the owner per route, one clock, what each owner breaks |
 | Content that animates in (sections, cards, headlines, stats) | [motion-architecture.md](references/motion-architecture.md) | triage by clock, entrance wiring, trigger lines, measured curves, SSR |
-| A pinned or scrubbed section, a scroll well, copy riding over a pin | [scroll-scenes.md](references/scroll-scenes.md) | range wrapper, pin geometry, progress, latches, direct writes, camera |
-| Any `<video>`: scrub, loop, conditional autoplay | [video.md](references/video.md) | encoding, loop seams, seeks, preload tiers, posters, tab-sleep recovery |
+| A pinned or scrubbed section, stacked acts, a scroll well, copy riding over a pin | [scenes.md](references/scenes.md) | range wrapper, sticky or GSAP pin, acts, latches, manual writes, camera, scaled travel |
+| Any `<video>`: scrub, loop, conditional autoplay | [video.md](references/video.md) | encoding, loop seams, seeks, preload tiers, posters, serving, pause controls, tab-sleep recovery |
+| An image sequence on scroll (Apple-style), or Lottie or Rive driven by scroll | [sequences.md](references/sequences.md) | sequence or video, the frame manifest, decode window, byte budgets |
 | Reduced motion, auto-moving content, keyboard, split text, no-JS, print | [accessibility.md](references/accessibility.md) | the alternate scene per engine, pause controls, focus, screen readers |
 | A transparent fixed header over light and dark sections | [header-theme.md](references/header-theme.md) | the probe, the marks, one shared transition |
 | A site that already animates (header scripts, GSAP, Lenis, AOS) | [brownfield-coexistence.md](references/brownfield-coexistence.md) | keep, adapt or replace; one writer per property |
@@ -45,7 +46,7 @@ First pick the lane, then the reference:
 | Jank, budgets, before shipping | [performance.md](references/performance.md) | cost order, per-frame budgets, gating |
 | Proving it works; any "it doesn't fire / holds / snaps" | [verification.md](references/verification.md) | the harness, the scripts, device checks |
 | An exact attribute, CSS variable or constant name | [attribute-contract.md](references/attribute-contract.md) | the names both engines share |
-| A viewport-scaled layout (fluid-design or similar) | [fluid-interop.md](references/fluid-interop.md) | scaled travel, pin units, breakpoint and header sources |
+| A viewport-scaled layout (fluid-design or similar) | [preflight.md](references/preflight.md) §3.6 | breakpoint, header and unit sources; scaled travel is `scenes.md` §12 |
 
 ## Engine map
 
@@ -56,8 +57,10 @@ First pick the lane, then the reference:
 | scroll | copy fading as it leaves over a pin | `fade-on-exit` (motion, gsap) |
 | scroll | header ink per section | `header-theme` (motion, gsap) |
 | scroll | a section pulled to rest | `scroll-well` (motion, gsap; not under a smoother) |
-| media | a pinned, scrubbed video scene | `scrub-stage` (motion, gsap) |
-| media | an in-view background loop | `loop-video` (motion, gsap) |
+| scroll | a pinned scene: stacked acts, a scroll-driven timeline | `pinned-scene` (motion: `PinnedScene`; gsap: `pinnedScene`) |
+| media | a scrubbed video on a pinned scene | `scrub-video` (motion: `ScrubVideo`; gsap: `scrubVideo`) |
+| media | an image sequence scrubbed on a canvas | `frame-sequence` (motion: `FrameSequence`; gsap: `frameSequence`) |
+| media | an in-view background loop with a pause control | `loop-video` (motion: `LoopVideo`; gsap: `loopVideo`) |
 | — | scroll owner for a route | `smooth-lenis` + `smooth-react`, or `smooth-smoother` (GSAP-only pages) |
 | — | foundation | `config`, `base-css`, `gsap-setup` or `motion-provider` |
 

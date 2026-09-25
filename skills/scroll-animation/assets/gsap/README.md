@@ -1,179 +1,72 @@
-# scroll-animation / gsap
+# gsap: the GSAP blocks
 
-A framework-agnostic port of the scroll-animation motion system's behaviour,
-built on GSAP 3.13+ (CustomEase, all free since April 2025). Plain TypeScript
-modules, driven entirely by data attributes — works in Vite, Astro, a static
-page, or anything else that can run a script tag.
-
-This is a port of *behaviour*, not of the reference build's React
-components. If you are looking for the React/Motion version, see
-`../react-motion`.
-
-## Install
-
-```bash
-npm i gsap
-```
-
-Nothing else is required — CustomEase is bundled with the `gsap` package
-and is free to use (Webflow's "no charge" licence; see `SKILL.md`/the
-skill's `references/` for the full note).
+Plain TypeScript for GSAP pages: Vite, Astro, a static page, or React through `useGSAP`. Each v2 block is a function
+`(element, options)` that returns a handle with `destroy()`. Built on GSAP 3.15, where every plugin is free.
+`scroll-animation add <block>` copies a block with what it requires into `src/animation/`, in this layout.
 
 ## Setup
 
-1. Include `animation.gsap.css` (in the skill's `assets/css/`, copied to
-   `src/styles/animation/` with `animation.css`) right after `animation.css`, before any page content:
+1. `npm i gsap` (and `@gsap/react` in React).
+2. Call `setupGsap()` (`setup.ts`) once, client-side, before any block runs. It registers ScrollTrigger and the
+   measured eases, turns on `ignoreMobileResize` (an iOS toolbar isn't a layout change) and marks the engine ready.
+3. Import `css/animation.css`, then `css/scene.css` for pinned scenes, then `css/animation.gsap.css` only with the v1
+   entrance blocks below (`../css/README.md`).
+4. Mount per route: in React inside `useGSAP(() => …, { scope })`, on a vanilla page inside the route's
+   `mount(routeRoot)`, and call `destroy()` when the route goes away or is hidden.
 
-   ```ts
-   import './css/animation.css'
-   import './css/animation.gsap.css'
-   ```
+## The v2 blocks
 
-   It gives every attribute below its pre-JS resting state, so nothing
-   flashes the settled layout before the script below runs, and nothing is
-   permanently broken if JS never runs.
+| File | Block | Call | Reference |
+| --- | --- | --- | --- |
+| `pinned-scene.ts` | `pinned-scene` | `pinnedScene(root, options)`: exact progress, head/scrub/tail modes, acts made `inert`; `pin: 'gsap'` under ScrollSmoother | `references/scenes.md` |
+| `scrub-video.ts` | `scrub-video` | `scrubVideo(root, options)`: a pinned scene plus the video controller, camera and backdrop | `references/video.md` |
+| `frame-sequence.ts` | `frame-sequence` | `frameSequence(canvas, { manifest, trigger })` or `{ manifest, progress: () => p }` | `references/sequences.md` |
+| `loop-video.ts` | `loop-video` | `loopVideo(video, options)`, or `initLoopVideos(root)` over `[data-loop-video]`, with a WCAG 2.2.2 pause control | `references/video.md` |
+| `setup.ts` | `gsap-setup` | `setupGsap({ plugins })`, `MOTION_CONDITIONS`, `CONDITIONS`, `EASES` | `references/scroll-authority.md` |
 
-2. Ship the two `<noscript>` snippets `animation.gsap.css` calls out, next to the
-   elements they cover — one page using `[data-stage-item]` and
-   `[data-stage-veil]`:
+The engine-agnostic cores they drive sit one level up: `scene.ts`, `media/video-controller.ts`, `media/camera.ts` and
+`media/frame-sequence.ts`, shared with the Motion blocks.
 
-   ```html
-   <noscript>
-     <style>
-       [data-stage-item] { transform: none !important; opacity: 1 !important; }
-       [data-stage-veil] { display: none; }
-     </style>
-   </noscript>
-   ```
+- **Build ScrollTriggers on `MOTION_CONDITIONS` only.** When a `gsap.matchMedia` condition changes, GSAP 3.15 leaves
+  the page at scroll 0, so the breakpoint never goes in the conditions of a build that creates triggers; branch on
+  `isDesktop()` inside it. Create scenes outside your own `matchMedia` callbacks.
+- **Create scenes in page order** (or give `refreshPriority`), so ScrollTrigger refreshes them top to bottom.
+- **Scenes read a ScrollTrigger with no pin** on the range wrapper, which matches the wrapper's rect maths once
+  refreshed (spike S5), and keep it fresh with one shared ResizeObserver on `<body>`. On a ScrollSmoother page, where
+  CSS sticky can't work, pass `pin: 'gsap'` and ScrollTrigger pins instead.
+- **Reduced motion is live**: scenes rebuild through `gsap.matchMedia(MOTION_CONDITIONS)`; the frame sequence and the
+  loop follow the media query themselves.
+- **One scrubbed video live per page** (`references/performance.md` §3): a decoder seeking on nearly every scroll
+  frame, plus a per-frame loop while awake. Two acts that want two clips usually belong on one range wrapper, with
+  loops as sub-ranges of one continuous clip.
 
-3. Call the init function once, after the DOM you want wired is present:
+The reference build's camera numbers are not shipped: `camera` defaults to identity (a plain covering video). Measure
+your own (`references/scenes.md` §7, `references/video.md` §15).
 
-   ```ts
-   import { initFluidMotion } from 'scroll-animation/gsap'
-   // or, from source: import { initFluidMotion } from './assets/gsap'
+## The v1 attribute blocks
 
-   const motion = initFluidMotion(document, {
-     headerTheme: { header: 'header' }, // omit if the page has no themed header
-     scrubStage: (el) => (el.id === 'hero-scene' ? heroSceneOptions : undefined)
-   })
+`initFluidMotion(root, { countUp?, headerTheme? })` (`index.ts`) wires the v1 attribute blocks found under `root`:
+stages and the veil (`data-stage*`), count-ups (`data-count-up`), exit fades (`data-fade-on-exit`), the scroll well
+(`data-pull-to-centre`), v1's background loop (`inViewLoopVideo.ts`) and, when asked, the header theme. It is
+idempotent per root, so an HMR accept handler can call it again, and returns `{ destroy(), refresh() }`; `refresh()`
+doesn't reach pinned scenes, whose handles have their own. Call the individual `init*` exports when a page needs one
+block.
 
-   // Vite/webpack HMR: re-running initFluidMotion on the same root tears
-   // down the previous instance first, so this is safe to call again.
-   if (import.meta.hot) {
-     import.meta.hot.accept(() => motion.destroy())
-   }
-   ```
+Don't run `initFluidMotion` and `initLoopVideos` on one root: both wire every `[data-loop-video]`, so each video would
+get two controllers. Until v1's loop leaves the barrel, call the v1 `init*` functions you need one by one instead.
 
-`initFluidMotion` returns `{ destroy(), refresh() }`. It is idempotent per
-root — a second call on the same `root` (default `document`) tears the
-first one down before mounting again, which is what makes it HMR-safe.
-Everything it wires reads its own attribute selector; call the individual
-`init*` exports directly if you only need one primitive (e.g. a page with
-just count-up numbers has no reason to pull in `scrubStage.ts`'s cost).
+The attributes are in `references/attribute-contract.md` §3. Two things `animation.gsap.css` can't do for you:
 
-## The DOM attribute contract
+- **The load veil needs a background.** `[data-stage-veil]` is positioned and opaque but paints nothing, since the
+  colour is a page decision; without one the flash it exists to prevent is back.
+- **Centre a stage item with `translate`, not `transform`.** Every `[data-variant]` rule sets `transform`, so a
+  `transform: translateX(-50%)` on the same element is overwritten by the hidden state and again by the tween;
+  `translate: -50% 0` composes with it.
 
-Shared with `../react-motion` — `references/attribute-contract.md` §3. This is the whole surface
-area; there is no separate props API.
+## Differences from the Motion blocks
 
-| Attribute | On | Meaning |
-| --- | --- | --- |
-| `data-stage="view"\|"mount"` | a triggered entrance group | `view` fires on scroll-in, `mount` fires immediately |
-| `data-stage-margin` / `data-stage-margin-lg` | a stage | IntersectionObserver `rootMargin`; `-lg` overrides from `ENGAGE_QUERY` up, resolved once |
-| `data-stage-repeat` | a stage | presence replays the group on every re-entry instead of once |
-| `data-stage-item` | an item SSR'd/authored in its hidden state | required for `animation.gsap.css`'s hidden-state rules and the `<noscript>` override |
-| `data-variant` | a stage item | `drop \| settle \| settleFade \| lift \| liftFade \| growY \| growX` |
-| `data-delay` | a stage item | seconds after the stage fires |
-| `data-stage-veil` | the page-load overlay | self-driving; fades on mount regardless of any stage |
-| `data-count-up="<value>"` | a number | counts 0→value on first ~60% visible; static text must hold `<value>` |
-| `data-fade-on-exit` | a group | fades out as it scrolls above the viewport; tune with `--exit-from`/`--exit-to` |
-| `data-pull-to-centre` | a marker, first child of the box to attract | optional `data-clamp` (selector), `data-threshold`, `data-threshold-lg` |
-| `data-scrub-stage` | a scroll scene's range wrapper | the outer element `scrubStage.ts` measures |
-| `data-scrub-pin` | the sticky pinned layer, inside the range wrapper | CSS owns the pin; see `animation.gsap.css` |
-| `data-scrub-video` | the `<video>` inside the pin | `data-src`/`data-mobile-src`, `poster`/`data-mobile-poster` |
-| `data-scrub-gutter` | optional backdrop element, inside the pin | painted from `backdropStops` |
-| `data-scrub-content` | the flow wrapper riding over the pin | cancels the pin's height contribution |
-| `data-scrub-spacer` | an empty pacing act inside `data-scrub-content` | mark any act with no camera move or copy of its own so `animation.gsap.css`'s/`animation.css`'s reduced-motion collapse can zero its height, instead of leaving a blank band the length of that act. Author it by hand — neither engine infers it |
-| `data-motion-state` | a machine root (the scrub video) | current mode, written only on transition |
-| `data-header-theme="light"\|"dark"` | a section | what a themed header should read while this section is under it; `--header-theme` overrides per breakpoint |
-| `data-loop-video` | a background loop `<video>` | optional `data-loop-from-frame` + `data-fps` for the seam-loop policy |
-
-Distances live in CSS custom properties on the animated element —
-`--hero-drop`, `--hero-settle`, `--hero-lift` (signed lengths, `animation.gsap.css`
-reads them with the reference build's own defaults). Scalar ranges for
-`FadeOnExit` are `--exit-from`/`--exit-to`.
-
-## Two things `animation.gsap.css` cannot do for you
-
-- **The load veil needs a background from the page.** `[data-stage-veil]` is
-  positioned, `z-index`ed and set to `opacity: 1`, but it paints nothing —
-  the right colour is a page decision (a surface token), not this
-  stack-agnostic file's. Without one, the veil is an invisible fixed layer
-  and the flash it exists to prevent is back, silently: `<div
-  data-stage-veil class="bg-surface-dark">` (or an inline
-  `background-color`).
-- **Centring a stage item needs `translate`, not `transform`.** Every
-  `[data-variant]` rule in `animation.gsap.css` sets `transform`
-  (`translateY`/`scaleY`/`scaleX`), so `transform` is already spoken for on
-  any element carrying one. A `transform: translateX(-50%)` meant to centre
-  that same element is silently overwritten the instant the hidden-state
-  rule applies, and again by GSAP's own tween. Use the independent
-  `translate` property instead — `translate: -50% 0;` — which composes with
-  `transform` rather than fighting it for the one declaration.
-
-## One scroll-driven scene per page
-
-`scrubStage.ts` is real main-thread cost: a gated rAF loop, a per-frame
-transform write, a decoder held ready. `references/performance.md` §3
-sizes the whole system around
-**only 1–3 scroll-driven scenes intersecting the viewport at once** — in
-practice, on the reference build, exactly one per page. Everything else
-should be a triggered `[data-stage]`, which is close to free: it goes
-quiescent after firing and holds no per-frame subscription.
-
-If a page seems to want two independent scrubbed videos, that is usually a
-sign the two acts belong on one shared range wrapper instead (see
-`scrubStage.ts`'s docblock on why loops are sub-ranges of one continuous
-asset, not separate clips).
-
-## Module map
-
-| File | Job | React/Motion counterpart |
-| --- | --- | --- |
-| `src/eases.ts` | CustomEase registration + the `attribute-contract.md` §4 motion constants | `lib/transitions.ts`, `lib/constants.ts` |
-| `src/stage.ts` | Triggered entrances, IntersectionObserver-based | `components/Stage.tsx` |
-| `src/veil.ts` | The page-load overlay | `components/Stage.tsx`'s `StageVeil` |
-| `src/countUp.ts` | Counting numbers | `components/CountUp.tsx` |
-| `src/fadeOnExit.ts` | Manual scroll-linked group fade | `FadeOnExit.tsx` (reference build) |
-| `src/scrollPull.ts` | The scroll-well attractor, ported wholesale + a mount | `lib/scrollPull.ts` + `PullToCentre.tsx` |
-| `src/scrubStage.ts` | The one scroll-driven scene: pin, modes, camera, loops | `ScrubStage.tsx` |
-| `src/headerTheme.ts` | Resolves a fixed header's ink from the section beneath it | `hooks/useHeaderTheme.ts` |
-| `src/inViewLoopVideo.ts` | A gated background loop video | `InViewLoopVideo.tsx` (reference build) |
-| `src/videoController.ts` | Imperative `<video>` hardening, framework-free | `videoController.ts` (reference build) |
-| `src/index.ts` | `initFluidMotion()` — wires everything above at once | `MotionProvider.tsx` (mount point, not behaviour) |
-
-## What does NOT carry over 1:1
-
-- **GSAP has no spring-physics plugin.** `MOTION.indicator` (a critically
-  damped spring in the reference) is approximated with `power3.out` at the
-  same duration — retune by ear per use, it is not a measured fit the way
-  the three CustomEases are.
-- **`FadeOnExit`'s original bug (a WAAPI-promoted scroll-linked value
-  running backwards) is Motion-specific** — GSAP does not hand scroll-linked
-  values to the browser's native scroll-timeline API the way Motion can.
-  `fadeOnExit.ts` still writes `style.opacity` by hand, both because it is
-  the safer pattern regardless of engine and to keep one mental model
-  across both ports.
-- **The reference build's `ScrubStage` camera numbers (`SHOTS`, `SUBJECT`,
-  `CROP`, the backdrop colour stops) are that render's own measured
-  composition** and are not shipped here. `scrubStage.ts` defaults every
-  camera field to identity (a plain covering video, no pan/zoom) and grows
-  into the full camera once you supply your own measured `ScrubStageOptions`
-  — see `references/video.md` (posters, placement, encoding) and §15 (bringing your own asset)
-  for how those numbers get measured in the first place.
-- **Progress source for the scrub stage is a passive scroll listener + rAF,
-  not GSAP ScrollTrigger.** See the docblock at the top of `scrubStage.ts`'s
-  progress-source section for the reasoning (the pin is CSS `sticky`, not a
-  ScrollTrigger pin, and a second scroll-observation system alongside the
-  module's own IntersectionObserver-gated loop buys nothing a direct
-  `getBoundingClientRect` read doesn't already give).
+- **No spring plugin.** `MOTION.indicator` (a spring in Motion) is approximated with `power3.out` at the same
+  duration: retune it by ear; it isn't a measured fit like the three CustomEases.
+- **Scroll-linked values are written by hand** in both engines. The promotion bug that makes it necessary is
+  Motion-specific (GSAP never hands scroll-linked values to a native timeline), but one pattern in both engines keeps
+  one mental model.

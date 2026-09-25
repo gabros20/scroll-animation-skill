@@ -340,7 +340,7 @@
           ]
         }
       },
-      "reference": "references/scroll-scenes.md"
+      "reference": "references/scenes.md"
     },
     "loop-video": {
       "summary": "An in-view background video loop with a WCAG 2.2.2 pause control, live reduced-motion and Save-Data gating, a rejected-play fallback and Activity-safe hide/show",
@@ -431,7 +431,7 @@
           "packages": []
         }
       },
-      "reference": "references/scroll-scenes.md"
+      "reference": "references/scenes.md"
     },
     "scene-core": {
       "summary": "A pinned scene's maths, engine-agnostic and DOM-free: bounds from px holds and a hysteresis ratio, the head/scrub/tail stepper, absolute mode for resumes, band progress, acts",
@@ -451,7 +451,7 @@
           "packages": []
         }
       },
-      "reference": "references/scroll-scenes.md"
+      "reference": "references/scenes.md"
     },
     "scene-css": {
       "summary": "Pinned scene geometry for both engines (data-scene-root/pin/content/spacer/media/gutter/act): sticky 100lvh pin, the content pulled back over it, the reduced-motion collapse and print",
@@ -473,7 +473,7 @@
           "packages": []
         }
       },
-      "reference": "references/scroll-scenes.md"
+      "reference": "references/scenes.md"
     },
     "pinned-scene": {
       "summary": "A pinned scene: sticky pin over a measured range, exact progress, head/scrub/tail modes per transition, warm/wake gating, rehydrate from scroll, acts made inert; GSAP pins with ScrollTrigger under ScrollSmoother",
@@ -514,7 +514,7 @@
           ]
         }
       },
-      "reference": "references/scroll-scenes.md"
+      "reference": "references/scenes.md"
     },
     "video-controller": {
       "summary": "The decoder behind a scrubbed video (coalesced seeks, dt glide, rVFC loop wraps with late-callback and ended recovery, play watchdog, eviction recovery, tier sources) and the camera/backdrop framing maths",
@@ -595,7 +595,7 @@
           "packages": []
         }
       },
-      "reference": "references/video.md"
+      "reference": "references/sequences.md"
     },
     "frame-sequence": {
       "summary": "An image sequence scrubbed on a canvas from a `media sequence` manifest, driven by any progress source (a pinned scene, a ScrollTrigger, a Motion value)",
@@ -631,7 +631,7 @@
           ]
         }
       },
-      "reference": "references/video.md"
+      "reference": "references/sequences.md"
     }
   }
 }

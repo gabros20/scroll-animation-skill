@@ -16,7 +16,7 @@
     "prompt": "Build a pinned section that scrubs a product video with scroll.",
     "expected_references": [
       "references/preflight.md",
-      "references/scroll-scenes.md",
+      "references/scenes.md",
       "references/video.md"
     ],
     "forbidden_references": [
@@ -31,7 +31,7 @@
     ],
     "forbidden_references": [
       "references/video.md",
-      "references/scroll-scenes.md"
+      "references/scenes.md"
     ]
   },
   {
@@ -41,7 +41,7 @@
       "references/preflight.md",
       "references/scroll-authority.md",
       "references/brownfield-coexistence.md",
-      "references/scroll-scenes.md"
+      "references/scenes.md"
     ],
     "forbidden_references": [
       "references/header-theme.md"
@@ -90,6 +90,18 @@
     "forbidden_references": [
       "references/preflight.md",
       "references/brownfield-coexistence.md"
+    ]
+  },
+  {
+    "id": "image-sequence",
+    "prompt": "Apple-style image sequence: the product turns frame by frame as the reader scrolls through a pinned hero.",
+    "expected_references": [
+      "references/scenes.md",
+      "references/sequences.md"
+    ],
+    "forbidden_references": [
+      "references/video.md",
+      "references/header-theme.md"
     ]
   }
 ]
