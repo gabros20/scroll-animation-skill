@@ -57,6 +57,10 @@ Object.assign(window, {
       return handles.length - 1
     },
     authorityOf: (i: number) => handles[i].authority,
+    isCurrent: (i: number) => currentSmoothScroll() === handles[i],
+    scrollTo: (i: number, y: number) => handles[i].scrollTo(y),
+    stop: (i: number) => handles[i].stop(),
+    start: (i: number) => handles[i].start(),
     destroy: (i: number) => handles[i].destroy(),
     mount(initial: Authority) {
       root = createRoot(document.getElementById('root')!)
@@ -70,6 +74,7 @@ Object.assign(window, {
       lenisClass: html.classList.contains('lenis'),
       lenis: liveWheel.size,
       current: currentSmoothScroll()?.authority ?? null,
+      locked: html.style.overflow === 'hidden' || html.classList.contains('lenis-stopped'),
     }),
   },
 })

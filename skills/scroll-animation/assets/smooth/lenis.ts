@@ -18,11 +18,11 @@
  *   createSmoothScroll({ driver: rafDriver() })                         // neither
  *
  * Smooth once: under Lenis, GSAP scrubs use `scrub: true` and Motion reads raw `useScroll()`; a second smoothing stage
- * on top makes motion feel late. Reduced motion: no Lenis at all; the page keeps native scrolling.
+ * on top makes motion feel late. Reduced motion (followed live): no Lenis; the page scrolls natively.
  */
 import Lenis, { type LenisOptions } from 'lenis'
 
-import { prefersReducedMotion } from '../config'
+import { REDUCED_MOTION_QUERY } from '../config'
 import {
   clearAuthority,
   nativeHandle,
@@ -129,43 +129,84 @@ export interface SmoothScrollOptions {
   anchors?: boolean
 }
 
-/** Start Lenis (or native scrolling under reduced motion) and return the page's scroll handle. */
+/**
+ * Start Lenis (native scrolling under reduced motion) and return the page's scroll handle. Reduced motion is followed
+ * live: when the visitor turns it on, Lenis is torn down and the page scrolls natively; off again, Lenis comes back
+ * from the current position. The handle stays the same object, so callers never hold a dead one.
+ */
 export function createSmoothScroll(options: SmoothScrollOptions): SmoothScrollHandle {
-  if (typeof window === 'undefined' || prefersReducedMotion()) {
-    const native = nativeHandle()
-    registerHandle(native)
-    const destroy = native.destroy
-    native.destroy = () => {
-      destroy()
-      unregisterHandle(native)
-    }
-    return native
-  }
+  if (typeof window === 'undefined') return nativeHandle()
 
-  const lenis = new Lenis({ ...options.lenis, autoRaf: false, anchors: false })
-  const detach = options.driver(lenis)
-  const offAnchors = options.anchors === false ? () => {} : wireAnchors(lenis)
-  stampAuthority('lenis')
+  const reduced = window.matchMedia(REDUCED_MOTION_QUERY)
+  let lenis: Lenis | null = null
+  let native: SmoothScrollHandle | null = null
+  let detach = () => {}
+  let offAnchors = () => {}
+  // A modal's stop() holds across a switch.
+  let stopped = false
+
+  const startLenis = () => {
+    native?.destroy()
+    native = null
+    lenis = new Lenis({ ...options.lenis, autoRaf: false, anchors: false })
+    detach = options.driver(lenis)
+    offAnchors = options.anchors === false ? () => {} : wireAnchors(lenis)
+    stampAuthority('lenis')
+    handle.authority = 'lenis'
+    // A reload mid-page restores the native position before Lenis exists; start Lenis there, not at 0.
+    lenis.scrollTo(window.scrollY, { immediate: true })
+    if (stopped) lenis.stop()
+  }
+  const stopLenis = () => {
+    if (lenis) {
+      offAnchors()
+      detach()
+      lenis.destroy()
+      lenis = null
+      clearAuthority('lenis')
+    }
+    native = nativeHandle()
+    handle.authority = 'native'
+    if (stopped) native.stop()
+  }
 
   const handle: SmoothScrollHandle = {
     authority: 'lenis',
     scrollTo(target, opts = {}) {
       // Lenis applies scroll-padding-top and scroll-margin-top to element targets; `offset` shifts further.
-      lenis.scrollTo(target as never, { offset: opts.offset ?? 0, immediate: opts.immediate })
+      if (lenis) lenis.scrollTo(target as never, { offset: opts.offset ?? 0, immediate: opts.immediate })
+      else native?.scrollTo(target, opts)
     },
-    stop: () => lenis.stop(),
-    start: () => lenis.start(),
+    stop() {
+      stopped = true
+      if (lenis) lenis.stop()
+      else native?.stop()
+    },
+    start() {
+      stopped = false
+      if (lenis) lenis.start()
+      else native?.start()
+    },
     destroy() {
-      offAnchors()
-      detach()
-      lenis.destroy()
-      clearAuthority('lenis')
+      reduced.removeEventListener('change', onReducedChange)
+      if (lenis) {
+        offAnchors()
+        detach()
+        lenis.destroy()
+        lenis = null
+        clearAuthority('lenis')
+      }
+      native?.destroy()
+      native = null
       unregisterHandle(handle)
     },
   }
+
+  const onReducedChange = () => (reduced.matches ? stopLenis() : startLenis())
+  reduced.addEventListener('change', onReducedChange)
+  if (reduced.matches) stopLenis()
+  else startLenis()
   registerHandle(handle)
-  // A reload mid-page restores the native position before Lenis exists; start Lenis there, not at 0.
-  lenis.scrollTo(window.scrollY, { immediate: true })
   return handle
 }
 
