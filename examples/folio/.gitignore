@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/test-results/
 
 # media (fetched by `pnpm media`; see media/manifest.sha256)
 /public/media/

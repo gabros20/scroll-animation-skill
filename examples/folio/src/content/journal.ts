@@ -57,7 +57,7 @@ export const journalArticles: JournalArticle[] = [
     loop: {
       src: "journal/kiln-loop.mp4",
       poster: "journal/kiln-loop-poster.avif",
-      alt: "The kiln door swinging open at the end of a firing, heat shimmering off the bricks.",
+      alt: "The open kiln at the end of a firing, heat shimmering over the bricks.",
       width: 1280,
       height: 720,
       caption: "The kiln door, opened at the end of a fourteen-hour firing.",

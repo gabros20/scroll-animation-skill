@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { CameraOrbit } from "@/components/camera-orbit";
 import { MediaSlot } from "@/components/media-slot";
 import { folioObjects } from "@/content/objects";
+import { mediaExists, mediaSrc } from "@/lib/media";
 
 export const metadata: Metadata = {
   title: "Folio",
@@ -27,6 +29,14 @@ const PRINCIPLES = [
 ];
 
 export default function HomePage() {
+  const orbit = mediaExists("hero/scrub-camera-1920.mp4")
+    ? {
+        src: mediaSrc("hero/scrub-camera-1920.mp4"),
+        mobileSrc: mediaSrc("hero/scrub-camera-1080.mp4"),
+        poster: mediaSrc("hero/scrub-camera-poster.avif"),
+      }
+    : null;
+
   return (
     <>
       {/*
@@ -48,30 +58,10 @@ export default function HomePage() {
       </section>
 
       {/*
-        scroll-animation: PinnedScene + ScrubVideo (Phase 2).
-        One pinned scrub-video scene: a slow orbit around one object.
+        scroll-animation: scrub-video (GSAP, on pinned-scene). One pinned
+        scrub scene: a slow orbit around one object, copy riding over it.
       */}
-      <section aria-labelledby="scrub-heading" className="px-6 sm:px-10">
-        <h2
-          id="scrub-heading"
-          className="font-sans text-sm tracking-[0.2em] text-muted uppercase"
-        >
-          01 · Object
-        </h2>
-        <MediaSlot
-          kind="video"
-          src="hero/scrub-vessel-1920.mp4"
-          poster="hero/scrub-vessel-poster.avif"
-          alt="A glazed stoneware vessel, rotating slowly against a plain backdrop."
-          width={1920}
-          height={1080}
-          className="mt-4 w-full"
-        />
-        <p className="mt-3 max-w-md font-sans text-sm text-muted">
-          A glazed stoneware vessel, thrown on a wheel and fired in a wood
-          kiln.
-        </p>
-      </section>
+      <CameraOrbit media={orbit} />
 
       {/*
         scroll-animation: horizontal-rail (Phase 3). Falls back to native

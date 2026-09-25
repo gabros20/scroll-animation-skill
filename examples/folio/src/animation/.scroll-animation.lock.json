@@ -5,16 +5,29 @@
     "agnostic",
     "css",
     "gsap",
+    "media",
     "motion"
   ],
   "files": {
     "config.ts": "83ff17150c8cc8e2",
     "scale.ts": "322b05138c6a47d1",
-    "css/animation.css": "d23084de69ffdf00",
-    "gsap/setup.ts": "974e090dcd7398d6",
+    "css/animation.css": "85a2237eac738754",
+    "gsap/setup.ts": "694d3d67425bdddc",
     "motion/MotionProvider.tsx": "68e3d30eb593279e",
-    "smooth/authority.ts": "51784bdfdad2a0b9",
-    "smooth/lenis.ts": "23a0c841adf48586",
-    "smooth/SmoothScroll.tsx": "746d41cf23e5307b"
+    "smooth/authority.ts": "4e4a711f6a20aaaa",
+    "smooth/lenis.ts": "3388063654afd797",
+    "smooth/SmoothScroll.tsx": "746d41cf23e5307b",
+    "scene.ts": "681c45e78fd3add5",
+    "css/scene.css": "e78402c6e06065db",
+    "gsap/pinned-scene.ts": "2be471fa19d5cf42",
+    "media/video-controller.ts": "c90634a674e73fec",
+    "media/camera.ts": "aac8e28e75cb8011",
+    "gsap/scrub-video.ts": "f583288bb3be9870",
+    "motion/usePinnedScene.ts": "89f436e26056b786",
+    "motion/PinnedScene.tsx": "d885c77b107dfcb8",
+    "media/frame-sequence.ts": "1305e616d0ca6675",
+    "motion/FrameSequence.tsx": "51bb89d80d4bc116",
+    "motion/ScrubVideo.tsx": "d2e01513626af975",
+    "motion/LoopVideo.tsx": "969c721661c25a63"
   }
 }
