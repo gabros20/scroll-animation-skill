@@ -1,0 +1,3 @@
+# Render outputs go to $FOLIO_MEDIA_WORK (default: the OS temp dir), never here.
+node_modules/
+.work/
