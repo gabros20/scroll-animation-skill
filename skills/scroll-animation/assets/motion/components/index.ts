@@ -6,25 +6,11 @@ export { MotionProvider } from './MotionProvider'
 // `trigger="view"` for everything below the fold.
 //
 // This is the default entrance system for a whole site. The one exception is a
-// pinned scrubbed scene, which owns its own driver — see `ScrubStage`.
+// pinned scene, which owns its own driver — see `../PinnedScene` and `../ScrubVideo`.
 export { Stage, StageItem, StageVeil } from './Stage'
 // A number that counts up on first sight. Not a StageItem: variants animate style,
 // this animates text.
 export { CountUp } from './CountUp'
-// The one scroll-driven primitive: a pinned background video scrubbed across the
-// sections stacked on it. Requires an ALL-INTRA asset — see the docblock.
-export {
-  ScrubStage,
-  type ScrubLoopConfig,
-  type CameraShot,
-  type CameraTierShots,
-  type CropRect,
-  type SubjectPoint,
-  type SubjectTierPoints,
-  type FrameSize,
-  type CameraConfig,
-  type BackdropStop
-} from './ScrubStage'
 // Fades a group out as it scrolls away, so copy over a pinned render does not
 // compete with it. One manual opacity write per scroll frame — not a timeline.
 export { FadeOnExit } from './FadeOnExit'

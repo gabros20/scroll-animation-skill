@@ -1,5 +1,5 @@
 /**
- * A worked example of `ScrubStage`: a pinned, scrubbed scene with copy riding
+ * A worked example of `ScrubVideo`: a pinned, scrubbed scene with copy riding
  * over it in three acts.
  *
  * ## The geometry rule this exists to demonstrate
@@ -26,25 +26,27 @@
  * the frame — tune `--exit-from`/`--exit-to` per act rather than fighting the
  * defaults, which were tuned for the reference build's own act heights.
  *
- * Swap `src`/`mobileSrc`/`poster` for real assets, and pass a `camera` to
- * `ScrubStage` once you have measured your own subject placement — omitted
- * here, so this renders as a plain `object-cover` scrub with no pan/zoom.
+ * Swap `src`/`mobileSrc`/`poster` for real assets. Pass `headLoop`/`tailLoop`
+ * once you have measured your clip's seams (without them the head and tail
+ * hold the first and last frames), and a `camera` once you have measured your
+ * own subject placement — both omitted here, so this renders as a plain
+ * `object-cover` scrub with no loops and no pan/zoom.
  */
-import { ScrubStage } from '../components/ScrubStage'
+import { ScrubVideo } from '../ScrubVideo'
 import { FadeOnExit } from '../components/FadeOnExit'
 
 export function ScrollStack() {
   return (
-    <ScrubStage src="/scene.mp4" mobileSrc="/scene-mobile.mp4" poster="/scene-poster.jpg">
-      {/* Act 1 — one viewport. The scene holds on its head loop through this
-          act (see ScrubStage's docblock on why `headHoldPx` only needs to
-          survive scrollbar noise, not a whole viewport of scroll) — so this
-          is a near-static render for the reader to arrive on. */}
+    <ScrubVideo src="/scene.mp4" mobileSrc="/scene-mobile.mp4" poster="/scene-poster.jpg">
+      {/* Act 1 — one viewport. The scene holds its head through this act
+          (the first frame here, a loop with `headLoop`) until the scrub
+          engages, 12 px of scroll in (`headHoldPx`, scene.ts) — so this is a
+          near-static render for the reader to arrive on. */}
       <section className="flex h-svh items-center px-6">
         <FadeOnExit className="max-w-lg [--exit-from:0.1] [--exit-to:0.5]">
           <h1 className="text-4xl font-semibold">Act one</h1>
           <p className="mt-4 text-lg">
-            The render hovers here on its head loop. This copy fades before
+            The render rests here at the head of the scene. This copy fades before
             the scrub genuinely gets moving, so it never has to compete with a
             transforming render underneath it.
           </p>
@@ -54,17 +56,18 @@ export function ScrollStack() {
       {/* Act 2 — TWO viewports, and deliberately empty. It exists only to
           give the scrub band two viewports of scroll to spend while the
           render transforms underneath — see the geometry rule above.
-          `data-scrub-spacer` marks it as exactly that: an empty pacing act,
+          `data-scene-spacer` marks it as exactly that: an empty pacing act,
           not content. Under reduced motion there is no camera move left to
-          give this space to, so `assets/css/animation.css` collapses it to zero
+          give this space to, so `assets/css/scene.css` collapses it to zero
           height instead of leaving an 1800px blank band for a reduced-motion
           reader to scroll through for nothing (references/scroll-scenes.md
           §10, references/attribute-contract.md). */}
-      <section aria-hidden="true" data-scrub-spacer className="h-[200svh]" />
+      <section aria-hidden="true" data-scene-spacer className="h-[200svh]" />
 
-      {/* Act 3 — one viewport. The tail loop's composition is the one frame a
-          reader actually stops on, so if you bring a `camera` config, its
-          `tail` shot is worth tuning by eye against this exact act. */}
+      {/* Act 3 — one viewport. The tail's composition (the last frame here,
+          a loop with `tailLoop`) is the one a reader actually stops on, so if
+          you bring a `camera` config, its `tail` shot is worth tuning by eye
+          against this exact act. */}
       <section className="flex h-svh items-center justify-end px-6 text-right">
         <FadeOnExit className="max-w-lg [--exit-from:0.65] [--exit-to:0.9]">
           <h2 className="text-3xl font-semibold">Act three</h2>
@@ -76,6 +79,6 @@ export function ScrollStack() {
           </p>
         </FadeOnExit>
       </section>
-    </ScrubStage>
+    </ScrubVideo>
   )
 }

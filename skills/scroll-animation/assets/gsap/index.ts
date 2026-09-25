@@ -3,7 +3,6 @@ import { registerEases } from './eases'
 import { initFadeOnExit } from './fadeOnExit'
 import { initHeaderTheme, type HeaderThemeOptions } from './headerTheme'
 import { initInViewLoopVideos } from './inViewLoopVideo'
-import { initScrubStages, type ScrubStageOptions } from './scrubStage'
 import { initPullToCentre } from './scrollPull'
 import { initStages } from './stage'
 import { initVeil } from './veil'
@@ -13,13 +12,6 @@ export interface FluidMotionOptions {
   /** Omit to skip header-theme wiring entirely (most pages have no fixed
    * header that needs an inverse ink). */
   headerTheme?: HeaderThemeOptions
-  /** Per-`[data-scrub-stage]` configuration. Return `undefined` to skip a
-   * given element (e.g. it isn't this page's scene). `references/performance.md`
-   * §3 ("Only 1–3 scroll-driven scenes should intersect the viewport at
-   * once") is why a page should carry AT MOST one scroll-driven scene —
-   * this callback exists for the rare multi-scene page, not to encourage
-   * one. */
-  scrubStage?: (el: HTMLElement) => ScrubStageOptions | undefined
 }
 
 interface SubController {
@@ -33,9 +25,10 @@ export interface FluidMotionController {
    * this for you). */
   destroy(): void
   /**
-   * Re-measure the pieces that cache geometry (`scrubStage`, `headerTheme`,
-   * `fadeOnExit`) without tearing down stage entrance state. Cheap; call
-   * after injecting content into `root` without a resize to react to.
+   * Re-measure the pieces that cache geometry (`headerTheme`, `fadeOnExit`)
+   * without tearing down stage entrance state. Cheap; call after injecting
+   * content into `root` without a resize to react to. Pinned scenes
+   * (`pinnedScene`, `scrubVideo`) are not part of this: refresh their handles.
    */
   refresh(): void
 }
@@ -67,7 +60,6 @@ export function initFluidMotion(root: ParentNode = document, options: FluidMotio
     initCountUps(root, options.countUp),
     initFadeOnExit(root),
     initPullToCentre(root),
-    initScrubStages(root, options.scrubStage),
     initInViewLoopVideos(root)
   ]
   if (options.headerTheme) {
@@ -96,17 +88,5 @@ export { initVeil, type VeilController } from './veil'
 export { initCountUps, type CountUpOptions, type CountUpController } from './countUp'
 export { initFadeOnExit, type FadeOnExitController } from './fadeOnExit'
 export { initPullToCentre, createScrollPull, type ScrollPull, type ScrollPullOptions, type PullToCentreController } from './scrollPull'
-export {
-  initScrubStages,
-  type ScrubStageOptions,
-  type ScrubStageController,
-  type ScrubStageTierGeometry,
-  type ScrubStageShot,
-  type ScrubStageCrop,
-  type ScrubStageBackdropStop,
-  type HeadLoopPoint,
-  type LoopPoint
-} from './scrubStage'
 export { initHeaderTheme, type HeaderTheme, type HeaderThemeOptions, type HeaderThemeController } from './headerTheme'
 export { initInViewLoopVideos, type InViewLoopVideoController } from './inViewLoopVideo'
-export { createVideoController, type VideoController } from './videoController'
