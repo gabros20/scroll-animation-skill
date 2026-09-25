@@ -7,9 +7,9 @@ text, logo or icons must switch between light and dark ink as sections scroll un
 header ink is wrong over some band ("the nav disappears over the dark section").
 **Skip when:** the header paints an opaque bar of its own, or the page has no fixed header. If the
 site already has a script that switches header colours, read `brownfield-coexistence.md` §2 first.
-**Depends on:** `scroll-scenes.md` §3 for the "state per transition, not per frame" rule this obeys.
+**Depends on:** `scenes.md` §3 for the "state per transition, not per frame" rule this obeys.
 Header *sizing* (`--fluid-header-h`, the resting inset, safe areas) is layout and belongs to the
-`fluid-design` skill when it is installed (`fluid-interop.md` §6).
+`fluid-design` skill when it is installed (`preflight.md` §3.6).
 
 A transparent fixed header has no surface of its own, so its ink cannot belong to the page. A black
 nav pinned over a black section disappears. The header needs to know the declared ink of whichever
@@ -85,7 +85,7 @@ function resolve(scroll: number) {
   document. Hold the ref on whichever element is convenient; there is no need to hoist it to the
   header's outermost element.
 - **Write framework state only when the resolved theme changes**: a handful of times per page load,
-  never per scroll frame. That keeps this inside the latch rule (`scroll-scenes.md` §3).
+  never per scroll frame. That keeps this inside the latch rule (`scenes.md` §3).
 - `refresh()` (GSAP controller) or a remount forces a re-measure after content is injected without
   a resize.
 

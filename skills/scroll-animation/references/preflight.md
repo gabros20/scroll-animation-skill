@@ -98,13 +98,21 @@ property, never two scroll owners.
 ### 3.6 Layout scale
 
 If the layout scales with the viewport, motion distances must scale with it, and motion must switch at the layout's
-breakpoint and offset by its header height.
+breakpoint and offset by its header height. Those three are all that motion and layout share; every block also runs on a
+plain px layout.
 
 - **fluid-design** (`fluid.config.json` present): in `src/animation/config.ts`, re-export `DESKTOP_QUERY` from the
-  generated `fluid.ts` and set `SCALE = FLUID_DESIGN_SCALE`; in CSS, alias the header once:
-  `:root { --header-h: var(--fluid-header-h) }`. Details in [fluid-interop.md](fluid-interop.md).
+  generated `fluid.ts` (it carries `bands.desktop.minWidth`, which a hand-kept `1024` stops matching the day the config
+  changes) and set `SCALE = FLUID_DESIGN_SCALE`; in CSS, alias the header once:
+  `:root { --header-h: var(--fluid-header-h) }`.
 - **Another scaled unit** (a custom property holding one design px as a length): describe it in `SCALE.units`.
-- **Plain px**: leave `SCALE = null`; `scaledPx(n)` returns `n`.
+- **Plain px**: leave `SCALE = null`; `scaledPx(n)` returns `n`. Keep the breakpoint in `config.ts` alone and import it
+  everywhere: copies of one number drift.
+- **v1 blocks still in the pack** (the stage, the scroll well) read `ENGAGE_QUERY` from their own constants: point it
+  at the same source. The scroll well multiplies `--fluid` itself (a unit of 1 without it), and `anchor-check.mjs`
+  reads `--fluid-header-h`, then `--header-h`.
+
+Scaled travel (`--scene-p`, `scaledValue`, GSAP's `translate` trap) is in [scenes.md](scenes.md) §12.
 
 ## 4. ANIMATION.md and the scene ledger
 

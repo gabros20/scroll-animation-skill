@@ -8,7 +8,7 @@ fire" or a scene "is broken".
 **Skip when:** the change is a static tweak with no scroll or viewport dependency; a plain visual
 diff is enough. Layout verification (the viewport matrix for overflow and one-screen fit, unit
 maths) belongs to the `fluid-design` skill's `references/verification.md` when it is installed.
-**Depends on:** `scroll-scenes.md` for what a scene's "progress" means as a value to drive
+**Depends on:** `scenes.md` for what a scene's "progress" means as a value to drive
 programmatically.
 
 Three tiers, cheapest and most automatable first. The order matters: a bug tiers 1–2 can catch
@@ -41,12 +41,12 @@ stays meaningful regardless of what's above it:
 
 ```js
 const base = await page.evaluate(() => {
-  const s = document.querySelector('[data-scrub-stage]')
+  const s = document.querySelector('[data-scene-root]')
   return { top: s.getBoundingClientRect().top + scrollY, range: s.offsetHeight - innerHeight }
 })
 for (const progress of [0, 0.25, 0.5, 0.75, 1]) {
   await page.evaluate(y => scrollTo(0, y), base.top + base.range * progress)
-  await page.waitForTimeout(2500)                 // let any glide/spring settle — see below
+  await page.waitForTimeout(2500)                 // let any glide or spring settle: see below
   await page.screenshot({ path: `sweep_${progress}.png` })
 }
 ```
@@ -62,22 +62,26 @@ plays too early relative to arrival" faster than stepping through individually, 
 compares neighbours automatically.
 
 **Read state, not just pixels.** `getAnimations()`, a computed `style.transform`, `offsetWidth`,
-`getBoundingClientRect()`, a video's `currentTime`, `data-motion-state`: these turn "it looks a bit
+`getBoundingClientRect()`, a video's `currentTime`, `data-scene-state`: these turn "it looks a bit
 off" into a specific, falsifiable claim: "`offsetWidth` is 402 where it should be 1128." Every real
 bug found this way (§2) was found by reading one of these, not by looking harder at a screenshot.
 
-**`window.__scrub()` needs `?fluid-debug` against a production build.** `ScrubStage`'s debug
-readout (both engines) is off by default in production (it is internal state, not something to ship
-live), which means it does not exist on the exact build a `next start`/production verification pass
-runs against, only on a dev server. Append `?fluid-debug` to the URL being probed, or set
-`document.documentElement.dataset.fluidDebug` before the component or module mounts (for example a
-tiny inline script in the document head, for a harness that cannot control the URL), and the probe
-attaches regardless of environment. The React port additionally exposes it unconditionally on a dev
-build with no flag needed; the GSAP port is framework-free and has no reliable dev/production signal
-to key off, so it requires the flag in both. Without the probe, a sweep script still has a fallback:
-read the DOM contract directly (`video[data-motion-state]`, `currentTime`, the computed camera
-`transform`) rather than calling `__scrub()`. `scripts/tools/verify-motion.mjs` reads the contract, so it
-works without the flag.
+**`window.__scrub()` needs `?motion-debug`, in every build.** ScrubVideo's debug readout (both
+engines) is internal state, so it stays off unless the URL has `?motion-debug` or `<html>` carries
+`data-motion-debug` (set it from a tiny head script before the scene mounts, for a harness that
+can't control the URL). It returns one snapshot per live ScrubVideo: the scene's mode, progress,
+wake state and range, and the controller's counters (ticks, frame callbacks, plays, refused plays,
+wraps, recoveries, snaps). The counter that stopped moving names the layer that died. A bare
+`pinnedScene` has `scene.debug()` instead. Without the flag, read the DOM contract:
+`data-scene-state` on `[data-scene-root]`, `inert` on the acts, the video's `currentTime`, the
+camera's computed `transform`. `scripts/tools/verify-motion.mjs` reads the contract, so it works
+without the flag.
+
+**Scene checks.** With the default holds, on a range over 1,280 px, progress 0, ¼, ½, ¾ and 1 read
+`head`, `scrub`, `scrub`, `scrub`, `tail` (on a shorter range the tail hold is capped at a quarter, so ¾
+sits on its boundary); only the active stacked act lacks `inert`; a reload or a resize mid-scene lands in
+the state the scroll position implies without any scrolling; and under reduced motion the root is
+`height: auto`, no act is `inert` and the video holds its head frame (`scenes.md` §10).
 
 ## 2. The three bugs it caught
 
@@ -85,7 +89,7 @@ Concrete, because "measure state, not pixels" is abstract until you see what it 
 
 | Symptom | Cause | Found by |
 | --- | --- | --- |
-| Copy faded out, then faded back in | A scroll-linked value had been promoted to a native accelerated timeline whose range disagreed with the JS scroll maths (`scroll-scenes.md` §6) | `getAnimations()` showed a real, running native animation with keyframes at the component's declared range, visible nowhere in source |
+| Copy faded out, then faded back in | A scroll-linked value had been promoted to a native accelerated timeline whose keyframes stopped at the input range (`scenes.md` §6) | `getAnimations()` showed a real, running native animation with keyframes at the component's declared range, visible nowhere in source |
 | A stat grid sat permanently invisible | A `display: contents` wrapper generates no box, so the `IntersectionObserver` watching it had nothing to observe and the reveal never fired | Computed style plus a direct IO check; invisible from reading the component's JSX, which looked entirely correct |
 | "Animates too early and too fast" | The trigger fired at roughly a third of the element visible and settled hundreds of pixels before the element had actually arrived | Scripted scroll plus screenshots at fixed progress steps; not reproducible by scrolling manually at normal speed |
 
@@ -101,23 +105,23 @@ element, so it works with no dev panel open, survives a plain screenshot, and wo
 USB-connected real device with no extra tooling:
 
 ```css
-:root[data-motion-debug~='markers'] [data-scrub-stage]        { outline: 1px dashed #f59e0b; }
-:root[data-motion-debug~='markers'] [data-stage]               { outline: 1px solid  #34d399; }
-:root[data-motion-debug~='markers'] [data-motion-state='head'] { outline-color: #22c55e; }
-:root[data-motion-debug~='markers'] [data-scroll-video],
-:root[data-motion-debug~='markers'] [data-scroll-video] *      { outline: 2px solid #ef4444; }
+:root[data-motion-debug~='markers'] [data-scene-root]         { outline: 1px dashed #f59e0b; }
+:root[data-motion-debug~='markers'] [data-stage]              { outline: 1px solid  #34d399; }
+:root[data-motion-debug~='markers'] [data-scene-state='head'] { outline-color: #22c55e; }
+:root[data-motion-debug~='markers'] [data-scene-media],
+:root[data-motion-debug~='markers'] [data-scene-media] *      { outline: 2px solid #ef4444; }
 ```
 
-A machine's mode attribute (`data-motion-state`, `attribute-contract.md` §3) is written only **on
+A scene's mode attribute (`data-scene-state`, `attribute-contract.md` §3) is written only **on
 transition**, not per frame, so a mode flipping is visible as a discrete colour change with nothing
 else open: exactly the observability this needs, at no extra cost, because the latch rule
-(`scroll-scenes.md` §3: state per transition, not per frame) already pays for it.
+(`scenes.md` §3: state per transition, not per frame) already pays for it.
 
 **If this tier is ever extended, the rule that keeps it safe is: the tool must not change what it
 measures.** No `border` (it changes box size, which changes exactly the geometry being debugged), no
 `position: relative` added purely to anchor a label (it creates a stacking context that didn't exist
 before), no wrapper elements (they change the DOM structure a sticky/pin calculation depends on), no
-`overflow: hidden` (it kills sticky, `scroll-scenes.md` §1). Outlines only, because `outline` is the
+`overflow: hidden` (it kills sticky, `scenes.md` §1). Outlines only, because `outline` is the
 one visual debug affordance that never participates in layout.
 
 ## 4. Before debugging a scene: rule out a stale stylesheet
@@ -153,17 +157,18 @@ contract.
   missing `muted`/`playsInline`/a deliberate `preload`), `scroll-well-vs-smooth-scroll` (info: a
   scroll well alongside page-wide smooth scrolling), `lenis-with-scroll-well` (Lenis in the
   dependencies together with `PullToCentre`/`data-pull-to-centre`), and `gsap-pin-with-sticky-scene`
-  (`pin: true` in the same file as `data-scrub-stage`/`ScrubStage`). `--selftest` runs every rule
-  over its positive and negative fixtures and asserts each trips (or doesn't).
+  (`pin: true` in a file with v1's `data-scrub-stage`/`ScrubStage`; it doesn't match v2's
+  `data-scene-root` yet). `--selftest` runs every rule over its positive and negative fixtures and
+  asserts each trips (or doesn't).
 - **`scripts/tools/verify-motion.mjs <url>`**: the runtime check. It step-scrolls the page with rAF plus a
   pause per step (a fast scroll outruns `IntersectionObserver` and gives false blanks), waits for the
   up-to-1.3s entrance to settle, and reports every `[data-stage-item]` still under full opacity. It
-  drives each `[data-scrub-stage]` to progress `[0, 0.25, 0.5, 0.75, 1]` and records
-  `data-motion-state` at each step. **It forces `document.documentElement.style.scrollBehavior =
-  'auto'` for the duration of its stepped `scrollTo` calls and restores the old value afterwards.**
-  A page with `html { scroll-behavior: smooth }` (`animation.css`'s default) would otherwise have
-  each step's `scrollTo` cancel the previous step's still-in-flight smooth animation (the same
-  mechanism as the scroll-well trap, `scroll-scenes.md` §8), and the harness would stall partway
+  drives each `[data-scene-root]` (and v1's `[data-scrub-stage]`) to progress `[0, 0.25, 0.5, 0.75, 1]`
+  and records `data-scene-state` (v1's `data-motion-state`) at each step. **It forces
+  `document.documentElement.style.scrollBehavior = 'auto'` for the duration of its stepped `scrollTo`
+  calls and restores the old value afterwards.** A page with `html { scroll-behavior: smooth }` would
+  otherwise have each step's `scrollTo` cancel the previous step's still-in-flight smooth animation (the same
+  mechanism as the scroll-well trap, `scenes.md` §8), and the harness would stall partway
   down the page. Measured: this made the reveal check fail in every cell (30/54 items read as
   hidden) on a page that set `scroll-behavior: smooth` globally, with no reveal bug in the actual
   components.
@@ -205,8 +210,8 @@ skipped:
 - [ ] Sweeps scroll to scene *progress*, never raw pixel offsets (§1).
 - [ ] Each sweep step waits for glides and springs to settle before a screenshot (§1).
 - [ ] Claims are backed by read state (`getAnimations()`, rects, `currentTime`,
-  `data-motion-state`), not by screenshots alone (§1).
-- [ ] Production-build probes append `?fluid-debug` or read the DOM contract (§1).
+  `data-scene-state`), not by screenshots alone (§1).
+- [ ] Probes append `?motion-debug` or read the DOM contract (§1).
 - [ ] Debug markers use `outline` only: no border, wrapper, positioning or overflow (§3).
 - [ ] "First frame, then snap" is checked against a stale stylesheet before any scroll code is read
   (§4).

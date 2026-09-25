@@ -8,7 +8,7 @@ holds, or diagnosing dropped frames and jank on a real device.
 §3's triage already keeps that case cheap by construction). Render performance with no motion in it
 (fonts, image `sizes`, Core Web Vitals budgets for layout) belongs to the `fluid-design` skill's
 `references/performance.md` when it is installed.
-**Depends on:** `scroll-scenes.md` for what makes a scene expensive in the first place;
+**Depends on:** `scenes.md` for what makes a scene expensive in the first place;
 `ios-safari-motion.md` for the compositing quirks this budget has to survive on WebKit.
 
 Subscription count is the wrong metric to optimise: a scroll-position hook typically shares its
@@ -59,7 +59,7 @@ simultaneously, not per component.
 ## 3. Concurrent scroll scenes
 
 > **Only 1–3 scroll-driven scenes should intersect the viewport at once.** In practice, one
-> `ScrubStage` per page.
+> `ScrubVideo` per page.
 
 This is `motion-architecture.md` §3's triage restated as a hard number: at dozens of animated
 sections on one page, this ceiling *is* the performance budget. It's enforced by IO-gating (§6), so
@@ -68,7 +68,7 @@ is a design constraint, not just an implementation detail. Stacking more than a 
 full-screen pinned panels, each with its own filters or video decode, costs more than forty small
 opacity triggers combined. Layer count and pixel area dominate the cost, not element count.
 
-`ScrubStage` is expensive by design: a decoder that scrub-seeks on nearly every scroll frame, plus a
+`ScrubVideo` is expensive by design: a decoder that scrub-seeks on nearly every scroll frame, plus a
 per-frame rAF/`requestVideoFrameCallback` loop while it is awake. Its gating is what makes ONE
 instance affordable; two live at once means two decoders and two per-frame loops, which is not what
 the gating was built to survive. If a page seems to want two independent scrubbed videos, the two
@@ -87,7 +87,7 @@ under load. Write the full composed transform string instead:
 <AnimatedEl style={{ transform: template`translateX(${x}px)` }} />              // accelerated
 ```
 
-A hand-written transform string (the direct write, `scroll-scenes.md` §6) gets this for free by
+A hand-written transform string (the direct write, `scenes.md` §6) gets this for free by
 construction, and should keep a `translateZ(0)`/`translate3d(...)` term inside that same string
 rather than as a separate rule: that anchor is load-bearing for Safari's compositing specifically
 (`video.md` §6).
@@ -109,7 +109,7 @@ cost bounded to a single user-triggered event rather than a per-frame scroll cos
 actual distinction that matters: this exception is for a *discrete, infrequent, user-initiated*
 transition, never for anything scroll-linked.
 
-Related: size media with CSS, transform it with JS. A responsive camera crop (`scroll-scenes.md` §7)
+Related: size media with CSS, transform it with JS. A responsive camera crop (`scenes.md` §7)
 should scale a video via a per-frame `transform` write while its box dimensions stay entirely CSS.
 Letting CSS own `width`/`height` means the scaling never triggers a layout-invalidating write, no
 matter how large the multiplier.
@@ -157,9 +157,9 @@ something CSS cannot read: live scroll offset, a decoder's playhead, a measured 
 As decoration only, and never for coordination: native CSS `animation-timeline`/`view()` scroll
 timelines run entirely off the main thread on supporting engines, behind `@supports`, for flow-only
 triggered reveals with no state to coordinate. This buys real free performance on the boring majority
-of sections, but it is never a substitute for the JS-driven mechanisms in `scroll-scenes.md`. Its
+of sections, but it is never a substitute for the JS-driven mechanisms in `scenes.md`. Its
 browser-native view range is exactly the thing that disagreed with JS scroll maths in the
-WAAPI-promotion bug (`scroll-scenes.md` §6); the same caution about a native timeline's range not
+WAAPI-promotion bug (`scenes.md` §6); the same caution about a native timeline's range not
 matching a hand-computed one applies here too.
 
 ## 10. `will-change` policy
@@ -195,7 +195,7 @@ one import at a time. `scripts/tools/audit-motion.mjs`'s `motion-strict` rule fl
 
 GSAP's equivalent: import only the modules a page uses (`initStages`, `initCountUps`, …) rather than
 `initFluidMotion` when a page needs one primitive; a page with just count-up numbers has no reason to
-pull in `scrubStage.ts`'s cost.
+pull in the scroll well's (`scrollPull.ts`) cost.
 
 ## 13. Motion asset and JS budgets
 

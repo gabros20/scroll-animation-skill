@@ -7,7 +7,7 @@ GSAP `ScrollTrigger` timelines or pins, Lenis (or another smooth-scroll library)
 library such as AOS. Also when "the anchor link stops short", "the pin doesn't stick" or "the header
 flickers between colours" on a site that mixes old and new motion.
 **Skip when:** greenfield. Go straight to `motion-architecture.md`.
-**Depends on:** `preflight.md` §4 for the keep / adapt / replace decision; `scroll-scenes.md` §1
+**Depends on:** `preflight.md` §4 for the keep / adapt / replace decision; `scenes.md` §1
 and §8 for the pin and the scroll well these conflicts involve.
 
 The default on a brownfield site is **keep**: existing motion keeps running, and new work is built
@@ -120,20 +120,20 @@ them if a GSAP pin above changes the page height after mount.
 
 **`pin: true` versus CSS sticky: never nest the scene in a GSAP pin.** A ScrollTrigger pin wraps its
 element in a pin-spacer and, while pinned, sets it to `position: fixed` (or animates a `transform` on
-it, with `pinType: 'transform'` or a non-body scroller). A `ScrubStage` range wrapper, pin or video
+it, with `pinType: 'transform'` or a non-body scroller). A pinned scene's range wrapper, pin or video
 *inside* that element then has a fixed or transformed ancestor: sticky has no scroll travel inside a
 fixed box, and a transformed ancestor becomes the containing block. The scene freezes or drifts. So:
 
 - The scene's own pin is CSS sticky; never also pin it, its range wrapper, or any ancestor with
-  GSAP. (The GSAP port's `scrubStage.ts` deliberately reads a passive scroll listener, not
-  ScrollTrigger, for the same reason: two pinning systems disagree about geometry on resize.)
+  GSAP. (The GSAP `pinnedScene` reads its progress from a ScrollTrigger with no pin for the same
+  reason: two pinning systems disagree about geometry on resize.)
 - GSAP pins on *sibling* sections are fine. Refresh as above so the scene sees the spacer.
 - If an existing GSAP pin already wraps the area where the new scene goes, **adapt**: move the new
-  scene out of it, or convert that section to the CSS sticky pattern (`scroll-scenes.md` §1).
+  scene out of it, or convert that section to the CSS sticky pattern (`scenes.md` §1).
 
 **One engine per element.** A node animated by a ScrollTrigger tween never also carries a
 `StageItem`/`data-stage-item`. Existing GSAP breakpoint logic (`gsap.matchMedia()`) should use the
-same `ENGAGE_QUERY` as the primitives (`fluid-interop.md` §1).
+same `ENGAGE_QUERY` as the primitives (`preflight.md` §3.6).
 
 ## 4. Existing Lenis
 

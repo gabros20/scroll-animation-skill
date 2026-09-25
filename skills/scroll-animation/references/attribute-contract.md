@@ -6,7 +6,7 @@
 that carries a distance or scalar range, or a motion constant, checked against what actually ships
 rather than remembered.
 **Skip when:** you already know the name and need the *why* behind it: that lives in
-`motion-architecture.md`, `scroll-scenes.md`, `header-theme.md` and `video.md`. Layout names (the
+`motion-architecture.md`, `scenes.md`, `sequences.md`, `header-theme.md` and `video.md`. Layout names (the
 fluid config keys, `--fluid*` custom properties, `fluid-*` utilities, `data-fit`, `--fluid-header-h`) are
 the `fluid-design` skill's contract.
 **Depends on:** nothing. This is the leaf reference every other doc here cites for exact names.
@@ -29,10 +29,10 @@ on this page, not a bug in the primitive.
 ## 1. Layout names
 
 The fluid config keys, the `--fluid*` custom properties, the `fluid-*` utilities, `data-fit`,
-`data-verify-grid` and `--fluid-header-h` belong to the `fluid-design` skill's contract. The only ones
-motion code reads are `--fluid` (the scroll well's length unit) and `--fluid-header-h` (the anchor check's
-fallback offset); see `fluid-interop.md` §2 and §6. The section numbers below are kept stable
-because the shipped code cites them.
+`data-verify-grid` and `--fluid-header-h` belong to the `fluid-design` skill's contract. Motion code reads
+the scale units and their `--_fluid-m-*` mirrors that `FLUID_DESIGN_SCALE` names in `config.ts` (through
+`scale.ts`), the scroll well's `--fluid` and the anchor check's `--fluid-header-h`; see `preflight.md` §3.6.
+The section numbers below are kept stable because the shipped code cites them.
 
 ## 2. Distances and scalar ranges
 
@@ -51,19 +51,24 @@ media query.
 | `--exit-to` | scalar in [0, 1], `FadeOnExit`: where the fade ends (fully hidden) | see `FadeOnExit`'s own default |
 | `--header-theme` | `light \| dark`, per-breakpoint override of `data-header-theme` | unset (the attribute wins) |
 | `--fill` | `<number>`, registered with `@property` for a WebKit mask sweep | `0` |
+| `--scene-p` | `<number>` 0..1: progress you write for CSS to multiply into a scaled distance | `0` |
 
-Distances stay **fixed px**, even on a fluid-scaled layout: engines resolve `var()` once at
-animation start, so a scaled value would go stale on resize (`fluid-interop.md` §3).
+Entrance distances stay **fixed px**, even on a fluid-scaled layout: engines resolve `var()` once at
+animation start, so a scaled value would go stale on resize. Travel scales (`scenes.md` §12).
+
+The scene blocks write `--scene-frame-w` / `--scene-frame-h` (the camera's base media size in `svh`) and
+`--scene-g-top` / `--scene-g-bottom` (the backdrop ramp's edge colours); never set them yourself.
 
 ## 3. DOM attributes
 
-Shared by the React/Motion and GSAP primitives, the verifier and the docs. GSAP is attribute-driven
-end to end: it has no props API, so every knob a React consumer would pass as a component prop is
-instead a `data-*` attribute that GSAP's `init*` functions read off the DOM at mount. React exposes
-the same *behaviour* through component props (`<Stage trigger="view" />`, `<StageItem variant="lift"
-/>`) and only emits the subset of attributes below that something still needs to query from outside
-React: CSS (the pre-JS resting state, reduced motion), the `<noscript>` safety net, or the
-verification harness. The **On** column calls out where an attribute is GSAP-only.
+Shared by the React/Motion and GSAP primitives, the verifier and the docs. The v1 GSAP `init*`
+blocks are attribute-driven: every knob a React consumer would pass as a component prop is a
+`data-*` attribute they read off the DOM at mount. The v2 GSAP blocks (`pinnedScene`, `scrubVideo`,
+`frameSequence`, `loopVideo`) take an options object and read only the attributes below. React exposes
+the same *behaviour* through component props (`<Stage trigger="view" />`,
+`<StageItem variant="lift" />`) and only emits the subset of attributes below that something still
+needs to query from outside React: CSS (the pre-JS resting state, reduced motion), the `<noscript>`
+safety net, or the verification harness. The **On** column calls out where an attribute is GSAP-only.
 
 | Attribute | On | Meaning |
 |---|---|---|
@@ -77,52 +82,29 @@ verification harness. The **On** column calls out where an attribute is GSAP-onl
 | `data-count-up="<value>"` | a number | GSAP-only: counts 0→value on first ~60% visible; the static text must hold `<value>` (so no-JS and crawlers read the real number). React's `CountUp` takes a `value` prop |
 | `data-fade-on-exit` | a group | GSAP-only: fades out as it scrolls above the viewport, tuned with `--exit-from`/`--exit-to`. React's `FadeOnExit` reads the same two CSS variables directly, no attribute needed |
 | `data-pull-to-centre` | a marker, first child of the box to attract | GSAP-only: optional `data-clamp` (selector), `data-threshold`, `data-threshold-lg`. React's `PullToCentre` takes `clamp`/`threshold`/`thresholdLg`/`disabled` props |
-| `data-scrub-stage` | a scroll scene's range wrapper | both engines: the outer element the scrub logic measures. React's `ScrubStage` always emits it |
-| `data-scrub-pin` | the sticky pinned layer, inside the range wrapper | both engines: CSS owns the pin's resting geometry (`assets/css/animation.gsap.css` for GSAP; `assets/css/animation.css`'s reduced-motion collapse for both). React's `ScrubStage` emits it on the `position: sticky` div; see the note below on why that div's other styles stay inline |
-| `data-scrub-video` | the `<video>` inside the pin | GSAP-only: `data-src`/`data-mobile-src`, `poster`/`data-mobile-poster` drive tier selection; GSAP's `animation.gsap.css` also styles the box off this attribute. React's `ScrubStage` positions and sizes its `<video>` with an inline `style` and a `src` prop instead |
-| `data-scrub-gutter` | optional backdrop element, inside the pin | GSAP-only, on the DOM: painted from `backdropStops`. React's `ScrubStage` targets the same backdrop element with a `ref`, not an attribute |
-| `data-scrub-content` | the flow wrapper riding over the pin | both engines: cancels the pin's height contribution (a `-100lvh` margin); also the reduced-motion reset target (`margin-top: 0`). React's `ScrubStage` emits it on that wrapper div |
-| `data-scrub-spacer` | an empty pacing act inside `data-scrub-content` | both engines: marks an act with no camera move or copy of its own, added only to give the full-motion composition room to linger, so the reduced-motion collapse can zero its height instead of leaving a blank band the length of that act (measured: an unmarked 2-viewport spacer left 1800px of empty dark band under reduced motion). Neither engine emits it; author it by hand. See `scroll-scenes.md` §10 |
-| `data-scrub-frame="<scoped id>"` | React only: the `<video>`, when a `camera` is supplied | scopes a per-instance `<style>` tag that sets `--frame-w`/`--frame-h` from a media query (`useId()`-based), so two `ScrubStage`s on one page never share a rule. GSAP's `scrubStage.ts` sizes the video from its own options object directly |
-| `data-motion-state` | a machine root (the scrub video) | both engines: current mode (`head \| scrub \| tail`), written only on transition, never per frame |
+| `data-scene-root` | a pinned scene's range wrapper | both engines: what the scene measures, never the pin. `PinnedScene` emits it |
+| `data-scene-pin` | the sticky layer inside the root | both engines: `css/scene.css` owns its geometry. `pin: 'gsap'` sets it to `gsap` (CSS then makes it `position: relative`) and restores it on `destroy()` |
+| `data-scene-content` | the flow wrapper riding over the pin | both engines: its `-100lvh` margin cancels the pin's height; `0` under reduced motion |
+| `data-scene-spacer` | an empty pacing act in the content | both engines: zero height under reduced motion, so no blank runway is left; hidden in print. Author it by hand (`scenes.md` §10) |
+| `data-scene-act` | an act stacked in the pin | both engines: every act but the active one gets `inert`, per transition; all flow and show under reduced motion and print. Never on content-layer acts (`scenes.md` §2) |
+| `data-scene-media` | the pinned `<video>` | both engines: absolute, covering, `max-width: none`; `scrubVideo` finds its video by it, with sources in `data-src`, `data-mobile-src`, `poster` and `data-mobile-poster` |
+| `data-scene-gutter` | optional backdrop layer in the pin | both engines: painted from the `backdrop` stops through `--scene-g-top`/`-bottom` |
+| `data-scene-frame="<scoped id>"` | React only: the `<video>`, with a `camera` | scopes the per-instance rule that sets `--scene-frame-w/-h` from the desktop query, so two scenes never share one. GSAP writes the properties inline per tier |
+| `data-scene-state` | the scene root | both engines: `head \| scrub \| tail`, written per transition, never per frame. GSAP removes it on `destroy()` |
+| `data-frame` | a `FrameSequence` canvas | both engines: the frame index drawn, written only when it changes |
 | `data-header-theme="light"\|"dark"` | a section | both engines: what a themed header should read while this section is under it; `--header-theme` overrides it per breakpoint (`header-theme.md`) |
 | `data-theme` | the header element | GSAP-only output: `initHeaderTheme` writes the resolved theme here, only on a change. React's `useHeaderTheme` returns the value instead |
-| `data-loop-video` | a background loop `<video>` | GSAP-only: optional `data-loop-from-frame` + `data-fps` for the seam-loop policy. React's `InViewLoopVideo` takes `loopFromFrame`/`fps` props |
+| `data-loop-video` | a background loop `<video>` | GSAP-only: `data-loop-from-frame` + `data-fps` for the seam policy; the pause control shows unless `data-controls="false"`. React's `LoopVideo` takes `loopFromFrame`, `fps`, `controls` |
+| `data-loop-toggle` | the loop's pause button | GSAP-only: a sibling of the video, or anywhere in the root with `data-loop-toggle-for="<video id>"`; created when a control is due and none exists. React's `LoopVideo` renders its own |
 | `data-motion-debug~="markers"` | `<html>` | toggles the tier-2 marker stylesheet (`verification.md` §3) |
-| `?fluid-debug` / `data-fluid-debug` | the URL / `<html>` | attaches `window.__scrub()` on a production build (`verification.md` §1) |
+| `?motion-debug` / `data-motion-debug` | the URL / `<html>` | attaches `window.__scrub()` on pages with a ScrubVideo, in any build (`verification.md` §1) |
 
-### `data-scrub-pin`: the one place an engine difference bites
+### Why the scene collapse keeps `!important`
 
-React's `ScrubStage` writes the pin's `position: sticky; top: 0; height: 100lvh; width: 100%;
-overflow: hidden` as an inline `style`, not through a class, because that geometry is load-bearing
-and framework-agnostic and must ship regardless of the host's styling system. An inline style beats
-**any** non-`!important` stylesheet declaration, regardless of selector specificity or source
-order, so the reduced-motion structural collapse in `assets/css/animation.css` declares its rules
-`!important`:
-
-```css
-@media (prefers-reduced-motion: reduce) {
-  [data-scrub-stage]   { height: auto !important; }
-  [data-scrub-pin]     { position: static !important; height: 100svh !important; overflow: visible !important; }
-  [data-scrub-content] { margin-top: 0 !important; }
-  [data-scrub-spacer]  { height: 0 !important; }
-}
-```
-
-(The pin collapses to `100svh`, not `auto`: its only content is an absolutely positioned video, and
-`auto` would measure to zero. `scroll-scenes.md` §10.)
-
-The alternative, moving the pin's geometry into a scoped `<style>` tag the way `--frame-w`/
-`--frame-h` are (see `data-scrub-frame` above), was rejected here. That pattern earns its keep when
-the value is *per-instance* (the frame size varies with `camera.frameSize`), and it still only wins
-the cascade if its `<style>` tag is guaranteed to load after the global reduced-motion rule, which is
-an ordering assumption this skill does not want to make. The pin's `position`/`height`/`overflow`
-are the same on every instance, so `!important` on the one shared rule is both simpler and more
-robust than trying to out-order a per-instance tag.
-
-GSAP's own `animation.gsap.css` uses the identical selectors and the identical `!important` reasoning for
-the same collapse, so both engines end up structurally identical under reduced motion even though
-only one of them is fighting an inline style to get there.
+`css/scene.css` owns the scene geometry for both engines, but ScrollTrigger writes inline geometry on a `pin: 'gsap'`
+pin, and an inline style beats any non-`!important` rule whatever its specificity or source order. So every
+reduced-motion and print rule in `scene.css` is `!important`. The pin collapses to `100svh`, not `auto`: its media is
+absolutely positioned, and `auto` around it measures zero (`scenes.md` §10).
 
 ## 4. Motion constants (identical in both engines)
 
@@ -145,13 +127,15 @@ Source of truth: `assets/motion/lib/transitions.ts` + `lib/constants.ts` + `lib/
   visibly slides into position)
 - `ENGAGE_BREAKPOINT_PX` (React) / `ENGAGE_PX` (GSAP): 1024, with `ENGAGE_QUERY` derived from it.
   It must equal the width where the desktop composition starts: the fluid config's
-  `bands.desktop.minWidth` and the CSS breakpoint token for the same width. See `fluid-interop.md`
-  §1 for where the value comes from.
+  `bands.desktop.minWidth` and the CSS breakpoint token for the same width. See `preflight.md`
+  §3.6 for where the value comes from.
+- Scenes (`scene.ts`): `SCENE_HOLDS` `headHoldPx` 12, `tailLeadPx` 320, `hysteresisRatio` 0.7;
+  `SCENE_MARGINS` warm 600 px, wake 200 px; `ACT_HYSTERESIS` 0.1 acts.
 
 ## Traps
 
 - [ ] A `StageItem`/`[data-stage-item]` never gets its own trigger (`motion-architecture.md` §4).
-- [ ] Empty pacing acts carry `data-scrub-spacer`; no engine infers it (§3).
+- [ ] Empty pacing acts carry `data-scene-spacer`; no engine infers it (§3).
 - [ ] The veil has a background (§3).
 - [ ] `data-count-up`'s static text holds the final value (§3).
 - [ ] Reduced-motion collapse rules keep their `!important` (§3).

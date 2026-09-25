@@ -9,7 +9,7 @@ misbehaves on an iPhone or in Safari; or a device report says "the video froze",
 the toolbar tint policy for ordinary pages, the hero overshoot, SVG painting, input zoom. Those live
 in the `fluid-design` skill's `references/ios-safari.md` and `references/media.md` when it is
 installed.
-**Depends on:** `scroll-scenes.md` §1 (why the pin is `lvh`) and §8 (the scroll well's viewport
+**Depends on:** `scenes.md` §1 (why the pin is `lvh`) and §8 (the scroll well's viewport
 snapshot); `video.md` §14 (the imperative controller).
 
 Chrome DevTools' device emulation **cannot** reproduce most of what's in this document. Several of
@@ -33,7 +33,7 @@ real device or the matching iOS Simulator (§6).
 
 **Unit.** A scrub scene is read while scrolling, which is when Safari collapses its toolbar and the
 visible area grows to `lvh`. Size the pin in `lvh` and its cancelling negative margin in the same
-unit (`scroll-scenes.md` §1); an `svh` pin leaves a band of page background along the bottom edge.
+unit (`scenes.md` §1); an `svh` pin leaves a band of page background along the bottom edge.
 Never `dvh` for anything inside the scene: it tracks the toolbar animation live, a layout thrash on
 exactly the surface (a scrubbed video) that can least afford one.
 
@@ -60,21 +60,24 @@ The fix is a watchdog, not a one-time `play()` call: something that runs regardl
 tick inside an already-gated rAF loop, or a periodic imperative check) and re-issues `play()`
 whenever the tracked "should be playing" intent disagrees with the element's actual `paused` state.
 Throttle the re-issue so a `play()` promise that's still resolving isn't spammed every frame, and
-skip it when the video has legitimately ended or the tab is hidden. The shipped shape is
-`ensurePlaying()` in `videoController.ts` (`video.md` §14), plus `pause` and `visibilitychange`
-listeners that resume only while the intent is set.
+skip it when the tab is hidden. The shipped shape is the watchdog in `media/video-controller.ts`
+(`video.md` §14): inside the gated rAF tick, a loop that should run but sits paused gets `play()`
+again at most once per ~30 frames, a loop that ran out is re-wrapped and played at once, and a
+hidden tab stops the tick until its return rehydrates the scene.
 
-Two related WebKit behaviours the same controller covers: iOS won't paint `currentTime` seeks on a
-never-started video (prime it with a muted `play()`/`pause()`), and Safari silently drops a `play()`
-issued while a seek is resolving (wait for `seeked`, with a 150ms fallback). Keep the video's
-`translateZ(0)` anchor inside its composed transform string (`video.md` §6): it is what keeps the
-layer from being demoted in the first place.
+Two related WebKit behaviours: Safari silently drops a `play()` issued while a seek is resolving
+(the controller waits for `seeked`, with a 150ms fallback), and iOS may not paint `currentTime`
+seeks on a video that has never played. A scene of holds only (no `headLoop`, no `tailLoop`) never
+calls `play()`, so it is the iPhone case to test on the Phase 2 real-device pass, a reload
+mid-scrub included (`video.md` §11). `scene.css` gives every scene video a `translateZ(0)` anchor,
+and the camera's `translate3d(…)` keeps it (`video.md` §6): it is what keeps the layer from being
+demoted in the first place.
 
 ## 3. Toolbar collapse feeds back into scroll geometry
 
 iOS's toolbar collapse feeds back into scroll geometry, not just viewport height. A
 `ResizeObserver`/`resize` handler that reads and caches scroll-scene geometry (the range measurement
-in `scroll-scenes.md` §2) should **defer its read by one animation frame** on resize. Safari can
+in `scenes.md` §1) should **defer its read by one animation frame** on resize. Safari can
 service a `resize` event carrying the *new* `innerHeight` while layout still holds `svh`-sized
 children at their *old* size, and reading geometry synchronously inside that event reads back a
 range far shorter than reality. One `requestAnimationFrame` deferral (coalesced, so a drag produces
@@ -84,7 +87,7 @@ to the new toolbar state.
 The same toolbar is why a scroll well captures the viewport height as a snapshot and refreshes it
 only on a resize that clearly isn't chrome (a width change, or a height change over roughly a
 quarter of the viewport): read live, a well scrolling up re-reveals the toolbar, which shrinks the
-viewport, which moves the target, a feedback loop (`scroll-scenes.md` §8).
+viewport, which moves the target, a feedback loop (`scenes.md` §8).
 
 ## 4. `@property` for a mask sweep
 
@@ -113,16 +116,16 @@ feeds a gradient, filter or other paint input that needs to tween a number.
 `overscroll-behavior: none` on the root element kills the rubber-band overscroll at scroll
 boundaries. Set it deliberately on any page with a scroll-driven scene: momentum bouncing past a
 scroll boundary otherwise feeds jitter directly into whatever reads scroll position for a pin or a
-latch (`scroll-scenes.md` §3, §5). It is a global decision, set once on the document root. (When the
+latch (`scenes.md` §3, §4). It is a global decision, set once on the document root. (When the
 `fluid-design` skill's base layer is installed it already sets this, for a rendering reason as well:
 no canvas gap behind the page.)
 
-`html { scroll-behavior: smooth }` (in `assets/css/animation.css`, reset to `auto` under reduced
-motion) makes anchor jumps glide. It has two motion consequences: every write a scroll well makes
-must pass `behavior: 'instant'`, and any stepped harness must force `auto` while it steps
-(`scroll-scenes.md` §8, `verification.md` §5). Next.js App Router additionally wants
-`data-scroll-behavior="smooth"` on `<html>` so its own route-change scroll jumps instantly instead of
-gliding; the comment in `animation.css` has the detail.
+`html { scroll-behavior: smooth }` makes anchor jumps glide. `assets/css/animation.css` no longer
+sets it: only a purely native page may add it, never one where ScrollTrigger or a smoother runs
+(`scroll-authority.md` §3). Where it is on, every write a scroll well makes must pass
+`behavior: 'instant'`, and any stepped harness must force `auto` while it steps (`scenes.md` §8,
+`verification.md` §5). Next.js App Router additionally wants `data-scroll-behavior="smooth"` on
+`<html>` so its own route-change scroll jumps instantly instead of gliding.
 
 ## 6. Device discipline for video and scroll
 
