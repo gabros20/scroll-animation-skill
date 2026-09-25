@@ -6,9 +6,12 @@
  * (Next's Activity) or left (a client navigation) can't leave a stale owner behind. `verify` and devtools read the
  * stamp; code reads `getScrollAuthority()` and `currentSmoothScroll()`.
  */
+import { prefersReducedMotion } from '../config'
+
 export type ScrollAuthority = 'native' | 'lenis' | 'smoother'
 
 export interface SmoothScrollHandle {
+  /** Who scrolls right now. A Lenis handle reads `native` while reduced motion is on: Lenis is gone until it's off. */
   authority: ScrollAuthority
   /**
    * Scroll to an element, a selector or a y position, through whoever owns scrolling. Element targets land like a native
@@ -40,7 +43,7 @@ export function getScrollAuthority(): ScrollAuthority {
   return v === 'lenis' || v === 'smoother' ? v : 'native'
 }
 
-/** The running handle, or null under native scrolling. */
+/** The page's live handle (its `authority` says who scrolls now), or null when no authority is running. */
 export function currentSmoothScroll(): SmoothScrollHandle | null {
   return current
 }
@@ -63,19 +66,25 @@ export function unregisterHandle(handle: SmoothScrollHandle): void {
 
 /** Native scrolling as a handle, so callers can use one API whoever owns the page. */
 export function nativeHandle(): SmoothScrollHandle {
+  let stopped = false
   const handle: SmoothScrollHandle = {
     authority: 'native',
     scrollTo(target, options = {}) {
       const y = resolveY(target) - anchorInset(target) + (options.offset ?? 0)
-      window.scrollTo({ top: y, behavior: options.immediate ? 'instant' : 'smooth' })
+      // A programmatic scroll is motion too: under reduced motion it jumps.
+      window.scrollTo({ top: y, behavior: options.immediate || prefersReducedMotion() ? 'instant' : 'smooth' })
     },
     stop() {
+      stopped = true
       document.documentElement.style.overflow = 'hidden'
     },
     start() {
+      stopped = false
       document.documentElement.style.overflow = ''
     },
     destroy() {
+      // A handle that goes away never leaves the page locked.
+      if (stopped) handle.start()
       clearAuthority('native')
     },
   }

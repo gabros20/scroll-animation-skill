@@ -13,8 +13,12 @@
 //                  destroy() restores lagSmoothing and removes its ticker listener
 //   motion-driver  Lenis on motionDriver: a hand-written useScroll() value trails by 0 frames (S4b)
 //   authority      <html data-scroll-authority>: set and cleared by createSmoothScroll, `native`
-//                  under reduced motion, a warning for a second live handle, and SmoothScroll
-//                  switching lenis -> native by prop leaves one stamp and no Lenis
+//                  under reduced motion (at load and live, on the same handle), a warning for a second
+//                  live handle, SmoothScroll switching lenis -> native by prop leaves one stamp and no
+//                  Lenis, and a modal's stop() survives both switches
+//   smoother       createSmoother: ScrollSmoother's native mode under reduced motion (at load and
+//                  live) with the triggers still tracking, no replay from the top when it is created
+//                  on a scrolled page, grown content refreshes every trigger, stop() survives switches
 //   anchors        a same-page #target link under Lenis lands the target at --header-h, pushes the hash
 //   gate           the pre-JS gate and the failsafe latch: JavaScript off; no engine (the failsafe
 //                  fires at 4 s); a late engine after it (the latch holds); an engine at 1 s (it never fires)
@@ -34,7 +38,7 @@ const outDir = join(testsDir, '.scratch', 'foundation-dist')
 const { GATE_SCRIPT } = await import('../skills/scroll-animation/assets/config.ts')
 
 const ENGINES = { chromium, webkit }
-const PAGES = ['gsap-driver', 'motion-driver', 'authority', 'anchors', 'gate', 'print']
+const PAGES = ['gsap-driver', 'motion-driver', 'authority', 'smoother', 'anchors', 'gate', 'print']
 const VIEWPORT = { width: 1000, height: 600 }
 // A lag verdict needs at least this many moving frames inside the measured range (one wheel pass
 // gives 130–180 here; S4 counted 565–699 over three passes).
@@ -239,6 +243,177 @@ const GROUPS = {
         only(lenis, 'lenis') && only(native, 'native') && only(back, 'lenis') && none(gone) && warnings.length === 0,
         `lenis: ${show(lenis)} · native: ${show(native)} · back: ${show(back)} · unmounted: ${show(gone)}` +
           (warnings.length ? ` · warnings: ${JSON.stringify(warnings)}` : ''),
+      ])
+    }
+
+    {
+      const { page } = await t.open('authority.html')
+      const i = await page.evaluate(() => window.__fx.create())
+      const lenis = await state(page)
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await sleep(100)
+      const reduced = await state(page)
+      const same = await page.evaluate((n) => window.__fx.isCurrent(n), i)
+      await page.evaluate((n) => window.__fx.scrollTo(n, 900), i)
+      await sleep(50)
+      const jumped = await page.evaluate(() => Math.round(window.scrollY))
+      await page.emulateMedia({ reducedMotion: 'no-preference' })
+      await sleep(100)
+      const back = await state(page)
+      const y = await page.evaluate(() => Math.round(window.scrollY))
+      await page.evaluate((n) => window.__fx.destroy(n), i)
+      const after = await state(page)
+      t.check('reduced motion on mid-visit: Lenis goes, native stamp, same handle; off again: Lenis back at the same place', () => [
+        only(lenis, 'lenis') && only(reduced, 'native') && same && only(back, 'lenis') && y === 900 && none(after),
+        `lenis: ${show(lenis)} · reduce on: ${show(reduced)}${same ? '' : ' (not the same live handle)'} · off: ` +
+          `${show(back)} at scrollY ${y} · destroyed: ${show(after)}`,
+      ])
+      t.check("under reduced motion the handle's scrollTo jumps", () => [
+        jumped === 900,
+        `scrollY 50 ms after scrollTo(900): ${jumped}`,
+      ])
+    }
+
+    {
+      const { page } = await t.open('authority.html')
+      const i = await page.evaluate(() => window.__fx.create())
+      await page.evaluate((n) => window.__fx.stop(n), i)
+      const locked = []
+      for (const reducedMotion of ['reduce', 'no-preference']) {
+        await page.emulateMedia({ reducedMotion })
+        await sleep(100)
+        locked.push((await state(page)).locked)
+      }
+      await page.evaluate((n) => window.__fx.start(n), i)
+      const started = (await state(page)).locked
+      // A handle destroyed while stopped must not leave the page locked (native, then Lenis).
+      await page.evaluate((n) => window.__fx.destroy(n), i)
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      const j = await page.evaluate(() => window.__fx.create())
+      await page.evaluate((n) => (window.__fx.stop(n), window.__fx.destroy(n)), j)
+      const nativeLeft = (await state(page)).locked
+      await page.emulateMedia({ reducedMotion: 'no-preference' })
+      const k = await page.evaluate(() => window.__fx.create())
+      await page.evaluate((n) => (window.__fx.stop(n), window.__fx.destroy(n)), k)
+      const lenisLeft = (await state(page)).locked
+      t.check("a modal's stop() holds across both switches; start() or destroy() releases it", () => [
+        locked.every(Boolean) && !started && !nativeLeft && !lenisLeft,
+        `locked after reduce on / off: ${locked.join(' / ')}; after start(): ${started}; ` +
+          `after destroy() while stopped, native: ${nativeLeft}, Lenis: ${lenisLeft}`,
+      ])
+    }
+  },
+
+  async smoother(t) {
+    const state = (page) => page.evaluate(() => window.__fx.state())
+    const show = (s) =>
+      `stamp=${s.stamp} wrapper ${s.wrapperFixed ? 'fixed' : 'in flow'} smooth=${s.smooth} effects=${s.effects} ` +
+      `speedY=${s.speedY} scrollY=${s.scrollY} contentTop=${s.contentTop} progress=${s.progress}`
+    // Smoothed mode catches up over about a second; wait until the content is drawn at the scroll position.
+    const settle = (page, y) =>
+      page.waitForFunction((y) => Math.abs(document.getElementById('smooth-content').getBoundingClientRect().top + y) < 1, y)
+
+    {
+      const { page } = await t.open('smoother.html')
+      await page.evaluate(() => window.__fx.create())
+      await page.evaluate(() => window.__fx.scrollTo(1500))
+      await settle(page, 1500)
+      const smooth = await state(page)
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await sleep(100)
+      const reduced = await state(page)
+      await page.evaluate(() => window.scrollTo(0, 2100))
+      await sleep(100)
+      const scrolled = await state(page)
+      await page.evaluate(() => window.__fx.scrollTo(900, false))
+      await sleep(50)
+      const jumped = await state(page)
+      t.check('reduced motion on mid-visit: native mode (wrapper in flow, no effects), the reader stays, triggers track', () => [
+        smooth.stamp === 'smoother' && smooth.wrapperFixed && smooth.effects === 1 && smooth.progress === 0.5 &&
+          reduced.stamp === 'smoother' && !reduced.wrapperFixed && reduced.effects === 0 && reduced.speedY === 0 &&
+          reduced.scrollY === 1500 && reduced.contentTop === -1500 &&
+          scrolled.contentTop === -2100 && scrolled.progress === 0.75,
+        `smoothed: ${show(smooth)} · reduce on: ${show(reduced)} · native scroll to 2100: ${show(scrolled)}`,
+      ])
+      t.check("under reduced motion the handle's scrollTo jumps", () => [
+        jumped.scrollY === 900,
+        `scrollY 50 ms after scrollTo(900): ${jumped.scrollY}`,
+      ])
+
+      await page.emulateMedia({ reducedMotion: 'no-preference' })
+      const drift = await page.evaluate(() => window.__fx.drift(45))
+      const back = await state(page)
+      t.check('reduced motion off again: smoothed from where the reader is, no replay from the top', () => [
+        drift <= 2 && back.wrapperFixed && back.effects === 1 && back.scrollY === 900,
+        `farthest the content was drawn from the scroll position over 45 frames: ${drift} px · ${show(back)}`,
+      ])
+
+      await page.evaluate(() => window.__fx.grow(500))
+      await sleep(600)
+      const grown = await state(page)
+      // #track now spans 1400–3200 px: at scrollY 900 the trigger (start 'top bottom' = 800) reads 100 / 2400.
+      t.check('content that grows refreshes every trigger, not only the smoother', () => [
+        Math.abs(grown.progress - 0.042) < 0.002 && grown.bodyHeight === '4700px',
+        `progress ${grown.progress} (0.042 expected) · body height ${grown.bodyHeight} (4700px expected)`,
+      ])
+
+      await page.evaluate(() => window.__fx.destroy())
+      const gone = await state(page)
+      t.check('destroy() kills the smoother and removes the stamp', () => [
+        gone.stamp === null && !gone.smoother && !gone.wrapperFixed,
+        show(gone),
+      ])
+    }
+
+    {
+      // The page is already scrolled and at rest when the smoother starts (a reload mid-page, a late mount). Under
+      // GSAP 3.15's own autoResize this replays the scroll from the top ~0.2 s after creation.
+      const { page } = await t.open('smoother.html')
+      await page.evaluate(() => window.scrollTo(0, 1500))
+      await sleep(300)
+      await page.evaluate(() => window.__fx.create())
+      const drift = await page.evaluate(() => window.__fx.drift(45))
+      t.check('created on a page already scrolled: holds the position, no replay from the top', () => [
+        drift <= 2,
+        `farthest the content was drawn from the scroll position over 45 frames: ${drift} px`,
+      ])
+    }
+
+    {
+      const { page } = await t.open('smoother.html', { reducedMotion: 'reduce' })
+      await page.evaluate(() => window.__fx.create())
+      await page.evaluate(() => window.scrollTo(0, 1500))
+      await sleep(100)
+      const s = await state(page)
+      t.check('reduced motion at load: native mode, triggers track', () => [
+        s.stamp === 'smoother' && !s.wrapperFixed && s.effects === 0 && s.speedY === 0 && s.contentTop === -1500 &&
+          s.progress === 0.5,
+        show(s),
+      ])
+    }
+
+    {
+      const { page } = await t.open('smoother.html')
+      await page.evaluate(() => window.__fx.create())
+      await page.evaluate(() => window.__fx.stop())
+      await page.mouse.move(500, 300)
+      const wheel = async (ms) => {
+        const y0 = await page.evaluate(() => window.scrollY)
+        await page.mouse.wheel(0, 400)
+        await sleep(ms)
+        return Math.round((await page.evaluate(() => window.scrollY)) - y0)
+      }
+      const moved = []
+      for (const reducedMotion of ['reduce', 'no-preference']) {
+        await page.emulateMedia({ reducedMotion })
+        await sleep(100)
+        moved.push(await wheel(500))
+      }
+      await page.evaluate(() => window.__fx.start())
+      const released = await wheel(500)
+      t.check("a modal's stop() holds across both switches; start() releases it", () => [
+        moved.every((d) => d === 0) && released > 0,
+        `wheel while stopped moved ${moved.join(' / ')} px (reduce on / off) · after start(): ${released} px`,
       ])
     }
   },
