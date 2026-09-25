@@ -144,9 +144,9 @@ try {
   r = run(m, 'add', 'stage', '--force')
   expect(r.code === 0 && !readFileSync(join(m, 'src/animation/motion/lib/cx.ts'), 'utf8').includes('// mine'), '--force overwrites the hand edit', r.out)
 
-  r = run(m, 'add', 'scrub-stage', '--dry-run')
-  expect(r.code === 0 && r.out.includes('dry run') && /write\s+motion\/components\/ScrubStage\.tsx/.test(r.out), '--dry-run reports what it would write', r.out)
-  expect(!existsSync(join(m, 'src/animation/motion/components/ScrubStage.tsx')), '--dry-run left the filesystem untouched')
+  r = run(m, 'add', 'scrub-video', '--dry-run')
+  expect(r.code === 0 && r.out.includes('dry run') && /write\s+motion\/ScrubVideo\.tsx/.test(r.out), '--dry-run reports what it would write', r.out)
+  expect(!existsSync(join(m, 'src/animation/motion/ScrubVideo.tsx')), '--dry-run left the filesystem untouched')
 
   // ── add: greenfield GSAP project, --dir, and reusing the lock's dir ──
   const g = join(root, 'gsap-proj')
