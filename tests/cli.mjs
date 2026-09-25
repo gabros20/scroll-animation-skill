@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // cli.mjs — the `scroll-animation` command end to end, in throwaway projects: list, add (copy +
 // lock + refuse-on-hand-edit + --force + --dry-run + engine auto-pick from package.json), and
-// media probe/sequence (+ a light scrub/poster check) against a tiny ffmpeg-generated clip —
-// skipped entirely if ffmpeg/ffprobe aren't on PATH. No browser, no network.
+// media probe/sequence (+ scrub/poster, loop --loop-from seam keyframes and .mp4 default outputs)
+// against a tiny ffmpeg-generated clip — skipped entirely if ffmpeg/ffprobe aren't on PATH. No
+// browser, no network.
 
 import { mkdtempSync, writeFileSync, readFileSync, mkdirSync, rmSync, appendFileSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
@@ -218,7 +219,7 @@ try {
   // ── media: probe/sequence (+ a light scrub/poster check) on a real clip ──
   const hasFfmpeg = !spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' }).error && !spawnSync('ffprobe', ['-version'], { stdio: 'ignore' }).error
   if (!hasFfmpeg) {
-    console.log('skip  media probe/scrub/sequence/poster — ffmpeg/ffprobe not on PATH')
+    console.log('skip  media probe/scrub/loop/sequence/poster — ffmpeg/ffprobe not on PATH')
   } else {
     const media = join(root, 'media')
     mkdirSync(media, { recursive: true })
@@ -247,6 +248,34 @@ try {
 
     r = run(media, 'media', 'poster', 'clip.mp4', '--at', '0')
     expect(r.code === 0, 'media poster exits 0', r.out)
+
+    // ── media loop --loop-from: a second keyframe at the seam, read back with ffprobe itself ──
+    const keyframesOf = (file) => {
+      const p = spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'frame=key_frame', '-of', 'csv=p=0', file], { encoding: 'utf8' })
+      return p.stdout.split('\n').map((l) => l.trim().split(',')[0]).filter(Boolean).flatMap((key, i) => (key === '1' ? [i] : []))
+    }
+    r = run(media, 'media', 'loop', 'clip.mp4', '--loop-from', '12', '--out', 'seam.mp4')
+    expect(r.code === 0 && r.out.includes('loopFromFrame={12} fps={24}'), 'media loop --loop-from prints the LoopVideo props to pass', r.out)
+    const seamKeys = existsSync(join(media, 'seam.mp4')) ? keyframesOf(join(media, 'seam.mp4')) : []
+    expect(seamKeys.join(',') === '0,12', 'media loop --loop-from 12 keys frames 0 and 12 and no others (ffprobe)', JSON.stringify(seamKeys))
+    r = run(media, 'media', 'probe', 'seam.mp4')
+    expect(/keyframes\s+2\/24 frames at 0, 12,/.test(r.out), 'media probe says where a handful of keyframes sit', r.out)
+    r = run(media, 'media', 'loop', 'clip.mp4', '--loop-from', '24', '--out', 'past-end.mp4')
+    expect(r.code === 2 && r.out.includes('--loop-from: frame 24 is outside 1..23') && !existsSync(join(media, 'past-end.mp4')), 'a --loop-from past the last frame is a usage error that names the valid range and writes nothing', r.out)
+    r = run(media, 'media', 'loop', 'clip.mp4', '--loop-from', '0', '--out', 'at-start.mp4')
+    expect(r.code === 2 && r.out.includes('--loop-from') && !existsSync(join(media, 'at-start.mp4')), '--loop-from 0 is a usage error (frame 0 is always a keyframe)', r.out)
+
+    // ── default containers: a .mov source still gets .mp4 outputs ──
+    const movDir = join(media, 'mov')
+    mkdirSync(movDir, { recursive: true })
+    const remux = spawnSync('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-i', clip, '-c', 'copy', join(movDir, 'clip.mov')])
+    expect(remux.status === 0, 'remuxed the test clip to .mov', String(remux.stderr))
+    r = run(movDir, 'media', 'loop', 'clip.mov')
+    expect(r.code === 0 && existsSync(join(movDir, 'clip-loop.mp4')) && !existsSync(join(movDir, 'clip-loop.mov')), 'media loop names its default output .mp4 for a .mov input', r.out)
+    r = run(movDir, 'media', 'scrub', 'clip.mov')
+    expect(r.code === 0 && existsSync(join(movDir, 'clip-scrub.mp4')) && !existsSync(join(movDir, 'clip-scrub.mov')), 'media scrub names its default output .mp4 for a .mov input', r.out)
+    r = run(movDir, 'media', 'loop', 'clip.mov', '--out', 'kept.mov')
+    expect(r.code === 0 && existsSync(join(movDir, 'kept.mov')), 'an explicit --out keeps the extension it was given', r.out)
   }
 } finally {
   rmSync(root, { recursive: true, force: true })

@@ -5,7 +5,7 @@
 
 import { spawnSync } from 'node:child_process'
 import { openSync, closeSync, readSync, statSync, mkdirSync, writeFileSync, unlinkSync } from 'node:fs'
-import { dirname, extname, join } from 'node:path'
+import { basename, dirname, extname, join } from 'node:path'
 
 /** Throws a plain Error (the CLI layer turns it into a CliError, exit 1) naming whichever of
  * ffmpeg/ffprobe is missing. Call once before any recipe below. */
@@ -85,10 +85,12 @@ function splitExt(p) {
   const ext = extname(p)
   return [p.slice(0, p.length - ext.length), ext]
 }
-/** input.mp4, 'scrub' → input-scrub.mp4 (next to the input, same container). */
+/** input.mov, 'scrub' → input-scrub.mp4, next to the input. Always .mp4 whatever came in: every encode here is
+ * faststart H.264 for the web, and a .mov/.mkv default would carry the source's container into production. An
+ * explicit --out is used as given. */
 function defaultOut(input, tag) {
   const [base] = splitExt(input)
-  return `${base}-${tag}${extname(input) || '.mp4'}`
+  return `${base}-${tag}.mp4`
 }
 function withSuffix(p, suffix) {
   const [base, ext] = splitExt(p)
@@ -108,21 +110,26 @@ function ffprobeFormat(path) {
   return JSON.parse(ffprobe(['-print_format', 'json', '-show_format', '-show_streams', path]))
 }
 
-/** Per-frame pict_type in decode order (the technique references/video.md §1 itself points at):
- * total frame count, keyframe count, and the max span in frames between consecutive keyframes
- * (an all-intra file spans 1; a normal GOP-N file spans ~N). */
+/** Per-frame key flags in presentation order (the technique references/video.md §1 itself points at): total frame
+ * count, the keyframe indices, and the max span in frames between consecutive keyframes (an all-intra file spans 1;
+ * a normal GOP-N file spans ~N). A keyframe is a random-access point (`key_frame`), which a browser can seek to; an
+ * I-picture that isn't one only counts when the build reports no key flag at all. */
 function keyframeStats(path) {
-  const out = ffprobe(['-select_streams', 'v:0', '-show_entries', 'frame=pict_type', '-of', 'csv=p=0', path])
-  // A frame carrying side data (typically the first keyframe) gets an extra trailing comma from
-  // csv=p=0 on some ffprobe builds ("I," instead of "I") — take the leading field, not the line.
-  const types = out.split('\n').map((l) => l.trim().split(',')[0]).filter(Boolean)
-  const total = types.length
+  const out = ffprobe(['-select_streams', 'v:0', '-show_entries', 'frame=key_frame,pict_type', '-of', 'compact=p=0', path])
+  // Named fields rather than csv: a frame carrying side data (typically the first keyframe) gets an extra empty
+  // field on some ffprobe builds ("key_frame=1|pict_type=I|"), and field order isn't ours to rely on.
   const keyIdx = []
-  types.forEach((t, i) => t === 'I' && keyIdx.push(i))
+  let total = 0
+  for (const line of out.split('\n')) {
+    const fields = Object.fromEntries(line.split('|').filter((f) => f.includes('=')).map((f) => f.trim().split('=')))
+    if (fields.key_frame === undefined && fields.pict_type === undefined) continue
+    if (fields.key_frame !== undefined ? fields.key_frame === '1' : fields.pict_type === 'I') keyIdx.push(total)
+    total++
+  }
   let maxGop = keyIdx.length ? 1 : 0
   for (let i = 1; i < keyIdx.length; i++) maxGop = Math.max(maxGop, keyIdx[i] - keyIdx[i - 1])
   if (keyIdx.length) maxGop = Math.max(maxGop, total - keyIdx[keyIdx.length - 1])
-  return { total, keyframes: keyIdx.length, maxGop }
+  return { total, keyIdx, maxGop }
 }
 
 /** moov-before-mdat, read from the file's own top-level box layout — not ffmpeg's trace log,
@@ -161,8 +168,8 @@ function readFastStart(path) {
   }
 }
 
-/** codec/profile, resolution, fps, duration, keyframe count + max GOP, faststart, audio presence,
- * and the two verdicts `media probe` prints. */
+/** codec/profile, resolution, fps, duration, keyframe count + indices + max GOP, faststart, audio
+ * presence, and the two verdicts `media probe` prints. */
 export function probeVideo(path) {
   const meta = ffprobeFormat(path)
   const vStream = (meta.streams ?? []).find((s) => s.codec_type === 'video')
@@ -171,7 +178,8 @@ export function probeVideo(path) {
   const [num, den] = String(vStream.avg_frame_rate ?? vStream.r_frame_rate ?? '0/1').split('/').map(Number)
   const fps = den ? num / den : 0
   const duration = Number(meta.format?.duration ?? vStream.duration ?? 0)
-  const { total, keyframes, maxGop } = keyframeStats(path)
+  const { total, keyIdx, maxGop } = keyframeStats(path)
+  const keyframes = keyIdx.length
   const faststart = readFastStart(path)
   const allIntra = total > 0 && keyframes === total
   const scrubReady = allIntra || (maxGop > 0 && maxGop <= 2)
@@ -188,6 +196,7 @@ export function probeVideo(path) {
     audio,
     frames: total,
     keyframes,
+    keyframeIndices: keyIdx,
     maxGop,
     faststart,
     allIntra,
@@ -250,18 +259,46 @@ export function encodeScrub(input, { out, width, crf = 23, fps, mobile, posterAt
   return result
 }
 
-/** A normal-GOP, faststart, silent loop encode, plus a poster from the encoded output. */
-export function encodeLoop(input, { out, width, fps, crf = 23, posterAt = 0 } = {}) {
+/** A request the input can't satisfy, such as a frame it doesn't have. The CLI reports it as a usage error (exit 2). */
+export class MediaRangeError extends RangeError {}
+
+/** Frames an encode will hold: the source's own count, or duration × fps when `fps` resamples it. */
+function encodedFrames(probed, fps) {
+  if (fps && Math.abs(fps - probed.fps) > 1e-3) return Math.max(1, Math.round(probed.duration * fps))
+  return probed.frames > 0 ? probed.frames : Math.max(1, Math.round(probed.duration * probed.fps))
+}
+
+/** An fps for LoopVideo's `fps` prop: exact for whole rates, six decimals otherwise (30000/1001 → 29.97003, a
+ * seam-time error in the nanoseconds). */
+export function formatFps(fps) {
+  return Number.isInteger(fps) ? String(fps) : String(Number(fps.toFixed(6)))
+}
+
+/** A one-GOP, faststart, silent loop encode, plus a poster from the encoded output. `loopFrom` is for an
+ * intro-then-seam loop (LoopVideo `loopFromFrame`): it forces a second keyframe at that frame, so each re-entry
+ * decodes from the seam itself instead of from frame 0 (references/video.md §10). It throws a MediaRangeError
+ * outside 1..frames−1 and verifies both keyframes on the encoded file. */
+export function encodeLoop(input, { out, width, fps, crf = 23, posterAt = 0, loopFrom } = {}) {
   const primary = out ?? defaultOut(input, 'loop')
+  const probed = probeVideo(input)
+  const frames = encodedFrames(probed, fps)
+  if (loopFrom !== undefined && !(Number.isInteger(loopFrom) && loopFrom >= 1 && loopFrom <= frames - 1)) {
+    throw new MediaRangeError(`frame ${loopFrom} is outside 1..${frames - 1} (${basename(input)} encodes to ${frames} frames at ${formatFps(fps || probed.fps)} fps)`)
+  }
   ensureDirFor(primary)
   const filters = videoFilters({ width, fps })
   // references/video.md §13: qcomp=1 so byte-identical frames at the seam quantize alike (no pop at the wrap), and
-  // one GOP per loop so the loop point is the keyframe.
-  const probed = probeVideo(input)
-  const gop = probed.frames > 0 ? probed.frames : Math.max(1, Math.round(probed.duration * (fps || probed.fps)))
-  ffmpeg(['-i', input, '-c:v', 'libx264', '-profile:v', 'high', '-preset', 'slow', '-crf', String(crf), '-g', String(gop), '-x264-params', 'qcomp=1', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', '-vf', filters.join(','), primary])
+  // one GOP per loop so the loop point is the keyframe. §10: the seam keyframe is forced by frame number (`n`, after
+  // any --fps), not by timestamp, so it can't round onto a neighbouring frame.
+  const seamKey = loopFrom ? ['-force_key_frames', `expr:eq(n,0)+eq(n,${loopFrom})`] : []
+  ffmpeg(['-i', input, '-c:v', 'libx264', '-profile:v', 'high', '-preset', 'slow', '-crf', String(crf), '-g', String(frames), ...seamKey, '-x264-params', 'qcomp=1', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', '-vf', filters.join(','), primary])
   const poster = extractPoster(primary, posterFor(primary), { at: posterAt })
-  return { primary, poster }
+  if (!loopFrom) return { primary, poster }
+  const encoded = probeVideo(primary)
+  if (!encoded.keyframeIndices.includes(0) || !encoded.keyframeIndices.includes(loopFrom)) {
+    throw new Error(`${primary}: expected keyframes at frames 0 and ${loopFrom}, found ${encoded.keyframeIndices.join(', ') || 'none'}`)
+  }
+  return { primary, poster, loopFrom, fps: encoded.fps, frames: encoded.frames, keyframeIndices: encoded.keyframeIndices }
 }
 
 function evenHeight(srcW, srcH, width) {
