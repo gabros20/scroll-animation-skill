@@ -1,0 +1,8599 @@
+{
+ "spike": "S1",
+ "versions": {
+  "chromium": "153.0.8010.12",
+  "webkit": "26.6"
+ },
+ "runs": [
+  {
+   "engine": "chromium",
+   "mode": "native",
+   "read": "all",
+   "rep": 0,
+   "layout": {
+    "timeOrigin": 1790358533750.1,
+    "rootIters": 8,
+    "vh": 600,
+    "vw": 1000,
+    "maxScroll": 3800,
+    "red": [
+     [
+      900,
+      60
+     ],
+     [
+      1500,
+      70
+     ],
+     [
+      2100,
+      80
+     ],
+     [
+      2700,
+      90
+     ],
+     [
+      3300,
+      100
+     ]
+    ],
+    "green": [
+     [
+      1200,
+      65
+     ],
+     [
+      1800,
+      75
+     ],
+     [
+      2400,
+      85
+     ],
+     [
+      3000,
+      95
+     ],
+     [
+      3600,
+      105
+     ]
+    ],
+    "magenta": [
+     [
+      1050,
+      62
+     ],
+     [
+      1650,
+      72
+     ],
+     [
+      2250,
+      82
+     ],
+     [
+      2850,
+      92
+     ],
+     [
+      3450,
+      102
+     ]
+    ],
+    "timeline": {
+     "red": "ViewTimeline",
+     "blue": "ScrollTimeline"
+    },
+    "frameKeyMatchesRaf": null
+   },
+   "js": {
+    "frames": 316,
+    "movingFrames": 25,
+    "scrollDeltaPerMovingFrame": {
+     "n": 25,
+     "max": 1500,
+     "p95": 1100,
+     "median": 100,
+     "mean": 276
+    },
+    "frameInterval": {
+     "n": 315,
+     "max": 16.8,
+     "p95": 16.7,
+     "median": 16.7,
+     "mean": 16.666
+    },
+    "lenisAnimatedVsScrollTop": 0,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0.001,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0.001,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     }
+    },
+    "outliers": []
+   }
+  },
+  {
+   "engine": "chromium",
+   "mode": "native",
+   "read": "all",
+   "rep": 1,
+   "layout": {
+    "timeOrigin": 1790358533750.1,
+    "rootIters": 8,
+    "vh": 600,
+    "vw": 1000,
+    "maxScroll": 3800,
+    "red": [
+     [
+      900,
+      60
+     ],
+     [
+      1500,
+      70
+     ],
+     [
+      2100,
+      80
+     ],
+     [
+      2700,
+      90
+     ],
+     [
+      3300,
+      100
+     ]
+    ],
+    "green": [
+     [
+      1200,
+      65
+     ],
+     [
+      1800,
+      75
+     ],
+     [
+      2400,
+      85
+     ],
+     [
+      3000,
+      95
+     ],
+     [
+      3600,
+      105
+     ]
+    ],
+    "magenta": [
+     [
+      1050,
+      62
+     ],
+     [
+      1650,
+      72
+     ],
+     [
+      2250,
+      82
+     ],
+     [
+      2850,
+      92
+     ],
+     [
+      3450,
+      102
+     ]
+    ],
+    "timeline": {
+     "red": "ViewTimeline",
+     "blue": "ScrollTimeline"
+    },
+    "frameKeyMatchesRaf": null
+   },
+   "js": {
+    "frames": 316,
+    "movingFrames": 25,
+    "scrollDeltaPerMovingFrame": {
+     "n": 25,
+     "max": 1500,
+     "p95": 1100,
+     "median": 100,
+     "mean": 276
+    },
+    "frameInterval": {
+     "n": 315,
+     "max": 16.8,
+     "p95": 16.8,
+     "median": 16.7,
+     "mean": 16.666
+    },
+    "lenisAnimatedVsScrollTop": 0,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0.001,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0.001,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     }
+    },
+    "outliers": []
+   }
+  },
+  {
+   "engine": "chromium",
+   "mode": "native",
+   "read": "all",
+   "rep": 2,
+   "layout": {
+    "timeOrigin": 1790358533750.1,
+    "rootIters": 8,
+    "vh": 600,
+    "vw": 1000,
+    "maxScroll": 3800,
+    "red": [
+     [
+      900,
+      60
+     ],
+     [
+      1500,
+      70
+     ],
+     [
+      2100,
+      80
+     ],
+     [
+      2700,
+      90
+     ],
+     [
+      3300,
+      100
+     ]
+    ],
+    "green": [
+     [
+      1200,
+      65
+     ],
+     [
+      1800,
+      75
+     ],
+     [
+      2400,
+      85
+     ],
+     [
+      3000,
+      95
+     ],
+     [
+      3600,
+      105
+     ]
+    ],
+    "magenta": [
+     [
+      1050,
+      62
+     ],
+     [
+      1650,
+      72
+     ],
+     [
+      2250,
+      82
+     ],
+     [
+      2850,
+      92
+     ],
+     [
+      3450,
+      102
+     ]
+    ],
+    "timeline": {
+     "red": "ViewTimeline",
+     "blue": "ScrollTimeline"
+    },
+    "frameKeyMatchesRaf": null
+   },
+   "js": {
+    "frames": 316,
+    "movingFrames": 25,
+    "scrollDeltaPerMovingFrame": {
+     "n": 25,
+     "max": 1500,
+     "p95": 1100,
+     "median": 100,
+     "mean": 276
+    },
+    "frameInterval": {
+     "n": 315,
+     "max": 16.8,
+     "p95": 16.7,
+     "median": 16.7,
+     "mean": 16.666
+    },
+    "lenisAnimatedVsScrollTop": 0,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0.001,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0.001,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     }
+    },
+    "outliers": []
+   }
+  },
+  {
+   "engine": "chromium",
+   "mode": "native",
+   "read": "all+screencast",
+   "rep": 0,
+   "js": {
+    "frames": 315,
+    "movingFrames": 25,
+    "scrollDeltaPerMovingFrame": {
+     "n": 25,
+     "max": 1500,
+     "p95": 1100,
+     "median": 100,
+     "mean": 276
+    },
+    "frameInterval": {
+     "n": 314,
+     "max": 16.8,
+     "p95": 16.7,
+     "median": 16.7,
+     "mean": 16.666
+    },
+    "lenisAnimatedVsScrollTop": 0,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0.001,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0.001,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     }
+    },
+    "outliers": []
+   },
+   "painted": {
+    "frames": 288,
+    "framesMatchedToRows": 278,
+    "view.transform": {
+     "samples": 256,
+     "movingSamples": 16,
+     "errMoving": {
+      "n": 16,
+      "max": 1.6,
+      "p95": 1.6,
+      "median": 0.5,
+      "mean": 0.631
+     },
+     "signedMeanMoving": 0.094,
+     "errStill": 1.6,
+     "lagFrames": {
+      "0": 16
+     }
+    },
+    "view.left": {
+     "samples": 262,
+     "movingSamples": 13,
+     "errMoving": {
+      "n": 13,
+      "max": 100.813,
+      "p95": 100.75,
+      "median": 100.25,
+      "mean": 100.16
+     },
+     "signedMeanMoving": -7.729,
+     "errStill": 0.813,
+     "lagFrames": {
+      "1": 13
+     }
+    },
+    "root.transform": {
+     "samples": 278,
+     "movingSamples": 18,
+     "errMoving": {
+      "n": 18,
+      "max": 1.375,
+      "p95": 1.25,
+      "median": 0.375,
+      "mean": 0.503
+     },
+     "signedMeanMoving": 0.358,
+     "errStill": 1.375,
+     "lagFrames": {
+      "0": 18
+     }
+    },
+    "root.left": {
+     "samples": 278,
+     "movingSamples": 18,
+     "errMoving": {
+      "n": 18,
+      "max": 100.563,
+      "p95": 100.563,
+      "median": 100.063,
+      "mean": 100.021
+     },
+     "signedMeanMoving": -22.139,
+     "errStill": 0.563,
+     "lagFrames": {
+      "1": 18
+     }
+    },
+    "control.view.js": {
+     "samples": 247,
+     "movingSamples": 14,
+     "errMoving": {
+      "n": 14,
+      "max": 100.86,
+      "p95": 100.415,
+      "median": 99.68,
+      "mean": 99.825
+     },
+     "signedMeanMoving": -14.017,
+     "errStill": 0.86,
+     "lagFrames": {
+      "1": 14
+     }
+    },
+    "control.root.js": {
+     "samples": 278,
+     "movingSamples": 18,
+     "errMoving": {
+      "n": 18,
+      "max": 101,
+      "p95": 100.875,
+      "median": 100.063,
+      "mean": 100.087
+     },
+     "signedMeanMoving": -22.469,
+     "errStill": 1,
+     "lagFrames": {
+      "1": 18
+     }
+    }
+   }
+  },
+  {
+   "engine": "chromium",
+   "mode": "native",
+   "read": "all+screencast",
+   "rep": 1,
+   "js": {
+    "frames": 316,
+    "movingFrames": 25,
+    "scrollDeltaPerMovingFrame": {
+     "n": 25,
+     "max": 1500,
+     "p95": 1100,
+     "median": 100,
+     "mean": 276
+    },
+    "frameInterval": {
+     "n": 315,
+     "max": 16.8,
+     "p95": 16.7,
+     "median": 16.7,
+     "mean": 16.666
+    },
+    "lenisAnimatedVsScrollTop": 0,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0.001,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0.001,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     }
+    },
+    "outliers": []
+   },
+   "painted": {
+    "frames": 288,
+    "framesMatchedToRows": 278,
+    "view.transform": {
+     "samples": 255,
+     "movingSamples": 16,
+     "errMoving": {
+      "n": 16,
+      "max": 1.6,
+      "p95": 1.6,
+      "median": 0.5,
+      "mean": 0.631
+     },
+     "signedMeanMoving": 0.094,
+     "errStill": 1.6,
+     "lagFrames": {
+      "0": 16
+     }
+    },
+    "view.left": {
+     "samples": 262,
+     "movingSamples": 13,
+     "errMoving": {
+      "n": 13,
+      "max": 100.813,
+      "p95": 100.75,
+      "median": 100.25,
+      "mean": 100.16
+     },
+     "signedMeanMoving": -7.729,
+     "errStill": 0.813,
+     "lagFrames": {
+      "1": 13
+     }
+    },
+    "root.transform": {
+     "samples": 278,
+     "movingSamples": 18,
+     "errMoving": {
+      "n": 18,
+      "max": 1.375,
+      "p95": 1.25,
+      "median": 0.375,
+      "mean": 0.503
+     },
+     "signedMeanMoving": 0.358,
+     "errStill": 1.375,
+     "lagFrames": {
+      "0": 18
+     }
+    },
+    "root.left": {
+     "samples": 278,
+     "movingSamples": 18,
+     "errMoving": {
+      "n": 18,
+      "max": 100.563,
+      "p95": 100.563,
+      "median": 100.063,
+      "mean": 100.021
+     },
+     "signedMeanMoving": -22.139,
+     "errStill": 0.563,
+     "lagFrames": {
+      "1": 18
+     }
+    },
+    "control.view.js": {
+     "samples": 247,
+     "movingSamples": 14,
+     "errMoving": {
+      "n": 14,
+      "max": 100.86,
+      "p95": 100.415,
+      "median": 99.68,
+      "mean": 99.825
+     },
+     "signedMeanMoving": -14.017,
+     "errStill": 0.86,
+     "lagFrames": {
+      "1": 14
+     }
+    },
+    "control.root.js": {
+     "samples": 278,
+     "movingSamples": 18,
+     "errMoving": {
+      "n": 18,
+      "max": 101,
+      "p95": 100.875,
+      "median": 100.063,
+      "mean": 100.087
+     },
+     "signedMeanMoving": -22.469,
+     "errStill": 1,
+     "lagFrames": {
+      "1": 18
+     }
+    }
+   }
+  },
+  {
+   "engine": "chromium",
+   "mode": "native",
+   "read": "timing",
+   "rep": 0,
+   "js": {
+    "frames": 316,
+    "movingFrames": 25,
+    "scrollDeltaPerMovingFrame": {
+     "n": 25,
+     "max": 1500,
+     "p95": 1100,
+     "median": 100,
+     "mean": 276
+    },
+    "frameInterval": {
+     "n": 315,
+     "max": 16.8,
+     "p95": 16.7,
+     "median": 16.7,
+     "mean": 16.666
+    },
+    "lenisAnimatedVsScrollTop": 0,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     }
+    },
+    "outliers": []
+   }
+  },
+  {
+   "engine": "chromium",
+   "mode": "native",
+   "read": "style",
+   "rep": 0,
+   "js": {
+    "frames": 316,
+    "movingFrames": 25,
+    "scrollDeltaPerMovingFrame": {
+     "n": 25,
+     "max": 1500,
+     "p95": 1100,
+     "median": 100,
+     "mean": 276
+    },
+    "frameInterval": {
+     "n": 315,
+     "max": 16.8,
+     "p95": 16.7,
+     "median": 16.7,
+     "mean": 16.666
+    },
+    "lenisAnimatedVsScrollTop": 0,
+    "series": {
+     "root.transform.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0.001,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0.001,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     }
+    },
+    "outliers": []
+   }
+  },
+  {
+   "engine": "chromium",
+   "mode": "lenis",
+   "read": "all",
+   "rep": 0,
+   "layout": {
+    "timeOrigin": 1790358603651.3,
+    "rootIters": 8,
+    "vh": 600,
+    "vw": 1000,
+    "maxScroll": 3800,
+    "red": [
+     [
+      900,
+      60
+     ],
+     [
+      1500,
+      70
+     ],
+     [
+      2100,
+      80
+     ],
+     [
+      2700,
+      90
+     ],
+     [
+      3300,
+      100
+     ]
+    ],
+    "green": [
+     [
+      1200,
+      65
+     ],
+     [
+      1800,
+      75
+     ],
+     [
+      2400,
+      85
+     ],
+     [
+      3000,
+      95
+     ],
+     [
+      3600,
+      105
+     ]
+    ],
+    "magenta": [
+     [
+      1050,
+      62
+     ],
+     [
+      1650,
+      72
+     ],
+     [
+      2250,
+      82
+     ],
+     [
+      2850,
+      92
+     ],
+     [
+      3450,
+      102
+     ]
+    ],
+    "timeline": {
+     "red": "ViewTimeline",
+     "blue": "ScrollTimeline"
+    },
+    "frameKeyMatchesRaf": null
+   },
+   "js": {
+    "frames": 445,
+    "movingFrames": 238,
+    "scrollDeltaPerMovingFrame": {
+     "n": 238,
+     "max": 1500,
+     "p95": 38,
+     "median": 12,
+     "mean": 32.773
+    },
+    "frameInterval": {
+     "n": 444,
+     "max": 16.8,
+     "p95": 16.8,
+     "median": 16.7,
+     "mean": 16.666
+    },
+    "lenisAnimatedVsScrollTop": 0.5,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 238,
+      "errMoving": {
+       "n": 238,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 238,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 238,
+      "errMoving": {
+       "n": 238,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 238,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 238,
+      "errMoving": {
+       "n": 238,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 238,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 238,
+      "errMoving": {
+       "n": 238,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 238,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 226,
+      "errMoving": {
+       "n": 226,
+       "max": 14,
+       "p95": 0,
+       "median": 0,
+       "mean": 0.062
+      },
+      "signedMean": 0.062,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 225,
+       "1": 1,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 226,
+      "errMoving": {
+       "n": 226,
+       "max": 14,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0.062
+      },
+      "signedMean": 0.062,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 225,
+       "1": 1,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 210,
+      "errMoving": {
+       "n": 210,
+       "max": 3,
+       "p95": 0,
+       "median": 0,
+       "mean": 0.014
+      },
+      "signedMean": 0.014,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 209,
+       "1": 1,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 210,
+      "errMoving": {
+       "n": 210,
+       "max": 3,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0.015
+      },
+      "signedMean": 0.014,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 209,
+       "1": 1,
+       "2": 0
+      }
+     }
+    },
+    "outliers": [
+     {
+      "series": "view.left.timing",
+      "lag": 1,
+      "errPx": 3,
+      "frame": 170,
+      "phase": "wheel-up",
+      "y": 1262,
+      "prevY": 1279
+     },
+     {
+      "series": "view.left.style",
+      "lag": 1,
+      "errPx": 3,
+      "frame": 170,
+      "phase": "wheel-up",
+      "y": 1262,
+      "prevY": 1279
+     },
+     {
+      "series": "view.transform.timing",
+      "lag": 1,
+      "errPx": 14,
+      "frame": 188,
+      "phase": "wheel-up",
+      "y": 946,
+      "prevY": 962
+     },
+     {
+      "series": "view.transform.style",
+      "lag": 1,
+      "errPx": 14,
+      "frame": 188,
+      "phase": "wheel-up",
+      "y": 946,
+      "prevY": 962
+     }
+    ]
+   }
+  },
+  {
+   "engine": "chromium",
+   "mode": "lenis",
+   "read": "all",
+   "rep": 1,
+   "layout": {
+    "timeOrigin": 1790358603651.3,
+    "rootIters": 8,
+    "vh": 600,
+    "vw": 1000,
+    "maxScroll": 3800,
+    "red": [
+     [
+      900,
+      60
+     ],
+     [
+      1500,
+      70
+     ],
+     [
+      2100,
+      80
+     ],
+     [
+      2700,
+      90
+     ],
+     [
+      3300,
+      100
+     ]
+    ],
+    "green": [
+     [
+      1200,
+      65
+     ],
+     [
+      1800,
+      75
+     ],
+     [
+      2400,
+      85
+     ],
+     [
+      3000,
+      95
+     ],
+     [
+      3600,
+      105
+     ]
+    ],
+    "magenta": [
+     [
+      1050,
+      62
+     ],
+     [
+      1650,
+      72
+     ],
+     [
+      2250,
+      82
+     ],
+     [
+      2850,
+      92
+     ],
+     [
+      3450,
+      102
+     ]
+    ],
+    "timeline": {
+     "red": "ViewTimeline",
+     "blue": "ScrollTimeline"
+    },
+    "frameKeyMatchesRaf": null
+   },
+   "js": {
+    "frames": 444,
+    "movingFrames": 238,
+    "scrollDeltaPerMovingFrame": {
+     "n": 238,
+     "max": 1500,
+     "p95": 38,
+     "median": 12,
+     "mean": 32.773
+    },
+    "frameInterval": {
+     "n": 443,
+     "max": 16.8,
+     "p95": 16.7,
+     "median": 16.7,
+     "mean": 16.666
+    },
+    "lenisAnimatedVsScrollTop": 0.499,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 238,
+      "errMoving": {
+       "n": 238,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 238,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 238,
+      "errMoving": {
+       "n": 238,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 238,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 238,
+      "errMoving": {
+       "n": 238,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 238,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 238,
+      "errMoving": {
+       "n": 238,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 238,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 226,
+      "errMoving": {
+       "n": 226,
+       "max": 14,
+       "p95": 0,
+       "median": 0,
+       "mean": 0.062
+      },
+      "signedMean": 0.062,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 225,
+       "1": 1,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 226,
+      "errMoving": {
+       "n": 226,
+       "max": 14,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0.062
+      },
+      "signedMean": 0.062,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 225,
+       "1": 1,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 210,
+      "errMoving": {
+       "n": 210,
+       "max": 3,
+       "p95": 0,
+       "median": 0,
+       "mean": 0.014
+      },
+      "signedMean": 0.014,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 209,
+       "1": 1,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 210,
+      "errMoving": {
+       "n": 210,
+       "max": 3,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0.015
+      },
+      "signedMean": 0.014,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 209,
+       "1": 1,
+       "2": 0
+      }
+     }
+    },
+    "outliers": [
+     {
+      "series": "view.left.timing",
+      "lag": 1,
+      "errPx": 3,
+      "frame": 169,
+      "phase": "wheel-up",
+      "y": 1262,
+      "prevY": 1279
+     },
+     {
+      "series": "view.left.style",
+      "lag": 1,
+      "errPx": 3,
+      "frame": 169,
+      "phase": "wheel-up",
+      "y": 1262,
+      "prevY": 1279
+     },
+     {
+      "series": "view.transform.timing",
+      "lag": 1,
+      "errPx": 14,
+      "frame": 187,
+      "phase": "wheel-up",
+      "y": 946,
+      "prevY": 962
+     },
+     {
+      "series": "view.transform.style",
+      "lag": 1,
+      "errPx": 14,
+      "frame": 187,
+      "phase": "wheel-up",
+      "y": 946,
+      "prevY": 962
+     }
+    ]
+   }
+  },
+  {
+   "engine": "chromium",
+   "mode": "lenis",
+   "read": "all",
+   "rep": 2,
+   "layout": {
+    "timeOrigin": 1790358603651.3,
+    "rootIters": 8,
+    "vh": 600,
+    "vw": 1000,
+    "maxScroll": 3800,
+    "red": [
+     [
+      900,
+      60
+     ],
+     [
+      1500,
+      70
+     ],
+     [
+      2100,
+      80
+     ],
+     [
+      2700,
+      90
+     ],
+     [
+      3300,
+      100
+     ]
+    ],
+    "green": [
+     [
+      1200,
+      65
+     ],
+     [
+      1800,
+      75
+     ],
+     [
+      2400,
+      85
+     ],
+     [
+      3000,
+      95
+     ],
+     [
+      3600,
+      105
+     ]
+    ],
+    "magenta": [
+     [
+      1050,
+      62
+     ],
+     [
+      1650,
+      72
+     ],
+     [
+      2250,
+      82
+     ],
+     [
+      2850,
+      92
+     ],
+     [
+      3450,
+      102
+     ]
+    ],
+    "timeline": {
+     "red": "ViewTimeline",
+     "blue": "ScrollTimeline"
+    },
+    "frameKeyMatchesRaf": null
+   },
+   "js": {
+    "frames": 444,
+    "movingFrames": 238,
+    "scrollDeltaPerMovingFrame": {
+     "n": 238,
+     "max": 1500,
+     "p95": 38,
+     "median": 12,
+     "mean": 32.773
+    },
+    "frameInterval": {
+     "n": 443,
+     "max": 16.8,
+     "p95": 16.7,
+     "median": 16.7,
+     "mean": 16.666
+    },
+    "lenisAnimatedVsScrollTop": 0.5,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 238,
+      "errMoving": {
+       "n": 238,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 238,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 238,
+      "errMoving": {
+       "n": 238,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 238,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 238,
+      "errMoving": {
+       "n": 238,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 238,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 238,
+      "errMoving": {
+       "n": 238,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 238,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 226,
+      "errMoving": {
+       "n": 226,
+       "max": 13,
+       "p95": 0,
+       "median": 0,
+       "mean": 0.058
+      },
+      "signedMean": 0.058,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 225,
+       "1": 1,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 226,
+      "errMoving": {
+       "n": 226,
+       "max": 13,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0.058
+      },
+      "signedMean": 0.057,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 225,
+       "1": 1,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 210,
+      "errMoving": {
+       "n": 210,
+       "max": 3,
+       "p95": 0,
+       "median": 0,
+       "mean": 0.014
+      },
+      "signedMean": 0.014,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 209,
+       "1": 1,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 210,
+      "errMoving": {
+       "n": 210,
+       "max": 3,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0.015
+      },
+      "signedMean": 0.014,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 209,
+       "1": 1,
+       "2": 0
+      }
+     }
+    },
+    "outliers": [
+     {
+      "series": "view.left.timing",
+      "lag": 1,
+      "errPx": 3,
+      "frame": 169,
+      "phase": "wheel-up",
+      "y": 1262,
+      "prevY": 1279
+     },
+     {
+      "series": "view.left.style",
+      "lag": 1,
+      "errPx": 3,
+      "frame": 169,
+      "phase": "wheel-up",
+      "y": 1262,
+      "prevY": 1279
+     },
+     {
+      "series": "view.transform.timing",
+      "lag": 1,
+      "errPx": 13,
+      "frame": 187,
+      "phase": "wheel-up",
+      "y": 947,
+      "prevY": 962
+     },
+     {
+      "series": "view.transform.style",
+      "lag": 1,
+      "errPx": 13,
+      "frame": 187,
+      "phase": "wheel-up",
+      "y": 947,
+      "prevY": 962
+     }
+    ]
+   }
+  },
+  {
+   "engine": "chromium",
+   "mode": "lenis",
+   "read": "all+screencast",
+   "rep": 0,
+   "js": {
+    "frames": 444,
+    "movingFrames": 238,
+    "scrollDeltaPerMovingFrame": {
+     "n": 238,
+     "max": 1500,
+     "p95": 38,
+     "median": 12,
+     "mean": 32.773
+    },
+    "frameInterval": {
+     "n": 443,
+     "max": 16.8,
+     "p95": 16.7,
+     "median": 16.7,
+     "mean": 16.666
+    },
+    "lenisAnimatedVsScrollTop": 0.5,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 237,
+      "errMoving": {
+       "n": 237,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 237,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 237,
+      "errMoving": {
+       "n": 237,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 237,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 237,
+      "errMoving": {
+       "n": 237,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 237,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 237,
+      "errMoving": {
+       "n": 237,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 237,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 226,
+      "errMoving": {
+       "n": 226,
+       "max": 13,
+       "p95": 0,
+       "median": 0,
+       "mean": 0.058
+      },
+      "signedMean": 0.058,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 225,
+       "1": 1,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 226,
+      "errMoving": {
+       "n": 226,
+       "max": 13,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0.058
+      },
+      "signedMean": 0.057,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 225,
+       "1": 1,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 210,
+      "errMoving": {
+       "n": 210,
+       "max": 3,
+       "p95": 0,
+       "median": 0,
+       "mean": 0.014
+      },
+      "signedMean": 0.014,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 209,
+       "1": 1,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 210,
+      "errMoving": {
+       "n": 210,
+       "max": 3,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0.015
+      },
+      "signedMean": 0.014,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 209,
+       "1": 1,
+       "2": 0
+      }
+     }
+    },
+    "outliers": [
+     {
+      "series": "view.left.timing",
+      "lag": 1,
+      "errPx": 3,
+      "frame": 169,
+      "phase": "wheel-up",
+      "y": 1262,
+      "prevY": 1279
+     },
+     {
+      "series": "view.left.style",
+      "lag": 1,
+      "errPx": 3,
+      "frame": 169,
+      "phase": "wheel-up",
+      "y": 1262,
+      "prevY": 1279
+     },
+     {
+      "series": "view.transform.timing",
+      "lag": 1,
+      "errPx": 13,
+      "frame": 187,
+      "phase": "wheel-up",
+      "y": 947,
+      "prevY": 962
+     },
+     {
+      "series": "view.transform.style",
+      "lag": 1,
+      "errPx": 13,
+      "frame": 187,
+      "phase": "wheel-up",
+      "y": 947,
+      "prevY": 962
+     }
+    ]
+   },
+   "painted": {
+    "frames": 302,
+    "framesMatchedToRows": 275,
+    "view.transform": {
+     "samples": 249,
+     "movingSamples": 174,
+     "errMoving": {
+      "n": 174,
+      "max": 2.1,
+      "p95": 1.7,
+      "median": 0.483,
+      "mean": 0.625
+     },
+     "signedMeanMoving": 0.32,
+     "errStill": 2.033,
+     "lagFrames": {
+      "0": 131,
+      "small-delta": 43
+     }
+    },
+    "view.left": {
+     "samples": 247,
+     "movingSamples": 159,
+     "errMoving": {
+      "n": 159,
+      "max": 1.313,
+      "p95": 0.825,
+      "median": 0.388,
+      "mean": 0.425
+     },
+     "signedMeanMoving": 0.092,
+     "errStill": 1.083,
+     "lagFrames": {
+      "0": 116,
+      "small-delta": 43
+     }
+    },
+    "root.transform": {
+     "samples": 275,
+     "movingSamples": 185,
+     "errMoving": {
+      "n": 185,
+      "max": 2.375,
+      "p95": 1.375,
+      "median": 0.5,
+      "mean": 0.621
+     },
+     "signedMeanMoving": 0.544,
+     "errStill": 1.708,
+     "lagFrames": {
+      "0": 142,
+      "small-delta": 43
+     }
+    },
+    "root.left": {
+     "samples": 275,
+     "movingSamples": 185,
+     "errMoving": {
+      "n": 185,
+      "max": 1.563,
+      "p95": 0.833,
+      "median": 0.313,
+      "mean": 0.365
+     },
+     "signedMeanMoving": 0.158,
+     "errStill": 0.708,
+     "lagFrames": {
+      "0": 142,
+      "small-delta": 43
+     }
+    },
+    "control.view.js": {
+     "samples": 234,
+     "movingSamples": 159,
+     "errMoving": {
+      "n": 159,
+      "max": 1.56,
+      "p95": 1.253,
+      "median": 0.483,
+      "mean": 0.534
+     },
+     "signedMeanMoving": 0.268,
+     "errStill": 1.413,
+     "lagFrames": {
+      "0": 116,
+      "small-delta": 43
+     }
+    },
+    "control.root.js": {
+     "samples": 275,
+     "movingSamples": 185,
+     "errMoving": {
+      "n": 185,
+      "max": 1.625,
+      "p95": 1,
+      "median": 0.375,
+      "mean": 0.437
+     },
+     "signedMeanMoving": 0.024,
+     "errStill": 1.083,
+     "lagFrames": {
+      "0": 142,
+      "small-delta": 43
+     }
+    }
+   }
+  },
+  {
+   "engine": "chromium",
+   "mode": "lenis",
+   "read": "all+screencast",
+   "rep": 1,
+   "js": {
+    "frames": 444,
+    "movingFrames": 238,
+    "scrollDeltaPerMovingFrame": {
+     "n": 238,
+     "max": 1500,
+     "p95": 38,
+     "median": 12,
+     "mean": 32.773
+    },
+    "frameInterval": {
+     "n": 443,
+     "max": 16.8,
+     "p95": 16.7,
+     "median": 16.7,
+     "mean": 16.666
+    },
+    "lenisAnimatedVsScrollTop": 0.5,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 237,
+      "errMoving": {
+       "n": 237,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 237,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 237,
+      "errMoving": {
+       "n": 237,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 237,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 237,
+      "errMoving": {
+       "n": 237,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 237,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 237,
+      "errMoving": {
+       "n": 237,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 237,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 226,
+      "errMoving": {
+       "n": 226,
+       "max": 13,
+       "p95": 0,
+       "median": 0,
+       "mean": 0.058
+      },
+      "signedMean": 0.058,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 225,
+       "1": 1,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 226,
+      "errMoving": {
+       "n": 226,
+       "max": 13,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0.058
+      },
+      "signedMean": 0.057,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 225,
+       "1": 1,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 210,
+      "errMoving": {
+       "n": 210,
+       "max": 3,
+       "p95": 0,
+       "median": 0,
+       "mean": 0.014
+      },
+      "signedMean": 0.014,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 209,
+       "1": 1,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 210,
+      "errMoving": {
+       "n": 210,
+       "max": 3,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0.015
+      },
+      "signedMean": 0.014,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 209,
+       "1": 1,
+       "2": 0
+      }
+     }
+    },
+    "outliers": [
+     {
+      "series": "view.left.timing",
+      "lag": 1,
+      "errPx": 3,
+      "frame": 169,
+      "phase": "wheel-up",
+      "y": 1262,
+      "prevY": 1279
+     },
+     {
+      "series": "view.left.style",
+      "lag": 1,
+      "errPx": 3,
+      "frame": 169,
+      "phase": "wheel-up",
+      "y": 1262,
+      "prevY": 1279
+     },
+     {
+      "series": "view.transform.timing",
+      "lag": 1,
+      "errPx": 13,
+      "frame": 187,
+      "phase": "wheel-up",
+      "y": 947,
+      "prevY": 962
+     },
+     {
+      "series": "view.transform.style",
+      "lag": 1,
+      "errPx": 13,
+      "frame": 187,
+      "phase": "wheel-up",
+      "y": 947,
+      "prevY": 962
+     }
+    ]
+   },
+   "painted": {
+    "frames": 302,
+    "framesMatchedToRows": 275,
+    "view.transform": {
+     "samples": 249,
+     "movingSamples": 174,
+     "errMoving": {
+      "n": 174,
+      "max": 2.1,
+      "p95": 1.65,
+      "median": 0.467,
+      "mean": 0.608
+     },
+     "signedMeanMoving": 0.322,
+     "errStill": 2.033,
+     "lagFrames": {
+      "0": 131,
+      "small-delta": 43
+     }
+    },
+    "view.left": {
+     "samples": 247,
+     "movingSamples": 159,
+     "errMoving": {
+      "n": 159,
+      "max": 1.313,
+      "p95": 0.825,
+      "median": 0.383,
+      "mean": 0.422
+     },
+     "signedMeanMoving": 0.072,
+     "errStill": 1.083,
+     "lagFrames": {
+      "0": 116,
+      "small-delta": 43
+     }
+    },
+    "root.transform": {
+     "samples": 275,
+     "movingSamples": 185,
+     "errMoving": {
+      "n": 185,
+      "max": 2.375,
+      "p95": 1.375,
+      "median": 0.563,
+      "mean": 0.638
+     },
+     "signedMeanMoving": 0.562,
+     "errStill": 1.708,
+     "lagFrames": {
+      "0": 142,
+      "small-delta": 43
+     }
+    },
+    "root.left": {
+     "samples": 275,
+     "movingSamples": 185,
+     "errMoving": {
+      "n": 185,
+      "max": 1.563,
+      "p95": 0.833,
+      "median": 0.313,
+      "mean": 0.363
+     },
+     "signedMeanMoving": 0.151,
+     "errStill": 0.708,
+     "lagFrames": {
+      "0": 142,
+      "small-delta": 43
+     }
+    },
+    "control.view.js": {
+     "samples": 234,
+     "movingSamples": 159,
+     "errMoving": {
+      "n": 159,
+      "max": 1.56,
+      "p95": 1.253,
+      "median": 0.48,
+      "mean": 0.528
+     },
+     "signedMeanMoving": 0.281,
+     "errStill": 1.413,
+     "lagFrames": {
+      "0": 116,
+      "small-delta": 43
+     }
+    },
+    "control.root.js": {
+     "samples": 275,
+     "movingSamples": 185,
+     "errMoving": {
+      "n": 185,
+      "max": 1.625,
+      "p95": 1,
+      "median": 0.375,
+      "mean": 0.441
+     },
+     "signedMeanMoving": 0.029,
+     "errStill": 1.083,
+     "lagFrames": {
+      "0": 142,
+      "small-delta": 43
+     }
+    }
+   }
+  },
+  {
+   "engine": "chromium",
+   "mode": "lenis",
+   "read": "timing",
+   "rep": 0,
+   "js": {
+    "frames": 446,
+    "movingFrames": 238,
+    "scrollDeltaPerMovingFrame": {
+     "n": 238,
+     "max": 1500,
+     "p95": 38,
+     "median": 12,
+     "mean": 32.773
+    },
+    "frameInterval": {
+     "n": 445,
+     "max": 16.8,
+     "p95": 16.7,
+     "median": 16.7,
+     "mean": 16.666
+    },
+    "lenisAnimatedVsScrollTop": 0.5,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 238,
+      "errMoving": {
+       "n": 238,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 238,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 238,
+      "errMoving": {
+       "n": 238,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 238,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 226,
+      "errMoving": {
+       "n": 226,
+       "max": 14,
+       "p95": 0,
+       "median": 0,
+       "mean": 0.062
+      },
+      "signedMean": 0.062,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 225,
+       "1": 1,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 210,
+      "errMoving": {
+       "n": 210,
+       "max": 3,
+       "p95": 0,
+       "median": 0,
+       "mean": 0.014
+      },
+      "signedMean": 0.014,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 209,
+       "1": 1,
+       "2": 0
+      }
+     }
+    },
+    "outliers": [
+     {
+      "series": "view.left.timing",
+      "lag": 1,
+      "errPx": 3,
+      "frame": 170,
+      "phase": "wheel-up",
+      "y": 1262,
+      "prevY": 1279
+     },
+     {
+      "series": "view.transform.timing",
+      "lag": 1,
+      "errPx": 14,
+      "frame": 188,
+      "phase": "wheel-up",
+      "y": 946,
+      "prevY": 962
+     }
+    ]
+   }
+  },
+  {
+   "engine": "chromium",
+   "mode": "lenis",
+   "read": "style",
+   "rep": 0,
+   "js": {
+    "frames": 446,
+    "movingFrames": 238,
+    "scrollDeltaPerMovingFrame": {
+     "n": 238,
+     "max": 1500,
+     "p95": 38,
+     "median": 12,
+     "mean": 32.773
+    },
+    "frameInterval": {
+     "n": 445,
+     "max": 16.8,
+     "p95": 16.7,
+     "median": 16.7,
+     "mean": 16.666
+    },
+    "lenisAnimatedVsScrollTop": 0.5,
+    "series": {
+     "root.transform.style": {
+      "movingSamples": 238,
+      "errMoving": {
+       "n": 238,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 238,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 238,
+      "errMoving": {
+       "n": 238,
+       "max": 0.001,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 238,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 226,
+      "errMoving": {
+       "n": 226,
+       "max": 14,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0.062
+      },
+      "signedMean": 0.062,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 225,
+       "1": 1,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 210,
+      "errMoving": {
+       "n": 210,
+       "max": 3,
+       "p95": 0.001,
+       "median": 0,
+       "mean": 0.015
+      },
+      "signedMean": 0.014,
+      "errStill": 0.001,
+      "bestLagFrames": {
+       "0": 209,
+       "1": 1,
+       "2": 0
+      }
+     }
+    },
+    "outliers": [
+     {
+      "series": "view.left.style",
+      "lag": 1,
+      "errPx": 3,
+      "frame": 171,
+      "phase": "wheel-up",
+      "y": 1262,
+      "prevY": 1279
+     },
+     {
+      "series": "view.transform.style",
+      "lag": 1,
+      "errPx": 14,
+      "frame": 189,
+      "phase": "wheel-up",
+      "y": 946,
+      "prevY": 962
+     }
+    ]
+   }
+  },
+  {
+   "engine": "webkit",
+   "mode": "native",
+   "read": "all",
+   "rep": 0,
+   "layout": {
+    "timeOrigin": 1790358692314,
+    "rootIters": 8,
+    "vh": 600,
+    "vw": 1000,
+    "maxScroll": 3800,
+    "red": [
+     [
+      900,
+      60
+     ],
+     [
+      1500,
+      70
+     ],
+     [
+      2100,
+      80
+     ],
+     [
+      2700,
+      90
+     ],
+     [
+      3300,
+      100
+     ]
+    ],
+    "green": [
+     [
+      1200,
+      65
+     ],
+     [
+      1800,
+      75
+     ],
+     [
+      2400,
+      85
+     ],
+     [
+      3000,
+      95
+     ],
+     [
+      3600,
+      105
+     ]
+    ],
+    "magenta": [
+     [
+      1050,
+      62
+     ],
+     [
+      1650,
+      72
+     ],
+     [
+      2250,
+      82
+     ],
+     [
+      2850,
+      92
+     ],
+     [
+      3450,
+      102
+     ]
+    ],
+    "timeline": {
+     "red": "ViewTimeline",
+     "blue": "ScrollTimeline"
+    },
+    "frameKeyMatchesRaf": null
+   },
+   "js": {
+    "frames": 294,
+    "movingFrames": 25,
+    "scrollDeltaPerMovingFrame": {
+     "n": 25,
+     "max": 1500,
+     "p95": 1100,
+     "median": 100,
+     "mean": 276
+    },
+    "frameInterval": {
+     "n": 293,
+     "max": 18,
+     "p95": 18,
+     "median": 17,
+     "mean": 16.666
+    },
+    "lenisAnimatedVsScrollTop": 0,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     }
+    },
+    "outliers": []
+   }
+  },
+  {
+   "engine": "webkit",
+   "mode": "native",
+   "read": "all",
+   "rep": 1,
+   "layout": {
+    "timeOrigin": 1790358692314,
+    "rootIters": 8,
+    "vh": 600,
+    "vw": 1000,
+    "maxScroll": 3800,
+    "red": [
+     [
+      900,
+      60
+     ],
+     [
+      1500,
+      70
+     ],
+     [
+      2100,
+      80
+     ],
+     [
+      2700,
+      90
+     ],
+     [
+      3300,
+      100
+     ]
+    ],
+    "green": [
+     [
+      1200,
+      65
+     ],
+     [
+      1800,
+      75
+     ],
+     [
+      2400,
+      85
+     ],
+     [
+      3000,
+      95
+     ],
+     [
+      3600,
+      105
+     ]
+    ],
+    "magenta": [
+     [
+      1050,
+      62
+     ],
+     [
+      1650,
+      72
+     ],
+     [
+      2250,
+      82
+     ],
+     [
+      2850,
+      92
+     ],
+     [
+      3450,
+      102
+     ]
+    ],
+    "timeline": {
+     "red": "ViewTimeline",
+     "blue": "ScrollTimeline"
+    },
+    "frameKeyMatchesRaf": null
+   },
+   "js": {
+    "frames": 295,
+    "movingFrames": 25,
+    "scrollDeltaPerMovingFrame": {
+     "n": 25,
+     "max": 1500,
+     "p95": 1100,
+     "median": 100,
+     "mean": 276
+    },
+    "frameInterval": {
+     "n": 294,
+     "max": 18,
+     "p95": 18,
+     "median": 17,
+     "mean": 16.67
+    },
+    "lenisAnimatedVsScrollTop": 0,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     }
+    },
+    "outliers": []
+   }
+  },
+  {
+   "engine": "webkit",
+   "mode": "native",
+   "read": "all",
+   "rep": 2,
+   "layout": {
+    "timeOrigin": 1790358692314,
+    "rootIters": 8,
+    "vh": 600,
+    "vw": 1000,
+    "maxScroll": 3800,
+    "red": [
+     [
+      900,
+      60
+     ],
+     [
+      1500,
+      70
+     ],
+     [
+      2100,
+      80
+     ],
+     [
+      2700,
+      90
+     ],
+     [
+      3300,
+      100
+     ]
+    ],
+    "green": [
+     [
+      1200,
+      65
+     ],
+     [
+      1800,
+      75
+     ],
+     [
+      2400,
+      85
+     ],
+     [
+      3000,
+      95
+     ],
+     [
+      3600,
+      105
+     ]
+    ],
+    "magenta": [
+     [
+      1050,
+      62
+     ],
+     [
+      1650,
+      72
+     ],
+     [
+      2250,
+      82
+     ],
+     [
+      2850,
+      92
+     ],
+     [
+      3450,
+      102
+     ]
+    ],
+    "timeline": {
+     "red": "ViewTimeline",
+     "blue": "ScrollTimeline"
+    },
+    "frameKeyMatchesRaf": null
+   },
+   "js": {
+    "frames": 297,
+    "movingFrames": 25,
+    "scrollDeltaPerMovingFrame": {
+     "n": 25,
+     "max": 1500,
+     "p95": 1100,
+     "median": 100,
+     "mean": 276
+    },
+    "frameInterval": {
+     "n": 296,
+     "max": 18,
+     "p95": 18,
+     "median": 17,
+     "mean": 16.635
+    },
+    "lenisAnimatedVsScrollTop": 0,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     }
+    },
+    "outliers": []
+   }
+  },
+  {
+   "engine": "webkit",
+   "mode": "native",
+   "read": "all+screencast",
+   "rep": 0,
+   "js": {
+    "frames": 305,
+    "movingFrames": 25,
+    "scrollDeltaPerMovingFrame": {
+     "n": 25,
+     "max": 1500,
+     "p95": 1100,
+     "median": 100,
+     "mean": 276
+    },
+    "frameInterval": {
+     "n": 304,
+     "max": 24,
+     "p95": 20,
+     "median": 17,
+     "mean": 16.664
+    },
+    "lenisAnimatedVsScrollTop": 0,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     }
+    },
+    "outliers": []
+   },
+   "painted": {
+    "frames": 41,
+    "framesMatchedToRows": 37,
+    "view.transform": {
+     "samples": 34,
+     "movingSamples": 1,
+     "errMoving": {
+      "n": 1,
+      "max": 0.325,
+      "p95": 0.325,
+      "median": 0.325,
+      "mean": 0.325
+     },
+     "signedMeanMoving": 0.325,
+     "errStill": 500,
+     "lagFrames": {
+      "0": 1
+     }
+    },
+    "view.left": {
+     "samples": 32,
+     "movingSamples": 1,
+     "errMoving": {
+      "n": 1,
+      "max": 100.813,
+      "p95": 100.813,
+      "median": 100.813,
+      "mean": 100.813
+     },
+     "signedMeanMoving": 100.813,
+     "errStill": 0.813,
+     "lagFrames": {
+      "1": 1
+     }
+    },
+    "root.transform": {
+     "samples": 37,
+     "movingSamples": 1,
+     "errMoving": {
+      "n": 1,
+      "max": 1.5,
+      "p95": 1.5,
+      "median": 1.5,
+      "mean": 1.5
+     },
+     "signedMeanMoving": 1.5,
+     "errStill": 125.625,
+     "lagFrames": {
+      "0": 1
+     }
+    },
+    "root.left": {
+     "samples": 37,
+     "movingSamples": 1,
+     "errMoving": {
+      "n": 1,
+      "max": 100.063,
+      "p95": 100.063,
+      "median": 100.063,
+      "mean": 100.063
+     },
+     "signedMeanMoving": 100.063,
+     "errStill": 0.563,
+     "lagFrames": {
+      "1": 1
+     }
+    },
+    "control.view.js": {
+     "samples": 32,
+     "movingSamples": 1,
+     "errMoving": {
+      "n": 1,
+      "max": 99.44,
+      "p95": 99.44,
+      "median": 99.44,
+      "mean": 99.44
+     },
+     "signedMeanMoving": 99.44,
+     "errStill": 1.23,
+     "lagFrames": {
+      "1": 1
+     }
+    },
+    "control.root.js": {
+     "samples": 37,
+     "movingSamples": 1,
+     "errMoving": {
+      "n": 1,
+      "max": 101.25,
+      "p95": 101.25,
+      "median": 101.25,
+      "mean": 101.25
+     },
+     "signedMeanMoving": 101.25,
+     "errStill": 1.75,
+     "lagFrames": {
+      "1": 1
+     }
+    }
+   }
+  },
+  {
+   "engine": "webkit",
+   "mode": "native",
+   "read": "all+screencast",
+   "rep": 1,
+   "js": {
+    "frames": 298,
+    "movingFrames": 25,
+    "scrollDeltaPerMovingFrame": {
+     "n": 25,
+     "max": 1500,
+     "p95": 1100,
+     "median": 100,
+     "mean": 276
+    },
+    "frameInterval": {
+     "n": 297,
+     "max": 26,
+     "p95": 20,
+     "median": 17,
+     "mean": 16.663
+    },
+    "lenisAnimatedVsScrollTop": 0,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     }
+    },
+    "outliers": []
+   },
+   "painted": {
+    "frames": 43,
+    "framesMatchedToRows": 38,
+    "view.transform": {
+     "samples": 35,
+     "movingSamples": 3,
+     "errMoving": {
+      "n": 3,
+      "max": 0.825,
+      "p95": 0.325,
+      "median": 0.325,
+      "mean": 0.442
+     },
+     "signedMeanMoving": 0.325,
+     "errStill": 1,
+     "lagFrames": {
+      "0": 3
+     }
+    },
+    "view.left": {
+     "samples": 32,
+     "movingSamples": 2,
+     "errMoving": {
+      "n": 2,
+      "max": 100.438,
+      "p95": 100,
+      "median": 100,
+      "mean": 100.219
+     },
+     "signedMeanMoving": -100.219,
+     "errStill": 100.813,
+     "lagFrames": {
+      "1": 2
+     }
+    },
+    "root.transform": {
+     "samples": 38,
+     "movingSamples": 3,
+     "errMoving": {
+      "n": 3,
+      "max": 1.75,
+      "p95": 1.5,
+      "median": 1.5,
+      "mean": 1.5
+     },
+     "signedMeanMoving": 1.5,
+     "errStill": 1.75,
+     "lagFrames": {
+      "0": 3
+     }
+    },
+    "root.left": {
+     "samples": 38,
+     "movingSamples": 3,
+     "errMoving": {
+      "n": 3,
+      "max": 100.375,
+      "p95": 99.688,
+      "median": 99.688,
+      "mean": 99.833
+     },
+     "signedMeanMoving": -99.833,
+     "errStill": 100.375,
+     "lagFrames": {
+      "1": 3
+     }
+    },
+    "control.view.js": {
+     "samples": 33,
+     "movingSamples": 3,
+     "errMoving": {
+      "n": 3,
+      "max": 99.68,
+      "p95": 99.6,
+      "median": 99.6,
+      "mean": 99.36
+     },
+     "signedMeanMoving": -99.36,
+     "errStill": 100.86,
+     "lagFrames": {
+      "1": 3
+     }
+    },
+    "control.root.js": {
+     "samples": 38,
+     "movingSamples": 3,
+     "errMoving": {
+      "n": 3,
+      "max": 100.375,
+      "p95": 98.5,
+      "median": 98.5,
+      "mean": 99.042
+     },
+     "signedMeanMoving": -99.042,
+     "errStill": 101.5,
+     "lagFrames": {
+      "1": 3
+     }
+    }
+   }
+  },
+  {
+   "engine": "webkit",
+   "mode": "native",
+   "read": "timing",
+   "rep": 0,
+   "js": {
+    "frames": 294,
+    "movingFrames": 25,
+    "scrollDeltaPerMovingFrame": {
+     "n": 25,
+     "max": 1500,
+     "p95": 1100,
+     "median": 100,
+     "mean": 276
+    },
+    "frameInterval": {
+     "n": 293,
+     "max": 18,
+     "p95": 18,
+     "median": 17,
+     "mean": 16.669
+    },
+    "lenisAnimatedVsScrollTop": 0,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     }
+    },
+    "outliers": []
+   }
+  },
+  {
+   "engine": "webkit",
+   "mode": "native",
+   "read": "style",
+   "rep": 0,
+   "js": {
+    "frames": 297,
+    "movingFrames": 25,
+    "scrollDeltaPerMovingFrame": {
+     "n": 25,
+     "max": 1500,
+     "p95": 1100,
+     "median": 100,
+     "mean": 276
+    },
+    "frameInterval": {
+     "n": 296,
+     "max": 19,
+     "p95": 18,
+     "median": 17,
+     "mean": 16.652
+    },
+    "lenisAnimatedVsScrollTop": 0,
+    "series": {
+     "root.transform.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 25,
+      "errMoving": {
+       "n": 25,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 25,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 22,
+      "errMoving": {
+       "n": 22,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 22,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 19,
+      "errMoving": {
+       "n": 19,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 19,
+       "1": 0,
+       "2": 0
+      }
+     }
+    },
+    "outliers": []
+   }
+  },
+  {
+   "engine": "webkit",
+   "mode": "lenis",
+   "read": "all",
+   "rep": 0,
+   "layout": {
+    "timeOrigin": 1790358737314,
+    "rootIters": 8,
+    "vh": 600,
+    "vw": 1000,
+    "maxScroll": 3800,
+    "red": [
+     [
+      900,
+      60
+     ],
+     [
+      1500,
+      70
+     ],
+     [
+      2100,
+      80
+     ],
+     [
+      2700,
+      90
+     ],
+     [
+      3300,
+      100
+     ]
+    ],
+    "green": [
+     [
+      1200,
+      65
+     ],
+     [
+      1800,
+      75
+     ],
+     [
+      2400,
+      85
+     ],
+     [
+      3000,
+      95
+     ],
+     [
+      3600,
+      105
+     ]
+    ],
+    "magenta": [
+     [
+      1050,
+      62
+     ],
+     [
+      1650,
+      72
+     ],
+     [
+      2250,
+      82
+     ],
+     [
+      2850,
+      92
+     ],
+     [
+      3450,
+      102
+     ]
+    ],
+    "timeline": {
+     "red": "ViewTimeline",
+     "blue": "ScrollTimeline"
+    },
+    "frameKeyMatchesRaf": null
+   },
+   "js": {
+    "frames": 402,
+    "movingFrames": 208,
+    "scrollDeltaPerMovingFrame": {
+     "n": 208,
+     "max": 1500,
+     "p95": 41,
+     "median": 10,
+     "mean": 37.5
+    },
+    "frameInterval": {
+     "n": 401,
+     "max": 18,
+     "p95": 18,
+     "median": 17,
+     "mean": 16.663
+    },
+    "lenisAnimatedVsScrollTop": 0.996,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 208,
+      "errMoving": {
+       "n": 208,
+       "max": 87,
+       "p95": 35,
+       "median": 9,
+       "mean": 14.423
+      },
+      "signedMean": -7.692,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 204,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 208,
+      "errMoving": {
+       "n": 208,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 208,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 208,
+      "errMoving": {
+       "n": 208,
+       "max": 87,
+       "p95": 35,
+       "median": 9,
+       "mean": 14.423
+      },
+      "signedMean": -7.692,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 204,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 208,
+      "errMoving": {
+       "n": 208,
+       "max": 87,
+       "p95": 35,
+       "median": 9,
+       "mean": 14.423
+      },
+      "signedMean": -7.692,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 204,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 200,
+      "errMoving": {
+       "n": 200,
+       "max": 87,
+       "p95": 36,
+       "median": 8,
+       "mean": 14.27
+      },
+      "signedMean": -6.71,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 196,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 200,
+      "errMoving": {
+       "n": 200,
+       "max": 87,
+       "p95": 36,
+       "median": 8,
+       "mean": 14.27
+      },
+      "signedMean": -6.71,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 196,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 190,
+      "errMoving": {
+       "n": 190,
+       "max": 87,
+       "p95": 38,
+       "median": 7,
+       "mean": 13.463
+      },
+      "signedMean": -5.611,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 186,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 190,
+      "errMoving": {
+       "n": 190,
+       "max": 87,
+       "p95": 38,
+       "median": 7,
+       "mean": 13.463
+      },
+      "signedMean": -5.611,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 186,
+       "2": 0
+      }
+     }
+    },
+    "outliers": [
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -10,
+      "frame": 2,
+      "phase": "wheel-down",
+      "y": 10,
+      "prevY": 0
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -10,
+      "frame": 2,
+      "phase": "wheel-down",
+      "y": 10,
+      "prevY": 0
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -10,
+      "frame": 2,
+      "phase": "wheel-down",
+      "y": 10,
+      "prevY": 0
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -7,
+      "frame": 3,
+      "phase": "wheel-down",
+      "y": 17,
+      "prevY": 10
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -7,
+      "frame": 3,
+      "phase": "wheel-down",
+      "y": 17,
+      "prevY": 10
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -7,
+      "frame": 3,
+      "phase": "wheel-down",
+      "y": 17,
+      "prevY": 10
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -9,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 26,
+      "prevY": 17
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -9,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 26,
+      "prevY": 17
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -9,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 26,
+      "prevY": 17
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -16,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 42,
+      "prevY": 26
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -16,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 42,
+      "prevY": 26
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -16,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 42,
+      "prevY": 26
+     }
+    ]
+   }
+  },
+  {
+   "engine": "webkit",
+   "mode": "lenis",
+   "read": "all",
+   "rep": 1,
+   "layout": {
+    "timeOrigin": 1790358737314,
+    "rootIters": 8,
+    "vh": 600,
+    "vw": 1000,
+    "maxScroll": 3800,
+    "red": [
+     [
+      900,
+      60
+     ],
+     [
+      1500,
+      70
+     ],
+     [
+      2100,
+      80
+     ],
+     [
+      2700,
+      90
+     ],
+     [
+      3300,
+      100
+     ]
+    ],
+    "green": [
+     [
+      1200,
+      65
+     ],
+     [
+      1800,
+      75
+     ],
+     [
+      2400,
+      85
+     ],
+     [
+      3000,
+      95
+     ],
+     [
+      3600,
+      105
+     ]
+    ],
+    "magenta": [
+     [
+      1050,
+      62
+     ],
+     [
+      1650,
+      72
+     ],
+     [
+      2250,
+      82
+     ],
+     [
+      2850,
+      92
+     ],
+     [
+      3450,
+      102
+     ]
+    ],
+    "timeline": {
+     "red": "ViewTimeline",
+     "blue": "ScrollTimeline"
+    },
+    "frameKeyMatchesRaf": null
+   },
+   "js": {
+    "frames": 404,
+    "movingFrames": 208,
+    "scrollDeltaPerMovingFrame": {
+     "n": 208,
+     "max": 1500,
+     "p95": 41,
+     "median": 9,
+     "mean": 37.5
+    },
+    "frameInterval": {
+     "n": 403,
+     "max": 19,
+     "p95": 18,
+     "median": 17,
+     "mean": 16.667
+    },
+    "lenisAnimatedVsScrollTop": 0.989,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 207,
+      "errMoving": {
+       "n": 207,
+       "max": 87,
+       "p95": 36,
+       "median": 9,
+       "mean": 14.449
+      },
+      "signedMean": -7.686,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 203,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 207,
+      "errMoving": {
+       "n": 207,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 207,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 207,
+      "errMoving": {
+       "n": 207,
+       "max": 87,
+       "p95": 36,
+       "median": 9,
+       "mean": 14.449
+      },
+      "signedMean": -7.686,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 203,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 207,
+      "errMoving": {
+       "n": 207,
+       "max": 87,
+       "p95": 36,
+       "median": 9,
+       "mean": 14.449
+      },
+      "signedMean": -7.686,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 203,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 201,
+      "errMoving": {
+       "n": 201,
+       "max": 87,
+       "p95": 38,
+       "median": 8,
+       "mean": 14.373
+      },
+      "signedMean": -6.861,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 197,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 201,
+      "errMoving": {
+       "n": 201,
+       "max": 87,
+       "p95": 38,
+       "median": 8,
+       "mean": 14.373
+      },
+      "signedMean": -6.861,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 197,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 190,
+      "errMoving": {
+       "n": 190,
+       "max": 87,
+       "p95": 39,
+       "median": 7,
+       "mean": 13.463
+      },
+      "signedMean": -5.621,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 186,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 190,
+      "errMoving": {
+       "n": 190,
+       "max": 87,
+       "p95": 39,
+       "median": 7,
+       "mean": 13.463
+      },
+      "signedMean": -5.621,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 186,
+       "2": 0
+      }
+     }
+    },
+    "outliers": [
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -8,
+      "frame": 3,
+      "phase": "wheel-down",
+      "y": 17,
+      "prevY": 9
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -8,
+      "frame": 3,
+      "phase": "wheel-down",
+      "y": 17,
+      "prevY": 9
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -8,
+      "frame": 3,
+      "phase": "wheel-down",
+      "y": 17,
+      "prevY": 9
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -8,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 25,
+      "prevY": 17
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -8,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 25,
+      "prevY": 17
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -8,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 25,
+      "prevY": 17
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -17,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 42,
+      "prevY": 25
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -17,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 42,
+      "prevY": 25
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -17,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 42,
+      "prevY": 25
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -14,
+      "frame": 6,
+      "phase": "wheel-down",
+      "y": 56,
+      "prevY": 42
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -14,
+      "frame": 6,
+      "phase": "wheel-down",
+      "y": 56,
+      "prevY": 42
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -14,
+      "frame": 6,
+      "phase": "wheel-down",
+      "y": 56,
+      "prevY": 42
+     }
+    ]
+   }
+  },
+  {
+   "engine": "webkit",
+   "mode": "lenis",
+   "read": "all",
+   "rep": 2,
+   "layout": {
+    "timeOrigin": 1790358737314,
+    "rootIters": 8,
+    "vh": 600,
+    "vw": 1000,
+    "maxScroll": 3800,
+    "red": [
+     [
+      900,
+      60
+     ],
+     [
+      1500,
+      70
+     ],
+     [
+      2100,
+      80
+     ],
+     [
+      2700,
+      90
+     ],
+     [
+      3300,
+      100
+     ]
+    ],
+    "green": [
+     [
+      1200,
+      65
+     ],
+     [
+      1800,
+      75
+     ],
+     [
+      2400,
+      85
+     ],
+     [
+      3000,
+      95
+     ],
+     [
+      3600,
+      105
+     ]
+    ],
+    "magenta": [
+     [
+      1050,
+      62
+     ],
+     [
+      1650,
+      72
+     ],
+     [
+      2250,
+      82
+     ],
+     [
+      2850,
+      92
+     ],
+     [
+      3450,
+      102
+     ]
+    ],
+    "timeline": {
+     "red": "ViewTimeline",
+     "blue": "ScrollTimeline"
+    },
+    "frameKeyMatchesRaf": null
+   },
+   "js": {
+    "frames": 404,
+    "movingFrames": 208,
+    "scrollDeltaPerMovingFrame": {
+     "n": 208,
+     "max": 1500,
+     "p95": 43,
+     "median": 10,
+     "mean": 37.5
+    },
+    "frameInterval": {
+     "n": 403,
+     "max": 19,
+     "p95": 18,
+     "median": 17,
+     "mean": 16.665
+    },
+    "lenisAnimatedVsScrollTop": 0.998,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 207,
+      "errMoving": {
+       "n": 207,
+       "max": 92,
+       "p95": 36,
+       "median": 9,
+       "mean": 14.449
+      },
+      "signedMean": -7.686,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 203,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 207,
+      "errMoving": {
+       "n": 207,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 207,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 207,
+      "errMoving": {
+       "n": 207,
+       "max": 92,
+       "p95": 36,
+       "median": 9,
+       "mean": 14.449
+      },
+      "signedMean": -7.686,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 203,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 207,
+      "errMoving": {
+       "n": 207,
+       "max": 92,
+       "p95": 36,
+       "median": 9,
+       "mean": 14.449
+      },
+      "signedMean": -7.686,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 203,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 199,
+      "errMoving": {
+       "n": 199,
+       "max": 92,
+       "p95": 37,
+       "median": 8,
+       "mean": 14.206
+      },
+      "signedMean": -6.678,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 195,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 199,
+      "errMoving": {
+       "n": 199,
+       "max": 92,
+       "p95": 37,
+       "median": 8,
+       "mean": 14.206
+      },
+      "signedMean": -6.678,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 195,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 190,
+      "errMoving": {
+       "n": 190,
+       "max": 92,
+       "p95": 38,
+       "median": 7,
+       "mean": 13.489
+      },
+      "signedMean": -5.658,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 186,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 190,
+      "errMoving": {
+       "n": 190,
+       "max": 92,
+       "p95": 38,
+       "median": 7,
+       "mean": 13.489
+      },
+      "signedMean": -5.658,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 186,
+       "2": 0
+      }
+     }
+    },
+    "outliers": [
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -9,
+      "frame": 3,
+      "phase": "wheel-down",
+      "y": 18,
+      "prevY": 9
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -9,
+      "frame": 3,
+      "phase": "wheel-down",
+      "y": 18,
+      "prevY": 9
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -9,
+      "frame": 3,
+      "phase": "wheel-down",
+      "y": 18,
+      "prevY": 9
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -7,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 25,
+      "prevY": 18
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -7,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 25,
+      "prevY": 18
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -7,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 25,
+      "prevY": 18
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -18,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 43,
+      "prevY": 25
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -18,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 43,
+      "prevY": 25
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -18,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 43,
+      "prevY": 25
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -14,
+      "frame": 6,
+      "phase": "wheel-down",
+      "y": 57,
+      "prevY": 43
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -14,
+      "frame": 6,
+      "phase": "wheel-down",
+      "y": 57,
+      "prevY": 43
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -14,
+      "frame": 6,
+      "phase": "wheel-down",
+      "y": 57,
+      "prevY": 43
+     }
+    ]
+   }
+  },
+  {
+   "engine": "webkit",
+   "mode": "lenis",
+   "read": "all+screencast",
+   "rep": 0,
+   "js": {
+    "frames": 402,
+    "movingFrames": 208,
+    "scrollDeltaPerMovingFrame": {
+     "n": 208,
+     "max": 1500,
+     "p95": 47,
+     "median": 10,
+     "mean": 37.5
+    },
+    "frameInterval": {
+     "n": 401,
+     "max": 61,
+     "p95": 18,
+     "median": 17,
+     "mean": 16.761
+    },
+    "lenisAnimatedVsScrollTop": 0.996,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 207,
+      "errMoving": {
+       "n": 207,
+       "max": 84,
+       "p95": 38,
+       "median": 9,
+       "mean": 14.449
+      },
+      "signedMean": -7.686,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 203,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 207,
+      "errMoving": {
+       "n": 207,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 207,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 207,
+      "errMoving": {
+       "n": 207,
+       "max": 84,
+       "p95": 38,
+       "median": 9,
+       "mean": 14.449
+      },
+      "signedMean": -7.686,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 203,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 207,
+      "errMoving": {
+       "n": 207,
+       "max": 84,
+       "p95": 38,
+       "median": 9,
+       "mean": 14.449
+      },
+      "signedMean": -7.686,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 203,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 198,
+      "errMoving": {
+       "n": 198,
+       "max": 84,
+       "p95": 40,
+       "median": 8,
+       "mean": 14.374
+      },
+      "signedMean": -6.859,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 194,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 198,
+      "errMoving": {
+       "n": 198,
+       "max": 84,
+       "p95": 40,
+       "median": 8,
+       "mean": 14.374
+      },
+      "signedMean": -6.859,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 194,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 189,
+      "errMoving": {
+       "n": 189,
+       "max": 84,
+       "p95": 41,
+       "median": 7,
+       "mean": 13.534
+      },
+      "signedMean": -5.651,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 185,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 189,
+      "errMoving": {
+       "n": 189,
+       "max": 84,
+       "p95": 41,
+       "median": 7,
+       "mean": 13.534
+      },
+      "signedMean": -5.651,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 185,
+       "2": 0
+      }
+     }
+    },
+    "outliers": [
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -9,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 18,
+      "prevY": 9
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -9,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 18,
+      "prevY": 9
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -9,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 18,
+      "prevY": 9
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -7,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 25,
+      "prevY": 18
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -7,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 25,
+      "prevY": 18
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -7,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 25,
+      "prevY": 18
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -17,
+      "frame": 6,
+      "phase": "wheel-down",
+      "y": 42,
+      "prevY": 25
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -17,
+      "frame": 6,
+      "phase": "wheel-down",
+      "y": 42,
+      "prevY": 25
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -17,
+      "frame": 6,
+      "phase": "wheel-down",
+      "y": 42,
+      "prevY": 25
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -15,
+      "frame": 7,
+      "phase": "wheel-down",
+      "y": 57,
+      "prevY": 42
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -15,
+      "frame": 7,
+      "phase": "wheel-down",
+      "y": 57,
+      "prevY": 42
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -15,
+      "frame": 7,
+      "phase": "wheel-down",
+      "y": 57,
+      "prevY": 42
+     }
+    ]
+   },
+   "painted": {
+    "frames": 90,
+    "framesMatchedToRows": 83,
+    "view.transform": {
+     "samples": 79,
+     "movingSamples": 59,
+     "errMoving": {
+      "n": 59,
+      "max": 40.1,
+      "p95": 30.4,
+      "median": 0.8,
+      "mean": 6.528
+     },
+     "signedMeanMoving": -3.24,
+     "errStill": 1.15,
+     "lagFrames": {
+      "0": 17,
+      "1": 19,
+      "small-delta": 23
+     }
+    },
+    "view.left": {
+     "samples": 74,
+     "movingSamples": 55,
+     "errMoving": {
+      "n": 55,
+      "max": 84.625,
+      "p95": 31.313,
+      "median": 6.25,
+      "mean": 11.965
+     },
+     "signedMeanMoving": -4.99,
+     "errStill": 2.613,
+     "lagFrames": {
+      "1": 32,
+      "small-delta": 23
+     }
+    },
+    "root.transform": {
+     "samples": 83,
+     "movingSamples": 62,
+     "errMoving": {
+      "n": 62,
+      "max": 39.375,
+      "p95": 30.5,
+      "median": 1.5,
+      "mean": 6.546
+     },
+     "signedMeanMoving": -2.772,
+     "errStill": 1.75,
+     "lagFrames": {
+      "0": 20,
+      "1": 19,
+      "small-delta": 23
+     }
+    },
+    "root.left": {
+     "samples": 83,
+     "movingSamples": 62,
+     "errMoving": {
+      "n": 62,
+      "max": 84.25,
+      "p95": 32.813,
+      "median": 7.5,
+      "mean": 14.271
+     },
+     "signedMeanMoving": -7.426,
+     "errStill": 1.938,
+     "lagFrames": {
+      "1": 39,
+      "small-delta": 23
+     }
+    },
+    "control.view.js": {
+     "samples": 75,
+     "movingSamples": 55,
+     "errMoving": {
+      "n": 55,
+      "max": 1.42,
+      "p95": 1.2,
+      "median": 0.44,
+      "mean": 0.5
+     },
+     "signedMeanMoving": 0.391,
+     "errStill": 1.23,
+     "lagFrames": {
+      "0": 32,
+      "small-delta": 23
+     }
+    },
+    "control.root.js": {
+     "samples": 83,
+     "movingSamples": 62,
+     "errMoving": {
+      "n": 62,
+      "max": 1.75,
+      "p95": 1.75,
+      "median": 0.875,
+      "mean": 0.903
+     },
+     "signedMeanMoving": 0.79,
+     "errStill": 1.75,
+     "lagFrames": {
+      "0": 39,
+      "small-delta": 23
+     }
+    }
+   }
+  },
+  {
+   "engine": "webkit",
+   "mode": "lenis",
+   "read": "all+screencast",
+   "rep": 1,
+   "js": {
+    "frames": 402,
+    "movingFrames": 207,
+    "scrollDeltaPerMovingFrame": {
+     "n": 207,
+     "max": 1500,
+     "p95": 42,
+     "median": 10,
+     "mean": 37.681
+    },
+    "frameInterval": {
+     "n": 401,
+     "max": 34,
+     "p95": 19,
+     "median": 17,
+     "mean": 16.708
+    },
+    "lenisAnimatedVsScrollTop": 0.99,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 206,
+      "errMoving": {
+       "n": 206,
+       "max": 92,
+       "p95": 37,
+       "median": 9,
+       "mean": 14.519
+      },
+      "signedMean": -7.723,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 202,
+       "2": 0
+      }
+     },
+     "root.transform.style": {
+      "movingSamples": 206,
+      "errMoving": {
+       "n": 206,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 206,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 206,
+      "errMoving": {
+       "n": 206,
+       "max": 92,
+       "p95": 37,
+       "median": 9,
+       "mean": 14.519
+      },
+      "signedMean": -7.723,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 202,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 206,
+      "errMoving": {
+       "n": 206,
+       "max": 92,
+       "p95": 37,
+       "median": 9,
+       "mean": 14.519
+      },
+      "signedMean": -7.723,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 202,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 200,
+      "errMoving": {
+       "n": 200,
+       "max": 92,
+       "p95": 38,
+       "median": 9,
+       "mean": 14.445
+      },
+      "signedMean": -6.895,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 196,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 200,
+      "errMoving": {
+       "n": 200,
+       "max": 92,
+       "p95": 38,
+       "median": 9,
+       "mean": 14.445
+      },
+      "signedMean": -6.895,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 196,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 189,
+      "errMoving": {
+       "n": 189,
+       "max": 92,
+       "p95": 39,
+       "median": 7,
+       "mean": 13.529
+      },
+      "signedMean": -5.656,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 185,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 189,
+      "errMoving": {
+       "n": 189,
+       "max": 92,
+       "p95": 39,
+       "median": 7,
+       "mean": 13.529
+      },
+      "signedMean": -5.656,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 185,
+       "2": 0
+      }
+     }
+    },
+    "outliers": [
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -8,
+      "frame": 3,
+      "phase": "wheel-down",
+      "y": 17,
+      "prevY": 9
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -8,
+      "frame": 3,
+      "phase": "wheel-down",
+      "y": 17,
+      "prevY": 9
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -8,
+      "frame": 3,
+      "phase": "wheel-down",
+      "y": 17,
+      "prevY": 9
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -8,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 25,
+      "prevY": 17
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -8,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 25,
+      "prevY": 17
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -8,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 25,
+      "prevY": 17
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -17,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 42,
+      "prevY": 25
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -17,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 42,
+      "prevY": 25
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -17,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 42,
+      "prevY": 25
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -15,
+      "frame": 6,
+      "phase": "wheel-down",
+      "y": 57,
+      "prevY": 42
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -15,
+      "frame": 6,
+      "phase": "wheel-down",
+      "y": 57,
+      "prevY": 42
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -15,
+      "frame": 6,
+      "phase": "wheel-down",
+      "y": 57,
+      "prevY": 42
+     }
+    ]
+   },
+   "painted": {
+    "frames": 93,
+    "framesMatchedToRows": 83,
+    "view.transform": {
+     "samples": 79,
+     "movingSamples": 59,
+     "errMoving": {
+      "n": 59,
+      "max": 40,
+      "p95": 36.3,
+      "median": 0.825,
+      "mean": 8.147
+     },
+     "signedMeanMoving": -4.019,
+     "errStill": 1.55,
+     "lagFrames": {
+      "0": 18,
+      "1": 20,
+      "small-delta": 21
+     }
+    },
+    "view.left": {
+     "samples": 76,
+     "movingSamples": 57,
+     "errMoving": {
+      "n": 57,
+      "max": 81.625,
+      "p95": 37.813,
+      "median": 6.912,
+      "mean": 14.111
+     },
+     "signedMeanMoving": -7.003,
+     "errStill": 1.563,
+     "lagFrames": {
+      "1": 36,
+      "small-delta": 21
+     }
+    },
+    "root.transform": {
+     "samples": 83,
+     "movingSamples": 62,
+     "errMoving": {
+      "n": 62,
+      "max": 40.875,
+      "p95": 34.875,
+      "median": 1.375,
+      "mean": 8.662
+     },
+     "signedMeanMoving": -3.588,
+     "errStill": 1.75,
+     "lagFrames": {
+      "0": 19,
+      "1": 22,
+      "small-delta": 21
+     }
+    },
+    "root.left": {
+     "samples": 83,
+     "movingSamples": 62,
+     "errMoving": {
+      "n": 62,
+      "max": 82.188,
+      "p95": 37.125,
+      "median": 8.75,
+      "mean": 14.955
+     },
+     "signedMeanMoving": -7.15,
+     "errStill": 1.563,
+     "lagFrames": {
+      "1": 41,
+      "small-delta": 21
+     }
+    },
+    "control.view.js": {
+     "samples": 74,
+     "movingSamples": 54,
+     "errMoving": {
+      "n": 54,
+      "max": 1.36,
+      "p95": 1.18,
+      "median": 0.52,
+      "mean": 0.572
+     },
+     "signedMeanMoving": 0.364,
+     "errStill": 1.23,
+     "lagFrames": {
+      "0": 33,
+      "small-delta": 21
+     }
+    },
+    "control.root.js": {
+     "samples": 83,
+     "movingSamples": 62,
+     "errMoving": {
+      "n": 62,
+      "max": 1.75,
+      "p95": 1.625,
+      "median": 0.75,
+      "mean": 0.78
+     },
+     "signedMeanMoving": 0.683,
+     "errStill": 1.75,
+     "lagFrames": {
+      "0": 41,
+      "small-delta": 21
+     }
+    }
+   }
+  },
+  {
+   "engine": "webkit",
+   "mode": "lenis",
+   "read": "timing",
+   "rep": 0,
+   "js": {
+    "frames": 402,
+    "movingFrames": 208,
+    "scrollDeltaPerMovingFrame": {
+     "n": 208,
+     "max": 1500,
+     "p95": 41,
+     "median": 10,
+     "mean": 37.5
+    },
+    "frameInterval": {
+     "n": 401,
+     "max": 18,
+     "p95": 18,
+     "median": 17,
+     "mean": 16.666
+    },
+    "lenisAnimatedVsScrollTop": 0.998,
+    "series": {
+     "root.transform.timing": {
+      "movingSamples": 207,
+      "errMoving": {
+       "n": 207,
+       "max": 92,
+       "p95": 35,
+       "median": 9,
+       "mean": 14.449
+      },
+      "signedMean": -7.686,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 203,
+       "2": 0
+      }
+     },
+     "root.left.timing": {
+      "movingSamples": 207,
+      "errMoving": {
+       "n": 207,
+       "max": 92,
+       "p95": 35,
+       "median": 9,
+       "mean": 14.449
+      },
+      "signedMean": -7.686,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 203,
+       "2": 0
+      }
+     },
+     "view.transform.timing": {
+      "movingSamples": 201,
+      "errMoving": {
+       "n": 201,
+       "max": 92,
+       "p95": 36,
+       "median": 8,
+       "mean": 14.368
+      },
+      "signedMean": -6.856,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 197,
+       "2": 0
+      }
+     },
+     "view.left.timing": {
+      "movingSamples": 190,
+      "errMoving": {
+       "n": 190,
+       "max": 92,
+       "p95": 38,
+       "median": 7,
+       "mean": 13.474
+      },
+      "signedMean": -5.632,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 186,
+       "2": 0
+      }
+     }
+    },
+    "outliers": [
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -9,
+      "frame": 3,
+      "phase": "wheel-down",
+      "y": 18,
+      "prevY": 9
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -9,
+      "frame": 3,
+      "phase": "wheel-down",
+      "y": 18,
+      "prevY": 9
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -7,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 25,
+      "prevY": 18
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -7,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 25,
+      "prevY": 18
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -17,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 42,
+      "prevY": 25
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -17,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 42,
+      "prevY": 25
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -16,
+      "frame": 6,
+      "phase": "wheel-down",
+      "y": 58,
+      "prevY": 42
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -16,
+      "frame": 6,
+      "phase": "wheel-down",
+      "y": 58,
+      "prevY": 42
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -13,
+      "frame": 7,
+      "phase": "wheel-down",
+      "y": 71,
+      "prevY": 58
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -13,
+      "frame": 7,
+      "phase": "wheel-down",
+      "y": 71,
+      "prevY": 58
+     },
+     {
+      "series": "root.transform.timing",
+      "lag": 1,
+      "errPx": -22,
+      "frame": 8,
+      "phase": "wheel-down",
+      "y": 93,
+      "prevY": 71
+     },
+     {
+      "series": "root.left.timing",
+      "lag": 1,
+      "errPx": -22,
+      "frame": 8,
+      "phase": "wheel-down",
+      "y": 93,
+      "prevY": 71
+     }
+    ]
+   }
+  },
+  {
+   "engine": "webkit",
+   "mode": "lenis",
+   "read": "style",
+   "rep": 0,
+   "js": {
+    "frames": 403,
+    "movingFrames": 208,
+    "scrollDeltaPerMovingFrame": {
+     "n": 208,
+     "max": 1500,
+     "p95": 41,
+     "median": 10,
+     "mean": 37.5
+    },
+    "frameInterval": {
+     "n": 402,
+     "max": 18,
+     "p95": 18,
+     "median": 17,
+     "mean": 16.657
+    },
+    "lenisAnimatedVsScrollTop": 0.996,
+    "series": {
+     "root.transform.style": {
+      "movingSamples": 207,
+      "errMoving": {
+       "n": 207,
+       "max": 0,
+       "p95": 0,
+       "median": 0,
+       "mean": 0
+      },
+      "signedMean": 0,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 207,
+       "1": 0,
+       "2": 0
+      }
+     },
+     "root.left.style": {
+      "movingSamples": 207,
+      "errMoving": {
+       "n": 207,
+       "max": 87,
+       "p95": 35,
+       "median": 9,
+       "mean": 14.449
+      },
+      "signedMean": -7.686,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 203,
+       "2": 0
+      }
+     },
+     "view.transform.style": {
+      "movingSamples": 201,
+      "errMoving": {
+       "n": 201,
+       "max": 87,
+       "p95": 35,
+       "median": 9,
+       "mean": 14.373
+      },
+      "signedMean": -6.851,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 197,
+       "2": 0
+      }
+     },
+     "view.left.style": {
+      "movingSamples": 190,
+      "errMoving": {
+       "n": 190,
+       "max": 87,
+       "p95": 36,
+       "median": 7,
+       "mean": 13.463
+      },
+      "signedMean": -5.611,
+      "errStill": 0,
+      "bestLagFrames": {
+       "0": 4,
+       "1": 186,
+       "2": 0
+      }
+     }
+    },
+    "outliers": [
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -8,
+      "frame": 3,
+      "phase": "wheel-down",
+      "y": 17,
+      "prevY": 9
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -9,
+      "frame": 4,
+      "phase": "wheel-down",
+      "y": 26,
+      "prevY": 17
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -16,
+      "frame": 5,
+      "phase": "wheel-down",
+      "y": 42,
+      "prevY": 26
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -14,
+      "frame": 6,
+      "phase": "wheel-down",
+      "y": 56,
+      "prevY": 42
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -15,
+      "frame": 7,
+      "phase": "wheel-down",
+      "y": 71,
+      "prevY": 56
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -21,
+      "frame": 8,
+      "phase": "wheel-down",
+      "y": 92,
+      "prevY": 71
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -20,
+      "frame": 9,
+      "phase": "wheel-down",
+      "y": 112,
+      "prevY": 92
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -18,
+      "frame": 10,
+      "phase": "wheel-down",
+      "y": 130,
+      "prevY": 112
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -23,
+      "frame": 11,
+      "phase": "wheel-down",
+      "y": 153,
+      "prevY": 130
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -26,
+      "frame": 12,
+      "phase": "wheel-down",
+      "y": 179,
+      "prevY": 153
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -21,
+      "frame": 13,
+      "phase": "wheel-down",
+      "y": 200,
+      "prevY": 179
+     },
+     {
+      "series": "root.left.style",
+      "lag": 1,
+      "errPx": -27,
+      "frame": 14,
+      "phase": "wheel-down",
+      "y": 227,
+      "prevY": 200
+     }
+    ]
+   }
+  }
+ ],
+ "summary": {
+  "chromium/native/read=all": {
+   "js": {
+    "root.transform.timing": {
+     "runs": 5,
+     "maxErr": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 125,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "root.transform.style": {
+     "runs": 5,
+     "maxErr": [
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 125,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0.001
+    },
+    "root.left.timing": {
+     "runs": 5,
+     "maxErr": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 125,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "root.left.style": {
+     "runs": 5,
+     "maxErr": [
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 125,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0.001
+    },
+    "view.transform.timing": {
+     "runs": 5,
+     "maxErr": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 110,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.transform.style": {
+     "runs": 5,
+     "maxErr": [
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001
+     ],
+     "p95Err": [
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001
+     ],
+     "lag0": 110,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0.001
+    },
+    "view.left.timing": {
+     "runs": 5,
+     "maxErr": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 95,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.left.style": {
+     "runs": 5,
+     "maxErr": [
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001
+     ],
+     "p95Err": [
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001
+     ],
+     "lag0": 95,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0.001
+    }
+   },
+   "painted": {
+    "view.transform": {
+     "runs": 2,
+     "samples": 32,
+     "maxErr": [
+      1.6,
+      1.6
+     ],
+     "p95Err": [
+      1.6,
+      1.6
+     ],
+     "signedMean": [
+      0.094,
+      0.094
+     ],
+     "lagFrames": {
+      "0": 32
+     }
+    },
+    "view.left": {
+     "runs": 2,
+     "samples": 26,
+     "maxErr": [
+      100.813,
+      100.813
+     ],
+     "p95Err": [
+      100.75,
+      100.75
+     ],
+     "signedMean": [
+      -7.729,
+      -7.729
+     ],
+     "lagFrames": {
+      "1": 26
+     }
+    },
+    "root.transform": {
+     "runs": 2,
+     "samples": 36,
+     "maxErr": [
+      1.375,
+      1.375
+     ],
+     "p95Err": [
+      1.25,
+      1.25
+     ],
+     "signedMean": [
+      0.358,
+      0.358
+     ],
+     "lagFrames": {
+      "0": 36
+     }
+    },
+    "root.left": {
+     "runs": 2,
+     "samples": 36,
+     "maxErr": [
+      100.563,
+      100.563
+     ],
+     "p95Err": [
+      100.563,
+      100.563
+     ],
+     "signedMean": [
+      -22.139,
+      -22.139
+     ],
+     "lagFrames": {
+      "1": 36
+     }
+    },
+    "control.view.js": {
+     "runs": 2,
+     "samples": 28,
+     "maxErr": [
+      100.86,
+      100.86
+     ],
+     "p95Err": [
+      100.415,
+      100.415
+     ],
+     "signedMean": [
+      -14.017,
+      -14.017
+     ],
+     "lagFrames": {
+      "1": 28
+     }
+    },
+    "control.root.js": {
+     "runs": 2,
+     "samples": 36,
+     "maxErr": [
+      101,
+      101
+     ],
+     "p95Err": [
+      100.875,
+      100.875
+     ],
+     "signedMean": [
+      -22.469,
+      -22.469
+     ],
+     "lagFrames": {
+      "1": 36
+     }
+    }
+   },
+   "frameInterval": {
+    "n": 315,
+    "max": 16.8,
+    "p95": 16.7,
+    "median": 16.7,
+    "mean": 16.666
+   },
+   "scrollDelta": {
+    "n": 25,
+    "max": 1500,
+    "p95": 1100,
+    "median": 100,
+    "mean": 276
+   }
+  },
+  "chromium/native/read=timing": {
+   "js": {
+    "root.transform.timing": {
+     "runs": 1,
+     "maxErr": [
+      0
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 25,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "root.left.timing": {
+     "runs": 1,
+     "maxErr": [
+      0
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 25,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.transform.timing": {
+     "runs": 1,
+     "maxErr": [
+      0
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 22,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.left.timing": {
+     "runs": 1,
+     "maxErr": [
+      0
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 19,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    }
+   },
+   "painted": {},
+   "frameInterval": {
+    "n": 315,
+    "max": 16.8,
+    "p95": 16.7,
+    "median": 16.7,
+    "mean": 16.666
+   },
+   "scrollDelta": {
+    "n": 25,
+    "max": 1500,
+    "p95": 1100,
+    "median": 100,
+    "mean": 276
+   }
+  },
+  "chromium/native/read=style": {
+   "js": {
+    "root.transform.style": {
+     "runs": 1,
+     "maxErr": [
+      0.001
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 25,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0.001
+    },
+    "root.left.style": {
+     "runs": 1,
+     "maxErr": [
+      0.001
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 25,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0.001
+    },
+    "view.transform.style": {
+     "runs": 1,
+     "maxErr": [
+      0.001
+     ],
+     "p95Err": [
+      0.001
+     ],
+     "lag0": 22,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0.001
+    },
+    "view.left.style": {
+     "runs": 1,
+     "maxErr": [
+      0.001
+     ],
+     "p95Err": [
+      0.001
+     ],
+     "lag0": 19,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0.001
+    }
+   },
+   "painted": {},
+   "frameInterval": {
+    "n": 315,
+    "max": 16.8,
+    "p95": 16.7,
+    "median": 16.7,
+    "mean": 16.666
+   },
+   "scrollDelta": {
+    "n": 25,
+    "max": 1500,
+    "p95": 1100,
+    "median": 100,
+    "mean": 276
+   }
+  },
+  "chromium/lenis/read=all": {
+   "js": {
+    "root.transform.timing": {
+     "runs": 5,
+     "maxErr": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 1188,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "root.transform.style": {
+     "runs": 5,
+     "maxErr": [
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001
+     ],
+     "p95Err": [
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001
+     ],
+     "lag0": 1188,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0.001
+    },
+    "root.left.timing": {
+     "runs": 5,
+     "maxErr": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 1188,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "root.left.style": {
+     "runs": 5,
+     "maxErr": [
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001
+     ],
+     "p95Err": [
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001
+     ],
+     "lag0": 1188,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0.001
+    },
+    "view.transform.timing": {
+     "runs": 5,
+     "maxErr": [
+      14,
+      14,
+      13,
+      13,
+      13
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 1125,
+     "lag1": 5,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.transform.style": {
+     "runs": 5,
+     "maxErr": [
+      14,
+      14,
+      13,
+      13,
+      13
+     ],
+     "p95Err": [
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001
+     ],
+     "lag0": 1125,
+     "lag1": 5,
+     "lag2": 0,
+     "stillMax": 0.001
+    },
+    "view.left.timing": {
+     "runs": 5,
+     "maxErr": [
+      3,
+      3,
+      3,
+      3,
+      3
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 1045,
+     "lag1": 5,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.left.style": {
+     "runs": 5,
+     "maxErr": [
+      3,
+      3,
+      3,
+      3,
+      3
+     ],
+     "p95Err": [
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001
+     ],
+     "lag0": 1045,
+     "lag1": 5,
+     "lag2": 0,
+     "stillMax": 0.001
+    }
+   },
+   "painted": {
+    "view.transform": {
+     "runs": 2,
+     "samples": 348,
+     "maxErr": [
+      2.1,
+      2.1
+     ],
+     "p95Err": [
+      1.7,
+      1.65
+     ],
+     "signedMean": [
+      0.32,
+      0.322
+     ],
+     "lagFrames": {
+      "0": 262,
+      "small-delta": 86
+     }
+    },
+    "view.left": {
+     "runs": 2,
+     "samples": 318,
+     "maxErr": [
+      1.313,
+      1.313
+     ],
+     "p95Err": [
+      0.825,
+      0.825
+     ],
+     "signedMean": [
+      0.092,
+      0.072
+     ],
+     "lagFrames": {
+      "0": 232,
+      "small-delta": 86
+     }
+    },
+    "root.transform": {
+     "runs": 2,
+     "samples": 370,
+     "maxErr": [
+      2.375,
+      2.375
+     ],
+     "p95Err": [
+      1.375,
+      1.375
+     ],
+     "signedMean": [
+      0.544,
+      0.562
+     ],
+     "lagFrames": {
+      "0": 284,
+      "small-delta": 86
+     }
+    },
+    "root.left": {
+     "runs": 2,
+     "samples": 370,
+     "maxErr": [
+      1.563,
+      1.563
+     ],
+     "p95Err": [
+      0.833,
+      0.833
+     ],
+     "signedMean": [
+      0.158,
+      0.151
+     ],
+     "lagFrames": {
+      "0": 284,
+      "small-delta": 86
+     }
+    },
+    "control.view.js": {
+     "runs": 2,
+     "samples": 318,
+     "maxErr": [
+      1.56,
+      1.56
+     ],
+     "p95Err": [
+      1.253,
+      1.253
+     ],
+     "signedMean": [
+      0.268,
+      0.281
+     ],
+     "lagFrames": {
+      "0": 232,
+      "small-delta": 86
+     }
+    },
+    "control.root.js": {
+     "runs": 2,
+     "samples": 370,
+     "maxErr": [
+      1.625,
+      1.625
+     ],
+     "p95Err": [
+      1,
+      1
+     ],
+     "signedMean": [
+      0.024,
+      0.029
+     ],
+     "lagFrames": {
+      "0": 284,
+      "small-delta": 86
+     }
+    }
+   },
+   "frameInterval": {
+    "n": 444,
+    "max": 16.8,
+    "p95": 16.8,
+    "median": 16.7,
+    "mean": 16.666
+   },
+   "scrollDelta": {
+    "n": 238,
+    "max": 1500,
+    "p95": 38,
+    "median": 12,
+    "mean": 32.773
+   }
+  },
+  "chromium/lenis/read=timing": {
+   "js": {
+    "root.transform.timing": {
+     "runs": 1,
+     "maxErr": [
+      0
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 238,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "root.left.timing": {
+     "runs": 1,
+     "maxErr": [
+      0
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 238,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.transform.timing": {
+     "runs": 1,
+     "maxErr": [
+      14
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 225,
+     "lag1": 1,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.left.timing": {
+     "runs": 1,
+     "maxErr": [
+      3
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 209,
+     "lag1": 1,
+     "lag2": 0,
+     "stillMax": 0
+    }
+   },
+   "painted": {},
+   "frameInterval": {
+    "n": 445,
+    "max": 16.8,
+    "p95": 16.7,
+    "median": 16.7,
+    "mean": 16.666
+   },
+   "scrollDelta": {
+    "n": 238,
+    "max": 1500,
+    "p95": 38,
+    "median": 12,
+    "mean": 32.773
+   }
+  },
+  "chromium/lenis/read=style": {
+   "js": {
+    "root.transform.style": {
+     "runs": 1,
+     "maxErr": [
+      0.001
+     ],
+     "p95Err": [
+      0.001
+     ],
+     "lag0": 238,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0.001
+    },
+    "root.left.style": {
+     "runs": 1,
+     "maxErr": [
+      0.001
+     ],
+     "p95Err": [
+      0.001
+     ],
+     "lag0": 238,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0.001
+    },
+    "view.transform.style": {
+     "runs": 1,
+     "maxErr": [
+      14
+     ],
+     "p95Err": [
+      0.001
+     ],
+     "lag0": 225,
+     "lag1": 1,
+     "lag2": 0,
+     "stillMax": 0.001
+    },
+    "view.left.style": {
+     "runs": 1,
+     "maxErr": [
+      3
+     ],
+     "p95Err": [
+      0.001
+     ],
+     "lag0": 209,
+     "lag1": 1,
+     "lag2": 0,
+     "stillMax": 0.001
+    }
+   },
+   "painted": {},
+   "frameInterval": {
+    "n": 445,
+    "max": 16.8,
+    "p95": 16.7,
+    "median": 16.7,
+    "mean": 16.666
+   },
+   "scrollDelta": {
+    "n": 238,
+    "max": 1500,
+    "p95": 38,
+    "median": 12,
+    "mean": 32.773
+   }
+  },
+  "webkit/native/read=all": {
+   "js": {
+    "root.transform.timing": {
+     "runs": 5,
+     "maxErr": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 125,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "root.transform.style": {
+     "runs": 5,
+     "maxErr": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 125,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "root.left.timing": {
+     "runs": 5,
+     "maxErr": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 125,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "root.left.style": {
+     "runs": 5,
+     "maxErr": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 125,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.transform.timing": {
+     "runs": 5,
+     "maxErr": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 110,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.transform.style": {
+     "runs": 5,
+     "maxErr": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 110,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.left.timing": {
+     "runs": 5,
+     "maxErr": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 95,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.left.style": {
+     "runs": 5,
+     "maxErr": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 95,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    }
+   },
+   "painted": {
+    "view.transform": {
+     "runs": 2,
+     "samples": 4,
+     "maxErr": [
+      0.325,
+      0.825
+     ],
+     "p95Err": [
+      0.325,
+      0.325
+     ],
+     "signedMean": [
+      0.325,
+      0.325
+     ],
+     "lagFrames": {
+      "0": 4
+     }
+    },
+    "view.left": {
+     "runs": 2,
+     "samples": 3,
+     "maxErr": [
+      100.813,
+      100.438
+     ],
+     "p95Err": [
+      100.813,
+      100
+     ],
+     "signedMean": [
+      100.813,
+      -100.219
+     ],
+     "lagFrames": {
+      "1": 3
+     }
+    },
+    "root.transform": {
+     "runs": 2,
+     "samples": 4,
+     "maxErr": [
+      1.5,
+      1.75
+     ],
+     "p95Err": [
+      1.5,
+      1.5
+     ],
+     "signedMean": [
+      1.5,
+      1.5
+     ],
+     "lagFrames": {
+      "0": 4
+     }
+    },
+    "root.left": {
+     "runs": 2,
+     "samples": 4,
+     "maxErr": [
+      100.063,
+      100.375
+     ],
+     "p95Err": [
+      100.063,
+      99.688
+     ],
+     "signedMean": [
+      100.063,
+      -99.833
+     ],
+     "lagFrames": {
+      "1": 4
+     }
+    },
+    "control.view.js": {
+     "runs": 2,
+     "samples": 4,
+     "maxErr": [
+      99.44,
+      99.68
+     ],
+     "p95Err": [
+      99.44,
+      99.6
+     ],
+     "signedMean": [
+      99.44,
+      -99.36
+     ],
+     "lagFrames": {
+      "1": 4
+     }
+    },
+    "control.root.js": {
+     "runs": 2,
+     "samples": 4,
+     "maxErr": [
+      101.25,
+      100.375
+     ],
+     "p95Err": [
+      101.25,
+      98.5
+     ],
+     "signedMean": [
+      101.25,
+      -99.042
+     ],
+     "lagFrames": {
+      "1": 4
+     }
+    }
+   },
+   "frameInterval": {
+    "n": 293,
+    "max": 18,
+    "p95": 18,
+    "median": 17,
+    "mean": 16.666
+   },
+   "scrollDelta": {
+    "n": 25,
+    "max": 1500,
+    "p95": 1100,
+    "median": 100,
+    "mean": 276
+   }
+  },
+  "webkit/native/read=timing": {
+   "js": {
+    "root.transform.timing": {
+     "runs": 1,
+     "maxErr": [
+      0
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 25,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "root.left.timing": {
+     "runs": 1,
+     "maxErr": [
+      0
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 25,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.transform.timing": {
+     "runs": 1,
+     "maxErr": [
+      0
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 22,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.left.timing": {
+     "runs": 1,
+     "maxErr": [
+      0
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 19,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    }
+   },
+   "painted": {},
+   "frameInterval": {
+    "n": 293,
+    "max": 18,
+    "p95": 18,
+    "median": 17,
+    "mean": 16.669
+   },
+   "scrollDelta": {
+    "n": 25,
+    "max": 1500,
+    "p95": 1100,
+    "median": 100,
+    "mean": 276
+   }
+  },
+  "webkit/native/read=style": {
+   "js": {
+    "root.transform.style": {
+     "runs": 1,
+     "maxErr": [
+      0
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 25,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "root.left.style": {
+     "runs": 1,
+     "maxErr": [
+      0
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 25,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.transform.style": {
+     "runs": 1,
+     "maxErr": [
+      0
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 22,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.left.style": {
+     "runs": 1,
+     "maxErr": [
+      0
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 19,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    }
+   },
+   "painted": {},
+   "frameInterval": {
+    "n": 296,
+    "max": 19,
+    "p95": 18,
+    "median": 17,
+    "mean": 16.652
+   },
+   "scrollDelta": {
+    "n": 25,
+    "max": 1500,
+    "p95": 1100,
+    "median": 100,
+    "mean": 276
+   }
+  },
+  "webkit/lenis/read=all": {
+   "js": {
+    "root.transform.timing": {
+     "runs": 5,
+     "maxErr": [
+      87,
+      87,
+      92,
+      84,
+      92
+     ],
+     "p95Err": [
+      35,
+      36,
+      36,
+      38,
+      37
+     ],
+     "lag0": 20,
+     "lag1": 1015,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "root.transform.style": {
+     "runs": 5,
+     "maxErr": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "p95Err": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "lag0": 1035,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "root.left.timing": {
+     "runs": 5,
+     "maxErr": [
+      87,
+      87,
+      92,
+      84,
+      92
+     ],
+     "p95Err": [
+      35,
+      36,
+      36,
+      38,
+      37
+     ],
+     "lag0": 20,
+     "lag1": 1015,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "root.left.style": {
+     "runs": 5,
+     "maxErr": [
+      87,
+      87,
+      92,
+      84,
+      92
+     ],
+     "p95Err": [
+      35,
+      36,
+      36,
+      38,
+      37
+     ],
+     "lag0": 20,
+     "lag1": 1015,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.transform.timing": {
+     "runs": 5,
+     "maxErr": [
+      87,
+      87,
+      92,
+      84,
+      92
+     ],
+     "p95Err": [
+      36,
+      38,
+      37,
+      40,
+      38
+     ],
+     "lag0": 20,
+     "lag1": 978,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.transform.style": {
+     "runs": 5,
+     "maxErr": [
+      87,
+      87,
+      92,
+      84,
+      92
+     ],
+     "p95Err": [
+      36,
+      38,
+      37,
+      40,
+      38
+     ],
+     "lag0": 20,
+     "lag1": 978,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.left.timing": {
+     "runs": 5,
+     "maxErr": [
+      87,
+      87,
+      92,
+      84,
+      92
+     ],
+     "p95Err": [
+      38,
+      39,
+      38,
+      41,
+      39
+     ],
+     "lag0": 20,
+     "lag1": 928,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.left.style": {
+     "runs": 5,
+     "maxErr": [
+      87,
+      87,
+      92,
+      84,
+      92
+     ],
+     "p95Err": [
+      38,
+      39,
+      38,
+      41,
+      39
+     ],
+     "lag0": 20,
+     "lag1": 928,
+     "lag2": 0,
+     "stillMax": 0
+    }
+   },
+   "painted": {
+    "view.transform": {
+     "runs": 2,
+     "samples": 118,
+     "maxErr": [
+      40.1,
+      40
+     ],
+     "p95Err": [
+      30.4,
+      36.3
+     ],
+     "signedMean": [
+      -3.24,
+      -4.019
+     ],
+     "lagFrames": {
+      "0": 35,
+      "1": 39,
+      "small-delta": 44
+     }
+    },
+    "view.left": {
+     "runs": 2,
+     "samples": 112,
+     "maxErr": [
+      84.625,
+      81.625
+     ],
+     "p95Err": [
+      31.313,
+      37.813
+     ],
+     "signedMean": [
+      -4.99,
+      -7.003
+     ],
+     "lagFrames": {
+      "1": 68,
+      "small-delta": 44
+     }
+    },
+    "root.transform": {
+     "runs": 2,
+     "samples": 124,
+     "maxErr": [
+      39.375,
+      40.875
+     ],
+     "p95Err": [
+      30.5,
+      34.875
+     ],
+     "signedMean": [
+      -2.772,
+      -3.588
+     ],
+     "lagFrames": {
+      "0": 39,
+      "1": 41,
+      "small-delta": 44
+     }
+    },
+    "root.left": {
+     "runs": 2,
+     "samples": 124,
+     "maxErr": [
+      84.25,
+      82.188
+     ],
+     "p95Err": [
+      32.813,
+      37.125
+     ],
+     "signedMean": [
+      -7.426,
+      -7.15
+     ],
+     "lagFrames": {
+      "1": 80,
+      "small-delta": 44
+     }
+    },
+    "control.view.js": {
+     "runs": 2,
+     "samples": 109,
+     "maxErr": [
+      1.42,
+      1.36
+     ],
+     "p95Err": [
+      1.2,
+      1.18
+     ],
+     "signedMean": [
+      0.391,
+      0.364
+     ],
+     "lagFrames": {
+      "0": 65,
+      "small-delta": 44
+     }
+    },
+    "control.root.js": {
+     "runs": 2,
+     "samples": 124,
+     "maxErr": [
+      1.75,
+      1.75
+     ],
+     "p95Err": [
+      1.75,
+      1.625
+     ],
+     "signedMean": [
+      0.79,
+      0.683
+     ],
+     "lagFrames": {
+      "0": 80,
+      "small-delta": 44
+     }
+    }
+   },
+   "frameInterval": {
+    "n": 401,
+    "max": 18,
+    "p95": 18,
+    "median": 17,
+    "mean": 16.663
+   },
+   "scrollDelta": {
+    "n": 208,
+    "max": 1500,
+    "p95": 41,
+    "median": 10,
+    "mean": 37.5
+   }
+  },
+  "webkit/lenis/read=timing": {
+   "js": {
+    "root.transform.timing": {
+     "runs": 1,
+     "maxErr": [
+      92
+     ],
+     "p95Err": [
+      35
+     ],
+     "lag0": 4,
+     "lag1": 203,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "root.left.timing": {
+     "runs": 1,
+     "maxErr": [
+      92
+     ],
+     "p95Err": [
+      35
+     ],
+     "lag0": 4,
+     "lag1": 203,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.transform.timing": {
+     "runs": 1,
+     "maxErr": [
+      92
+     ],
+     "p95Err": [
+      36
+     ],
+     "lag0": 4,
+     "lag1": 197,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.left.timing": {
+     "runs": 1,
+     "maxErr": [
+      92
+     ],
+     "p95Err": [
+      38
+     ],
+     "lag0": 4,
+     "lag1": 186,
+     "lag2": 0,
+     "stillMax": 0
+    }
+   },
+   "painted": {},
+   "frameInterval": {
+    "n": 401,
+    "max": 18,
+    "p95": 18,
+    "median": 17,
+    "mean": 16.666
+   },
+   "scrollDelta": {
+    "n": 208,
+    "max": 1500,
+    "p95": 41,
+    "median": 10,
+    "mean": 37.5
+   }
+  },
+  "webkit/lenis/read=style": {
+   "js": {
+    "root.transform.style": {
+     "runs": 1,
+     "maxErr": [
+      0
+     ],
+     "p95Err": [
+      0
+     ],
+     "lag0": 207,
+     "lag1": 0,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "root.left.style": {
+     "runs": 1,
+     "maxErr": [
+      87
+     ],
+     "p95Err": [
+      35
+     ],
+     "lag0": 4,
+     "lag1": 203,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.transform.style": {
+     "runs": 1,
+     "maxErr": [
+      87
+     ],
+     "p95Err": [
+      35
+     ],
+     "lag0": 4,
+     "lag1": 197,
+     "lag2": 0,
+     "stillMax": 0
+    },
+    "view.left.style": {
+     "runs": 1,
+     "maxErr": [
+      87
+     ],
+     "p95Err": [
+      36
+     ],
+     "lag0": 4,
+     "lag1": 186,
+     "lag2": 0,
+     "stillMax": 0
+    }
+   },
+   "painted": {},
+   "frameInterval": {
+    "n": 402,
+    "max": 18,
+    "p95": 18,
+    "median": 17,
+    "mean": 16.657
+   },
+   "scrollDelta": {
+    "n": 208,
+    "max": 1500,
+    "p95": 41,
+    "median": 10,
+    "mean": 37.5
+   }
+  }
+ }
+}
