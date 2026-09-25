@@ -1,6 +1,6 @@
 ---
 name: scroll-animation
-description: Build, fix or review web animation that is tied to page arrival or scroll. Covers triggered entrance and reveal animations, pinned sections, scroll-driven or scrubbed video, parallax and other scroll scenes, looping background video, header text colour that changes as sections scroll under it, and scroll wells that pull a section to rest. It ships measured primitives for React + Motion (framer-motion) and for GSAP/ScrollTrigger, plus the iOS Safari, video-encoding and performance fixes they need. Use it whenever someone wants things to "fade in on scroll", "animate as you scroll", "pin this section", "scrub the video with scroll", or asks about Motion, framer-motion, GSAP, ScrollTrigger or Lenis. Also use it to debug the symptoms of such work: reveals that never fire on mobile, a scrub stuck on its first frame and then snapping, a loop video that pops or stutters at its seam, a scroll-driven pin that won't hold (a plain CSS sticky layout bug is the `fluid-design` skill's), header ink that is wrong over a dark band, anchor links that stop short, animation jank, or new motion fighting existing GSAP, Lenis or header scripts. It is the companion to the `fluid-design` skill (viewport-fluid layout) and works with or without it.
+description: Build, fix and review scroll-linked web animation: triggered entrance reveals, a pinned scroll scene with scrubbed video, looping background video, header ink that follows the section underneath, and scroll wells, for React + Motion and for GSAP, with the iOS Safari, video-encoding and performance fixes they need. Use for "fade in on scroll", "pin this section", "scrub the video with scroll", Motion, GSAP, ScrollTrigger or Lenis questions, and for a scrub stuck on frame one, reveals that never fire, or scroll jank. Not for UI micro-interactions.
 ---
 
 # Scroll animation
@@ -20,11 +20,11 @@ read its why before bending it; the cheap-looking alternative has usually been t
 | Piece | Where |
 |---|---|
 | The method, the rules and the reasons behind them | `references/*.md` (read on demand; see the map below) |
-| React + Motion primitives: `Stage`/`StageItem`/`StageVeil`, `CountUp`, `FadeOnExit`, `ScrubStage`, `PullToCentre`, `InViewLoopVideo`, `useHeaderTheme`, `useFluidUnit` | `assets/react-motion/` (README inside) |
-| Scaled travel on a fluid layout: `fluidPx`, `fluidValue`, `fluidEnd`, `useFluidUnit`, `--scene-p` | `assets/{gsap/src,react-motion/lib}/fluid.ts`, `references/fluid-interop.md` §3 |
+| React + Motion primitives: `Stage`/`StageItem`/`StageVeil`, `CountUp`, `FadeOnExit`, `ScrubStage`, `PullToCentre`, `InViewLoopVideo`, `useHeaderTheme`, `useFluidUnit` | `assets/motion/` (README inside) |
+| Scaled travel on a fluid layout: `fluidPx`, `fluidValue`, `fluidEnd`, `useFluidUnit`, `--scene-p` | `assets/{gsap,motion/lib}/fluid.ts`, `references/fluid-interop.md` §3 |
 | The same primitives for GSAP, framework-agnostic and attribute-driven | `assets/gsap/` (README inside) |
-| The CSS, one folder: `animation.css` (both engines: smooth scroll, reduced-motion collapse, `@property --fill`) and `animation.gsap.css` (GSAP's pre-JS resting states) | `assets/styles/animation/` (README inside) → the project's `src/styles/animation/` |
-| Static motion audit, runtime reveal and scene verifier, real-smooth-scroll anchor check | `scripts/{audit-motion,verify-motion,anchor-check}.mjs` |
+| The CSS, one folder: `animation.css` (both engines: smooth scroll, reduced-motion collapse, `@property --fill`) and `animation.gsap.css` (GSAP's pre-JS resting states) | `assets/css/` (README inside) → the project's `src/styles/animation/` |
+| Static motion audit, runtime reveal and scene verifier, real-smooth-scroll anchor check | `scripts/tools/{audit-motion,verify-motion,anchor-check}.mjs` |
 
 Copy the prepared artifacts; do not rewrite them from memory. They carry measured numbers and
 comment trails that a from-scratch rewrite loses.
@@ -59,10 +59,10 @@ most expensive. Above the fold, use trigger only.
 
 ### 3. Install the foundation
 
-1. Copy the engine folder into the project: `assets/react-motion/` or `assets/gsap/`. Follow its
+1. Copy the engine folder into the project: `assets/motion/` or `assets/gsap/`. Follow its
    README. React: mount `MotionProvider` once at the root (`LazyMotion strict`, so write `m.div`,
    never `motion.div`). GSAP: call `initFluidMotion()` once.
-2. Copy `assets/styles/animation/` to `src/styles/animation/`, beside fluid-design's `src/styles/fluid/`
+2. Copy `assets/css/` to `src/styles/animation/`, beside fluid-design's `src/styles/fluid/`
    (React: delete `animation.gsap.css`). Import `animation.css` once, after your reset and after
    `fluid.css`; with Tailwind v4, into `layer(base)`. It holds `scroll-behavior: smooth` (reset
    under reduced motion; the file notes Next.js's `data-scroll-behavior`), the reduced-motion
@@ -141,10 +141,10 @@ route it through `lenis.scrollTo`.
 
 ### 9. Verify
 
-- `node <skill>/scripts/audit-motion.mjs src`: fix every error.
-- `node <skill>/scripts/verify-motion.mjs <url>`: every reveal reaches full opacity and each scene
+- `node <skill>/scripts/tools/audit-motion.mjs src`: fix every error.
+- `node <skill>/scripts/tools/verify-motion.mjs <url>`: every reveal reaches full opacity and each scene
   reports `data-motion-state` at progress 0, .25, .5, .75 and 1.
-- `node <skill>/scripts/anchor-check.mjs <url>` if the page has anchors or a scroll well. The reveal
+- `node <skill>/scripts/tools/anchor-check.mjs <url>` if the page has anchors or a scroll well. The reveal
   check forces `scroll-behavior: auto`, so it proves nothing about real anchor jumps.
 - If "the scrub holds frame one, then snaps", **rule out a stale stylesheet first**: close the tab
   and open a new one before reading scroll code (`references/verification.md` §4).
@@ -176,17 +176,17 @@ route it through `lenis.scrollTo`.
 
 | Read | When |
 |---|---|
-| `references/preflight.md` | always, first: detection, the decisions and their defaults, the keep/adapt/replace question |
-| `references/motion-architecture.md` | any animation: triage by clock, stages, trigger lines, variants, measured curves, craft, reduced motion, SSR, what was rejected |
-| `references/scroll-scenes.md` | pins, progress maths, latches, the three clocks, direct writes, the camera, scroll wells, riding sections |
-| `references/video.md` | any `<video>`: all-intra, loop seams, rVFC, seeking, preload tiers, posters, autoplay, tab-sleep rehydrate, encoding |
-| `references/header-theme.md` | header ink that follows the section underneath |
-| `references/brownfield-coexistence.md` | a site that already has header scripts, GSAP, Lenis or an entrance library |
-| `references/ios-safari-motion.md` | a scene or video misbehaving on iPhone or Safari |
-| `references/performance.md` | before shipping motion; jank; budgets |
-| `references/verification.md` | proving it works; the three bugs the harness caught; the scripts |
-| `references/attribute-contract.md` | the exact name of a `data-*` attribute, a CSS variable or a motion constant |
-| `references/fluid-interop.md` | a project that also uses `fluid-design`, or one without a fluid scale |
+| [preflight.md](references/preflight.md) | always, first: detection, the decisions and their defaults, the keep/adapt/replace question |
+| [motion-architecture.md](references/motion-architecture.md) | any animation: triage by clock, stages, trigger lines, variants, measured curves, craft, reduced motion, SSR, what was rejected |
+| [scroll-scenes.md](references/scroll-scenes.md) | pins, progress maths, latches, the three clocks, direct writes, the camera, scroll wells, riding sections |
+| [video.md](references/video.md) | any `<video>`: all-intra, loop seams, rVFC, seeking, preload tiers, posters, autoplay, tab-sleep rehydrate, encoding |
+| [header-theme.md](references/header-theme.md) | header ink that follows the section underneath |
+| [brownfield-coexistence.md](references/brownfield-coexistence.md) | a site that already has header scripts, GSAP, Lenis or an entrance library |
+| [ios-safari-motion.md](references/ios-safari-motion.md) | a scene or video misbehaving on iPhone or Safari |
+| [performance.md](references/performance.md) | before shipping motion; jank; budgets |
+| [verification.md](references/verification.md) | proving it works; the three bugs the harness caught; the scripts |
+| [attribute-contract.md](references/attribute-contract.md) | the exact name of a `data-*` attribute, a CSS variable or a motion constant |
+| [fluid-interop.md](references/fluid-interop.md) | a project that also uses `fluid-design`, or one without a fluid scale |
 
 ## Companion skill
 

@@ -12,5 +12,5 @@
     "noEmit": true,
     "isolatedModules": true
   },
-  "include": ["../scroll-animation/assets/react-motion/**/*.ts", "../scroll-animation/assets/react-motion/**/*.tsx"]
+  "include": ["../skills/scroll-animation/assets/motion/**/*.ts", "../skills/scroll-animation/assets/motion/**/*.tsx"]
 }

@@ -1,0 +1,11 @@
+# Tests compare bytes and hashes: keep LF everywhere, on every OS.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.webp binary
+*.avif binary
+*.mp4 binary
+*.webm binary
+*.glb binary
+*.ktx2 binary
+*.woff2 binary

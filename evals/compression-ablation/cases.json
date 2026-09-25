@@ -1,0 +1,32 @@
+[
+  {
+    "id": "trigger-before-scroll",
+    "prompt": "Make the stats section animate as you scroll through it.",
+    "load_bearing_instruction": "Triage by clock first: a stats section is content arriving, so it is a triggered entrance (Stage/StageItem or a count-up), not a scroll-linked scene.",
+    "variants": [
+      "no-skill",
+      "current",
+      "compressed-candidate"
+    ],
+    "preserve": [
+      "task success",
+      "a triggered entrance, not a scroll-linked scrub",
+      "reduced motion handled"
+    ]
+  },
+  {
+    "id": "margin-not-amount",
+    "prompt": "Reveal the long case-study article sections when they come into view.",
+    "load_bearing_instruction": "Reveals trigger on a margin (rootMargin/viewport margin), never a fractional amount, because a fraction is unsatisfiable on content taller than the viewport.",
+    "variants": [
+      "no-skill",
+      "current",
+      "compressed-candidate"
+    ],
+    "preserve": [
+      "task success",
+      "margin-based trigger",
+      "reveals fire on tall sections on a phone"
+    ]
+  }
+]

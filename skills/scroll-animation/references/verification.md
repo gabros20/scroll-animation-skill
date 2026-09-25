@@ -1,5 +1,7 @@
 # Verifying motion
 
+**Purpose:** Prove scroll-dependent motion works: the scripted harness, the three bugs it caught, the scripts, device checks.
+
 **Read when:** you've built or changed a scroll scene, an entrance group, a scroll well or anything
 else whose correctness depends on scroll position, and need to prove it works; or a reveal "doesn't
 fire" or a scene "is broken".
@@ -11,6 +13,9 @@ programmatically.
 
 Three tiers, cheapest and most automatable first. The order matters: a bug tiers 1–2 can catch
 should never wait for tier 3, because a real device is the scarcest resource in this list.
+
+**Inputs:** a URL or a built page.
+**Produces:** pass/fail evidence per reveal, scene and anchor.
 
 ## Contents
 
@@ -71,7 +76,7 @@ attaches regardless of environment. The React port additionally exposes it uncon
 build with no flag needed; the GSAP port is framework-free and has no reliable dev/production signal
 to key off, so it requires the flag in both. Without the probe, a sweep script still has a fallback:
 read the DOM contract directly (`video[data-motion-state]`, `currentTime`, the computed camera
-`transform`) rather than calling `__scrub()`. `scripts/verify-motion.mjs` reads the contract, so it
+`transform`) rather than calling `__scrub()`. `scripts/tools/verify-motion.mjs` reads the contract, so it
 works without the flag.
 
 ## 2. The three bugs it caught
@@ -85,7 +90,7 @@ Concrete, because "measure state, not pixels" is abstract until you see what it 
 | "Animates too early and too fast" | The trigger fired at roughly a third of the element visible and settled hundreds of pixels before the element had actually arrived | Scripted scroll plus screenshots at fixed progress steps; not reproducible by scrolling manually at normal speed |
 
 None of the three were visible from reading the source code in isolation. All three were found in
-minutes once the harness existed. (The second is now a static check: `scripts/audit-motion.mjs`'s
+minutes once the harness existed. (The second is now a static check: `scripts/tools/audit-motion.mjs`'s
 `contents-reveal` rule flags a reveal trigger on a `contents` wrapper, including a responsive
 `lg:contents`.)
 
@@ -140,7 +145,7 @@ check: a STALE verdict means the tab holds an old stylesheet.)
 Check each script's own `--help` for the current flag surface; the shapes below are the intended
 contract.
 
-- **`scripts/audit-motion.mjs <srcDir>`**: a static source scanner for the silent motion failure
+- **`scripts/tools/audit-motion.mjs <srcDir>`**: a static source scanner for the silent motion failure
   modes. Each finding carries a rule id, `file:line`, the snippet, a *why* and a *fix*. Rules:
   `motion-strict` (a `motion.*` component in a project running `LazyMotion strict`, where it
   throws at runtime), `fractional-amount` (a fractional `amount`, unsatisfiable on tall content),
@@ -150,7 +155,7 @@ contract.
   dependencies together with `PullToCentre`/`data-pull-to-centre`), and `gsap-pin-with-sticky-scene`
   (`pin: true` in the same file as `data-scrub-stage`/`ScrubStage`). `--selftest` runs every rule
   over its positive and negative fixtures and asserts each trips (or doesn't).
-- **`scripts/verify-motion.mjs <url>`**: the runtime check. It step-scrolls the page with rAF plus a
+- **`scripts/tools/verify-motion.mjs <url>`**: the runtime check. It step-scrolls the page with rAF plus a
   pause per step (a fast scroll outruns `IntersectionObserver` and gives false blanks), waits for the
   up-to-1.3s entrance to settle, and reports every `[data-stage-item]` still under full opacity. It
   drives each `[data-scrub-stage]` to progress `[0, 0.25, 0.5, 0.75, 1]` and records
@@ -162,7 +167,7 @@ contract.
   down the page. Measured: this made the reveal check fail in every cell (30/54 items read as
   hidden) on a page that set `scroll-behavior: smooth` globally, with no reveal bug in the actual
   components.
-- **`scripts/anchor-check.mjs <url>`**: the one check that exercises a REAL smooth scroll through
+- **`scripts/tools/anchor-check.mjs <url>`**: the one check that exercises a REAL smooth scroll through
   the page's own `scroll-behavior` and scroll-well setup, which the reveal check deliberately does
   not. Because that check forces `auto`, 27/27 green cells there prove nothing about whether an
   actual anchor click survives a scroll well sitting between it and its target. For each same-page

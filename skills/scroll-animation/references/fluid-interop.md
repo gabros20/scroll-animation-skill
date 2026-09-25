@@ -1,5 +1,7 @@
 # Fluid interop: with a fluid-scaled layout, and without one
 
+**Purpose:** Make motion distances, pins and header offsets agree with a viewport-scaled layout, or with none.
+
 **Read when:** the project also uses the `fluid-design` skill (a `fluid.config.json`, `--fluid`
 custom properties, `fluid-*` utilities), or you're installing these primitives on a site that
 doesn't, and need to know which parts depend on the scale.
@@ -9,11 +11,24 @@ doesn't, and need to know which parts depend on the scale.
 The two skills meet at three things only: the fluid units, the engage breakpoint, and `--fluid-header-h`.
 Everything else is independent, and every primitive here runs on a plain px layout.
 
+**Inputs:** whether the project has `fluid.config.json` or another scaled unit.
+**Produces:** travel distances that scale, pin units, and the breakpoint and header sources.
+
+## Contents
+
+1. [1. The engage breakpoint: one number, one source](#1-the-engage-breakpoint-one-number-one-source)
+2. [2. Fluid lengths inside motion code](#2-fluid-lengths-inside-motion-code)
+3. [3. Distances: small entrances stay fixed, travel scales](#3-distances-small-entrances-stay-fixed-travel-scales)
+4. [4. Pins in `lvh`, sections in `svh`](#4-pins-in-lvh-sections-in-svh)
+5. [5. Fluid-height acts inside a pin](#5-fluid-height-acts-inside-a-pin)
+6. [6. `--fluid-header-h`](#6---fluid-header-h)
+7. [Traps](#traps)
+
 ## 1. The engage breakpoint: one number, one source
 
 Both engines keep one constant for "where the desktop composition starts":
-`ENGAGE_BREAKPOINT_PX`/`ENGAGE_QUERY` in `assets/react-motion/lib/constants.ts`, and
-`ENGAGE_PX`/`ENGAGE_QUERY` in `assets/gsap/src/config.ts`. Stages read it for `marginLg`/
+`ENGAGE_BREAKPOINT_PX`/`ENGAGE_QUERY` in `assets/motion/lib/constants.ts`, and
+`ENGAGE_PX`/`ENGAGE_QUERY` in `assets/gsap/config.ts`. Stages read it for `marginLg`/
 `data-stage-margin-lg`, the scroll well for `thresholdLg`, the scrub scene for its desktop crop.
 
 - **With `fluid-design` v2:** its `fluid.config.json` `bands.desktop.minWidth` is the source.
@@ -79,7 +94,7 @@ ScrollTrigger `start`/`end` offset, a marquee's speed. Three patterns, in order 
 
 2. **GSAP function values** when the distance must be a tween property (a timeline with several
    steps, `motionPath`, a `Flip` offset). Import `fluidValue`/`fluidEnd`/`fluidPx` from
-   `assets/gsap/src/fluid.ts` and set `invalidateOnRefresh: true`, so ScrollTrigger re-reads them
+   `assets/gsap/fluid.ts` and set `invalidateOnRefresh: true`, so ScrollTrigger re-reads them
    on the refresh it already runs after every resize:
 
    ```ts
@@ -91,7 +106,7 @@ ScrollTrigger `start`/`end` offset, a marquee's speed. Three patterns, in order 
 
 3. **Motion with the unit as a MotionValue** when the distance feeds other maths:
    `const f = useFluidUnit(); const x = useTransform(() => p.get() * 240 * f.get())`
-   (`assets/react-motion/hooks/useFluidUnit.ts`). It re-scales on resize without a remount.
+   (`assets/motion/hooks/useFluidUnit.ts`). It re-scales on resize without a remount.
 
 **Measured distances need nothing.** A value read from layout (`track.scrollWidth - innerWidth`,
 `el.offsetLeft`, a `getBoundingClientRect()` span) is already in scaled px. In GSAP make it a

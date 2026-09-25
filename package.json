@@ -1,15 +1,21 @@
 {
-  "name": "scroll-animation-skill-tests",
+  "name": "scroll-animation-cli",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
-  "description": "Runnable validation for the scroll-animation skill's assets. Not the skill itself -- see scroll-animation/.",
+  "description": "The scroll-animation skill's repository: the runtime pack lives in skills/scroll-animation/. The CLI ships from here at v2.",
+  "license": "MIT",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "pretest": "mkdir -p tests/.scratch tests/smoke-gsap/public && ffmpeg -y -f lavfi -i \"testsrc=size=640x360:rate=30:duration=2\" -g 1 -pix_fmt yuv420p tests/.scratch/clip.mp4 && cp tests/.scratch/clip.mp4 tests/smoke-gsap/public/clip.mp4",
-    "test": "npm run test:types && npm run test:smoke && npm run test:audit",
-    "test:types": "tsc --noEmit -p tests/tsconfig.react-motion.json && tsc --noEmit -p tests/tsconfig.gsap.json",
+    "test": "npm run test:types && npm run test:audit && npm run test:smoke",
+    "test:types": "tsc --noEmit -p tests/tsconfig.motion.json && tsc --noEmit -p tests/tsconfig.gsap.json",
     "test:smoke": "node tests/run-smoke.mjs",
-    "test:audit": "node scroll-animation/scripts/audit-motion.mjs --selftest"
+    "test:audit": "node skills/scroll-animation/scripts/tools/audit-motion.mjs --selftest",
+    "check-sync": "bash scripts/check-sync",
+    "verify": "bash scripts/check-sync && npm test"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

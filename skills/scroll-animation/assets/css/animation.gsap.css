@@ -1,12 +1,12 @@
 /**
- * styles/animation/animation.gsap.css — the GSAP engine's SSR/no-flash layer.
+ * css/animation.gsap.css — the GSAP engine's SSR/no-flash layer.
  * GSAP projects only; import it right after animation.css from this folder.
  *
  * This file gives every attribute in the DOM contract (`references/attribute-contract.md` §3) its
  * pre-JS resting state, so a static page never flashes the settled layout
  * before `initFluidMotion` runs, and never shows a permanently broken one
  * if JS is unavailable. Include it once, before any page content, on every
- * page that uses the GSAP engine (`assets/gsap/src`).
+ * page that uses the GSAP engine (`assets/gsap`).
  *
  * Everything here is keyed off attributes, not classes — the same contract
  * the react-motion port's `variants.ts` shares, down to the CSS custom

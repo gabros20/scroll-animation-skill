@@ -127,6 +127,6 @@ resolved/launched. Playwright resolution matches `verify-motion.mjs`.
 
 `../../tests/` (repo root) is the runnable end-to-end validation for this
 skill's assets — see its own `package.json`/`npm test`, which exercises
-`assets/gsap`/`assets/react-motion` (`tsc --noEmit`), a Vite smoke page
+`assets/gsap`/`assets/motion` (`tsc --noEmit`), a Vite smoke page
 against `verify-motion.mjs --reveal --scenes`, and `audit-motion.mjs
 --selftest`.

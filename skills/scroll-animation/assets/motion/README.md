@@ -16,7 +16,7 @@ npm i motion@^12 react@^19 react-dom@^19
 TypeScript project settings this folder assumes: `strict: true`,
 `jsx: "react-jsx"`, `moduleResolution: "bundler"` (or `node16`/`nodenext`).
 
-Copy the whole `react-motion/` folder into your project — every import inside
+Copy the whole `motion/` folder into your project — every import inside
 it is relative, so it has no dependency on a particular path alias or
 bundler. If your project also has the `fluid-design` skill installed, its
 Tailwind package ships a `cn` you can swap in for `lib/cx.ts`'s bare joiner
@@ -83,7 +83,7 @@ examples/
 
 ```tsx
 // app/layout.tsx (or your framework's root layout)
-import { MotionProvider } from './react-motion/components'
+import { MotionProvider } from './motion/components'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

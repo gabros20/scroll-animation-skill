@@ -8,3 +8,5 @@ tests/.scratch/
 tests/smoke-gsap/public/
 .orchestrate/
 .research/
+__pycache__/
+*.pyc

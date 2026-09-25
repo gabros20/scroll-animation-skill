@@ -1,5 +1,7 @@
 # Brownfield coexistence: working next to existing header scripts, GSAP and Lenis
 
+**Purpose:** Work next to motion a site already has (header scripts, GSAP, Lenis, entrance libraries) without two systems fighting.
+
 **Read when:** the site already animates: a header that hides, shrinks or changes colour on scroll,
 GSAP `ScrollTrigger` timelines or pins, Lenis (or another smooth-scroll library), or an entrance
 library such as AOS. Also when "the anchor link stops short", "the pin doesn't stick" or "the header
@@ -15,6 +17,9 @@ around it. Every conflict below comes from one cause, so learn the rule once:
 > `color`, a node's `transform`, the page's scroll position) do not blend; the last writer each frame
 > wins, and which one that is changes with timing. The fix is always to pick one writer and route
 > the other's decision through it, never to tune them against each other.
+
+**Inputs:** the inventory from preflight; the site's existing motion code.
+**Produces:** a keep/adapt/replace decision per system and the wiring that lets them coexist.
 
 ## Contents
 
@@ -39,7 +44,7 @@ grep -rnE "scroll-behavior|overscroll-behavior|overflow-x: ?hidden" src
 ```
 
 Write down, per item: what it animates, which property it writes, on which element, and on which
-routes. That list is what the one-writer rule is checked against. `scripts/audit-motion.mjs` flags
+routes. That list is what the one-writer rule is checked against. `scripts/tools/audit-motion.mjs` flags
 the two combinations that are always wrong: `lenis-with-scroll-well` and
 `gsap-pin-with-sticky-scene`.
 

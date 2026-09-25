@@ -1,5 +1,7 @@
 # iOS Safari: the motion-specific fixes
 
+**Purpose:** The iPhone and Safari fixes for pins, video, mask sweeps and toolbar collapse.
+
 **Read when:** a scroll scene, scrubbed or looping video, mask sweep or scroll-linked effect
 misbehaves on an iPhone or in Safari; or a device report says "the video froze", "the wipe pops" or
 "the pin jitters".
@@ -13,6 +15,9 @@ snapshot); `video.md` §14 (the imperative controller).
 Chrome DevTools' device emulation **cannot** reproduce most of what's in this document. Several of
 these are Safari/WebKit sampling and rendering behaviours with no emulated equivalent. Verify on a
 real device or the matching iOS Simulator (§6).
+
+**Inputs:** a scene or video that misbehaves on iOS or Safari.
+**Produces:** the specific fix and the device check that proves it.
 
 ## Contents
 
@@ -100,7 +105,7 @@ Chromium interpolates a plain custom property either way; this is specifically a
 
 `syntax: '<number>'` (matched to whatever type the value actually is) is what makes the browser
 treat updates to it as a typed, animatable value instead of an opaque string token.
-`assets/styles/animation/animation.css` registers `--fill`; use the same shape for any other custom property that
+`assets/css/animation.css` registers `--fill`; use the same shape for any other custom property that
 feeds a gradient, filter or other paint input that needs to tween a number.
 
 ## 5. Overscroll and smooth scroll
@@ -112,7 +117,7 @@ latch (`scroll-scenes.md` §3, §5). It is a global decision, set once on the do
 `fluid-design` skill's base layer is installed it already sets this, for a rendering reason as well:
 no canvas gap behind the page.)
 
-`html { scroll-behavior: smooth }` (in `assets/styles/animation/animation.css`, reset to `auto` under reduced
+`html { scroll-behavior: smooth }` (in `assets/css/animation.css`, reset to `auto` under reduced
 motion) makes anchor jumps glide. It has two motion consequences: every write a scroll well makes
 must pass `behavior: 'instant'`, and any stepped harness must force `auto` while it steps
 (`scroll-scenes.md` §8, `verification.md` §5). Next.js App Router additionally wants

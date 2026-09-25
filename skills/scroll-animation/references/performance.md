@@ -1,5 +1,7 @@
 # Motion performance
 
+**Purpose:** Keep scroll motion inside the frame budget on real devices.
+
 **Read when:** you're adding a scroll-driven effect, reviewing whether a page's motion budget still
 holds, or diagnosing dropped frames and jank on a real device.
 **Skip when:** the work is a single triggered reveal with no scroll binding (`motion-architecture.md`
@@ -12,6 +14,9 @@ holds, or diagnosing dropped frames and jank on a real device.
 Subscription count is the wrong metric to optimise: a scroll-position hook typically shares its
 underlying measurement per container regardless of how many things read it. What actually costs, in
 order, is below.
+
+**Inputs:** the page's motion inventory or a jank report.
+**Produces:** the budget check, the cost order and the fix for the hot path.
 
 ## Contents
 
@@ -186,7 +191,7 @@ library's ~34KB. Add only the specific feature you need when you need it (`domMa
 animations or drag are genuinely required). Import the `m` component from `motion/react` and write `m.div`,
 never `motion.div`: `strict` mode throws on the non-lazy `motion.*` component API rather than silently working, and that
 is a feature, not friction. It stops a future contributor from quietly reintroducing the full bundle
-one import at a time. `scripts/audit-motion.mjs`'s `motion-strict` rule flags any `motion.*` left in a strict project.
+one import at a time. `scripts/tools/audit-motion.mjs`'s `motion-strict` rule flags any `motion.*` left in a strict project.
 
 GSAP's equivalent: import only the modules a page uses (`initStages`, `initCountUps`, …) rather than
 `initFluidMotion` when a page needs one primitive; a page with just count-up numbers has no reason to
