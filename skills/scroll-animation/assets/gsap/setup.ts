@@ -27,18 +27,30 @@ export const EASES: Readonly<Record<CurveName, string>> = {
 }
 
 /**
- * `gsap.matchMedia()` conditions every block shares. Build inside `mm.add(CONDITIONS, (ctx) => …)` and read
- * `ctx.conditions`: when a query stops matching (a resize past the breakpoint, the visitor turning reduced motion
- * on), GSAP reverts everything created inside and runs the function again. Don't nest `gsap.context()` in it.
+ * `gsap.matchMedia()` conditions for anything that creates ScrollTriggers: reduced motion only. Build inside
+ * `mm.add(MOTION_CONDITIONS, (ctx) => …)` and read `ctx.conditions.reduce`: when the visitor turns reduced motion on
+ * or off, GSAP reverts what was built and runs the function again. Don't nest `gsap.context()` in it.
+ *
+ * Never put the BREAKPOINT in the conditions of a build that creates ScrollTriggers. Measured with GSAP 3.15: when a
+ * condition changes, the rebuilt trigger's own refresh zeroes the recorded scroll and the refresh that follows leaves
+ * the page at scrollY 0 (Chromium and WebKit), so rotating an iPad across the desktop breakpoint throws the reader to
+ * the top. Branch on the breakpoint inside the build (`isDesktop()` from config, function-based values and
+ * `invalidateOnRefresh`), or keep the trigger outside the matchMedia and swap only its tweens.
  */
-export const CONDITIONS = {
-  desktop: DESKTOP_QUERY,
-  mobile: `not all and ${DESKTOP_QUERY}`,
+export const MOTION_CONDITIONS = {
   reduce: REDUCED_MOTION_QUERY,
   motion: '(prefers-reduced-motion: no-preference)',
 } as const
 
+/** Breakpoint conditions, for matchMedia builds that create NO ScrollTriggers (a tween set, a hover setup). */
+export const CONDITIONS = {
+  desktop: DESKTOP_QUERY,
+  mobile: `not all and ${DESKTOP_QUERY}`,
+  ...MOTION_CONDITIONS,
+} as const
+
 export type Conditions = { [K in keyof typeof CONDITIONS]: boolean }
+export type MotionConditions = { [K in keyof typeof MOTION_CONDITIONS]: boolean }
 
 let registered = false
 

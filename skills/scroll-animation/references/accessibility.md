@@ -54,13 +54,14 @@ Each engine covers only its own animations. Anything you write by hand checks th
     .parallax { animation: none; animation-timeline: auto; }
   }
   ```
-- **GSAP.** Build inside `gsap.matchMedia()` with the shared conditions; when the visitor changes the setting, GSAP
-  reverts what was built and runs the function again.
+- **GSAP.** Build inside `gsap.matchMedia()` with `MOTION_CONDITIONS` (reduced motion only); when the visitor
+  changes the setting, GSAP reverts what was built and runs the function again. Keep the breakpoint out of the
+  conditions of any build that creates ScrollTriggers: in GSAP 3.15 a condition change leaves the page at scroll 0.
   ```ts
-  gsap.matchMedia().add(CONDITIONS, (ctx) => {
-    const { reduce } = ctx.conditions as Conditions
+  gsap.matchMedia().add(MOTION_CONDITIONS, (ctx) => {
+    const { reduce } = ctx.conditions as MotionConditions
     if (reduce) { gsap.set(items, { autoAlpha: 1 }); return }
-    // full motion
+    // full motion; branch on isDesktop() inside if the layout differs
   })
   ```
 - **Motion.** `MotionConfig reducedMotion="user"` (in `MotionProvider`) drops transform and layout animation. A

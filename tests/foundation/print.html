@@ -6,6 +6,7 @@
     <title>foundation: print</title>
     <!--gate-script-->
     <link rel="stylesheet" href="../../skills/scroll-animation/assets/css/animation.css" />
+    <link rel="stylesheet" href="../../skills/scroll-animation/assets/css/scene.css" />
     <link rel="stylesheet" href="./src/page.css" />
     <style>
       html[data-animation='on'] [data-reveal-item] {
@@ -19,14 +20,14 @@
     <p data-reveal-item id="inline" style="opacity: 0; transform: translateY(24px)">
       An entrance item hidden by an inline style.
     </p>
-    <!-- A scrubbed scene as the React scene writes it: the pin's sticky geometry is inline. -->
-    <div data-scrub-stage style="position: relative; height: 300vh">
-      <div data-scrub-pin style="position: sticky; top: 0; height: 100lvh; overflow: clip">
+    <!-- A pinned scene whose pin geometry is inline (ScrollTrigger writes some): the print rules must beat it. -->
+    <div data-scene-root style="position: relative; height: 300vh">
+      <div data-scene-pin style="position: sticky; top: 0; height: 100lvh; overflow: clip">
         <div style="height: 100%; background: #ccd">The held frame</div>
       </div>
-      <div data-scrub-content style="margin-top: -100lvh">
+      <div data-scene-content style="margin-top: -100lvh">
         <section style="height: 100vh">Act one</section>
-        <div data-scrub-spacer style="height: 100vh"></div>
+        <div data-scene-spacer style="height: 100vh"></div>
         <section style="height: 100vh">Act two</section>
       </div>
     </div>

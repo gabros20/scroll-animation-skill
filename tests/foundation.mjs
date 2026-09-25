@@ -358,7 +358,7 @@ const GROUPS = {
       page.evaluate(() => {
         const cs = (el) => getComputedStyle(el)
         return {
-          pin: cs(document.querySelector('[data-scrub-pin]')).position,
+          pin: cs(document.querySelector('[data-scene-pin]')).position,
           items: [...document.querySelectorAll('[data-reveal-item]')].map((el) => ({ opacity: cs(el).opacity, transform: cs(el).transform })),
         }
       })
@@ -366,7 +366,7 @@ const GROUPS = {
     await page.emulateMedia({ media: 'print' })
     const printed = await read()
     const show = (s) => `pin ${s.pin}, items opacity ${s.items.map((i) => i.opacity).join('/')}`
-    t.check('print: [data-scrub-pin] is position: static and entrance items are visible', () => [
+    t.check('print: [data-scene-pin] is position: static and entrance items are visible', () => [
       screen.pin === 'sticky' && screen.items.every((i) => i.opacity === '0') &&
         printed.pin === 'static' && printed.items.every((i) => i.opacity === '1' && i.transform === 'none'),
       `screen: ${show(screen)} · print: ${show(printed)}`,

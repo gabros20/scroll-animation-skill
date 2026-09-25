@@ -44,8 +44,8 @@ Options:
                        A width <= 480 is emulated as touch/mobile.
   --reveal            step-scroll (scroll-behavior forced to auto) and check
                        every [data-stage-item] ends visible
-  --scenes            for each [data-scrub-stage], scroll to progress
-                       0/.25/.5/.75/1 and record data-motion-state + a screenshot
+  --scenes            for each scene ([data-scene-root], v1 [data-scrub-stage]), scroll to progress
+                       0/.25/.5/.75/1 and record data-scene-state (v1 data-motion-state) + a screenshot
   --anchors           delegate to anchor-check.mjs (a REAL smooth scroll
                        through the page's own scroll-behavior/scroll well)
   -h, --help          print this message and exit
@@ -208,11 +208,11 @@ async function checkReveal(page) {
 // of what's above it. Maths from references/verification.md §1 / §2 (the
 // three real bugs found this way).
 async function checkScenes(page, opts) {
-  const stages = await page.evaluate(() => document.querySelectorAll('[data-scrub-stage]').length)
+  const stages = await page.evaluate(() => document.querySelectorAll('[data-scene-root], [data-scrub-stage]').length)
   const scenes = []
   for (let i = 0; i < stages; i++) {
     const base = await page.evaluate((index) => {
-      const s = document.querySelectorAll('[data-scrub-stage]')[index]
+      const s = document.querySelectorAll('[data-scene-root], [data-scrub-stage]')[index]
       return { top: s.getBoundingClientRect().top + scrollY, range: s.offsetHeight - innerHeight }
     }, i)
 
@@ -226,10 +226,10 @@ async function checkScenes(page, opts) {
       await page.waitForTimeout(2500)
 
       const state = await page.evaluate((index) => {
-        const s = document.querySelectorAll('[data-scrub-stage]')[index]
-        const stateEl = s.querySelector('[data-motion-state]') ?? s
+        const s = document.querySelectorAll('[data-scene-root], [data-scrub-stage]')[index]
+        const stateEl = s.hasAttribute('data-scene-state') ? s : (s.querySelector('[data-motion-state]') ?? s)
         return {
-          motionState: stateEl.getAttribute('data-motion-state'),
+          motionState: stateEl.getAttribute('data-scene-state') ?? stateEl.getAttribute('data-motion-state'),
           scrollY: window.scrollY
         }
       }, i)
@@ -301,7 +301,7 @@ function printSummary(viewports) {
       for (const h of v.checks.reveal.hidden) console.log(`  reveal[${h.index}] ${h.selector}: opacity ${h.opacity}`)
     }
     if (v.checks.scenes && !v.checks.scenes.pass) {
-      console.log('  scenes: at least one [data-scrub-stage] never wrote data-motion-state across any step')
+      console.log('  scenes: at least one scene never wrote data-scene-state across any step')
     }
     console.log('')
   }

@@ -1,4 +1,4 @@
-import { ScrubStage } from '../../../../skills/scroll-animation/assets/motion/components/ScrubStage'
+import { ScrubVideo } from '../../../../skills/scroll-animation/assets/motion/ScrubVideo'
 
 // The same all-intra test clip and the same explicit config as the GSAP smoke
 // page (tests/smoke-gsap/main.ts): 2 s at 30 fps, a five-frame head loop and a
@@ -20,11 +20,11 @@ export function App() {
         <p>Fades out as it scrolls above the viewport.</p>
       </div>
 
-      <ScrubStage src="/clip.mp4" fps={30} headLoop={{ fromFrame: 0, matchFrame: 5 }} tailLoop={{ fromFrame: 55 }}>
+      <ScrubVideo src="/clip.mp4" fps={30} headLoop={{ fromFrame: 0, matchFrame: 5 }} tailLoop={{ fromFrame: 55 }}>
         <section style={{ height: '100vh' }} />
         <section style={{ height: '100vh' }} />
         <section style={{ height: '100vh' }} />
-      </ScrubStage>
+      </ScrubVideo>
 
       <section style={{ position: 'relative', height: '200vh' }} />
 
