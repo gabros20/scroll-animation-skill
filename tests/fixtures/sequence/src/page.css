@@ -1,0 +1,29 @@
+/* The scene: a lead of --lead viewports, a range whose scroll travel is exactly 2360 px (so progress .25/.5/.75
+   land on whole pixels), a sticky 100vh pin holding the canvas, and a tail long enough to scroll the pin far away. */
+html,
+body {
+  margin: 0;
+  background: #fff;
+}
+#lead {
+  height: calc(var(--lead, 0) * 100vh);
+}
+#range {
+  position: relative;
+  height: calc(100vh + 2360px);
+}
+#pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: clip;
+  background: #222;
+}
+#seq {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+#tail {
+  height: 400vh;
+}
