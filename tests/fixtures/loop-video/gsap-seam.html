@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>loop-video fixture (gsap)</title>
+    <title>loop-video seam fixture (gsap)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       html,
@@ -27,28 +27,23 @@
         height: 100%;
         object-fit: cover;
       }
-      .video-wrap button {
-        position: absolute;
-        right: 8px;
-        bottom: 8px;
-      }
       .tail {
         height: 150vh;
       }
     </style>
   </head>
   <body>
-    <!-- Tall enough that the video starts well outside even the warm (800px) margin. -->
+    <!--
+      Task 21: the seam-wrap check needs a REAL seam (loopFromFrame/fps), unlike
+      gsap.html which stays in native-loop mode for the task-12 checks. The clip
+      is the shared 60-frame/30fps all-intra testsrc plus one spare clone of its
+      last frame (61 frames, as `media loop --loop-from` makes it); frame 45 is an arbitrary
+      mid-clip seam (loop body = frames 45-59, 15 frames = 0.5s/cycle), not a
+      measured pixel match — this fixture asserts frame INDICES and event
+      timing, never visual seamlessness.
+    -->
     <div class="spacer" id="top"></div>
     <div class="video-wrap">
-      <!--
-        data-controls="true" forces the WCAG control on regardless of the
-        clip's real (2s) duration, so every check below is deterministic —
-        this fixture is not exercising the duration-default heuristic, only
-        the playback/gating behaviour. No [data-loop-toggle] button is
-        authored here on purpose: this fixture also exercises loop-video.ts's
-        auto-created-button path (see the file docblock).
-      -->
       <video
         id="fx-video"
         data-loop-video
@@ -59,13 +54,13 @@
         disablepictureinpicture
         disableremoteplayback
         aria-hidden="true"
-        data-controls="true"
-        data-alt="A test pattern, looping"
+        data-loop-from-frame="45"
+        data-fps="30"
       >
-        <source src="/clip.mp4" type="video/mp4" />
+        <source src="/clip-seam.mp4" type="video/mp4" />
       </video>
     </div>
     <div class="tail"></div>
-    <script type="module" src="./src/gsap-entry.ts"></script>
+    <script type="module" src="./src/gsap-seam-entry.ts"></script>
   </body>
 </html>

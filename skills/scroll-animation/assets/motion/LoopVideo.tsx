@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 
 /**
  * A background render that starts when it is ~20% on screen and pauses when
@@ -17,8 +17,12 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
  *   `loopFromFrame`) joins the clip's own ends and pauses IN PLACE on exit.
  *   Intro + seam (`loopFromFrame` + `fps`) plays the full clip once, then
  *   re-enters at a measured seamless frame (`references/video.md` §2) for
- *   the rest of the element's life — the wrap happens ON the last frame,
- *   while still playing, never by pausing for it. Both policies resume IN
+ *   the rest of the element's life — the wrap happens while playing, never
+ *   by pausing for it. On requestVideoFrameCallback it fires up to one frame
+ *   early (the presented frame's end within 1.5 frames of the duration),
+ *   which beats WebKit's own end-of-media handling; so a seam clip ends on
+ *   one spare clone of its last frame, which `media loop --loop-from` adds,
+ *   and the early wrap only ever skips that. Both policies resume IN
  *   PLACE on re-entry: replaying the intro every scroll-past reads as the
  *   section "restarting" rather than living.
  * - **Two preload tiers.** `preload` stays `'none'` until a wide (800px)
@@ -37,20 +41,28 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
  *
  * ## New in v2
  *
- * - **A pause/play control** (WCAG 2.2.2, Pause/Stop/Hide: content that
- *   moves by itself for more than 5s needs one). `controls` defaults to
- *   `durationS > 5` when given, and to **shown** when `durationS` is
- *   omitted — `preload="none"` means the real `video.duration` usually
- *   isn't known at mount, and silently omitting a required control is a
- *   worse failure than one extra button on a clip that turns out to be
- *   short. Pass `durationS` (the clip's measured single-cycle length) for
- *   an exact default with no guess, or `controls` to override outright.
- *   The control is a real `<button>` with `aria-pressed` and an accessible
- *   name, both mirrored from the element's actual `play`/`pause` events
- *   (`references/video.md` §11: the element is the source of truth, the UI
- *   only reflects it). A user pause is sticky — entering the viewport again
- *   never auto-resumes it — and clears only when the user presses play
- *   again.
+ * - **A pause/play control, shown by default** (WCAG 2.2.2, Pause/Stop/Hide).
+ *   WCAG counts how long the movement itself lasts, not the clip's cycle
+ *   length — a loop moves for as long as it's in view, which is normally
+ *   far past 5s regardless of how short one cycle is, so `controls`
+ *   defaults to shown unconditionally; pass `controls={false}` for the rare
+ *   case a loop is genuinely decorative and brief enough to be exempt.
+ *   The control is a real `<button>` whose accessible name flips between
+ *   `pauseLabel`/`playLabel` — the WAI-ARIA APG's carousel play/pause-button
+ *   pattern, not a fixed label plus `aria-pressed` (a toggle button's name
+ *   must not change with its state per APG; this button IS the state, the
+ *   way a media player's play/pause button is). Mirrored from the element's
+ *   actual `play`/`pause` events (`references/video.md` §11: the element is
+ *   the source of truth, the UI only reflects it). A user pause is sticky —
+ *   entering the viewport again never auto-resumes it — and clears only
+ *   when the user presses play again.
+ * - **`alt`, for footage that isn't decorative.** Omit it and the loop stays
+ *   fully decorative: the `<video>` is `aria-hidden` and nothing else is
+ *   exposed, as before. Set it and the video keeps its `aria-hidden` (it's
+ *   still not the thing a screen reader should land on — a `<video>` with no
+ *   controls or captions isn't useful there) while `alt` is exposed as
+ *   visually hidden text alongside it, giving assistive tech a text
+ *   alternative for what the loop shows without changing anything on screen.
  * - **Reduced motion.** No autoplay; the poster (or wherever the last frame
  *   left off) holds; the control can still start it — reduced motion is a
  *   motion-sensitivity preference, not a refusal of the content. Read live
@@ -104,12 +116,22 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 const PLAY_THRESHOLD = 0.2
 /** How far out to start fetching, so arrival does not stall on the first frame. */
 const WARM_MARGIN = '800px 0px'
-/** WCAG 2.2.2: auto-moving content running longer than this needs a pause control. */
-const WCAG_AUTO_DURATION_S = 5
 /** How often the watchdog checks a should-be-playing element that came up paused. */
 const WATCHDOG_INTERVAL_MS = 2000
 /** Fallback if a wrap seek's `seeked` event never fires. */
 const WRAP_SAFETY_MS = 120
+/** The standard "sr-only" recipe: present in the DOM and the accessibility tree, invisible on screen. */
+const VISUALLY_HIDDEN_STYLE: CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0,0,0,0)',
+  whiteSpace: 'nowrap',
+  border: 0
+}
 
 interface NetworkInformationLike extends EventTarget {
   saveData?: boolean
@@ -131,10 +153,10 @@ export interface LoopVideoProps {
   loopFromFrame?: number
   /** Required with `loopFromFrame` (e.g. 60 for a 10x-decode-friendly re-encode). */
   fps?: number
-  /** Explicit override. Omit to use the WCAG default derived from `durationS` (see file docblock). */
+  /** Defaults to shown — WCAG 2.2.2 (see file docblock). Pass `false` to opt out. */
   controls?: boolean
-  /** The clip's measured single-cycle length in seconds — decides the `controls` default. */
-  durationS?: number
+  /** A text alternative for meaningful footage, exposed as visually hidden text. Omit to stay fully decorative. */
+  alt?: string
   toggleClassName?: string
   /** Accessible name while paused (what the control will do if pressed). */
   playLabel?: string
@@ -149,7 +171,7 @@ export function LoopVideo({
   loopFromFrame,
   fps,
   controls,
-  durationS,
+  alt,
   toggleClassName,
   playLabel = 'Play background video',
   pauseLabel = 'Pause background video'
@@ -161,7 +183,7 @@ export function LoopVideo({
   const seamTime = loopFromFrame != null && fps != null && fps > 0 ? loopFromFrame / fps : null
   const frameDur = fps != null && fps > 0 ? 1 / fps : 0
 
-  const showControls = controls ?? (durationS != null ? durationS > WCAG_AUTO_DURATION_S : true)
+  const showControls = controls ?? true
 
   // Sticky gates, read (and written) by both the controller effect below and
   // the live media-query effect — refs, not state, so neither has to be torn
@@ -176,8 +198,8 @@ export function LoopVideo({
   // never needs to know the controller's internals.
   const toggleRef = useRef<() => void>(() => {})
 
-  // Mirrors the element's actual play/pause state for aria-pressed and the
-  // label — never driven by our own intent, only by what the element did
+  // Mirrors the element's actual play/pause state for the toggle's label —
+  // never driven by our own intent, only by what the element did
   // (references/video.md §11).
   const [playing, setPlaying] = useState(false)
 
@@ -242,11 +264,41 @@ export function LoopVideo({
     }
 
     // Last half-frame of the clip — late enough to show the match pose,
-    // early enough to usually beat the ended/pause transition.
+    // early enough to usually beat the ended/pause transition. Used by the
+    // rAF fallback below, whose `currentTime` sweeps continuously and so
+    // does cross this threshold mid-frame.
     const shouldWrap = (t: number) => {
       if (seamTime == null || frameDur <= 0) return false
       if (!Number.isFinite(video.duration) || video.duration <= 0) return false
       return t >= video.duration - frameDur * 0.6
+    }
+
+    // rVFC's `mediaTime` is fixed at the PRESENTED frame's start, not a
+    // sweeping clock, so the true last frame's mediaTime (≈ duration −
+    // frameDur) never reaches the threshold above — there is no later frame
+    // to hand a bigger mediaTime to `shouldWrap`. Un-fixed, the wrap only
+    // ever happens once `ended` already had: a pause, a seek and a play at
+    // every loop. Comparing the frame's END instead (mediaTime + frameDur)
+    // reaches it while that frame is still the one on screen.
+    //
+    // The tolerance is 1.5 frames, not the "half a frame" that would only
+    // ever match the true last frame: measured against WebKit
+    // (tests/loop-video.mjs, task 21), a half-frame tolerance still let
+    // `ended`/`pause` fire on a measured ~1-in-4 loops even with this
+    // trigger in place — WebKit occasionally fires its native "reached end
+    // of media" steps before this callback for the true last frame is
+    // dispatched, a race between two independently-scheduled browser
+    // mechanisms this module doesn't control. 1.5 frames also qualifies the
+    // SECOND-to-last frame, giving the wrap two consecutive rVFC callbacks
+    // to win that race on instead of one, at the cost of occasionally
+    // wrapping one frame earlier than the true last frame — covered by the
+    // frame-accuracy checks' own ±1 tolerance, so it isn't a new source of
+    // visible imprecision. (Must stay below 2 frames: that would also
+    // qualify the third-to-last frame, which the ±1 checks do NOT cover.)
+    const shouldWrapPresented = (mediaTime: number) => {
+      if (seamTime == null || frameDur <= 0) return false
+      if (!Number.isFinite(video.duration) || video.duration <= 0) return false
+      return mediaTime + frameDur >= video.duration - frameDur * 1.5
     }
 
     const wrapToSeam = () => {
@@ -298,7 +350,7 @@ export function LoopVideo({
 
     const onFrame = (_now: number, meta: VideoFrameCallbackMetadata) => {
       if (disposed) return
-      if (seamTime != null && !wrapping && !video.paused && shouldWrap(meta.mediaTime)) wrapToSeam()
+      if (seamTime != null && !wrapping && !video.paused && shouldWrapPresented(meta.mediaTime)) wrapToSeam()
       video.requestVideoFrameCallback?.(onFrame)
     }
     if (seamTime != null && typeof video.requestVideoFrameCallback === 'function') {
@@ -451,8 +503,9 @@ export function LoopVideo({
       >
         {children}
       </video>
+      {alt && <span style={VISUALLY_HIDDEN_STYLE}>{alt}</span>}
       {showControls && (
-        <button type="button" aria-pressed={playing} className={toggleClassName} onClick={() => toggleRef.current()}>
+        <button type="button" className={toggleClassName} onClick={() => toggleRef.current()}>
           {playing ? pauseLabel : playLabel}
         </button>
       )}

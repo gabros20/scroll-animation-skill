@@ -9,7 +9,7 @@ import { LoopVideo } from '../../../../skills/scroll-animation/assets/motion/Loo
 const POSTER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBTAA7'
 
 createRoot(document.getElementById('root')!).render(
-  <LoopVideo poster={POSTER} controls>
+  <LoopVideo poster={POSTER} controls alt="A test pattern, looping">
     <source src="/clip.mp4" type="video/mp4" />
   </LoopVideo>
 )

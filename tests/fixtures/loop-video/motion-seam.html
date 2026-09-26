@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>loop-video seam fixture (motion)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #111;
+        color: #eee;
+        font-family: system-ui, sans-serif;
+      }
+      .spacer {
+        height: 150vh;
+      }
+      #root {
+        position: relative;
+        width: 480px;
+        height: 270px;
+        margin: 0 auto;
+      }
+      #root video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .tail {
+        height: 150vh;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      Task 21: the seam-wrap check needs a REAL seam (loopFromFrame/fps), unlike
+      motion.html which stays in native-loop mode for the task-12 checks. See
+      gsap-seam.html for the clip/seam-frame rationale (shared here).
+    -->
+    <div class="spacer" id="top"></div>
+    <div id="root"></div>
+    <div class="tail"></div>
+    <script type="module" src="./src/motion-seam-entry.tsx"></script>
+  </body>
+</html>
