@@ -20,7 +20,7 @@
  * that has one. Non-inherited because an inherited viewport-dependent length
  * made WebKit re-resolve every element on every resize.
  *
- * `references/fluid-interop.md` §3 has the GSAP and Motion recipes.
+ * `references/scenes.md` §12 has the GSAP and Motion recipes.
  */
 
 /** 'chrome' is the v1 name for 'ui'; both resolve to the same measured value. */

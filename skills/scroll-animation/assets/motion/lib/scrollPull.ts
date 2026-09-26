@@ -347,7 +347,7 @@ const RESTED_QUIET_MS = 200
  * the fallback with how far the target actually is: `max(SUSPEND_FALLBACK_MIN_MS,
  * distancePx * SUSPEND_FALLBACK_DISTANCE_FACTOR)`, capped at
  * `SUSPEND_FALLBACK_MAX_MS` so a broken/very distant target can't suspend the
- * well indefinitely. See `references/scroll-scenes.md` §8.
+ * well indefinitely. See `references/scenes.md` §8.
  *
  * `SUSPEND_STABLE_MS` is the second, browser-agnostic half of the fix: while
  * suspended, a small watcher ends the suspension as soon as `scrollY` has

@@ -8,7 +8,7 @@
 // deterministic harness — see references/verification.md), so it never
 // proves an anchor jump actually arrives. A scroll well sitting between the
 // click and the target cancels a smooth jump one rAF at a time unless it
-// suspends itself (references/scroll-scenes.md §8); this is the check that
+// suspends itself (references/scenes.md §8); this is the check that
 // catches a regression there. Called directly, or delegated to from
 // `verify-motion.mjs --anchors`.
 //
