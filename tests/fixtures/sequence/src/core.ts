@@ -1,6 +1,6 @@
 // The engine-agnostic core on its own: progress from the range's rect in a scroll listener, the way any producer
 // would hand it over. ?budget=<MiB> · ?lead=<viewports> · ?mobile=1 (the mobile/ variant) · ?list=1 (plain URLs;
-// with &missing=<i>, frame i's URL 404s) · ?dprCap=<n>.
+// with &missing=<i>, frame i's URL 404s) · ?dprCap=<n> · ?still=<n> (reducedMotionFrame).
 import {
   createFrameSequence,
   MIB,
@@ -34,6 +34,7 @@ manifest.then((source) => {
     mobile: params.has('mobile') || undefined,
     budgetBytes: params.has('budget') ? Number(params.get('budget')) * MIB : undefined,
     dprCap: params.has('dprCap') ? Number(params.get('dprCap')) : undefined,
+    reducedMotionFrame: params.has('still') ? Number(params.get('still')) : undefined,
   })
   // A producer re-reads on resize too: a layout that settles after the first read leaves no scroll event behind.
   addEventListener('scroll', update, { passive: true })

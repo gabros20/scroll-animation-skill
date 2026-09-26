@@ -20,7 +20,8 @@
 //              a CSP that blocks the worker (csp.html): frames decode on the main thread and still scrub
 //   offscreen  4 viewports down: nothing fetched or decoded; fetch without decode between the margins; decoded
 //              memory released far past; destroy() before ready rejects `ready` with an AbortError
-//   reduced    reduced motion: the last frame, static, one fetch and one decode; turning it off live resumes the scrub
+//   reduced    reduced motion: frame 0 by default (static, one fetch, one decode), -1 when asked; turning it off live
+//              resumes the scrub; the React and GSAP adapters inherit the default
 //   destroy    destroy() closes every bitmap (in-flight decodes on arrival) and stops fetching
 //   variant    mobile: true picks mobile/ at 390×844 @1x (390 ≤ 480) and the 960 set at @2x (780 > 480)
 //   list       a plain frame-URL list learns the frame size from the first decode
@@ -28,6 +29,8 @@
 //              rebuilds it, unmount closes everything
 //   gsap       frameSequence() with its own trigger and with a polled getter: the five stops; reverting the
 //              gsap.context destroys it and removes its ticker listener
+//   scene      PinnedScene hands FrameSequence its band through the `pinned` render function: data-frame follows
+//              the band, and after new holds plus a rehydrate (focus), with no scroll; reduced motion shows frame 0
 
 import './unit/load-ts.mjs'
 
@@ -48,7 +51,7 @@ const cli = join(repoRoot, 'skills', 'scroll-animation', 'bin', 'scroll-animatio
 const { frameIndex, MIB } = await import('../skills/scroll-animation/assets/media/frame-sequence.ts')
 
 const ENGINES = { chromium, webkit }
-const PAGES = ['core', 'csp', 'react', 'gsap']
+const PAGES = ['core', 'csp', 'react', 'gsap', 'scene']
 const VIEWPORT = { width: 800, height: 450 }
 const FRAMES = 60
 const STOPS = [0, 0.25, 0.5, 0.75, 1]
@@ -169,6 +172,25 @@ async function stops(t, page, label) {
     results.map((r) => (r.ok ? `${r.p}→${r.frame} in ${round(r.ms)} ms` : `${r.p}: stuck at ${r.frame} (progress ${r.progress})`)).join(', '),
   ])
   return results
+}
+
+/** Scene page: scrolls the scene to progress `p` and waits for data-frame to show frameIndex(the scene's band). */
+function followBand(page, p) {
+  return page.evaluate(async (p) => {
+    const fx = window.__fx
+    const t0 = performance.now()
+    if (p !== null) fx.scrollToProgress(p)
+    while (performance.now() - t0 < 5000) {
+      await new Promise(requestAnimationFrame)
+      const s = fx.stats()
+      const scene = fx.scene()
+      if (!s || !scene || (p !== null && Math.abs(scene.p - p) > 1e-6)) continue
+      // frameIndex's formula, restated so the page can wait on it; the runner checks it against the real one
+      const want = scene.band >= 1 ? s.count - 1 : scene.band > 0 ? Math.round(scene.band * (s.count - 1)) : 0
+      if (fx.frame() === String(want)) return { ok: true, ...scene, frame: fx.frame(), ms: performance.now() - t0 }
+    }
+    return { ok: false, ...fx.scene(), frame: fx.frame() }
+  }, p)
 }
 
 async function wheelPass(page) {
@@ -344,15 +366,15 @@ const GROUPS = {
     const { page } = await t.open('core.html', { reducedMotion: 'reduce' })
     const ready = await whenReady(page)
     const s = await stats(page)
-    t.check('reduced motion: the last frame, one fetch, one decode', () => [
-      ready.result === 'ready' && s.reduced && s.frame === FRAMES - 1 && s.fetched === 1 && s.decodes === 1,
+    t.check('reduced motion: frame 0 by default (the head a pinned scene holds), one fetch, one decode', () => [
+      ready.result === 'ready' && s.reduced && s.frame === 0 && s.fetched === 1 && s.decodes === 1,
       `${ready.result}, frame ${s.frame}, ${s.fetched} fetched, ${s.decodes} decodes`,
     ])
     await page.evaluate(() => window.__fx.scrollToProgress(0.5))
     await sleep(400)
     const still = await stats(page)
     t.check('scrolling does not scrub it', () => [
-      still.frame === FRAMES - 1 && still.target === frameIndex(0.5, FRAMES) && still.fetched === 1,
+      still.frame === 0 && still.target === frameIndex(0.5, FRAMES) && still.fetched === 1,
       `frame ${still.frame} with target ${still.target}, ${still.fetched} fetched`,
     ])
     await page.emulateMedia({ reducedMotion: 'no-preference' })
@@ -362,6 +384,27 @@ const GROUPS = {
       resumed && !after.reduced && after.fetched > 1,
       `frame ${after.frame}, reduced ${after.reduced}, ${after.fetched} fetched`,
     ])
+
+    const last = await t.open('core.html?still=-1', { reducedMotion: 'reduce' })
+    await whenReady(last.page)
+    const l = await stats(last.page)
+    t.check('an explicit reducedMotionFrame still wins: -1 shows the last frame', () => [
+      l.reduced && l.frame === FRAMES - 1 && l.fetched === 1,
+      `frame ${l.frame}, ${l.fetched} fetched`,
+    ])
+
+    // The adapters pass the core's default through: frame 0.
+    for (const path of ['react.html', 'gsap.html?mode=trigger']) {
+      const adapter = await t.open(path, { reducedMotion: 'reduce' })
+      const r = await whenReady(adapter.page)
+      await adapter.page.evaluate(() => window.__fx.scrollToProgress(0.75))
+      await sleep(400)
+      const a = await stats(adapter.page)
+      t.check(`${path.split(/[.?]/)[0]} adapter: frame 0 under reduced motion by default, scroll or not`, () => [
+        r.result === 'ready' && a.reduced && a.frame === 0 && a.fetched === 1,
+        `${r.result}, frame ${a.frame} with target ${a.target}, ${a.fetched} fetched`,
+      ])
+    }
   },
 
   async destroy(t) {
@@ -442,6 +485,64 @@ const GROUPS = {
     t.check('a frame that 404s is skipped: the canvas holds its nearest decoded neighbour, one warning', () => [
       settledOn !== null && b.failed === 1 && b.state === 'ready' && t.expectedWarnings.length === 1,
       `target ${b.target}, drawn ${b.frame}, ${b.failed} failed, state ${b.state}, warned: ${t.expectedWarnings[0] ?? 'nothing'}`,
+    ])
+  },
+
+  async scene(t) {
+    const { page } = await t.open('scene.html')
+    const ready = await whenReady(page)
+    const rows = []
+    for (const p of [0, 0.3, 0.5, 0.7, 1]) rows.push({ at: p, ...(await followBand(page, p)) })
+    t.check('PinnedScene pinned={({ band }) => <FrameSequence progress={band} />}: data-frame follows the band', () => [
+      ready.result === 'ready' && rows.every((r) => r.ok && Number(r.frame) === frameIndex(r.band, FRAMES)),
+      rows.map((r) => (r.ok ? `p ${r.at} band ${r.band.toFixed(3)}→${r.frame}` : `p ${r.at}: stuck at ${r.frame} (band ${r.band})`)).join(', '),
+    ])
+
+    // New holds move the band while scroll stays put: nothing may redraw until a rehydrate (here: focus) re-derives it.
+    const before = await followBand(page, 0.5)
+    await page.evaluate(() => window.__fx.setHolds({ headHoldPx: 500 }))
+    await sleep(300)
+    const idle = await page.evaluate(() => ({ frame: window.__fx.frame(), band: window.__fx.scene().band }))
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')))
+    const after = await followBand(page, null)
+    t.check('…and after a rehydrate: new holds, then focus, and the frame follows the new band with no scroll', () => [
+      before.ok && idle.frame === before.frame && after.ok && after.band < before.band - 0.05 &&
+        Number(after.frame) === frameIndex(after.band, FRAMES) && Math.abs(after.p - 0.5) < 1e-6,
+      `band ${before.band.toFixed(3)} (frame ${before.frame}) → holds changed: frame ${idle.frame} → focus: band ` +
+        `${after.band?.toFixed(3)} (frame ${after.frame}) at p ${after.p}`,
+    ])
+
+    const reduced = await t.open('scene.html', { reducedMotion: 'reduce' })
+    const r = await whenReady(reduced.page)
+    await reduced.page.evaluate(() => window.__fx.scrollToProgress(0.5))
+    await sleep(400)
+    const s = await stats(reduced.page)
+    const scene = await reduced.page.evaluate(() => window.__fx.scene())
+    t.check('reduced motion: the scene holds its head and the sequence shows frame 0 by default', () => [
+      r.result === 'ready' && scene.reduced && scene.band === 0 && s.frame === 0 && s.fetched === 1,
+      `${r.result}, scene band ${scene.band} (reduced ${scene.reduced}), frame ${s.frame}, ${s.fetched} fetched`,
+    ])
+
+    // Hand markup on usePinnedScene: the scene itself keeps data-scene-state on its root, per transition and after a
+    // rehydrate. PinnedScene no longer renders the attribute, so its root reads the same writer.
+    const hookStateAt = async (p) => {
+      await page.evaluate((p) => {
+        const el = document.getElementById('hook-range')
+        const top = el.getBoundingClientRect().top + window.scrollY
+        window.scrollTo(0, top + (el.offsetHeight - window.innerHeight) * p)
+      }, p)
+      await sleep(400)
+      return page.evaluate(() => document.getElementById('hook-range').getAttribute('data-scene-state'))
+    }
+    const hookStates = []
+    for (const p of [0, 0.5, 1]) hookStates.push(await hookStateAt(p))
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')))
+    await sleep(300)
+    const hookAfter = await page.evaluate(() => document.getElementById('hook-range').getAttribute('data-scene-state'))
+    const pinnedRoot = await page.evaluate(() => document.getElementById('range').getAttribute('data-scene-state'))
+    t.check('usePinnedScene on hand markup writes data-scene-state: head > scrub > tail, and after a rehydrate', () => [
+      hookStates.join(' > ') === 'head > scrub > tail' && hookAfter === 'tail' && pinnedRoot === 'tail',
+      `${hookStates.join(' > ')} · after focus: ${hookAfter} · PinnedScene root (scrolled past): ${pinnedRoot}`,
     ])
   },
 

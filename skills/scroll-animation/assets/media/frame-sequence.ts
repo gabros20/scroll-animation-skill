@@ -49,7 +49,8 @@
  * outside `wakeMargin`; outside `warmMargin` the decoded frames are released too (the blobs stay).
  *
  * Reduced motion ('user' follows the OS setting live): one static frame, `reducedMotionFrame` (negative counts from
- * the end; default -1, the last), and nothing else is fetched or decoded.
+ * the end; default 0, the head a pinned scene holds under reduced motion and a frame the prefix has already loaded),
+ * and nothing else is fetched or decoded.
  *
  * Frames on another origin need CORS headers: they are fetched, not loaded by <img>.
  */
@@ -94,7 +95,8 @@ export interface FrameSequenceOptions {
   budgetBytes?: number
   /** 'user' (default) follows prefers-reduced-motion live; 'always' / 'never' force it. */
   reducedMotion?: 'user' | 'always' | 'never'
-  /** The static frame under reduced motion; negative counts from the end. Default -1 (the last). */
+  /** The static frame under reduced motion; negative counts from the end (-1: the last). Default 0: the head a pinned
+   * scene holds under reduced motion. */
   reducedMotionFrame?: number
   /** Viewports above and below the fold within which frames are fetched. Default 1.5. */
   warmMargin?: number
@@ -667,7 +669,7 @@ export function createFrameSequence(canvas: HTMLCanvasElement, options: FrameSeq
     dprCap = 2,
     prefix = 12,
     reducedMotion = 'user',
-    reducedMotionFrame = -1,
+    reducedMotionFrame = 0,
     warmMargin = 1.5,
     wakeMargin = 0.5,
     fetchConcurrency = 4,

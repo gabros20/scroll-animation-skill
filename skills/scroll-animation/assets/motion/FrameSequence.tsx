@@ -3,24 +3,25 @@
  * motion/FrameSequence.tsx — an image sequence scrubbed on a <canvas> by a progress MotionValue (or a number).
  * The decoding, memory budget, gating and reduced motion all live in media/frame-sequence.ts; read its header.
  *
- *   const range = useRef<HTMLDivElement>(null)
- *   const { scrollYProgress } = useScroll({ target: range, offset: ['start start', 'end end'] })
+ * In a pinned scene it follows the scene's band (the scrub span as 0..1), which PinnedScene hands its `pinned`
+ * render function as a MotionValue, rehydrates included:
  *
- *   <div ref={range} style={{ height: '400lvh' }}>
- *     <div style={{ position: 'sticky', top: 0, height: '100lvh' }}>
- *       <FrameSequence
- *         manifest="/media/hero/manifest.json"
- *         mobile
- *         progress={scrollYProgress}
- *         label="A camera, turning"
- *       />
- *     </div>
- *   </div>
+ *   <PinnedScene
+ *     pinned={({ band }) => (
+ *       <FrameSequence manifest="/media/hero/manifest.json" mobile progress={band} label="A camera, turning" />
+ *     )}
+ *   >
+ *     <Acts />
+ *   </PinnedScene>
+ *
+ * Any other exact progress works too: `useScroll({ target, offset: ['start start', 'end end'] }).scrollYProgress`.
  *
  * - `progress` is read by hand (useMotionValueEvent) and never bound to a style: it only picks a frame, and a bound
  *   scroll-linked style can be handed to a native timeline that disagrees with the value (spike S3). Pass EXACT
  *   progress: a spring on top only makes the scrub late, and the canvas already holds the nearest decoded frame while
  *   the exact one decodes.
+ * - Reduced motion shows `reducedMotionFrame`, by default 0: the head a pinned scene holds under reduced motion, and
+ *   a frame the prefix has already loaded. Pass -1 for the last.
  * - The canvas is `role="img"` with `label` as its accessible name, and fills its box (`display: block`, 100% × 100%):
  *   size the box, not the canvas. Its backing store follows that box.
  * - The sequence is built in a layout effect and destroyed in its cleanup: on unmount, and when Next's Activity hides
@@ -130,7 +131,6 @@ export function FrameSequence({
       if (sequenceRef?.current === handle) sequenceRef.current = null
     }
     // Keyed on content: an inline manifest object or position tuple must not rebuild the sequence every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     manifestKey,
     mobileKey,
