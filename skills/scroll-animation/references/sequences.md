@@ -88,7 +88,7 @@ authority is created first (S4). Pass exact progress: the canvas already shows t
 exact one decodes, so a spring only makes it late.
 
 Options and defaults: `fit` `'cover'`, `position` `[0.5, 0.5]`, `dprCap` 2, `prefix` 12, `budgetBytes` (§4),
-`reducedMotion` `'user'` (live), `reducedMotionFrame` 0 in both adapters (−1, the last, in the bare core),
+`reducedMotion` `'user'` (live), `reducedMotionFrame` 0 (negative counts from the end),
 `warmMargin` 1.5 and `wakeMargin` 0.5 viewports,
 `fetchConcurrency` 4, `decodeConcurrency` 2, `resizeQuality` `'high'`, `worker` true.
 

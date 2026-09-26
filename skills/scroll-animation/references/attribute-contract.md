@@ -94,7 +94,7 @@ safety net, or the verification harness. The **On** column calls out where an at
 | `data-frame` | a `FrameSequence` canvas | both engines: the frame index drawn, written only when it changes |
 | `data-header-theme="light"\|"dark"` | a section | both engines: what a themed header should read while this section is under it; `--header-theme` overrides it per breakpoint (`header-theme.md`) |
 | `data-theme` | the header element | GSAP-only output: `initHeaderTheme` writes the resolved theme here, only on a change. React's `useHeaderTheme` returns the value instead |
-| `data-loop-video` | a background loop `<video>` | GSAP-only: `data-loop-from-frame` + `data-fps` for the seam policy; the pause control shows unless `data-controls="false"`. React's `LoopVideo` takes `loopFromFrame`, `fps`, `controls` |
+| `data-loop-video` | a background loop `<video>` | GSAP-only: `data-loop-from-frame` + `data-fps` for the seam policy; the pause control shows unless `data-controls="false"`; `data-alt` for footage that carries meaning. React's `LoopVideo` takes `loopFromFrame`, `fps`, `controls`, `alt` |
 | `data-loop-toggle` | the loop's pause button | GSAP-only: a sibling of the video, or anywhere in the root with `data-loop-toggle-for="<video id>"`; created when a control is due and none exists. React's `LoopVideo` renders its own |
 | `data-motion-debug~="markers"` | `<html>` | toggles the tier-2 marker stylesheet (`verification.md` §3) |
 | `?motion-debug` / `data-motion-debug` | the URL / `<html>` | attaches `window.__scrub()` on pages with a ScrubVideo, in any build (`verification.md` §1) |
