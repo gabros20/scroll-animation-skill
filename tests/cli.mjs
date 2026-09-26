@@ -259,7 +259,35 @@ try {
     const seamKeys = existsSync(join(media, 'seam.mp4')) ? keyframesOf(join(media, 'seam.mp4')) : []
     expect(seamKeys.join(',') === '0,12', 'media loop --loop-from 12 keys frames 0 and 12 and no others (ffprobe)', JSON.stringify(seamKeys))
     r = run(media, 'media', 'probe', 'seam.mp4')
-    expect(/keyframes\s+2\/24 frames at 0, 12,/.test(r.out), 'media probe says where a handful of keyframes sit', r.out)
+    expect(/keyframes\s+2\/25 frames at 0, 12,/.test(r.out), 'media probe says where a handful of keyframes sit', r.out)
+    // LoopVideo wraps up to a frame early (WebKit's end-of-media race), so a seam file ends on a spare clone of its last
+    // frame: the early wrap only ever skips the clone. H.264 is lossy, so the clone decodes near-identical, not
+    // byte-identical: compare decoded luma. The spare must sit within a grey level of the last content frame, while a
+    // real step of the test pattern moves far more.
+    const lumaFrames = (file) => {
+      const size = spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', file], { encoding: 'utf8' })
+      const [w, h] = size.stdout.trim().split(',').map(Number)
+      const raw = spawnSync('ffmpeg', ['-v', 'error', '-i', file, '-map', '0:v:0', '-f', 'rawvideo', '-pix_fmt', 'gray', '-'], { maxBuffer: 1 << 28 }).stdout
+      const n = w * h
+      return Array.from({ length: Math.floor(raw.length / n) }, (_, i) => raw.subarray(i * n, (i + 1) * n))
+    }
+    const meanDiff = (a, b) => {
+      let sum = 0
+      for (let i = 0; i < a.length; i++) sum += Math.abs(a[i] - b[i])
+      return sum / a.length
+    }
+    const seamFrames = existsSync(join(media, 'seam.mp4')) ? lumaFrames(join(media, 'seam.mp4')) : []
+    const spareStep = seamFrames.length === 25 ? meanDiff(seamFrames[23], seamFrames[24]) : NaN
+    const contentStep = seamFrames.length === 25 ? meanDiff(seamFrames[22], seamFrames[23]) : NaN
+    expect(
+      seamFrames.length === 25 && spareStep < 1 && contentStep > spareStep * 10,
+      'media loop --loop-from ends on one spare frame: 24 content frames + a clone of the last',
+      `${seamFrames.length} frames; mean luma step spare ${spareStep.toFixed(3)} vs content ${contentStep.toFixed(3)}`,
+    )
+    expect(/24 frames \+ 1 spare/.test(r.out) || /24 frames \+ 1 spare/.test(run(media, 'media', 'loop', 'clip.mp4', '--loop-from', '12', '--out', 'seam-again.mp4').out), 'media loop --loop-from says the file carries one spare frame')
+    r = run(media, 'media', 'loop', 'clip.mp4', '--out', 'plain.mp4')
+    const plainFrames = existsSync(join(media, 'plain.mp4')) ? lumaFrames(join(media, 'plain.mp4')) : []
+    expect(r.code === 0 && plainFrames.length === 24, 'a plain media loop (native `loop`) gets no spare frame', `${plainFrames.length} frames`)
     r = run(media, 'media', 'loop', 'clip.mp4', '--loop-from', '24', '--out', 'past-end.mp4')
     expect(r.code === 2 && r.out.includes('--loop-from: frame 24 is outside 1..23') && !existsSync(join(media, 'past-end.mp4')), 'a --loop-from past the last frame is a usage error that names the valid range and writes nothing', r.out)
     r = run(media, 'media', 'loop', 'clip.mp4', '--loop-from', '0', '--out', 'at-start.mp4')

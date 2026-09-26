@@ -110,7 +110,7 @@ function ffprobeFormat(path) {
   return JSON.parse(ffprobe(['-print_format', 'json', '-show_format', '-show_streams', path]))
 }
 
-/** Per-frame key flags in presentation order (the technique references/video.md §1 itself points at): total frame
+/** Per-frame key flags in presentation order (references/video.md §13: the probe behind `media probe`): total frame
  * count, the keyframe indices, and the max span in frames between consecutive keyframes (an all-intra file spans 1;
  * a normal GOP-N file spans ~N). A keyframe is a random-access point (`key_frame`), which a browser can seek to; an
  * I-picture that isn't one only counts when the build reports no key flag at all. */
@@ -241,7 +241,7 @@ export function extractPoster(input, out, { at = 0, width } = {}) {
   return dest
 }
 
-/** All-intra H.264 for scrubbing (references/video.md §1's recipe, verbatim: -preset slow, the
+/** All-intra H.264 for scrubbing (references/video.md §13's recipe, verbatim: -preset slow, the
  * four x264-params bundled together), plus an optional --mobile width variant and a poster pulled
  * from the encoded output (§9: never from the source master). */
 export function encodeScrub(input, { out, width, crf = 23, fps, mobile, posterAt = 0 } = {}) {
@@ -276,8 +276,9 @@ export function formatFps(fps) {
 
 /** A one-GOP, faststart, silent loop encode, plus a poster from the encoded output. `loopFrom` is for an
  * intro-then-seam loop (LoopVideo `loopFromFrame`): it forces a second keyframe at that frame, so each re-entry
- * decodes from the seam itself instead of from frame 0 (references/video.md §10). It throws a MediaRangeError
- * outside 1..frames−1 and verifies both keyframes on the encoded file. */
+ * decodes from the seam itself instead of from frame 0 (references/video.md §10), and appends one spare frame, a
+ * clone of the last. It throws a MediaRangeError outside 1..frames−1 and verifies both keyframes on the encoded
+ * file. */
 export function encodeLoop(input, { out, width, fps, crf = 23, posterAt = 0, loopFrom } = {}) {
   const primary = out ?? defaultOut(input, 'loop')
   const probed = probeVideo(input)
@@ -286,19 +287,24 @@ export function encodeLoop(input, { out, width, fps, crf = 23, posterAt = 0, loo
     throw new MediaRangeError(`frame ${loopFrom} is outside 1..${frames - 1} (${basename(input)} encodes to ${frames} frames at ${formatFps(fps || probed.fps)} fps)`)
   }
   ensureDirFor(primary)
-  const filters = videoFilters({ width, fps })
+  // LoopVideo wraps up to a frame early to beat WebKit's end-of-media race, so an intro-then-seam file ends on a
+  // spare clone of its last frame: the early wrap only ever skips the clone, never content. Last in the chain, after
+  // any fps/scale. A native `loop` plays every frame, so a plain loop gets no spare (it would show as a stutter).
+  const spare = loopFrom ? ['tpad=stop_mode=clone:stop=1'] : []
+  const filters = [...videoFilters({ width, fps }), ...spare]
   // references/video.md §13: qcomp=1 so byte-identical frames at the seam quantize alike (no pop at the wrap), and
   // one GOP per loop so the loop point is the keyframe. §10: the seam keyframe is forced by frame number (`n`, after
   // any --fps), not by timestamp, so it can't round onto a neighbouring frame.
   const seamKey = loopFrom ? ['-force_key_frames', `expr:eq(n,0)+eq(n,${loopFrom})`] : []
-  ffmpeg(['-i', input, '-c:v', 'libx264', '-profile:v', 'high', '-preset', 'slow', '-crf', String(crf), '-g', String(frames), ...seamKey, '-x264-params', 'qcomp=1', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', '-vf', filters.join(','), primary])
+  ffmpeg(['-i', input, '-c:v', 'libx264', '-profile:v', 'high', '-preset', 'slow', '-crf', String(crf), '-g', String(frames + spare.length), ...seamKey, '-x264-params', 'qcomp=1', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', '-vf', filters.join(','), primary])
   const poster = extractPoster(primary, posterFor(primary), { at: posterAt })
   if (!loopFrom) return { primary, poster }
   const encoded = probeVideo(primary)
   if (!encoded.keyframeIndices.includes(0) || !encoded.keyframeIndices.includes(loopFrom)) {
     throw new Error(`${primary}: expected keyframes at frames 0 and ${loopFrom}, found ${encoded.keyframeIndices.join(', ') || 'none'}`)
   }
-  return { primary, poster, loopFrom, fps: encoded.fps, frames: encoded.frames, keyframeIndices: encoded.keyframeIndices }
+  // `frames` is the file's count, spare included; `contentFrames` excludes it.
+  return { primary, poster, loopFrom, fps: encoded.fps, frames: encoded.frames, contentFrames: encoded.frames - 1, keyframeIndices: encoded.keyframeIndices }
 }
 
 function evenHeight(srcW, srcH, width) {

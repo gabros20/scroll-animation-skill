@@ -19,8 +19,8 @@ export const MEDIA_USAGE = `scroll-animation media <command> <input> [--out <pat
       all-intra H.264 for scrubbing (references/video.md §1) + a --mobile variant + a poster
   media loop <input> [--out] [--width px] [--fps n] [--crf 23] [--loop-from frame]
       web-safe loop encode (one GOP, qcomp=1, faststart, no audio) + a poster; --loop-from N also
-      keys frame N for an intro-then-seam loop (references/video.md §10) and prints LoopVideo's
-      loopFromFrame/fps
+      keys frame N for an intro-then-seam loop (references/video.md §10), ends the file on one spare
+      clone of the last frame for LoopVideo's early wrap, and prints LoopVideo's loopFromFrame/fps
   media sequence <input> --out <dir> [--frames 24] [--width px] [--quality 80] [--mobile-width px]
       N evenly spaced frames to <dir>/0001.webp… + manifest.json; --mobile-width adds <dir>/mobile/
   media poster <input> [--out] [--at 0]
@@ -136,7 +136,8 @@ function printLoop(r) {
   console.log(`${c.green('✓')} ${r.poster} ${c.dim('(poster)')}`)
   if (r.loopFrom === undefined) return
   const fps = formatFps(r.fps)
-  console.log(`  keyframes at frames 0 and ${r.loopFrom} of ${r.frames}; pass the seam to LoopVideo:`)
+  console.log(`  keyframes at frames 0 and ${r.loopFrom}; ${r.contentFrames} frames + 1 spare (a clone of the last, for LoopVideo's early wrap) = ${r.frames} in the file`)
+  console.log('  pass the seam to LoopVideo:')
   console.log(`    loopFromFrame={${r.loopFrom}} fps={${fps}}   ${c.dim(`(GSAP: data-loop-from-frame="${r.loopFrom}" data-fps="${fps}")`)}`)
 }
 
