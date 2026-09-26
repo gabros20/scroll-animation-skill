@@ -107,9 +107,10 @@ didn't move", the difference between a five-minute diagnosis and an unreproducib
 ### The v1 controller and the v2 rebuild
 
 - v1's `videoController.ts` documented decoder priming (a muted `play()` then `pause()`, because iOS may not paint
-  `currentTime` seeks on a video that has never played), but its `prime()` was reserved and never called. v2 has no
-  prime, and a scene of holds only never calls `play()`: the Phase 2 real-device pass checks, on that scene, whether
-  iOS needs one.
+  `currentTime` seeks on a video that has never played), but its `prime()` was reserved and never called. v2 shipped
+  without one until the Phase 2 real-device pass: on an iPhone the holds-only scene sat on its poster, then vanished at
+  its first seek (metadata only, `readyState` 1, the seek never completed). The controller now primes once per source
+  and never seeks before a frame exists.
 - v1 React defaulted the loops to the reference build's frames (32, 80, 192), wrong for any other clip. v2 defaults to
   holds.
 - **The WebKit tail race.** The tail's wrap sits one frame before the clip's end, and WebKit runs frame callbacks about

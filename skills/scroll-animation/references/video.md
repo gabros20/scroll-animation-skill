@@ -188,9 +188,10 @@ spare (`tpad=stop_mode=clone:stop=1`) and keyframe; `media probe` lists keyframe
 - **The element is the source of truth.** Every path that changes playback acts on the element, and the UI mirrors
   its `play` and `pause` events, never the code's intent.
 
-iOS may not paint seeks on a video that has never played, and a scene of holds only (no `headLoop`, no `tailLoop`)
-never calls `play()`. Whether it needs a prime is checked on the Phase 2 real-device pass: that holds-only scene is the
-iPhone case to test, with a reload mid-scrub and Low Power Mode.
+**iOS loads only metadata for a video that has never played** (`preload` is a hint it ignores), so a scene of holds
+never gets a frame, and its first seek clears the poster, leaving nothing (measured on the device pass). The controller
+primes each source once (a muted `play()`, paused at once) and seeks only once a frame exists; refused in Low Power
+Mode, the poster stays.
 
 ## 12. Tab-sleep rehydrate
 

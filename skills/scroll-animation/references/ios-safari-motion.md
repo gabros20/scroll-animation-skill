@@ -66,10 +66,10 @@ again at most once per ~30 frames, a loop that ran out is re-wrapped and played 
 hidden tab stops the tick until its return rehydrates the scene.
 
 Two related WebKit behaviours: Safari silently drops a `play()` issued while a seek is resolving
-(the controller waits for `seeked`, with a 150ms fallback), and iOS may not paint `currentTime`
-seeks on a video that has never played. A scene of holds only (no `headLoop`, no `tailLoop`) never
-calls `play()`, so it is the iPhone case to test on the Phase 2 real-device pass, a reload
-mid-scrub included (`video.md` §11). `scene.css` gives every scene video a `translateZ(0)` anchor,
+(the controller waits for `seeked`, with a 150ms fallback), and iOS loads nothing past the metadata
+of a video that has never played, so its seeks paint nothing and clear the poster. The controller
+primes a scrub video once (a muted `play()`, paused at once) and seeks only once a frame exists
+(`video.md` §11). `scene.css` gives every scene video a `translateZ(0)` anchor,
 and the camera's `translate3d(…)` keeps it (`video.md` §6): it is what keeps the layer from being
 demoted in the first place.
 
