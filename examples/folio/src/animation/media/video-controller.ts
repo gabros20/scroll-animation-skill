@@ -232,7 +232,9 @@ export function exposeDebug(snapshot: () => Record<string, unknown>): () => void
   }
 }
 
+const NETWORK_IDLE = 1
 const NETWORK_LOADING = 2
+const HAVE_CURRENT_DATA = 2
 
 export function createVideoController(video: HTMLVideoElement, options: VideoControllerOptions = {}): VideoController {
   const fps = options.fps ?? 30
@@ -254,6 +256,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   let hasSource = managed ? false : !!(video.getAttribute('src') || video.querySelector('source'))
   let hadMetadata = validDuration()
   let recovering = false
+  // iOS loads a never-played video's metadata and then idles: one muted play() per source starts its data.
+  let primed = false
   // The scene reached its warm margin; and the first tier pick ran (the source waits a frame after mount).
   let warmed = false
   let picked = false
@@ -281,6 +285,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     holds: 0,
     recoveries: 0,
     kicks: 0,
+    primes: 0,
     snaps: 0,
     lastRehydrate: null as null | Record<string, unknown>,
   }
@@ -294,6 +299,10 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   function validDuration() {
     return Number.isFinite(video.duration) && video.duration > 0
   }
+
+  /** A decoded frame to show. Before one exists a seek would hide the poster (the spec clears its flag on seek) and
+   * paint nothing, so nothing seeks until then. */
+  const hasFrame = () => video.readyState >= HAVE_CURRENT_DATA
 
   const loops = (m: SceneMode) => (m === 'head' && tl.headMatch !== null) || (m === 'tail' && tl.tailLoop)
   const wrapFrom = (m: SceneMode) => (m === 'head' ? tl.headFrom : tl.tailFrom)
@@ -350,6 +359,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   }
 
   function seek(time: number) {
+    if (!hasFrame()) return
     if (seeking) {
       pending = time
       return
@@ -362,6 +372,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   function jump(time: number) {
     seeking = false
     pending = null
+    if (!hasFrame()) return
     try {
       video.currentTime = time
     } catch {
@@ -416,6 +427,27 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     if (validDuration() && Math.abs(video.currentTime - tl.headFrom) >= tl.glideRest) jump(tl.headFrom)
   }
 
+  /**
+   * iOS loads only metadata for a video that has never played, then idles (preload is a hint it ignores), so a scene
+   * of holds would never get a frame: seeks go nowhere and the poster is all there is. A muted, inline play() is
+   * allowed and starts the data; it pauses again at once unless a loop owns the mode, and the glide takes the playhead
+   * where the scroll wants it. Once per source. Refused (Low Power Mode), the poster simply stays.
+   */
+  function prime() {
+    primed = true
+    stats.primes++
+    const token = playToken
+    video.play().then(
+      () => {
+        if (token === playToken && !(running && loops(mode) && !capped)) video.pause()
+      },
+      (error: unknown) => {
+        // An AbortError is the scene's own pause landing first: the load has started all the same.
+        if ((error as { name?: string } | null)?.name === 'NotAllowedError') stats.rejections++
+      },
+    )
+  }
+
   // ── the per-frame loop, only while awake ─────────────────────────────
 
   /** One frame-callback chain per run: a restart kills the old chain (it checks its id), so wakes never pile up. */
@@ -446,6 +478,10 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     }
     badTicks = 0
     stats.ticks++
+    if (!hasFrame()) {
+      if (!primed && video.paused && video.networkState === NETWORK_IDLE) prime()
+      return
+    }
     const time = video.currentTime
 
     if (loops(mode) && !capped) {
@@ -522,6 +558,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
 
   function kick() {
     recovering = true
+    primed = false
     stats.kicks++
     video.preload = 'auto'
     try {
@@ -574,6 +611,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     if (src ? current !== src : current) {
       hadMetadata = false
       recovering = false
+      primed = false
       if (src) video.src = src
       else {
         video.removeAttribute('src')
