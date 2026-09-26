@@ -11,13 +11,14 @@
  *   // Its own ScrollTrigger on the range (start 'top top', end 'bottom bottom' by default; page order):
  *   frameSequence(canvas, { manifest: '/media/hero/manifest.json', mobile: true, trigger: '#hero-range' })
  *
- *   // Or any progress getter, such as a pinned scene's, read on gsap.ticker:
- *   frameSequence(canvas, { manifest, progress: () => scene.progress() })
+ *   // Or any progress getter, read on gsap.ticker. In a pinned scene, its band (the scrub span as 0..1):
+ *   frameSequence(canvas, { manifest, progress: () => scene.band() })
  *
  * Both read exact progress in the frame it changes: ScrollTrigger's onUpdate runs inside ScrollTrigger.update, and a
  * getter is polled on gsap.ticker, after Lenis's gsapDriver moved the scroll and ScrollTrigger updated (create the
  * scroll authority first, as the route does). No `scrub` smoothing: the canvas already holds the nearest decoded frame
- * while the exact one decodes. Reduced motion is the core's (live), so this builds the same way under it.
+ * while the exact one decodes. Reduced motion is the core's (live), so this builds the same way under it; it shows
+ * `reducedMotionFrame`, by default 0: the head a pinned scene holds under reduced motion.
  *
  * Call setupGsap() first. Created inside useGSAP, gsap.context or a gsap.matchMedia callback, reverting that
  * context destroys the sequence; otherwise call destroy().
