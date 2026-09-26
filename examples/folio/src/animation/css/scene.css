@@ -61,7 +61,9 @@
 
 /* The media box. With a camera, --scene-frame-w/h size it (in svh) and the camera's transform places it; the origin
    is the top left so the transform's x/y are its top-left corner in the pin. max-width: none undoes a reset's
-   `video { max-width: 100% }`, which silently clamps a deliberately oversized box to the pin's width. */
+   `video { max-width: 100% }`, which silently clamps a deliberately oversized box to the pin's width. The static
+   translateZ(0) is Safari's compositing anchor (references/video.md §6): it keeps the video's layer from being
+   demoted. A camera's inline translate3d() replaces it and stays 3D, so the anchor holds either way. */
 [data-scene-media] {
   position: absolute;
   top: 0;
@@ -71,6 +73,7 @@
   height: var(--scene-frame-h, 100%);
   max-width: none;
   object-fit: cover;
+  transform: translateZ(0);
   transform-origin: top left;
 }
 

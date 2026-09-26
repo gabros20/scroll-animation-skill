@@ -6,9 +6,9 @@
  *   video.setMode(mode)          per mode transition (the scene's exact-progress stepper)
  *   video.setBand(band)          per progress event: where the scrub wants the playhead, 0..1 across the band
  *   video.setAwake(awake)        per wake transition: the per-frame loop runs only while awake
- *   video.setReduced(reduced)    reduced motion: hold the head frame, no loop
+ *   video.setReduced(reduced)    reduced motion: the poster is the scene; no video is fetched
  *   video.rehydrate(state)       the video half of a resume: snap the playhead to what scroll implies
- *   video.warm()                 the preload hint, from the scene's warm margin
+ *   video.warm()                 the preload hint, from the scene's warm margin (kept until reduced motion lifts)
  *   video.destroy()              stops everything and pauses (a hidden route never keeps decoding)
  *
  * Modes on one continuous clip: the head and tail either LOOP (sub-ranges whose endpoints match, so leaving a loop
@@ -33,11 +33,22 @@
  * - Safari drops a `play()` issued mid-seek, so play waits for `seeked` (150 ms fallback). A watchdog re-issues
  *   `play()` when a loop should run but sits paused (Safari pauses a video it judges invisible, e.g. around a
  *   resize), throttled to one call per ~30 frames.
+ * - A loop moves by itself for as long as the reader rests in its region, and WCAG 2.2.2 allows 5 s of that without a
+ *   pause control. So each visit to a region gets `loopSeconds` (5) of looping; then the loop finishes its cycle and
+ *   holds its seam frame on the band's side (`loopHoldTime`), and the scrub takes over from there. Leaving the region,
+ *   or the loop restarting after the scene slept or the tab hid, starts a new budget.
  * - Scroll is durable truth; the playhead is derived. On resume (`rehydrate`) the playhead snaps with no glide, and a
  *   media element that lost its data after a long sleep gets ONE soft `load()`; the scene is asked to rehydrate
  *   again when metadata returns. A first load is never aborted, and a far-away scene never fetches before `warm()`.
  * - Tiers: with `mobileSrc`, the desktop query picks the source one frame after mount (never in the hydrating
  *   commit), so only one tier is fetched. `onTier` tells the camera which crop is on screen.
+ * - Reduced motion fetches no video: the poster is the scene. A managed source (`src`/`mobileSrc`) is not set, or is
+ *   removed if reduced motion turns on mid-visit, which aborts its download; no warm margin, wake or rehydrate loads
+ *   it. When reduced motion lifts, the source is set, and fetched if the scene is already warm. A source written in
+ *   the markup is the page's: give it to the controller instead (GSAP: `data-src`) to keep it unloaded.
+ * - Save-Data (`navigator.connection.saveData`) picks the smallest tier, `mobileSrc`, at every viewport; nothing else
+ *   changes. It is followed live where `navigator.connection` fires `change` (Chromium), else read whenever the tier
+ *   is picked: once per mount and on a breakpoint crossing. Safari and Firefox expose no `navigator.connection`.
  */
 import { DESKTOP_QUERY } from '../config'
 import { clamp01, type SceneMode } from '../scene'
@@ -73,6 +84,9 @@ export interface VideoControllerOptions extends VideoSources {
   tailLoop?: TailLoop | null
   /** Exponential approach per 60 Hz frame for the scrub glide. Default 0.18 (about 150 ms to settle). */
   glide?: number
+  /** Seconds a head or tail loop may run per visit to its region. Default 5 (WCAG 2.2.2); `Infinity` only on a page
+   * that gives the reader a pause control of its own. */
+  loopSeconds?: number
   /** Media became ready (first load, a tier swap, a recovery): rehydrate the scene. Without it, the controller snaps
    * from the last state it was given. */
   onRehydrate?: (reason: 'metadata') => void
@@ -174,6 +188,32 @@ export function glideAlpha(glide: number, dtMs: number): number {
   return 1 - Math.pow(1 - glide, dtMs / (1000 / 60))
 }
 
+/** WCAG 2.2.2: motion that starts by itself and lasts more than 5 s needs a pause control. */
+export const LOOP_SECONDS = 5
+
+/**
+ * Where a loop that has had its time holds: its seam frame on the band's side, so the scrub takes over with no jump.
+ * The head holds its last frame (the band starts at its match frame); the tail holds its first (where the band ends).
+ */
+export function loopHoldTime(mode: SceneMode, tl: VideoTimeline): number {
+  return mode === 'head' ? Math.max(0, (tl.headMatch ?? 1) - 1) / tl.fps : tl.tailFrom
+}
+
+interface NetworkInformationLike extends EventTarget {
+  saveData?: boolean
+}
+
+function connection(): NetworkInformationLike | undefined {
+  return typeof navigator === 'undefined' ? undefined : (navigator as Navigator & { connection?: NetworkInformationLike }).connection
+}
+
+/** The tier to show now: the smallest (`mobileSrc`) under Save-Data, else the desktop query's. */
+export function sourceTier(sources: VideoSources): MediaTier {
+  if (!sources.mobileSrc) return 'desktop'
+  if (connection()?.saveData === true) return 'mobile'
+  return window.matchMedia(sources.desktopQuery ?? DESKTOP_QUERY).matches ? 'desktop' : 'mobile'
+}
+
 /**
  * `window.__scrub()` for a verification run: a snapshot of every live scrubbed video, so one console call from a
  * frozen tab says which layer died (no progress events, the scene asleep, `play()` refused, the loop idle). Off unless
@@ -197,6 +237,7 @@ const NETWORK_LOADING = 2
 export function createVideoController(video: HTMLVideoElement, options: VideoControllerOptions = {}): VideoController {
   const fps = options.fps ?? 30
   const glide = options.glide ?? 0.18
+  const loopMs = (options.loopSeconds ?? LOOP_SECONDS) * 1000
   const headLoop = options.headLoop ?? null
   const tailLoop = options.tailLoop ?? null
   let tl = videoTimeline(fps, headLoop, tailLoop, video.duration)
@@ -213,6 +254,9 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   let hasSource = managed ? false : !!(video.getAttribute('src') || video.querySelector('source'))
   let hadMetadata = validDuration()
   let recovering = false
+  // The scene reached its warm margin; and the first tier pick ran (the source waits a frame after mount).
+  let warmed = false
+  let picked = false
 
   let running = false
   let raf = 0
@@ -224,6 +268,9 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   let playToken = 0
   let pausedTicks = 0
   let badTicks = 0
+  // The loop's budget for this visit to its region: when it started playing, and whether it has had its time.
+  let loopStartedAt: number | null = null
+  let capped = false
 
   const stats = {
     ticks: 0,
@@ -231,6 +278,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     plays: 0,
     rejections: 0,
     wraps: 0,
+    holds: 0,
     recoveries: 0,
     kicks: 0,
     snaps: 0,
@@ -266,7 +314,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   function playWhenSeeked() {
     const token = ++playToken
     const go = () => {
-      if (token === playToken && running && loops(mode)) play()
+      if (token === playToken && running && loops(mode) && !capped) play()
     }
     if (!video.seeking) {
       go()
@@ -328,13 +376,39 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     jump(wrapFrom(mode))
   }
 
+  /** A new visit to a region (or the loop restarting after a sleep): a fresh budget. */
+  function freshLoop() {
+    loopStartedAt = null
+    capped = false
+  }
+
+  const loopSpent = () => loopStartedAt !== null && performance.now() - loopStartedAt >= loopMs
+
+  /** The loop has had its time: stop on its seam frame until the reader leaves the region. */
+  function hold() {
+    capped = true
+    stats.holds++
+    pause()
+    jump(loopHoldTime(mode, tl))
+  }
+
+  /** The loop reached its seam: on into the next cycle, or, once its time is up, held there. */
+  function seam(resume: boolean) {
+    if (loopSpent()) {
+      hold()
+      return
+    }
+    wrap()
+    if (resume) playWhenSeeked()
+  }
+
   /** A cold resume: pause, jump, and play again if a loop owns the mode. */
   function snap(time: number) {
     stats.snaps++
     pause()
     const clamped = Math.min(Math.max(0, time), Math.max(0, video.duration - 1 / fps))
     if (Math.abs(video.currentTime - clamped) >= tl.glideRest) jump(clamped)
-    if (running && loops(mode)) playWhenSeeked()
+    if (running && loops(mode) && !capped) playWhenSeeked()
   }
 
   function holdHead() {
@@ -350,8 +424,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     const onFrame: VideoFrameRequestCallback = (_now, meta) => {
       if (id !== chain) return
       stats.vframes++
-      if (loops(mode) && !wrapInFlight() && wrapDue(meta.mediaTime, video.currentTime, matchFrame(mode), wrapFrom(mode), fps)) {
-        wrap()
+      if (loops(mode) && !capped && !wrapInFlight() && wrapDue(meta.mediaTime, video.currentTime, matchFrame(mode), wrapFrom(mode), fps)) {
+        seam(false)
       }
       frameHandle = video.requestVideoFrameCallback(onFrame)
     }
@@ -374,30 +448,33 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     stats.ticks++
     const time = video.currentTime
 
-    if (loops(mode)) {
+    if (loops(mode) && !capped) {
       const match = matchFrame(mode)
       if (video.paused) {
         if (video.ended || time >= (match - 1) / fps) {
           // Ran out, or paused at the loop's end: wrap and play now, not a watchdog period later.
           stats.recoveries++
-          wrap()
-          playWhenSeeked()
+          seam(true)
         } else if (++pausedTicks > 30) {
           pausedTicks = 0
           play()
         }
       } else {
         pausedTicks = 0
+        loopStartedAt ??= performance.now()
         if (hasFrameCallback) {
           // Backstop: the loop's last frame is half shown and no frame callback has wrapped it.
-          if (time * fps >= match - 0.5 && !wrapInFlight()) wrap()
-        } else if (time >= (match - 1) / fps || time < wrapFrom(mode) - 0.001) {
+          if (time * fps >= match - 0.5 && !wrapInFlight()) seam(false)
+        } else if (time >= (match - 1) / fps) {
           // No frame callbacks: polling can't be frame-accurate, so wrap a full frame early. Losing a cycle's last
           // frame is cheap; showing the next cycle's first frame early is the visible fault.
+          if (loopSpent()) hold()
+          else seek(wrapFrom(mode))
+        } else if (time < wrapFrom(mode) - 0.001) {
           seek(wrapFrom(mode))
         }
       }
-    } else {
+    } else if (!loops(mode)) {
       const target = glideTarget()
       const delta = target - time
       if (Number.isFinite(delta) && Math.abs(delta) >= tl.glideRest) seek(time + delta * glideAlpha(glide, dt))
@@ -413,6 +490,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     pausedTicks = 0
     badTicks = 0
     lastTick = 0
+    freshLoop()
     video.addEventListener('seeked', onSeeked)
     if (hasFrameCallback) startChain()
     raf = requestAnimationFrame(tick)
@@ -436,9 +514,10 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
 
   // ── media readiness and recovery ─────────────────────────────────────
 
-  /** Never abort a first load in flight, and never fetch a far-away scene before its warm margin. */
+  /** Never abort a first load in flight, never fetch a far-away scene before its warm margin, never under reduced
+   * motion. */
   function needsKick() {
-    return hasSource && !recovering && (hadMetadata || (awake && video.networkState !== NETWORK_LOADING))
+    return hasSource && !reduced && !recovering && (hadMetadata || (awake && video.networkState !== NETWORK_LOADING))
   }
 
   function kick() {
@@ -462,10 +541,9 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   }
 
   const onEnded = () => {
-    if (!running || !loops(mode)) return
+    if (!running || !loops(mode) || capped) return
     stats.recoveries++
-    wrap()
-    playWhenSeeked()
+    seam(true)
   }
 
   const onVisibility = () => {
@@ -480,15 +558,27 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   // ── tiers ───────────────────────────────────────────────────────────
 
   const query = managed && options.mobileSrc ? window.matchMedia(options.desktopQuery ?? DESKTOP_QUERY) : null
-  function pickTier() {
-    const next: MediaTier = !query || query.matches ? 'desktop' : 'mobile'
-    const src = next === 'mobile' ? options.mobileSrc : (options.src ?? options.mobileSrc)
+  const network = query ? connection() : undefined
+  /**
+   * The picked tier's poster and source. Under reduced motion the poster is the scene: no source at all, so neither
+   * the warm margin, a wake nor a rehydrate can fetch a byte of video; turned on mid-visit, the source goes (which
+   * aborts its download) and comes back when reduced motion lifts.
+   */
+  function syncSource() {
+    picked = true
+    const next = sourceTier(options)
+    const src = reduced ? null : next === 'mobile' ? options.mobileSrc : (options.src ?? options.mobileSrc)
     const poster = next === 'mobile' ? (options.mobilePoster ?? options.poster) : options.poster
     if (poster && video.getAttribute('poster') !== poster) video.poster = poster
-    if (src && video.getAttribute('src') !== src) {
+    const current = video.getAttribute('src')
+    if (src ? current !== src : current) {
       hadMetadata = false
       recovering = false
-      video.src = src
+      if (src) video.src = src
+      else {
+        video.removeAttribute('src')
+        video.load()
+      }
     }
     hasSource = !!src
     const changed = next !== tier
@@ -496,13 +586,15 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     updateRun()
     if (changed) options.onTier?.(next)
   }
-  const tierFrame = managed ? requestAnimationFrame(pickTier) : 0
-  query?.addEventListener('change', pickTier)
+  const tierFrame = managed ? requestAnimationFrame(syncSource) : 0
+  query?.addEventListener('change', syncSource)
+  network?.addEventListener?.('change', syncSource)
 
   // ── the scene's inputs ───────────────────────────────────────────────
 
   function rehydrate(state: VideoRehydrateState) {
     if (destroyed) return
+    if (state.mode !== mode) freshLoop()
     mode = state.mode
     band = state.band
     awake = state.awake
@@ -510,19 +602,23 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     updateRun()
     if (!hasSource) return
     if (!validDuration()) {
-      // Metadata will rehydrate the scene again; until then only a lost resource gets a kick.
-      if (needsKick()) kick()
+      // Metadata will rehydrate the scene again; until then only a lost resource gets a kick. A first load isn't
+      // kicked here: networkState turns LOADING a task after `src`/`preload` change, so a rehydrate right after the
+      // warm margin reads "idle" and a load() would restart that download (measured: 1.76x the clip in Chromium).
+      // A load that never starts (iOS ignoring preload) is the tick's to kick, 45 idle frames on.
+      if (hadMetadata && needsKick()) kick()
       return
     }
     if (reduced) holdHead()
     else if (!running) pause()
-    else snap(targetTime(mode, band, tl))
+    else snap(capped ? loopHoldTime(mode, tl) : targetTime(mode, band, tl))
   }
 
   return {
     setMode(next) {
       if (destroyed || next === mode) return
       mode = next
+      freshLoop()
       if (!running) return
       if (loops(next)) {
         // Play from wherever the band left the playhead: the frames in between play, and the frame callback wraps
@@ -545,12 +641,16 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     setReduced(next) {
       if (destroyed || next === reduced) return
       reduced = next
+      // Lifted after the warm margin: fetch as the warm margin would have. The source follows the setting.
+      if (!reduced && warmed && video.preload !== 'auto') video.preload = 'auto'
+      if (managed && picked) syncSource()
       updateRun()
       if (reduced) holdHead()
     },
     rehydrate,
     warm() {
-      if (video.preload !== 'auto') video.preload = 'auto'
+      warmed = true
+      if (!reduced && video.preload !== 'auto') video.preload = 'auto'
     },
     tier: () => tier,
     timeline: () => tl,
@@ -562,6 +662,10 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
         awake,
         reduced,
         running,
+        warmed,
+        source: video.getAttribute('src'),
+        capped,
+        loopMs: loopStartedAt === null ? null : Math.round(performance.now() - loopStartedAt),
         tier,
         target: +glideTarget().toFixed(3),
         time: +video.currentTime.toFixed(3),
@@ -575,7 +679,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       destroyed = true
       stop()
       cancelAnimationFrame(tierFrame)
-      query?.removeEventListener('change', pickTier)
+      query?.removeEventListener('change', syncSource)
+      network?.removeEventListener?.('change', syncSource)
       video.removeEventListener('loadedmetadata', onMetadata)
       video.removeEventListener('ended', onEnded)
       document.removeEventListener('visibilitychange', onVisibility)
