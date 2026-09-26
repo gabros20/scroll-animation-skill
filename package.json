@@ -17,6 +17,7 @@
     "test:foundation": "node tests/foundation.mjs",
     "test:loop-video": "node tests/loop-video.mjs",
     "test:sequence": "node tests/sequence.mjs",
+    "test:scrub-video": "node tests/scrub-video.mjs",
     "test:smoke": "node tests/run-smoke.mjs",
     "test:audit": "node skills/scroll-animation/scripts/tools/audit-motion.mjs --selftest",
     "test:cli": "node tests/cli.mjs",

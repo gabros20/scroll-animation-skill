@@ -5,6 +5,8 @@ import { ScrubVideo } from '../../../../skills/scroll-animation/assets/motion/Sc
 // tail loop over the last five frames. The blocks above and below the scene are
 // static stand-ins for the smoke page's stage, count-up, fade-on-exit and
 // travel section, sized the same so the scene sits on the same geometry.
+// loopSeconds={Infinity} for the same reason as the smoke page: the v1
+// recording's loops never stopped (tests/scrub-video.mjs checks the 5 s cap).
 export function App() {
   return (
     <>
@@ -20,7 +22,13 @@ export function App() {
         <p>Fades out as it scrolls above the viewport.</p>
       </div>
 
-      <ScrubVideo src="/clip.mp4" fps={30} headLoop={{ fromFrame: 0, matchFrame: 5 }} tailLoop={{ fromFrame: 55 }}>
+      <ScrubVideo
+        src="/clip.mp4"
+        fps={30}
+        headLoop={{ fromFrame: 0, matchFrame: 5 }}
+        tailLoop={{ fromFrame: 55 }}
+        loopSeconds={Infinity}
+      >
         <section style={{ height: '100vh' }} />
         <section style={{ height: '100vh' }} />
         <section style={{ height: '100vh' }} />

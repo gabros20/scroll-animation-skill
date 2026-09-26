@@ -6,9 +6,8 @@ import './load-ts.mjs'
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
 
-const { bandTime, glideAlpha, lastFrame, targetTime, timeBand, videoTimeline, wrapDue } = await import(
-  '../../skills/scroll-animation/assets/media/video-controller.ts'
-)
+const { LOOP_SECONDS, bandTime, glideAlpha, lastFrame, loopHoldTime, sourceTier, targetTime, timeBand, videoTimeline, wrapDue } =
+  await import('../../skills/scroll-animation/assets/media/video-controller.ts')
 
 const near = (a, b, msg, tol = 1e-9) => assert.ok(Math.abs(a - b) <= tol, `${msg}: ${a} vs ${b}`)
 
@@ -100,5 +99,52 @@ describe('glideAlpha', () => {
     const half = glideAlpha(0.18, 1000 / 120)
     near(1 - (1 - half) ** 2, 0.18, 'two 120 Hz frames')
     assert.equal(glideAlpha(0.18, 0), 0)
+  })
+})
+
+describe('the loop cap (WCAG 2.2.2)', () => {
+  test('is 5 s by default', () => {
+    assert.equal(LOOP_SECONDS, 5)
+  })
+
+  test('holds each loop on its seam frame on the band side: the head on its last frame, the tail on its first', () => {
+    near(loopHoldTime('head', loops) * FPS, 4, 'head holds frame 4, next to the band start (match 5)')
+    near(loopHoldTime('tail', loops) * FPS, 55, 'tail holds frame 55, where the band ends')
+    const reference = videoTimeline(30, { fromFrame: 32, matchFrame: 80 }, { fromFrame: 192 }, 9.4333)
+    near(loopHoldTime('head', reference) * 30, 79, 'reference head')
+    near(loopHoldTime('tail', reference) * 30, 192, 'reference tail')
+  })
+})
+
+describe('sourceTier', () => {
+  const sources = { src: '/a.mp4', mobileSrc: '/a-mobile.mp4' }
+  // A window whose desktop query matches or not, and a navigator.connection with or without Save-Data.
+  function withEnvironment({ desktop, saveData }, run) {
+    const hadWindow = 'window' in globalThis
+    const previous = globalThis.window
+    globalThis.window = { matchMedia: () => ({ matches: desktop }) }
+    Object.defineProperty(globalThis.navigator, 'connection', { configurable: true, value: saveData === undefined ? undefined : { saveData } })
+    try {
+      return run()
+    } finally {
+      if (hadWindow) globalThis.window = previous
+      else delete globalThis.window
+      delete globalThis.navigator.connection
+    }
+  }
+
+  test('follows the desktop query without Save-Data', () => {
+    assert.equal(withEnvironment({ desktop: true }, () => sourceTier(sources)), 'desktop')
+    assert.equal(withEnvironment({ desktop: false }, () => sourceTier(sources)), 'mobile')
+    assert.equal(withEnvironment({ desktop: true, saveData: false }, () => sourceTier(sources)), 'desktop')
+  })
+
+  test('picks the smallest tier at every width under Save-Data', () => {
+    assert.equal(withEnvironment({ desktop: true, saveData: true }, () => sourceTier(sources)), 'mobile')
+    assert.equal(withEnvironment({ desktop: false, saveData: true }, () => sourceTier(sources)), 'mobile')
+  })
+
+  test('with one source there is one tier', () => {
+    assert.equal(withEnvironment({ desktop: false, saveData: true }, () => sourceTier({ src: '/a.mp4' })), 'desktop')
   })
 })

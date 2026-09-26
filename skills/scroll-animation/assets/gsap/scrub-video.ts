@@ -18,12 +18,14 @@
  * - The clip must be ALL-INTRA (`scroll-animation media scrub`), cut at your own measured loop seams. Omit
  *   `headLoop`/`tailLoop` to hold the first and last frames instead of looping.
  * - Sources come from the options or the video's data-src/data-mobile-src/poster/data-mobile-poster. The source is
- *   set a frame after mount, only for the tier config.ts DESKTOP_QUERY picks.
+ *   set a frame after mount, only for the tier config.ts DESKTOP_QUERY picks, and the mobile one at every width under
+ *   Save-Data (followed live where `navigator.connection` fires `change`: Chromium).
+ * - A head or tail loop runs at most `loopSeconds` (5, WCAG 2.2.2) per visit to its region, then holds a frame of it.
  * - `camera` pans and zooms a subject across the band (frameSize becomes --scene-frame-w/h on the video, per tier);
  *   omit it for a plain covering frame. `backdrop` paints [data-scene-gutter] from the playhead.
- * - Reduced motion (live, through the scene's matchMedia build) holds the head frame and shot.
+ * - Reduced motion (live, through the scene's matchMedia build) fetches no video: the poster, in the head shot, is
+ *   the scene. Lifted mid-visit, the source loads and the scene runs from where the reader is.
  */
-import { DESKTOP_QUERY } from '../config'
 import {
   cameraTier,
   createBackdropWriter,
@@ -38,6 +40,7 @@ import {
 import {
   createVideoController,
   exposeDebug,
+  sourceTier,
   type HeadLoop,
   type TailLoop,
   type VideoController,
@@ -51,6 +54,8 @@ export interface ScrubVideoOptions extends PinnedSceneOptions {
   tailLoop?: TailLoop
   /** Glide rate per 60 Hz frame for the handovers. Default 0.18. */
   glide?: number
+  /** Seconds a head or tail loop may run per visit to its region. Default 5 (WCAG 2.2.2). */
+  loopSeconds?: number
   camera?: CameraConfig
   backdrop?: BackdropStop[]
   /** Default: the video's data-src. */
@@ -98,17 +103,22 @@ export function scrubVideo(root: HTMLElement, options: ScrubVideoOptions = {}): 
       video.style.removeProperty('--scene-frame-h')
     }
   }
-  sizeFrame(window.matchMedia(DESKTOP_QUERY).matches ? 'desktop' : 'mobile')
-
-  const controller = createVideoController(video, {
-    fps: options.fps,
-    glide: options.glide,
-    headLoop: options.headLoop ?? null,
-    tailLoop: options.tailLoop ?? null,
+  const sources = {
     src: options.src ?? video.dataset.src,
     mobileSrc: options.mobileSrc ?? video.dataset.mobileSrc,
     poster: options.poster ?? video.getAttribute('poster') ?? undefined,
     mobilePoster: options.mobilePoster ?? video.dataset.mobilePoster,
+  }
+  // The tier the controller is about to pick, so the first paint already has its size.
+  sizeFrame(sourceTier(sources))
+
+  const controller = createVideoController(video, {
+    fps: options.fps,
+    glide: options.glide,
+    loopSeconds: options.loopSeconds,
+    headLoop: options.headLoop ?? null,
+    tailLoop: options.tailLoop ?? null,
+    ...sources,
     onRehydrate: () => scene?.rehydrate('metadata'),
     onPlayhead: (band) => backdropWriter?.paint(band),
     onTier: (tier) => {

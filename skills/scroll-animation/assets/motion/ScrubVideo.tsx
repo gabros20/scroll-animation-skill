@@ -15,12 +15,16 @@
  * - The clip must be ALL-INTRA (`scroll-animation media scrub`), cut at your own measured loop seams. Omit
  *   `headLoop`/`tailLoop` to hold the first and last frames instead of looping.
  * - The source is set on the client, a frame after mount: the server renders the poster alone, and only the picked
- *   tier (`mobileSrc` below config.ts DESKTOP_QUERY) is ever fetched, from the scene's warm margin on.
+ *   tier (`mobileSrc` below config.ts DESKTOP_QUERY, and at every width under Save-Data) is ever fetched, from the
+ *   scene's warm margin on. Save-Data is followed live where `navigator.connection` fires `change` (Chromium).
+ * - A head or tail loop runs at most `loopSeconds` (5, WCAG 2.2.2) per visit to its region, then holds a frame of it.
  * - `camera` pans and zooms a subject across the band; omit it for a plain covering frame. Its `frameSize` is CSS
- *   (a scoped rule on the desktop query), so the first paint is sized for the tier the browser is actually in.
+ *   (a scoped rule on the desktop query), so the first paint is sized for the tier the browser is actually in; once
+ *   the source is picked, the size follows the source's tier (Save-Data can put the mobile crop on a desktop).
  * - `backdrop` paints a gradient behind the video that follows the playhead: a backstop for the paint before the
  *   camera's first frame. Sample your own clip's top and bottom edges.
- * - Reduced motion holds the head frame and the head shot; css/scene.css releases the pin.
+ * - Reduced motion (live) fetches no video: the poster, in the head shot, is the scene, and css/scene.css releases
+ *   the pin. Lifted mid-visit, the source loads and the scene runs from where the reader is.
  * - `?motion-debug` (or `html[data-motion-debug]`) exposes `window.__scrub()`: which layer of a frozen scene died.
  */
 import {
@@ -46,6 +50,7 @@ import {
   type CameraConfig,
   type CameraWriter,
   type FrameGeometry,
+  type MediaTier,
 } from '../media/camera'
 import {
   createVideoController,
@@ -73,6 +78,8 @@ export interface ScrubVideoProps extends Omit<PinnedSceneProps, 'ref'> {
   tailLoop?: TailLoop
   /** Glide rate per 60 Hz frame for the handovers. Default 0.18. */
   glide?: number
+  /** Seconds a head or tail loop may run per visit to its region. Default 5 (WCAG 2.2.2). */
+  loopSeconds?: number
   camera?: CameraConfig
   backdrop?: BackdropStop[]
   /** Classes on the <video>. Not a size: with a camera, the camera owns it. */
@@ -98,6 +105,7 @@ export function ScrubVideo({
   headLoop,
   tailLoop,
   glide,
+  loopSeconds,
   camera,
   backdrop,
   videoClassName,
@@ -135,6 +143,21 @@ export function ScrubVideo({
     cameraRef.current.write(frameCamera(geometry.current, tier, scene.reduced() ? 0 : scene.band()))
   }
 
+  /** The frame size of the tier on screen, inline over the scoped rule, which only knows the viewport. */
+  const sizeFrame = (tier: MediaTier) => {
+    const config = latest.current.camera
+    const video = videoRef.current
+    if (!video) return
+    const size = config ? cameraTier(config, tier).frameSize : null
+    if (size) {
+      video.style.setProperty('--scene-frame-w', `${size.w}svh`)
+      video.style.setProperty('--scene-frame-h', `${size.h}svh`)
+    } else {
+      video.style.removeProperty('--scene-frame-w')
+      video.style.removeProperty('--scene-frame-h')
+    }
+  }
+
   const headFrom = headLoop?.fromFrame
   const headMatch = headLoop?.matchFrame
   const tailFrom = tailLoop?.fromFrame
@@ -145,6 +168,7 @@ export function ScrubVideo({
     const controller = createVideoController(video, {
       fps,
       glide,
+      loopSeconds,
       headLoop: headFrom === undefined || headMatch === undefined ? null : { fromFrame: headFrom, matchFrame: headMatch },
       tailLoop: tailFrom === undefined ? null : { fromFrame: tailFrom },
       src,
@@ -153,7 +177,8 @@ export function ScrubVideo({
       mobilePoster,
       onRehydrate: () => sceneRef.current?.rehydrate('metadata'),
       onPlayhead: (band) => backdropRef.current?.paint(band),
-      onTier: () => {
+      onTier: (tier) => {
+        sizeFrame(tier)
         if (sceneRef.current) frame(sceneRef.current, true)
       },
     })
@@ -178,7 +203,7 @@ export function ScrubVideo({
       cameraRef.current?.reset()
       cameraRef.current = null
     }
-  }, [src, mobileSrc, poster, mobilePoster, fps, glide, headFrom, headMatch, tailFrom])
+  }, [src, mobileSrc, poster, mobilePoster, fps, glide, loopSeconds, headFrom, headMatch, tailFrom])
 
   useEffect(() => {
     const gutter = gutterRef.current
