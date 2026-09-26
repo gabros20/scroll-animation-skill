@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 // loop-video.mjs — LoopVideo v2 (assets/motion/LoopVideo.tsx, assets/gsap/loop-video.ts) in real
-// browsers: IO-gated play/pause, the WCAG 2.2.2 pause control (sticky user-pause, aria-pressed),
-// live reduced motion, live Save-Data, and a rejected play() with no retry loop. Builds
-// tests/fixtures/loop-video with Vite, serves the build with `vite preview`, prints one PASS/FAIL
-// line per check/engine/browser, and exits 1 on any FAIL. Needs the Playwright browsers and
-// (for a first run with no cached clip) ffmpeg, so this is its own script, the way
+// browsers: IO-gated play/pause, the WCAG 2.2.2 pause control (sticky user-pause, a name that
+// follows the state, no aria-pressed), the `alt` text alternative,
+// live reduced motion, live Save-Data, a rejected play() with no retry loop, and (motion-seam/
+// gsap-seam) the rVFC seam wrap — no ended/pause event and frame-accurate across 3+ loop cycles.
+// Builds tests/fixtures/loop-video with Vite, serves the build with `vite preview`, prints one
+// PASS/FAIL line per check/engine/browser, and exits 1 on any FAIL. Needs the Playwright browsers
+// and (for a first run with no cached clip) ffmpeg, so this is its own script, the way
 // `test:foundation` and `test:smoke` are — not part of `npm test`.
 //
-//   node tests/loop-video.mjs [--browsers chromium,webkit] [--engines motion,gsap]
+//   node tests/loop-video.mjs [--browsers chromium,webkit] [--engines motion,gsap,motion-seam,gsap-seam]
 
 import { execFile } from 'node:child_process'
 import { existsSync } from 'node:fs'
@@ -26,13 +28,30 @@ const fixtureRoot = join(testsDir, 'fixtures', 'loop-video')
 const outDir = join(testsDir, '.scratch', 'loop-video-dist')
 const scratchClip = join(testsDir, '.scratch', 'clip.mp4')
 const fixtureClip = join(fixtureRoot, 'public', 'clip.mp4')
+// The seam pages play the shared clip plus one spare clone of its last frame, as `media loop --loop-from` makes it:
+// LoopVideo's early wrap only ever skips the spare.
+const seamClip = join(fixtureRoot, 'public', 'clip-seam.mp4')
 
 const ENGINES_BY_BROWSER = { chromium, webkit }
-const PAGES = ['motion', 'gsap']
+const PAGES = ['motion', 'gsap', 'motion-seam', 'gsap-seam']
 const VIEWPORT = { width: 800, height: 600 }
 // Must be >= the source files' own WATCHDOG_INTERVAL_MS, so the rejected-play
 // check spans at least one watchdog tick and can prove it did NOT retry.
 const WATCHDOG_MS = 2000
+// The *-seam pages' fixed seam config (data-loop-from-frame/fps and
+// loopFromFrame/fps — see gsap-seam-entry.ts): loop body = frames 45-59 of
+// the shared 60-frame/30fps clip, 0.5s/cycle. Not a measured pixel match —
+// these checks assert frame INDICES and event timing, never seamlessness.
+const SEAM_FROM_FRAME = 45
+// How long to observe after scrolling a *-seam page's video into view: the
+// ~2s intro plus >=3 loop cycles (1.5s) at 1x, with slack for IO/seek
+// latency and — pre-fix — the OLD pause+seek+replay overhead at every wrap.
+// Kept close to the minimum the brief asks for (3+) rather than generous:
+// each extra cycle observed is also extra exposure to rVFC scheduling
+// jitter under system load (see task-21-notes.md).
+const SEAM_WINDOW_MS = 5000
+const SEAM_MIN_SEAMS = 3
+const SEAM_FRAME_TOLERANCE = 1
 
 // ── args ────────────────────────────────────────────────────────────────
 
@@ -53,6 +72,17 @@ function parseArgs(argv) {
 
 /** Reuses `pretest`'s clip if it already ran; else makes the same one; else skips (ffmpeg missing). */
 async function ensureClip() {
+  if (!(await ensurePlainClip())) return false
+  if (existsSync(seamClip)) return true
+  try {
+    await execFileAsync('ffmpeg', ['-y', '-i', fixtureClip, '-vf', 'tpad=stop_mode=clone:stop=1', '-g', '1', '-pix_fmt', 'yuv420p', seamClip])
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function ensurePlainClip() {
   if (existsSync(fixtureClip)) return true
   await mkdir(dirname(fixtureClip), { recursive: true })
   if (existsSync(scratchClip)) {
@@ -122,11 +152,18 @@ async function scrollAway(page) {
 async function waitPaused(page, paused, timeout = 3000) {
   await page.waitForFunction((want) => document.querySelector('video')?.paused === want, paused, { timeout })
 }
-async function waitAriaPressed(page, pressed, timeout = 3000) {
+async function waitToggleName(page, pattern, timeout = 3000) {
   // `video.paused` flips synchronously inside play()/pause(), but the play/pause EVENTS that drive
-  // aria-pressed are queued tasks (fired a tick later) — polling the attribute itself, not `.paused`,
-  // is what avoids racing that gap.
-  await page.waitForFunction((want) => document.querySelector('button')?.getAttribute('aria-pressed') === want, pressed, { timeout })
+  // the button's name are queued tasks (fired a tick later) — polling the name itself, not `.paused`,
+  // is what avoids racing that gap. The name is aria-label when set (a supplied GSAP button), else the text.
+  await page.waitForFunction(
+    (source) => {
+      const b = document.querySelector('button')
+      return new RegExp(source, 'i').test((b?.getAttribute('aria-label') ?? b?.textContent ?? '').trim())
+    },
+    pattern.source,
+    { timeout }
+  )
 }
 function videoState(page) {
   return page.evaluate(() => {
@@ -138,7 +175,11 @@ function toggleState(page) {
   return page.evaluate(() => {
     const b = document.querySelector('button')
     if (!b) return null
-    return { pressed: b.getAttribute('aria-pressed'), visible: b.getClientRects().length > 0 }
+    return {
+      name: (b.getAttribute('aria-label') ?? b.textContent ?? '').trim(),
+      pressed: b.getAttribute('aria-pressed'),
+      visible: b.getClientRects().length > 0
+    }
   })
 }
 
@@ -201,20 +242,38 @@ const CHECKS = {
     return [s.paused === true, `paused=${s.paused} after scroll-out/in following a manual pause`]
   },
 
-  async 'aria-pressed flips'(t) {
+  async 'the toggle names its action (Pause while playing, Play while paused), no aria-pressed'(t) {
     const { page } = await t.open()
     await scrollToVideo(page)
-    await waitAriaPressed(page, 'true')
+    await waitToggleName(page, /pause/)
     const whilePlaying = await toggleState(page)
     await page.click('button')
-    await waitAriaPressed(page, 'false')
+    await waitToggleName(page, /play/)
     const afterPause = await toggleState(page)
     await page.click('button')
-    await waitAriaPressed(page, 'true')
+    await waitToggleName(page, /pause/)
     const afterResume = await toggleState(page)
+    const states = [whilePlaying, afterPause, afterResume]
     return [
-      whilePlaying?.pressed === 'true' && afterPause?.pressed === 'false' && afterResume?.pressed === 'true',
-      `aria-pressed: playing=${whilePlaying?.pressed} paused=${afterPause?.pressed} resumed=${afterResume?.pressed}`
+      /pause/i.test(whilePlaying?.name) && /play/i.test(afterPause?.name) && /pause/i.test(afterResume?.name) &&
+        states.every((s) => s?.pressed === null),
+      `name: playing="${whilePlaying?.name}" paused="${afterPause?.name}" resumed="${afterResume?.name}"; ` +
+        `aria-pressed ${states.every((s) => s?.pressed === null) ? 'absent' : 'present'}`
+    ]
+  },
+
+  async 'alt: the text alternative is in the accessibility tree, the video stays aria-hidden'(t) {
+    const { page } = await t.open()
+    const tree = await page.locator('body').ariaSnapshot()
+    const probe = await page.evaluate(() => {
+      const v = document.querySelector('video')
+      const alt = [...document.querySelectorAll('span')].find((s) => s.textContent === 'A test pattern, looping')
+      const box = alt?.getBoundingClientRect()
+      return { videoHidden: v?.getAttribute('aria-hidden'), altBox: box ? Math.max(box.width, box.height) : null }
+    })
+    return [
+      tree.includes('A test pattern, looping') && probe.videoHidden === 'true' && probe.altBox !== null && probe.altBox <= 1,
+      `in tree=${tree.includes('A test pattern, looping')} video aria-hidden=${probe.videoHidden} alt box=${probe.altBox}px`
     ]
   },
 
@@ -257,6 +316,78 @@ const CHECKS = {
   }
 }
 
+// ── seam-wrap checks (task 21) ─────────────────────────────────────────
+// The *-seam pages instrument a SEPARATE rVFC subscription and log
+// ended/pause/play/seeking/seeked events (see gsap-seam-entry.ts /
+// motion-seam-entry.tsx's __fx). Scrolling the video into view starts the
+// intro; by SEAM_WINDOW_MS later it should have wrapped at least
+// SEAM_MIN_SEAMS times.
+
+async function seamLog(page, windowMs = SEAM_WINDOW_MS) {
+  await page.evaluate(() => window.__fx?.reset())
+  await scrollToVideo(page)
+  await sleep(windowMs)
+  return page.evaluate(() => ({
+    fps: window.__fx.fps,
+    duration: window.__fx.duration(),
+    events: window.__fx.events(),
+    frames: window.__fx.frames()
+  }))
+}
+
+/** A wrap is any backward step in the presented frame index — forward playback never decreases it. */
+function findSeams(log) {
+  const idx = log.frames.map((f) => Math.round(f.mediaTime * log.fps))
+  const seams = []
+  for (let i = 1; i < idx.length; i++) {
+    if (idx[i] < idx[i - 1]) seams.push({ before: idx[i - 1], after: idx[i] })
+  }
+  return seams
+}
+
+function analyzeSeamLog(log) {
+  // The seam clip ends on a spare clone: the early wrap fires on the last content frame or on the clone, never earlier,
+  // so no content frame is skipped. After it, the seam frame (+1 only when a callback was missed).
+  const lastFrame = Math.round(log.duration * log.fps) - 1
+  const lastContent = lastFrame - 1
+  const seams = findSeams(log)
+  const badEvents = log.events.filter((e) => e.type === 'ended' || e.type === 'pause')
+  const beforeOk = seams.every((s) => s.before === lastContent || s.before === lastFrame)
+  const afterOk = seams.every((s) => s.after >= SEAM_FROM_FRAME && s.after <= SEAM_FROM_FRAME + SEAM_FRAME_TOLERANCE)
+  const enoughSeams = seams.length >= SEAM_MIN_SEAMS
+  return {
+    ok: enoughSeams && badEvents.length === 0 && beforeOk && afterOk,
+    lastFrame,
+    seams,
+    badEvents,
+    enoughSeams,
+    beforeOk,
+    afterOk
+  }
+}
+
+function seamDetail(r) {
+  const badList = r.badEvents.map((e) => e.type).join(',') || 'none'
+  const seamList = r.seams.map((s) => `${s.before}→${s.after}`).join(', ') || 'none'
+  return `seams=${r.seams.length} (want >=${SEAM_MIN_SEAMS}) expected before=${r.lastFrame - 1}|${r.lastFrame} (content|spare) after=${SEAM_FROM_FRAME}(+1) badEvents=[${badList}] transitions=[${seamList}]`
+}
+
+const SEAM_CHECKS = {
+  async 'seam wrap on rVFC: no ended/pause, and frame-accurate, across 3+ seams'(t) {
+    const { page } = await t.open()
+    const log = await seamLog(page)
+    const r = analyzeSeamLog(log)
+    return [r.ok, seamDetail(r)]
+  }
+}
+
+const CHECK_GROUPS = {
+  motion: CHECKS,
+  gsap: CHECKS,
+  'motion-seam': SEAM_CHECKS,
+  'gsap-seam': SEAM_CHECKS
+}
+
 // ── main ────────────────────────────────────────────────────────────────
 
 const open = { server: null, browser: null }
@@ -297,7 +428,7 @@ async function main() {
   for (const browserName of args.browsers) {
     open.browser = await ENGINES_BY_BROWSER[browserName].launch()
     for (const engine of args.pages) {
-      for (const [name, run] of Object.entries(CHECKS)) {
+      for (const [name, run] of Object.entries(CHECK_GROUPS[engine])) {
         const contexts = []
         const t = {
           async open(contextOptions = {}, initScripts = []) {
