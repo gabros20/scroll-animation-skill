@@ -61,16 +61,15 @@ export function MediaSlot({
   }
 
   // LoopVideo (a client island) plays it in view and pauses it out of view,
-  // under reduced motion and on Save-Data. A loop never stops by itself, so it
-  // always runs past WCAG 2.2.2's five seconds: the pause control is always on.
-  // Its <video> is aria-hidden, so the description is screen-reader text.
+  // under reduced motion and on Save-Data, and always shows its pause control
+  // (a loop runs past WCAG 2.2.2's five seconds). Its <video> is aria-hidden;
+  // `alt` gives the footage its text alternative.
   return (
     <div className="relative" style={{ aspectRatio: `${width} / ${height}` }}>
-      <p className="sr-only">{alt}</p>
       <LoopVideo
         poster={poster ? mediaSrc(poster) : undefined}
         className={`h-full w-full object-cover ${className}`}
-        controls
+        alt={alt}
         playLabel="Play loop"
         pauseLabel="Pause loop"
         toggleClassName="absolute right-3 bottom-3 rounded-full bg-ink/70 px-3 py-1.5 font-sans text-xs text-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"

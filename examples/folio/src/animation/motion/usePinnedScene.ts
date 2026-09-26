@@ -8,8 +8,12 @@
  *   style is written by hand. Bound through `style`, Motion hands opacity, clipPath, filter, backgroundColor and
  *   transform to a native timeline whose keyframes stop at the input range, and past it the element drifts back to its
  *   first-render value (spike S3), pinned or not.
- * - The mode (head | scrub | tail, scene.ts) is React state, set per TRANSITION only, from exact progress. Every
- *   per-frame path writes refs and styles, never state.
+ * - `band` is a MotionValue of the exact band (scene.ts: the scrub span as 0..1, 0 under reduced motion), written
+ *   wherever the scene computes it, rehydrate included: hand it straight to media that scrubs,
+ *   `<FrameSequence progress={band} />`, instead of bridging `onProgress` and `onRehydrate` by hand.
+ * - The mode (head | scrub | tail, scene.ts) changes per TRANSITION only, from exact progress: returned as React state,
+ *   and written by the scene to `data-scene-state` on the root, so hand markup gets it too. Every per-frame path
+ *   writes refs and styles, never state.
  * - Acts: descendants marked `data-scene-act` (this scene's own) get `inert` unless active, per transition.
  * - Gating: a warm margin (media may start fetching) and a wake margin (per-frame work may run). Safari can report a
  *   stale `isIntersecting: false` around a resize for elements much taller than the viewport, so the resize path
@@ -19,7 +23,7 @@
  * - Reduced motion (live, on config.ts REDUCED_MOTION_QUERY) holds the head; css/scene.css collapses the runway.
  * - Hide/show safe: everything is created in effects and torn down in their cleanup (Next's Activity hides routes).
  */
-import { useMotionValueEvent, useScroll, type MotionValue } from 'motion/react'
+import { useMotionValue, useMotionValueEvent, useScroll, type MotionValue } from 'motion/react'
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type RefObject } from 'react'
 
 import { REDUCED_MOTION_QUERY } from '../config'
@@ -109,6 +113,11 @@ export interface PinnedSceneState {
   pinRef: RefObject<HTMLDivElement | null>
   /** Exact scroll progress over the range. Read it in events; never bind it to `style`. */
   progress: MotionValue<number>
+  /**
+   * Exact progress across the band, 0..1 (0 under reduced motion): what media that scrubs follows. Written wherever
+   * the scene computes it, rehydrate included, so `<FrameSequence progress={band} />` needs no bridge.
+   */
+  band: MotionValue<number>
   mode: SceneMode
   reduced: boolean
   scene: PinnedSceneHandle
@@ -119,15 +128,15 @@ export function usePinnedScene(options: PinnedSceneOptions = {}): PinnedSceneSta
   const pinRef = useRef<HTMLDivElement>(null)
   const reduced = useReducedMotionLive()
   const { scrollYProgress } = useScroll({ target: rootRef, offset: PIN_OFFSET })
+  const band = useMotionValue(0)
   const [mode, setMode] = useState<SceneMode>('head')
 
-  // The latest options for handlers that must not resubscribe; written in an effect, never during render.
-  const opts = useRef(options)
+  // The core never sees a ref: render hands it values only, and effects hand it the elements and the latest options.
+  const [core] = useState(() => createCore(scrollYProgress, band, setMode, options))
+  // A layout effect, so the elements are there as early as refs are: a consumer's layout effect may rehydrate.
   useIsomorphicLayoutEffect(() => {
-    opts.current = options
+    core.attach(rootRef.current, pinRef.current, options)
   })
-
-  const [core] = useState(() => createCore(rootRef, pinRef, scrollYProgress, setMode, opts))
 
   useIsomorphicLayoutEffect(() => core.setReduced(reduced), [core, reduced])
   useMotionValueEvent(scrollYProgress, 'change', core.onProgress)
@@ -136,34 +145,37 @@ export function usePinnedScene(options: PinnedSceneOptions = {}): PinnedSceneSta
   const wakeMarginPx = options.wakeMarginPx ?? SCENE_MARGINS.wakeMarginPx
   useEffect(() => core.mount(warmMarginPx, wakeMarginPx), [core, warmMarginPx, wakeMarginPx])
 
-  return { rootRef, pinRef, progress: scrollYProgress, mode, reduced, scene: core.handle }
+  return { rootRef, pinRef, progress: scrollYProgress, band, mode, reduced, scene: core.handle }
 }
 
 function createCore(
-  rootRef: RefObject<HTMLDivElement | null>,
-  pinRef: RefObject<HTMLDivElement | null>,
   progress: MotionValue<number>,
+  band: MotionValue<number>,
   commitMode: (mode: SceneMode) => void,
-  opts: RefObject<PinnedSceneOptions>,
+  initialOptions: PinnedSceneOptions,
 ) {
   const state = { p: 0, mode: 'head' as SceneMode, act: 0, awake: false, reduced: false, rangePx: 1, wakeMarginPx: 0 }
+  let root: HTMLDivElement | null = null
+  let pin: HTMLDivElement | null = null
+  let options = initialOptions
   let acts: HTMLElement[] = []
   let rehydrateFrame = 0
 
-  const o = () => opts.current
+  const o = () => options
   const holds = (): SceneHolds => ({
     headHoldPx: o().headHoldPx ?? SCENE_HOLDS.headHoldPx,
     tailLeadPx: o().tailLeadPx ?? SCENE_HOLDS.tailLeadPx,
     hysteresisRatio: o().hysteresisRatio ?? SCENE_HOLDS.hysteresisRatio,
   })
   const bounds = () => sceneBounds(state.rangePx, holds())
+  const bandNow = () => (state.reduced ? 0 : bandProgress(state.p, bounds()))
 
   const handle: PinnedSceneHandle = {
     get root() {
-      return rootRef.current
+      return root
     },
     get pin() {
-      return pinRef.current
+      return pin
     },
     progress: () => state.p,
     mode: () => state.mode,
@@ -172,13 +184,25 @@ function createCore(
     reduced: () => state.reduced,
     rangePx: () => state.rangePx,
     bounds,
-    band: () => (state.reduced ? 0 : bandProgress(state.p, bounds())),
+    band: bandNow,
     rehydrate: (reason = 'manual') => rehydrate(reason),
+  }
+
+  /** Every place the band can move (progress, a new range, a rehydrate) writes it before anyone is told. */
+  function writeBand(value = bandNow()) {
+    band.set(value)
+  }
+
+  /** `data-scene-state` on the root, for CSS, `verify-motion` and devtools. The scene is its one writer, per transition,
+   * like the GSAP adapter; hand markup built on this hook gets it too. */
+  function writeState() {
+    if (root && root.getAttribute('data-scene-state') !== state.mode) root.setAttribute('data-scene-state', state.mode)
   }
 
   function setMode(next: SceneMode) {
     if (next === state.mode) return
     state.mode = next
+    writeState()
     commitMode(next)
     o().onMode?.(next, handle)
   }
@@ -206,17 +230,19 @@ function createCore(
   }
 
   function measure() {
-    const root = rootRef.current
-    if (!root) return
-    state.rangePx = rangeFromHeight(root.offsetHeight, window.innerHeight)
-    acts = Array.from(root.querySelectorAll<HTMLElement>('[data-scene-act]')).filter(
-      (el) => el.closest('[data-scene-root]') === root,
+    const el = root
+    if (!el) return
+    state.rangePx = rangeFromHeight(el.offsetHeight, window.innerHeight)
+    acts = Array.from(el.querySelectorAll<HTMLElement>('[data-scene-act]')).filter(
+      (act) => act.closest('[data-scene-root]') === el,
     )
+    writeBand()
     o().onMeasure?.(handle)
   }
 
   function onProgress(p: number) {
     state.p = p
+    writeBand()
     if (!state.reduced) {
       if (p > 0 && p < 1) wake(true)
       setMode(stepMode(state.mode, p, bounds()))
@@ -229,7 +255,6 @@ function createCore(
     cancelAnimationFrame(rehydrateFrame)
     rehydrateFrame = requestAnimationFrame(() => {
       rehydrateFrame = 0
-      const root = rootRef.current
       if (!root) return
       measure()
       // Fresh rect maths, not the last scroll event's value: a resume must not wait for one. Equal to useScroll's
@@ -242,6 +267,7 @@ function createCore(
       const at = sceneAt(p, state.rangePx, holds(), state.reduced)
       state.act = state.reduced ? 0 : actFromProgress(p, acts.length)
       writeActs(state.reduced ? null : state.act)
+      writeBand(at.band)
       // Media first, then the mode: a controller given the new mode by the rehydrate snaps without a second handover.
       o().onRehydrate?.({ reason, p, ...at, awake: state.awake, reduced: state.reduced }, handle)
       setMode(at.mode)
@@ -254,9 +280,19 @@ function createCore(
     rehydrate('reduced-motion')
   }
 
+  /** The elements (from the markup's refs) and the latest options, handed over after every commit. */
+  function attach(nextRoot: HTMLDivElement | null, nextPin: HTMLDivElement | null, nextOptions: PinnedSceneOptions) {
+    if (root && root !== nextRoot) root.removeAttribute('data-scene-state')
+    root = nextRoot
+    pin = nextPin
+    options = nextOptions
+    // Every commit, so a new root or a route shown again (Next's Activity) gets the current mode back.
+    writeState()
+  }
+
   function mount(warmMarginPx: number, wakeMarginPx: number) {
-    const root = rootRef.current
-    if (!root) return
+    const el = root
+    if (!el) return
     state.wakeMarginPx = wakeMarginPx
     state.p = clamp01(progress.get())
     measure()
@@ -269,7 +305,7 @@ function createCore(
       measureFrame = requestAnimationFrame(measure)
     }
     const resizeObserver = new ResizeObserver(scheduleMeasure)
-    resizeObserver.observe(root)
+    resizeObserver.observe(el)
 
     const warm = new IntersectionObserver(
       ([entry]) => {
@@ -279,7 +315,7 @@ function createCore(
       },
       { rootMargin: `${warmMarginPx}px 0px` },
     )
-    warm.observe(root)
+    warm.observe(el)
 
     // Arriving is also when geometry is certainly settled: a resize while the scene was away is re-read here.
     const awakeObserver = new IntersectionObserver(
@@ -290,11 +326,11 @@ function createCore(
       },
       { rootMargin: `${wakeMarginPx}px 0px` },
     )
-    awakeObserver.observe(root)
+    awakeObserver.observe(el)
 
     const onResize = () => {
       scheduleMeasure()
-      const r = root.getBoundingClientRect()
+      const r = el.getBoundingClientRect()
       wake(isNear(r.top, r.bottom, window.innerHeight, wakeMarginPx))
       measure()
       rehydrate('resize')
@@ -325,8 +361,9 @@ function createCore(
       window.removeEventListener('focus', onFocus)
       writeActs(null)
       wake(false)
+      el.removeAttribute('data-scene-state')
     }
   }
 
-  return { handle, onProgress, setReduced, mount }
+  return { handle, onProgress, setReduced, attach, mount }
 }

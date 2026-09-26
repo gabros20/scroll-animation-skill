@@ -59,5 +59,6 @@ scroll position.
 `pnpm verify:scenes` fetches the media and builds if either is missing, starts `next start`, and
 runs the skill's `verify-motion.mjs --scenes --reveal` on `/` and `/blocks` at 1440×900 and
 390×844, holding every scene to head, scrub, scrub, scrub, tail. It also checks that under
-reduced motion `/` shows the poster and no pin, and that with motion its video lands on the
-frame its band asks for. Chromium and WebKit; screenshots and reports go to `test-results/`.
+reduced motion `/` shows the poster and no pin and fetches no video, and that with motion its
+video lands on the frame its band asks for. Chromium and WebKit (`--browser`); screenshots and
+reports go to `test-results/`.

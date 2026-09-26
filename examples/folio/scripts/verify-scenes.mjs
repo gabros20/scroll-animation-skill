@@ -1,16 +1,15 @@
 #!/usr/bin/env node
 // verify-scenes.mjs — the pinned scenes on / and /blocks, against the production build, in Chromium and WebKit:
 //
-//   verify-motion  the skill's scripts/tools/verify-motion.mjs --scenes --reveal on / and /blocks at 1440x900 and
-//                  390x844, unmodified. Its scene check passes once any state is written; every scene here holds its
-//                  ends, so each one is also held to head, scrub, scrub, scrub, tail at progress 0, 1/4, 1/2, 3/4, 1.
+//   verify-motion  the skill's scripts/tools/verify-motion.mjs --scenes --reveal --browser <name> on / and /blocks at
+//                  1440x900 and 390x844, unmodified. It checks the states run head > scrub > tail in order; every scene
+//                  here holds its ends, so each one is also held to the exact head, scrub, scrub, scrub, tail at
+//                  progress 0, 1/4, 1/2, 3/4, 1.
 //   reduced        under emulated reduced motion, / shows the poster and no pin: the pin is released and scrolls with
-//                  the page, and the video sits on its poster, never played, while the scene stays in head.
+//                  the page, the video sits on its poster, never played, while the scene stays in head, and not one
+//                  byte of video is fetched.
 //   playhead       with motion, the video on / follows its band: the first frame, the middle, the last frame, from
 //                  the tier the viewport picks (window.__scrub() under ?motion-debug).
-//
-// verify-motion only launches Chromium. For WebKit it runs from a scratch directory whose `playwright` is a shim
-// handing it WebKit under the name it asks for.
 //
 // Pages are prerendered, so a build made before `pnpm media` holds placeholders: missing media is fetched first,
 // and the build is made when there is none or the media just arrived. Starts `next start` on a free port and always
@@ -19,11 +18,9 @@
 //   node scripts/verify-scenes.mjs [--browsers chromium,webkit]
 
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { createRequire } from "node:module";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { chromium, webkit } from "playwright";
 import { nextBuild, startServer, stopServer } from "./lib/next-server.mjs";
 
@@ -85,32 +82,15 @@ async function assertBuildHasMedia(base) {
 
 // ── verify-motion ───────────────────────────────────────────────────────
 
-/** A scratch cwd whose `playwright` hands verify-motion WebKit when it asks for chromium. */
-function webkitShim() {
-  const dir = mkdtempSync(join(tmpdir(), "verify-scenes-webkit-"));
-  const pkg = join(dir, "node_modules", "playwright");
-  mkdirSync(pkg, { recursive: true });
-  const real = pathToFileURL(createRequire(import.meta.url).resolve("playwright")).href;
-  writeFileSync(join(dir, "package.json"), "{}\n");
-  writeFileSync(join(pkg, "package.json"), JSON.stringify({ name: "playwright", type: "module", main: "index.js" }));
-  writeFileSync(
-    join(pkg, "index.js"),
-    `import playwright from ${JSON.stringify(real)};\n` +
-      `console.log("[verify-scenes] playwright shim: verify-motion's chromium is " + playwright.webkit.name());\n` +
-      `export const chromium = playwright.webkit;\n`,
-  );
-  return dir;
-}
-
-function runVerifyMotion(name, route, url, cwd, line) {
+function runVerifyMotion(name, route, url, line) {
   const out = join(OUT, name, route === "/" ? "home" : route.slice(1));
   rmSync(out, { recursive: true, force: true });
   const viewports = VIEWPORTS.map(size).join(",");
   console.log(`\n── verify-motion ${name} ${route} ─────────────────────────────────`);
   const res = spawnSync(
     process.execPath,
-    [VERIFY_MOTION, url, "--scenes", "--reveal", "--viewports", viewports, "--out", out],
-    { cwd, stdio: "inherit" },
+    [VERIFY_MOTION, url, "--scenes", "--reveal", "--browser", name, "--viewports", viewports, "--out", out],
+    { cwd: root, stdio: "inherit" },
   );
   line(res.status === 0, `verify-motion ${route} --scenes --reveal (${viewports})`, `exit ${res.status}`);
   if (!existsSync(join(out, "report.json"))) return;
@@ -188,9 +168,10 @@ async function checkReduced(browser, base, vp, line) {
         r.paused === true &&
         r.time === 0 &&
         r.played === 0 &&
-        r.states.join() === "head",
-      `/ ${size(vp)} reduced motion: shows the poster`,
-      `poster ${r.poster} ${posterLoaded ? "loaded" : "NOT loaded"}, video paused=${r.paused} t=${r.time} played ${r.played}x, states ${r.states.join(",")}; ${(videoBytes / 1e6).toFixed(1)} MB of video fetched anyway`,
+        r.states.join() === "head" &&
+        videoBytes === 0,
+      `/ ${size(vp)} reduced motion: shows the poster and fetches no video`,
+      `poster ${r.poster} ${posterLoaded ? "loaded" : "NOT loaded"}, video paused=${r.paused} t=${r.time} played ${r.played}x, states ${r.states.join(",")}; ${videoBytes} B of video fetched`,
     );
   } finally {
     await context.close();
@@ -260,11 +241,9 @@ async function main() {
   let failures = 0;
   let server = null;
   let browser = null;
-  let shim = null;
   const shutdown = async () => {
     await browser?.close().catch(() => {});
     await stopServer(server?.child);
-    if (shim) rmSync(shim, { recursive: true, force: true });
   };
   for (const sig of ["SIGINT", "SIGTERM"]) {
     process.on(sig, async () => {
@@ -281,8 +260,7 @@ async function main() {
         if (!ok) failures++;
         results.push(`${ok ? "PASS" : "FAIL"}  ${name.padEnd(8)}  ${what}${detail ? `  (${detail})` : ""}`);
       };
-      const cwd = name === "webkit" ? (shim ??= webkitShim()) : root;
-      for (const route of Object.keys(ROUTES)) runVerifyMotion(name, route, server.base + route, cwd, line);
+      for (const route of Object.keys(ROUTES)) runVerifyMotion(name, route, server.base + route, line);
 
       browser = await ENGINES[name].launch();
       for (const vp of VIEWPORTS) {

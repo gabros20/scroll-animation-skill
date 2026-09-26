@@ -1,6 +1,5 @@
 "use client";
 
-import { useMotionValue } from "motion/react";
 import { useState } from "react";
 import { FrameSequence } from "@/animation/motion/FrameSequence";
 import { PinnedScene } from "@/animation/motion/PinnedScene";
@@ -36,36 +35,20 @@ function ModeReadout({ mode }: { mode: SceneMode }) {
   );
 }
 
-/** PinnedScene + FrameSequence: the sequence draws the scene's band. */
+/** PinnedScene + FrameSequence: the sequence draws the scene's band, handed over by the `pinned` render function. */
 export function SequenceScene({ manifest, label }: { manifest: string; label: string }) {
-  // PinnedScene reports progress through its events, not as a MotionValue:
-  // this one carries the band to FrameSequence, from scroll and from resumes.
-  const band = useMotionValue(0);
-  const [mode, setMode] = useState<SceneMode>("head");
-
   return (
     <PinnedScene
-      pinned={
+      pinned={({ band, mode }) => (
         <>
           <div className="absolute inset-x-0 top-(--header-h) bottom-0 flex items-center justify-center px-6 sm:px-10">
             <div className="aspect-video w-full max-w-5xl">
-              {/* reducedMotionFrame 0: the scene holds its head under
-                  reduced motion, so the sequence shows the same frame. */}
-              <FrameSequence
-                manifest={manifest}
-                mobile
-                progress={band}
-                label={label}
-                reducedMotionFrame={0}
-              />
+              <FrameSequence manifest={manifest} mobile progress={band} label={label} />
             </div>
           </div>
           <ModeReadout mode={mode} />
         </>
-      }
-      onProgress={(_, scene) => band.set(scene.band())}
-      onRehydrate={(state) => band.set(state.band)}
-      onMode={(next) => setMode(next)}
+      )}
     >
       <Acts />
     </PinnedScene>
