@@ -35,7 +35,7 @@
 import './unit/load-ts.mjs'
 
 import { execFileSync, spawnSync } from 'node:child_process'
-import { existsSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium, webkit } from 'playwright'
@@ -84,6 +84,7 @@ function makeMedia(fresh) {
   const ok = (p) => existsSync(p) && JSON.parse(readFileSync(p, 'utf8')).count === FRAMES
   if (!fresh && ok(manifest) && ok(mobile)) return
   rmSync(join(publicDir, 'seq'), { recursive: true, force: true })
+  mkdirSync(publicDir, { recursive: true }) // a fresh checkout (CI) has no scratch directory yet
   const clip = join(scratch, 'clip.mp4')
   execFileSync('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', 'testsrc=size=1280x720:rate=30:duration=2', '-pix_fmt', 'yuv420p', clip])
   execFileSync(process.execPath, [cli, 'media', 'sequence', clip, '--out', join(publicDir, 'seq'), '--frames', String(FRAMES), '--width', '960', '--mobile-width', '480'], { stdio: 'inherit' })
