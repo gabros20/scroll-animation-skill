@@ -69,15 +69,18 @@ async function ensureClip() {
   const clip = join(publicDir, 'clip.mp4')
   if (existsSync(clip)) return true
   await mkdir(publicDir, { recursive: true })
-  if (existsSync(scratchClip)) {
-    await copyFile(scratchClip, clip)
-    return true
-  }
+  // Faststart, like every `media scrub` encode: with the index at the end, an engine fetches the tail to read it
+  // (measured: Chromium on CI requested 229376- and 65536- after the first full request), which the byte checks
+  // would read as a second download.
+  const faststart = ['-movflags', '+faststart']
   try {
-    await execFileAsync('ffmpeg', ['-y', '-f', 'lavfi', '-i', `testsrc=size=640x360:rate=${FPS}:duration=2`, '-g', '1', '-pix_fmt', 'yuv420p', clip])
+    if (existsSync(scratchClip)) await execFileAsync('ffmpeg', ['-y', '-i', scratchClip, '-c', 'copy', ...faststart, clip])
+    else await execFileAsync('ffmpeg', ['-y', '-f', 'lavfi', '-i', `testsrc=size=640x360:rate=${FPS}:duration=2`, '-g', '1', '-pix_fmt', 'yuv420p', ...faststart, clip])
     return true
   } catch {
-    return false
+    if (!existsSync(scratchClip)) return false
+    await copyFile(scratchClip, clip)
+    return true
   }
 }
 
