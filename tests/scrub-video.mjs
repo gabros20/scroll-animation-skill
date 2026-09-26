@@ -92,6 +92,9 @@ function onwarn(warning, warn) {
 
 /** Video bytes written per `${run}:${tier}`. */
 const served = new Map()
+// Every clip request per run: its Range header and the bytes served for it, so a check can tell the controller's own
+// fetches from an engine's (WebKit on Linux plays through GStreamer, which requests the file again for itself).
+const requested = new Map()
 
 function countVideoBytes() {
   return {
@@ -101,8 +104,13 @@ function countVideoBytes() {
         const url = new URL(req.url, 'http://x')
         if (!url.pathname.endsWith('/clip.mp4')) return next()
         const key = `${url.searchParams.get('run')}:${url.searchParams.get('tier')}`
+        const entry = { tier: url.searchParams.get('tier'), range: req.headers.range ?? null, bytes: 0 }
+        const run = url.searchParams.get('run')
+        requested.set(run, [...(requested.get(run) ?? []), entry])
         const add = (chunk) => {
-          if (chunk && typeof chunk !== 'function') served.set(key, (served.get(key) ?? 0) + Buffer.byteLength(chunk))
+          if (!chunk || typeof chunk === 'function') return
+          served.set(key, (served.get(key) ?? 0) + Buffer.byteLength(chunk))
+          entry.bytes += Buffer.byteLength(chunk)
         }
         const write = res.write.bind(res)
         const end = res.end.bind(res)
@@ -147,6 +155,24 @@ function connectionInit(saveData) {
 }
 
 /** Installed before any page script, on every page. */
+/** Counts what page code does to a video: `src` assignments and `load()` calls, the controller's own fetch decisions. */
+function mediaCallsInit() {
+  const calls = (window.__mediaCalls = { src: 0, load: 0 })
+  const load = HTMLMediaElement.prototype.load
+  HTMLMediaElement.prototype.load = function (...args) {
+    calls.load++
+    return load.apply(this, args)
+  }
+  const src = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'src')
+  Object.defineProperty(HTMLMediaElement.prototype, 'src', {
+    ...src,
+    set(value) {
+      calls.src++
+      src.set.call(this, value)
+    }
+  })
+}
+
 function helpersInit(fps) {
   const root = () => document.querySelector('[data-scene-root]')
   const video = () => root()?.querySelector('video')
@@ -382,13 +408,29 @@ const CHECKS = {
   },
 
   async bytesWithMotion(t) {
-    const { page, bytes } = await t.open()
+    const { page, bytes, requests } = await t.open()
     for (const p of [0, 0.5, 1]) {
       await page.evaluate((at) => window.__t.to(at), p)
       await page.waitForTimeout(300)
     }
     const b = bytes()
-    return [['with motion: the desktop tier, downloaded once', once(b.desktop) && b.mobile === 0, `${b.desktop} B desktop, ${b.mobile} B mobile (clip ${clipBytes} B)`]]
+    const calls = await page.evaluate(() => window.__mediaCalls)
+    const reqs = requests()
+    // The controller's share is one source and no load() (an extra load() restarted the first download: 1.76x the
+    // clip in Chromium). WebKit on Linux plays through GStreamer, which requests the file again by itself, so there the
+    // bytes can't be bounded by the page; everywhere else the engine fetches once.
+    const engineRefetches = t.browser === 'webkit' && process.platform === 'linux'
+    const ok =
+      calls.src === 1 && calls.load === 0 && b.mobile === 0 && b.desktop >= clipBytes && (engineRefetches || once(b.desktop))
+    const pattern = reqs.map((r) => `${r.range ?? 'no Range'}: ${r.bytes} B`).join(', ')
+    return [
+      [
+        'with motion: the desktop tier, one source and no load() from the controller, fetched once where the engine allows',
+        ok,
+        `${b.desktop} B desktop, ${b.mobile} B mobile (clip ${clipBytes} B) in ${reqs.length} request(s) [${pattern}] · ` +
+          `src set ${calls.src}x, load() ${calls.load}x${engineRefetches ? ' · GStreamer refetch allowed' : ''}`
+      ]
+    ]
   }
 }
 
@@ -435,6 +477,7 @@ async function main() {
       for (const [id, run] of Object.entries(CHECKS).filter(([id]) => !args.only || args.only.includes(id))) {
         const contexts = []
         const t = {
+          browser: browserName,
           /**
            * A fresh context on this engine's page with its own run id, ready: video data in, or under reduced motion
            * the scene painted (state written, poster set). Returns the tiers requested and the video bytes served.
@@ -443,6 +486,7 @@ async function main() {
             const context = await open.browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion })
             contexts.push(context)
             for (const [script, arg] of initScripts) await context.addInitScript(script, arg)
+            await context.addInitScript(mediaCallsInit)
             await context.addInitScript(helpersInit, FPS)
             const page = await context.newPage()
             const runId = `${browserName}-${engine}-${++runs}`
@@ -459,7 +503,7 @@ async function main() {
               const mobile = served.get(`${runId}:mobile`) ?? 0
               return { desktop, mobile, total: desktop + mobile }
             }
-            return { page, tiers, bytes }
+            return { page, tiers, bytes, requests: () => requested.get(runId) ?? [] }
           }
         }
         try {
