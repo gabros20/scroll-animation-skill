@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>scrub-video fixture (gsap)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- The scene at the very top: the page opens in its head, so the head loop runs from load. -->
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/animation.css" />
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/scene.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #111;
+      }
+    </style>
+  </head>
+  <body>
+    <div data-scene-root>
+      <div data-scene-pin>
+        <video data-scene-media muted playsinline preload="none" aria-hidden="true"></video>
+      </div>
+      <div data-scene-content>
+        <section style="height: 100vh"></section>
+        <section style="height: 100vh"></section>
+        <section style="height: 100vh"></section>
+      </div>
+    </div>
+    <div style="height: 150vh"></div>
+    <script type="module" src="./src/gsap-entry.ts"></script>
+  </body>
+</html>

@@ -13,14 +13,18 @@ initFluidMotion(document)
 // keyframe, so the scene can seek to an arbitrary frame every rAF without
 // the stuck-then-jump symptom a long-GOP encode produces. Created before the
 // travel section's ScrollTriggers: triggers are created in page order.
+// loopSeconds: Infinity because v1's loops ran for as long as the reader
+// stayed, and tests/scene-traces.mjs compares this page with that recording
+// (its tail region lasts ~9 s); tests/scrub-video.mjs checks the 5 s cap.
 setupGsap()
 scrubVideo(document.querySelector<HTMLElement>('[data-scene-root]')!, {
   fps: 30,
   headLoop: { fromFrame: 0, matchFrame: 5 },
-  tailLoop: { fromFrame: 55 }
+  tailLoop: { fromFrame: 55 },
+  loopSeconds: Infinity
 })
 
-// Scaled travel (fluid-interop.md §3). The section is 200vh tall; both
+// Scaled travel (scenes.md §12). The section is 200vh tall; both
 // tweens run from its top reaching the viewport top over 900 drawn px of
 // scroll, then hold. tests/distance-check.mjs scrolls past the end at two
 // viewports and asserts each element moved 240 * --fluid.
@@ -40,7 +44,7 @@ gsap.to('#travel-fn', {
 // transform tween (motion-architecture.md §7). distance-check.mjs asserts it.
 gsap.to('#fold-canary', { y: 1, duration: 0.01 })
 
-// fluidPx's `el` param (fluid-interop.md §3): #fluid-el-scope carries a
+// fluidPx's `el` param (scenes.md §12): #fluid-el-scope carries a
 // literal --_fluid-m-ui, standing in for a registered mirror the fluid-design
 // engine would write on a limited subtree (fluid-ui-grow-until-*). Reading
 // through `el` must use that 500px/1000 = 0.5 rather than the page's own
