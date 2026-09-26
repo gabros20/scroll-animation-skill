@@ -16,7 +16,7 @@
   @media (width >= 1024px) {
     :root { --fluid: calc(max(580px, min(calc(100svh * 1000 / 900), calc(100vw * 1000 / 1440))) / 1000); }
   }
-  /* Scaled travel, fluid-interop.md §3: pattern 1 (CSS multiplies --scene-p)
+  /* Scaled travel, scenes.md §12: pattern 1 (CSS multiplies --scene-p)
      and pattern 2 (a GSAP function value). Both must end 240 drawn px along. */
   #travel { position: relative; height: 200vh; }
   .travel { position: sticky; top: 0; width: 40px; height: 40px; background: #c33; }
@@ -63,8 +63,8 @@
     <div id="fold-canary" class="travel" style="translate: calc(10 * var(--fluid, 1px)) 0"></div>
   </section>
 
-  <!-- Stand-in for a fluid-design limit's registered mirror (fluid-interop.md
-       §3, `fluidPx`'s `el`): a real fluid-grow-until scope writes
+  <!-- Stand-in for a fluid-design limit's registered mirror (scenes.md
+       §12, `fluidPx`'s `el`): a real fluid-grow-until scope writes
        --_fluid-m-ui as a calc() off --fluid-ui, but a literal length reads
        identically through getComputedStyle, so this needs no fluid-design
        stylesheet. main.ts reads it with `el` and window.__fluidPxScoped. -->

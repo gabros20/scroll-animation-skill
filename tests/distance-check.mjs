@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// distance-check.mjs <url> — the scaled-travel check (fluid-interop.md §3).
+// distance-check.mjs <url> — the scaled-travel check (scenes.md §12).
 // For each viewport: scroll past the end of #travel, then read how far
 // #travel-var (CSS multiplies --scene-p) and #travel-fn (GSAP fluidValue)
 // moved, and compare with 240 × the resolved --fluid. Also resizes in place
@@ -68,10 +68,10 @@ for (const vp of steps) {
   )
 }
 const folded = await page.evaluate(() => document.getElementById('fold-canary').style.translate === 'none')
-console.log(`gsap folds CSS translate into its transform (documented behaviour): ${folded ? 'yes, as documented' : 'NO: update motion-architecture.md §7 and fluid-interop.md §3'}`)
+console.log(`gsap folds CSS translate into its transform (documented behaviour): ${folded ? 'yes, as documented' : 'NO: update motion-architecture.md §7 and scenes.md §12'}`)
 if (!folded) fail++
 
-// fluidPx's `el` param (fluid-interop.md §3): main.ts read #fluid-el-scope's
+// fluidPx's `el` param (scenes.md §12): main.ts read #fluid-el-scope's
 // literal --_fluid-m-ui (500px/1000) through `el`, which must win over
 // whatever the page's own `ui` unit resolves to at this viewport.
 const scoped = await page.evaluate(() => window.__fluidPxScoped)

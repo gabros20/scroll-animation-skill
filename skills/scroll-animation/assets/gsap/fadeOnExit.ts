@@ -13,7 +13,7 @@
  *
  * ## Why this writes `style.opacity` by hand instead of a library tween
  *
- * `references/scroll-scenes.md` §6, "The direct style write": a scroll-linked property
+ * `references/scenes.md` §6, "The direct style write": a scroll-linked property
  * bound through Motion (the reference build's animation library) was
  * measured to get promoted to a native, hardware-accelerated WAAPI timeline
  * whose view range disagreed with the JS-computed one — on an element that

@@ -60,7 +60,7 @@ export function ScrollStack() {
           not content. Under reduced motion there is no camera move left to
           give this space to, so `assets/css/scene.css` collapses it to zero
           height instead of leaving an 1800px blank band for a reduced-motion
-          reader to scroll through for nothing (references/scroll-scenes.md
+          reader to scroll through for nothing (references/scenes.md
           §10, references/attribute-contract.md). */}
       <section aria-hidden="true" data-scene-spacer className="h-[200svh]" />
 

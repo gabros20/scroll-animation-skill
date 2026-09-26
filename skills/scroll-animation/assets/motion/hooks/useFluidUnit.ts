@@ -23,7 +23,7 @@ import { fluidUnits, onFluidChange, type FluidUnit } from '../lib/fluid'
  *
  * For a distance that must stay correct with no JS at all between resizes,
  * the CSS-variable pattern needs no unit in JS: write progress to
- * `--scene-p` and let CSS multiply (`references/fluid-interop.md` §3).
+ * `--scene-p` and let CSS multiply (`references/scenes.md` §12).
  */
 export function useFluidUnit(unit: FluidUnit = 'fluid'): MotionValue<number> {
   const value = useMotionValue(1)

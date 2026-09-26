@@ -35,12 +35,13 @@ Rules (severity in parens): `motion-strict` (error — `motion.*` under
 used alongside a page-wide `scroll-behavior: smooth`), `lenis-with-scroll-
 well` (warn — Lenis alongside the scroll well; both are scroll-position
 writers), `gsap-pin-with-sticky-scene` (error — a GSAP `pin: true` in the
-same file as a `ScrubStage`/`data-scrub-stage`; the scene's pin is CSS
-`position: sticky`, never nest it in a GSAP pin), `fractional-amount` (warn),
+same file as a scene (`PinnedScene`, `ScrubVideo`, `pinnedScene()`, `data-scene-*`, or v1's
+`ScrubStage`/`data-scrub-stage`); the scene's pin is CSS `position: sticky` by default, never nest
+it in a GSAP pin), `fractional-amount` (warn),
 `contents-reveal` (error), `video-attrs` (warn), `fixed-travel-on-fluid` (warn — on a
 fluid-scaled project, a GSAP `x`/`y` or ScrollTrigger `start`/`end` offset or a Motion
 `useTransform` output typed as a plain number of 80+ px; drawn travel must scale,
-`references/fluid-interop.md` §3).
+`references/scenes.md` §12).
 
 `--selftest` runs the scanner over `fixtures/audit/<rule-id>/{positive,negative}`
 for every rule and asserts each positive fixture trips the rule and each
@@ -54,12 +55,15 @@ finding, `2` usage error. `--selftest` exits `0`/`1` on pass/fail.
 
 ```
 node verify-motion.mjs <url> [--out dir] [--viewports 1440x900,390x844]
-  [--reveal] [--scenes] [--anchors]
+  [--browser chromium|webkit|firefox] [--reveal] [--scenes] [--anchors]
 node verify-motion.mjs --help
 ```
 
 With none of `--reveal`/`--scenes`/`--anchors` given, all three run. Drives
-every `--viewports` WxH pair (a width `<= 480` is emulated as touch/mobile):
+every `--viewports` WxH pair (a width `<= 480` is emulated as touch/mobile) in the
+`--browser` engine (default `chromium`). A check with nothing to look at (no reveal
+items, no scenes) reports `SKIP`, never `PASS`, so a page without the markup can't
+pass by accident:
 
 - **`--reveal`** — step-scrolls to the bottom using rAF + 200ms per step (a
   fast scroll outruns `IntersectionObserver` and gives false blanks), with
@@ -68,17 +72,20 @@ every `--viewports` WxH pair (a width `<= 480` is emulated as touch/mobile):
   animation and the harness would stall partway down the page — measured:
   this made the check fail in every cell on a page with smooth scrolling
   on). Waits ~1.5s to let the contract's up-to-1.3s entrance transition
-  settle, then reports every `[data-stage-item]` under opacity `0.99`.
-- **`--scenes`** — for each `[data-scrub-stage]`, scrolls to *progress*
+  settle, then reports every `[data-reveal-item]` (v1 `[data-stage-item]`) under
+  opacity `0.99`.
+- **`--scenes`** — for each `[data-scene-root]` (v1 `[data-scrub-stage]`), scrolls to *progress*
   (never a raw pixel offset — pixel offsets rot the moment content above the
   scene changes height) 0, .25, .5, .75 and 1, using `references/
   verification.md`'s maths (`top = stage.getBoundingClientRect().top +
   scrollY`, `range = stage.offsetHeight - innerHeight`, target `y = top +
   range * progress`), waits 2.5s per step for any glide/spring to settle,
-  and records `data-motion-state` plus a screenshot at each step. A scene
-  that never writes `data-motion-state` across any step fails the run — a
-  machine that never transitions is either not wired up or has a broken
-  threshold.
+  and records `data-scene-state` (v1 `data-motion-state`) plus a screenshot at
+  each step. Where a mode flips is scene-specific, but the order isn't: every
+  step must have a state, the states only move `head > scrub > tail`, and the
+  scene must have left `head` by progress 1. A scene that never transitions,
+  steps backwards or skips writing fails the run, and the report prints each
+  scene's sequence.
 - **`--anchors`** — delegates to `anchor-check.mjs` with the same
   `--viewports` list (see below); its own exit code folds into this run's.
 
@@ -104,7 +111,7 @@ node anchor-check.mjs --help
 duration of its own stepped `scrollTo` calls, which is the right call for a fast, deterministic
 harness — but it means a green `--reveal` run proves nothing about whether a REAL anchor click
 survives the page's actual `scroll-behavior: smooth` and any scroll well sitting between the click
-and its target (`references/scroll-scenes.md` §8: an `instant`-writing scroll well cancels a smooth
+and its target (`references/scenes.md` §8: an `instant`-writing scroll well cancels a smooth
 scroll passing through it one rAF at a time unless it suspends itself). This script is the one check
 that exercises that real path end to end. `verify-motion.mjs --anchors` delegates to it directly.
 

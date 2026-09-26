@@ -249,7 +249,7 @@ const rules = [
     // `html` by default) means the scroll well's own per-frame
     // `behavior: 'instant'` writes cancel any smooth scroll passing through
     // its target one rAF at a time -- an anchor click that should land 900px
-    // further away instead stalls at the well (references/scroll-scenes.md
+    // further away instead stalls at the well (references/scenes.md
     // §8; `verify-motion.mjs --reveal` failed in every cell this way on a
     // real build). Both engines' scrollPull now suspend automatically on a
     // same-page hash click/hashchange, and expose `suspend(ms)` for a
@@ -266,7 +266,7 @@ const rules = [
       while ((m = re.exec(content))) {
         pushFinding(acc, {
           rule: this.id, file, content, index: m.index, matchLen: m[0].length, severity: 'info',
-          why: 'This project sets scroll-behavior: smooth somewhere and also uses a scroll well (PullToCentre/scrollPull). The well auto-suspends for a same-page hash click and hashchange, but any OTHER programmatic/smooth scroll (a router navigation, an imperative scrollIntoView outside a click handler) that passes through the well\'s target will still be cancelled one rAF at a time unless you call suspend() around it (references/scroll-scenes.md §8).',
+          why: 'This project sets scroll-behavior: smooth somewhere and also uses a scroll well (PullToCentre/scrollPull). The well auto-suspends for a same-page hash click and hashchange, but any OTHER programmatic/smooth scroll (a router navigation, an imperative scrollIntoView outside a click handler) that passes through the well\'s target will still be cancelled one rAF at a time unless you call suspend() around it (references/scenes.md §8).',
           fix: 'Call the returned controller\'s suspend(ms) immediately before driving any scroll of your own through this target, or confirm the only programmatic scrolls in this tree are same-page hash clicks/hashchange, which are already covered automatically.'
         })
       }
@@ -304,8 +304,9 @@ const rules = [
   {
     // A GSAP `ScrollTrigger.create({ pin: true, ... })` (or `gsap.timeline({
     // scrollTrigger: { pin: true } })`) creates its OWN pin-spacer element
-    // and reparents the pinned content into it. ScrubStage's pin is a plain
-    // CSS `position: sticky` element, not a ScrollTrigger pin -- nesting the
+    // and reparents the pinned content into it. A scene's pin (PinnedScene,
+    // ScrubVideo, pinnedScene(); v1's ScrubStage) is a plain CSS
+    // `position: sticky` element by default, not a ScrollTrigger pin -- nesting the
     // scene inside a GSAP pin means the scene's sticky geometry resolves
     // against the pin-spacer's scroll container, not the page, and the two
     // systems' idea of "current scroll progress" drift apart (references/
@@ -316,14 +317,14 @@ const rules = [
     id: 'gsap-pin-with-sticky-scene',
     ext: (e) => ['.ts', '.tsx', '.js', '.jsx'].includes(e),
     run(content, file, ctx, acc) {
-      if (!/\bdata-scrub-stage\b|<ScrubStage\b/.test(content)) return
+      if (!/\bdata-scene-(?:root|pin)\b|<(?:PinnedScene|ScrubVideo)\b|\b(?:pinnedScene|scrubVideo)\(|\bdata-scrub-stage\b|<ScrubStage\b/.test(content)) return
       const re = /\bpin\s*:\s*true\b/g
       let m
       while ((m = re.exec(content))) {
         pushFinding(acc, {
           rule: this.id, file, content, index: m.index, matchLen: m[0].length, severity: 'error',
-          why: 'This file has a GSAP pin: true alongside a ScrubStage scene (data-scrub-stage/<ScrubStage>). The scene\'s pin is CSS position: sticky, not a ScrollTrigger pin -- nesting it inside a GSAP pin-spacer breaks both systems\' scroll-progress maths (references/brownfield-coexistence.md).',
-          fix: 'Make sure this pin: true does not target an ancestor of the scrub scene. If the pinned element and the scene are unrelated, scope them clearly (e.g. separate files/components) so this heuristic stops flagging the coincidence.'
+          why: 'This file has a GSAP pin: true alongside a scene (PinnedScene, ScrubVideo, pinnedScene(), data-scene-*, or v1\'s ScrubStage). The scene pins with CSS position: sticky by default, not a ScrollTrigger pin -- nesting it inside a GSAP pin-spacer breaks both systems\' scroll-progress maths (references/scenes.md §5).',
+          fix: 'Make sure this pin: true does not target an ancestor of the scene. On a ScrollSmoother page, where sticky cannot work, give the scene pin: \'gsap\' instead of pinning around it. If the pin and the scene are unrelated, scope them apart (separate files/components) so this heuristic stops flagging the coincidence.'
         })
       }
     }
@@ -335,19 +336,19 @@ const rules = [
     // plain number (`x: 600`, `end: '+=1800'`, a useTransform output of 600)
     // lands short on big screens and overshoots on small ones. Entrance
     // offsets of 24-40px stay fixed on purpose, so only |n| >= 80 is flagged
-    // (references/fluid-interop.md §3).
+    // (references/scenes.md §12).
     id: 'fixed-travel-on-fluid',
     ext: (e) => ['.ts', '.tsx', '.js', '.jsx'].includes(e),
     run(content, file, ctx, acc) {
       if (!ctx.hasFluid) return
-      const why = 'This project is on a fluid scale, and this drawn travel distance is a fixed number. It is right at the 1440x900 reference and wrong everywhere else (1.6x too short at 2560x1440). Small entrance offsets (24-40px) may stay fixed; travel scales (references/fluid-interop.md §3).'
+      const why = 'This project is on a fluid scale, and this drawn travel distance is a fixed number. It is right at the 1440x900 reference and wrong everywhere else (1.6x too short at 2560x1440). Small entrance offsets (24-40px) may stay fixed; travel scales (references/scenes.md §12).'
       const checks = [
         // GSAP tween vars: x: 600 / y: -240 (not xPercent/yPercent)
-        { re: /\b(?:x|y)\s*:\s*(-?\d+(?:\.\d+)?)(?![\w%.])/g, n: 1, fix: 'Use x: fluidValue(N) (assets/gsap/fluid.ts) with invalidateOnRefresh: true, or tween --scene-p and let CSS multiply: translate: calc(var(--scene-p) * N * var(--fluid)) 0.' },
+        { re: /\b(?:x|y)\s*:\s*(-?\d+(?:\.\d+)?)(?![\w%.])/g, n: 1, fix: 'Use x: scaledValue(N) (assets/scale.ts) with invalidateOnRefresh: true, or write --scene-p and let CSS multiply: translate: calc(var(--scene-p) * N * var(--fluid, 1px)) 0.' },
         // ScrollTrigger end/start offsets: '+=1800', 'top top+=120'
-        { re: /\b(?:end|start)\s*:\s*['"`][^'"`]*?[+-]=\s*(\d+)(?!\s*%)[^'"`]*['"`]/g, n: 1, fix: 'Use end: fluidEnd(N), or a function: start: () => `top top+=${fluidPx(N)}`, with invalidateOnRefresh: true.' },
+        { re: /\b(?:end|start)\s*:\s*['"`][^'"`]*?[+-]=\s*(\d+)(?!\s*%)[^'"`]*['"`]/g, n: 1, fix: 'Use end: scaledEnd(N), or a function: start: () => `top top+=${scaledPx(N)}` (assets/scale.ts), with invalidateOnRefresh: true.' },
         // Motion useTransform output range with a big literal
-        { re: /useTransform\([^)]*?\[[^\]]*\]\s*,\s*\[([^\]]*)\]/g, n: 1, list: true, fix: 'Map progress to a unitless 0..1 and multiply by the unit: useTransform(() => p.get() * N * f.get()) with f = useFluidUnit(), or write --scene-p and let CSS multiply.' }
+        { re: /useTransform\([^)]*?\[[^\]]*\]\s*,\s*\[([^\]]*)\]/g, n: 1, list: true, fix: 'Map progress to a unitless 0..1 and multiply in the writer: p * scaledPx(N) (assets/scale.ts, re-read on onScaleChange), or write --scene-p and let CSS multiply.' }
       ]
       for (const c of checks) {
         let m

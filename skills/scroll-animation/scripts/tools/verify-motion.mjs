@@ -36,30 +36,36 @@ scene state and anchor landings.
 
 Usage:
   node verify-motion.mjs <url> [--out dir] [--viewports 1440x900,390x844]
-    [--reveal] [--scenes] [--anchors]
+    [--browser chromium|webkit|firefox] [--reveal] [--scenes] [--anchors]
 
 Options:
   --out <dir>         output directory for report.json / screenshots (default: verify-motion-out)
   --viewports <list>  comma-separated WxH pairs (default: 1440x900,390x844).
                        A width <= 480 is emulated as touch/mobile.
+  --browser <name>    the Playwright engine for --reveal/--scenes (default chromium)
   --reveal            step-scroll (scroll-behavior forced to auto) and check
-                       every [data-stage-item] ends visible
+                       every [data-reveal-item] (v1 [data-stage-item]) ends visible
   --scenes            for each scene ([data-scene-root], v1 [data-scrub-stage]), scroll to progress
-                       0/.25/.5/.75/1 and record data-scene-state (v1 data-motion-state) + a screenshot
+                       0/.25/.5/.75/1, record data-scene-state (v1 data-motion-state) + a
+                       screenshot, and check the states run head > scrub > tail in order,
+                       never step back, and have left head by progress 1
   --anchors           delegate to anchor-check.mjs (a REAL smooth scroll
                        through the page's own scroll-behavior/scroll well)
   -h, --help          print this message and exit
 
 With none of --reveal/--scenes/--anchors given, all three run.
 
-Exit codes: 0 = every requested check passed, 1 = at least one failed,
-2 = usage/invocation error (including "playwright not found").`
+A check with nothing to look at (no reveal items, no scenes) reports SKIP, never PASS.
+
+Exit codes: 0 = no requested check failed (PASS, or SKIP when nothing was found),
+1 = at least one failed, 2 = usage/invocation error (including "playwright not found").`
 
 function parseArgs(argv) {
   const out = {
     _: [],
     out: 'verify-motion-out',
     viewports: '1440x900,390x844',
+    browser: 'chromium',
     reveal: false,
     scenes: false,
     anchors: false,
@@ -70,11 +76,16 @@ function parseArgs(argv) {
     if (a === '--help' || a === '-h') out.help = true
     else if (a === '--out') out.out = argv[++i]
     else if (a === '--viewports') out.viewports = argv[++i]
+    else if (a === '--browser') out.browser = argv[++i]
     else if (a === '--reveal') out.reveal = true
     else if (a === '--scenes') out.scenes = true
     else if (a === '--anchors') out.anchors = true
     else if (a.startsWith('--')) { console.error(`[verify-motion] unknown flag ${a}`); process.exit(2) }
     else out._.push(a)
+  }
+  if (!['chromium', 'webkit', 'firefox'].includes(out.browser)) {
+    console.error(`[verify-motion] --browser must be chromium, webkit or firefox (got ${out.browser})`)
+    process.exit(2)
   }
   if (!out.reveal && !out.scenes && !out.anchors) {
     out.reveal = true
@@ -143,7 +154,7 @@ async function resolvePlaywrightModule() {
 
 // Step-scroll to the bottom with rAF + 200ms per step -- a fast scroll
 // outruns IntersectionObserver and gives false blanks. Then report every
-// [data-stage-item] still under opacity 0.99. Moved wholesale from the
+// [data-reveal-item] (v1 [data-stage-item]) still under opacity 0.99. Moved wholesale from the
 // fluid-design skill's `fluid verify` (scripts/tools/verify.mjs) (its --reveal), which never scanned
 // scene state -- that half is `checkScenes` below.
 async function checkReveal(page) {
@@ -153,7 +164,7 @@ async function checkReveal(page) {
     // default) queues a smooth animation on every `scrollTo` below; the
     // NEXT step's `scrollTo` then cancels that animation before it arrives
     // -- same mechanism as scrollPull's `instant` writes cancelling an
-    // anchor jump (references/scroll-scenes.md §8). The harness never
+    // anchor jump (references/scenes.md §8). The harness never
     // actually reaches the lower steps, so everything past wherever it
     // stalled reads as a reveal failure that has nothing to do with
     // IntersectionObserver. Measured: this made --reveal fail in every cell
@@ -184,7 +195,7 @@ async function checkReveal(page) {
   })
 
   return page.evaluate(() => {
-    const items = [...document.querySelectorAll('[data-stage-item]')]
+    const items = [...document.querySelectorAll('[data-reveal-item], [data-stage-item]')]
     const hidden = []
     items.forEach((el, i) => {
       const op = Number(getComputedStyle(el).opacity)
@@ -196,7 +207,8 @@ async function checkReveal(page) {
         })
       }
     })
-    return { pass: hidden.length === 0, total: items.length, hidden }
+    // No items is a SKIP: a page with nothing to reveal must never read as a passed reveal check.
+    return { verdict: items.length === 0 ? 'skip' : hidden.length === 0 ? 'pass' : 'fail', total: items.length, hidden }
   })
 }
 
@@ -245,13 +257,19 @@ async function checkScenes(page, opts) {
     }
     scenes.push({ index: i, base, steps })
   }
-  // Informational only: this heuristic records state, it does not itself
-  // know what data-motion-state SHOULD be at a given progress (that is
-  // scene-specific). A run only fails if a stage never wrote the attribute
-  // at all, across every step -- a machine that never transitions is either
-  // not wired up or has a broken threshold.
-  const pass = scenes.every((s) => s.steps.some((st) => st.motionState != null))
-  return { pass, total: stages, scenes }
+  // Where a mode flips is scene-specific (holds, lead-ins), but the order isn't: scrolling forward, every step has a
+  // state, the states only ever move head > scrub > tail, and the scene has left head by progress 1. A machine that
+  // never transitions, runs backwards or skips writing is miswired. No scenes is a SKIP, never a pass.
+  const RANK = { head: 0, scrub: 1, tail: 2 }
+  for (const scene of scenes) {
+    const ranks = scene.steps.map((st) => RANK[st.motionState])
+    scene.sequence = scene.steps.map((st) => st.motionState ?? '(none)').join(' > ')
+    if (ranks.some((r) => r === undefined)) scene.problem = 'a step has no head/scrub/tail state'
+    else if (ranks.some((r, k) => k > 0 && r < ranks[k - 1])) scene.problem = 'the state steps backwards while scrolling forward'
+    else if (ranks[ranks.length - 1] === 0) scene.problem = 'still in head at progress 1'
+  }
+  const verdict = stages === 0 ? 'skip' : scenes.some((s) => s.problem) ? 'fail' : 'pass'
+  return { verdict, total: stages, scenes }
 }
 
 // ── one viewport ────────────────────────────────────────────────────────
@@ -273,35 +291,40 @@ async function runViewport(browser, url, opts, vp) {
   return result
 }
 
-function viewportPass(v) {
-  return (v.checks.reveal ? v.checks.reveal.pass : true) && (v.checks.scenes ? v.checks.scenes.pass : true)
+/** 'fail' if any check failed, 'skip' if every check found nothing to look at, else 'pass'. */
+function viewportVerdict(v) {
+  const verdicts = Object.values(v.checks).map((c) => c.verdict)
+  if (verdicts.includes('fail')) return 'fail'
+  return verdicts.length && verdicts.every((x) => x === 'skip') ? 'skip' : 'pass'
 }
 
 function printSummary(viewports) {
   console.log('width  height  mobile  reveal  scenes  overall')
   for (const v of viewports) {
     const c = v.checks
-    const cell = (b) => (b === undefined ? '-' : b ? 'PASS' : 'FAIL')
+    const cell = (verdict) => (verdict ? verdict.toUpperCase() : '-')
     console.log(
       [
         String(v.width).padEnd(7),
         String(v.height).padEnd(8),
         (v.mobile ? 'yes' : 'no').padEnd(8),
-        cell(c.reveal?.pass).padEnd(8),
-        cell(c.scenes?.pass).padEnd(8),
-        viewportPass(v) ? 'PASS' : 'FAIL'
+        cell(c.reveal?.verdict).padEnd(8),
+        cell(c.scenes?.verdict).padEnd(8),
+        cell(viewportVerdict(v))
       ].join('')
     )
   }
   console.log('')
   for (const v of viewports) {
-    if (viewportPass(v)) continue
-    console.log(`FAIL at ${v.width}x${v.height}${v.mobile ? ' (mobile)' : ''}:`)
-    if (v.checks.reveal && !v.checks.reveal.pass) {
-      for (const h of v.checks.reveal.hidden) console.log(`  reveal[${h.index}] ${h.selector}: opacity ${h.opacity}`)
+    const at = `${v.width}x${v.height}${v.mobile ? ' (mobile)' : ''}`
+    for (const [name, c] of Object.entries(v.checks)) {
+      if (c.verdict === 'skip') console.log(`SKIP ${name} at ${at}: nothing to check (${name === 'reveal' ? 'no [data-reveal-item]' : 'no [data-scene-root]'})`)
     }
-    if (v.checks.scenes && !v.checks.scenes.pass) {
-      console.log('  scenes: at least one scene never wrote data-scene-state across any step')
+    if (v.checks.scenes) for (const s of v.checks.scenes.scenes) console.log(`scene ${s.index} at ${at}: ${s.sequence}${s.problem ? `  FAIL: ${s.problem}` : ''}`)
+    if (viewportVerdict(v) !== 'fail') continue
+    console.log(`FAIL at ${at}:`)
+    if (v.checks.reveal?.verdict === 'fail') {
+      for (const h of v.checks.reveal.hidden) console.log(`  reveal[${h.index}] ${h.selector}: opacity ${h.opacity}`)
     }
     console.log('')
   }
@@ -331,7 +354,7 @@ async function main() {
   }
   const url = args._[0]
   if (!url) {
-    console.error('usage: node verify-motion.mjs <url> [--out dir] [--viewports W1xH1,W2xH2] [--reveal] [--scenes] [--anchors]')
+    console.error('usage: node verify-motion.mjs <url> [--out dir] [--viewports W1xH1,W2xH2] [--browser chromium|webkit|firefox] [--reveal] [--scenes] [--anchors]')
     console.error('       node verify-motion.mjs --help')
     process.exit(2)
   }
@@ -345,18 +368,24 @@ async function main() {
   }
 
   let anyFail = false
+  let allSkipped = false
   let results = []
 
   if (args.reveal || args.scenes) {
-    let chromium
+    let engine
     try {
-      ;({ chromium } = await resolvePlaywrightModule())
+      engine = (await resolvePlaywrightModule())[args.browser]
     } catch (err) {
       console.error(err.message)
       process.exit(2)
     }
+    if (!engine) {
+      console.error(`[verify-motion] this playwright has no ${args.browser}`)
+      process.exit(2)
+    }
+    console.log(`[verify-motion] browser: ${args.browser}`)
 
-    const browser = await chromium.launch()
+    const browser = await engine.launch()
     try {
       for (const vp of viewports) {
         results.push(await runViewport(browser, url, args, vp))
@@ -371,7 +400,8 @@ async function main() {
 
     printSummary(results)
     console.log(`report: ${join(args.out, 'report.json')}`)
-    anyFail = anyFail || results.some((v) => !viewportPass(v))
+    anyFail = anyFail || results.some((v) => viewportVerdict(v) === 'fail')
+    allSkipped = results.every((v) => viewportVerdict(v) === 'skip')
   }
 
   if (args.anchors) {
@@ -380,7 +410,7 @@ async function main() {
     anyFail = anyFail || status !== 0
   }
 
-  console.log(anyFail ? 'FAIL' : 'PASS')
+  console.log(anyFail ? 'FAIL' : allSkipped && !args.anchors ? 'SKIP (nothing to check)' : 'PASS')
   process.exit(anyFail ? 1 : 0)
 }
 

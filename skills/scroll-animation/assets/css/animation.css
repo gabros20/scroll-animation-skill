@@ -136,7 +136,7 @@ html.lenis body {
 
 /* Scene progress for scaled distances: the engine writes 0..1 to --scene-p on the moving element and CSS multiplies
  * it into a length, e.g. translate: calc(var(--scene-p) * 600 * var(--fluid, 1px)) 0, so the distance follows a
- * viewport-scaled layout live through a resize with no unit maths in JS (references/fluid-interop.md §3). */
+ * viewport-scaled layout live through a resize with no unit maths in JS (references/scenes.md §12). */
 @property --scene-p {
   syntax: '<number>';
   inherits: false;
