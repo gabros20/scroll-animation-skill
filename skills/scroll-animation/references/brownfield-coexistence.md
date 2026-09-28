@@ -175,9 +175,9 @@ stutters around the rest position. So the well works under native scrolling only
 
 - **Under the skill's Lenis it stands down.** `createSmoothScroll` and `<SmoothScroll>` stamp
   `<html data-scroll-authority="lenis">`; the well reads it, pulls nothing and warns once.
-- **A site's own Lenis stamps nothing**, so the well can't see it and fights it every frame. Leave
-  the well off those routes (`<ScrollWell disabled />`, or no `scrollWell()` call). The composition
-  still reads; it just doesn't settle by itself. A section that must settle needs a native route.
+- **A site's own Lenis stamps nothing**, but Lenis marks `<html>` with its own `lenis` class, and the
+  well reads that too: it stands down the same way. The composition still reads; it just doesn't
+  settle by itself. A section that must settle needs a native route.
 
 **Mode switches read smoothed scroll.** Under Lenis, `window.scrollY` is Lenis's *animated* value,
 not the input. Latches and thresholds still work (they read what's on screen, and hysteresis still
