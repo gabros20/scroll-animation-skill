@@ -49,9 +49,6 @@ import { useReducedMotionLive } from './useReducedMotionLive'
 
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect
 
-/** Re-exported for imports that predate motion/useReducedMotionLive.ts; removed with the v1 leftovers. */
-export { useReducedMotionLive }
-
 /** Module constant: a fresh array each render would resubscribe the scroll listener. */
 const PIN_OFFSET = ['start start', 'end end'] as const satisfies [string, string]
 

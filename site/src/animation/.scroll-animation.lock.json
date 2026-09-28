@@ -7,15 +7,15 @@
     "gsap"
   ],
   "files": {
-    "config.ts": "83ff17150c8cc8e2",
+    "config.ts": "91fe04cc98fc0675",
     "scale.ts": "322b05138c6a47d1",
     "gsap/setup.ts": "fb9601866eb05ace",
-    "css/animation.css": "95eb55e7b0213941",
+    "css/animation.css": "7aa944c76accd5b7",
     "smooth/authority.ts": "4e4a711f6a20aaaa",
     "smooth/smoother.ts": "4b15338b11f6dabc",
     "scene.ts": "681c45e78fd3add5",
     "css/scene.css": "2862e3dd2903c50f",
-    "gsap/pinned-scene.ts": "2be471fa19d5cf42",
+    "gsap/pinned-scene.ts": "66bd7063f88e5ba6",
     "gsap/horizontal-rail.ts": "cb387c1c2915a062",
     "css/rail.css": "8b42bee648cfbded",
     "gsap/reveal.ts": "b12e6067bba597de",
@@ -24,9 +24,9 @@
     "split-words.ts": "d76af3671f7a3f06",
     "css/split.css": "ec0c0f651018e84a",
     "count-up.ts": "fc01d059966850e7",
-    "header-theme.ts": "373b8b927140728d",
-    "css/header-theme.css": "b1f36954f889a33d",
-    "css/scroll-effects.css": "4eea7b80222ee406",
+    "header-theme.ts": "a01b30e980f80ca4",
+    "css/header-theme.css": "2a3f8422c6b2dfc7",
+    "css/scroll-effects.css": "7366cc5cb00ac97f",
     "gsap/mount.ts": "8a0cb6d2005a13b2"
   }
 }

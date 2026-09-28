@@ -5,7 +5,8 @@
  * sees, so the same code is exact under native scrolling, Lenis and ScrollSmoother, whose window.scrollY runs ahead of
  * the page on screen. motion/useHeaderTheme.ts wraps it for React; GSAP pages mount it as it is.
  *
- *   <header data-header data-header-ink-default="light">…</header>   fixed; under ScrollSmoother, outside the wrapper
+ *   <header data-header data-header-ink-default="light">…</header>   fixed or sticky; under ScrollSmoother, fixed and
+ *                                                                     outside the wrapper
  *   <section data-header-theme="dark">…</section>                     any token: dark, light, a brand name
  *
  *   const stop = mountHeaderTheme(document.querySelector('[data-header]'))     stop() on teardown
@@ -17,9 +18,10 @@
  *   the ink of the top of the page on the header from the server too: the first paint then needs no write.
  * - The probe line is the header's bottom edge by default (`line: 1`, a fraction of its height from its top edge; 0.5
  *   is its middle). It is read from layout (offsetTop, offsetHeight), so a transform on the header (an entrance,
- *   hide-on-scroll) doesn't move it. A ResizeObserver on the header and a window resize listener rebuild the band when
- *   the line or the viewport moves. Nothing runs while the page scrolls except the observer's own callbacks, one per
- *   section edge crossing the line.
+ *   hide-on-scroll) doesn't move it. A sticky header is probed where it sticks, its `top`: its offsetTop is its place
+ *   in the document, which runs with the scroll once it is stuck. A ResizeObserver on the header and a window resize
+ *   listener rebuild the band when the line or the viewport moves. Nothing runs while the page scrolls except the
+ *   observer's own callbacks, one per section edge crossing the line.
  * - Sections that overlap at the line: the last in document order wins, so a nested section beats its parent, and a
  *   later sibling pulled over an earlier one wins where it covers it.
  * - Sections added, removed or re-themed later (a client-side navigation, a theme switch) are picked up by a
@@ -105,7 +107,9 @@ export function mountHeaderTheme(header: HTMLElement, options: HeaderThemeOption
   }
 
   function measure() {
-    line = header.offsetTop + header.offsetHeight * fraction
+    const style = view.getComputedStyle(header)
+    const top = style.position === 'sticky' ? parseFloat(style.top) || 0 : header.offsetTop
+    line = top + header.offsetHeight * fraction
     // The smaller reading: too short a root only makes the band thick, which rootBounds corrects in one step.
     rootHeight = Math.min(view.innerHeight, doc.documentElement.clientHeight || view.innerHeight)
     corrections = 0

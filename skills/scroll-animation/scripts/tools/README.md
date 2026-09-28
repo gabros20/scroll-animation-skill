@@ -33,8 +33,12 @@ recommended setup if generated files were dropped before context was built.
 Rules (severity in parens): `motion-strict` (error — `motion.*` under
 `LazyMotion strict`), `scroll-well-vs-smooth-scroll` (info — a scroll well
 used alongside a page-wide `scroll-behavior: smooth`), `lenis-with-scroll-
-well` (warn — Lenis alongside the scroll well; both are scroll-position
-writers), `gsap-pin-with-sticky-scene` (error — a GSAP `pin: true` in the
+well` (warn — Lenis alongside the scroll well; both write the scroll
+position, and the v2 well pulls nothing under Lenis). Both scroll-well rules
+match v2's `<ScrollWell />`, `data-scroll-well` and `scrollWell()`, and v1's
+`<PullToCentre />`, `data-pull-to-centre`, `createScrollPull()` and
+`initPullToCentre()`, so a brownfield project is still caught.
+`gsap-pin-with-sticky-scene` (error — a GSAP `pin: true` in the
 same file as a scene (`PinnedScene`, `ScrubVideo`, `pinnedScene()`, `data-scene-*`, or v1's
 `ScrubStage`/`data-scrub-stage`); the scene's pin is CSS `position: sticky` by default, never nest
 it in a GSAP pin), `fractional-amount` (warn),
@@ -71,17 +75,22 @@ pass by accident:
   would otherwise have each step cancel the previous step's still-in-flight
   animation and the harness would stall partway down the page — measured:
   this made the check fail in every cell on a page with smooth scrolling
-  on). Waits ~1.5s to let the contract's up-to-1.3s entrance transition
-  settle, then reports every `[data-reveal-item]` (v1 `[data-stage-item]`) under
-  opacity `0.99`.
-- **`--scenes`** — for each `[data-scene-root]` (v1 `[data-scrub-stage]`), scrolls to *progress*
+  on). Then every `[data-reveal-item]` must reach `data-reveal-state="shown"`
+  (each engine writes it when a reveal lands) and end at opacity `0.99` or
+  more; it waits up to 6s for the last entrances to land. Opacity alone
+  can't tell, because a `clip` item rests hidden at full opacity. An item of
+  a `data-reveal-replay` group resets once it is out of view, so it only has
+  to have been shown once on the way down. Each failure reports its group's
+  `data-reveal` and why: never shown, shown then reset, or shown but still
+  transparent.
+- **`--scenes`** — for each `[data-scene-root]`, scrolls to *progress*
   (never a raw pixel offset — pixel offsets rot the moment content above the
   scene changes height) 0, .25, .5, .75 and 1, using `references/
-  verification.md`'s maths (`top = stage.getBoundingClientRect().top +
-  scrollY`, `range = stage.offsetHeight - innerHeight`, target `y = top +
+  verification.md`'s maths (`top = root.getBoundingClientRect().top +
+  scrollY`, `range = root.offsetHeight - innerHeight`, target `y = top +
   range * progress`), waits 2.5s per step for any glide/spring to settle,
-  and records `data-scene-state` (v1 `data-motion-state`) plus a screenshot at
-  each step. Where a mode flips is scene-specific, but the order isn't: every
+  and records the root's `data-scene-state` (as `motionState` in the report)
+  plus a screenshot at each step. Where a mode flips is scene-specific, but the order isn't: every
   step must have a state, the states only move `head > scrub > tail`, and the
   scene must have left `head` by progress 1. A scene that never transitions,
   steps backwards or skips writing fails the run, and the report prints each

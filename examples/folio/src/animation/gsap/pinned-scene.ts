@@ -176,6 +176,7 @@ export function pinnedScene(root: HTMLElement, options: PinnedSceneOptions = {})
       if (pin && gsapPin) {
         if (pinValue === null) pin.removeAttribute('data-scene-pin')
         else pin.setAttribute('data-scene-pin', pinValue)
+        dropEmptyStyle(pin)
       }
     },
   }
@@ -270,6 +271,8 @@ export function pinnedScene(root: HTMLElement, options: PinnedSceneOptions = {})
     measure()
 
     if (gsapPin) {
+      // A rebuild: the last build's pin was reverted, and left an emptied style attribute behind.
+      dropEmptyStyle(pin)
       // The pin goes under reduced motion, so this trigger is rebuilt with the conditions. A trigger created during a
       // matchMedia rebuild makes GSAP (3.15) drop the page's recorded scroll, and its refresh leaves the page at the
       // top: put the reader back once that refresh is done.
@@ -368,6 +371,14 @@ export function pinnedScene(root: HTMLElement, options: PinnedSceneOptions = {})
   // GSAP drop the page's scroll position (see build).
   if (!gsapPin) trigger = createTrigger(false)
   return handle
+}
+
+/**
+ * A killed pin gets its inline styles back as its old cssText, so a pin that had none keeps an empty style="". The
+ * attribute goes when nothing is left in it.
+ */
+function dropEmptyStyle(el: HTMLElement | null) {
+  if (el?.getAttribute('style') === '') el.removeAttribute('style')
 }
 
 // ── ScrollTrigger freshness ─────────────────────────────────────────────

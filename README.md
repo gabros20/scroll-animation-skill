@@ -24,15 +24,16 @@ skills/scroll-animation/           the skill: ./install.sh copies this folder in
                                    video, header theme, brownfield coexistence, iOS Safari motion,
                                    performance, verification, attribute contract, fluid interop)
   assets/
-    motion/                  React + Motion primitives: Stage/StageItem/StageVeil, CountUp, FadeOnExit,
-                                   ScrubStage, PullToCentre, InViewLoopVideo, useHeaderTheme, useFluidUnit
-                                   (lib/fluid.ts: the fluid units as numbers)
-    gsap/                          the same primitives for GSAP, framework-agnostic and attribute-driven,
-                                   plus src/fluid.ts (fluidPx, fluidValue, fluidEnd) for scaled travel
-    css/                 the CSS → a project's src/styles/animation/ (beside fluid-design's
-                                   src/styles/fluid/): animation.css (both engines: smooth scroll,
-                                   reduced-motion scene collapse, @property --fill and --scene-p) and
-                                   animation.gsap.css (GSAP's pre-JS resting states)
+    motion/                        React + Motion blocks: Reveal/RevealItem/RevealVeil, SplitWords, CountUp,
+                                   PinnedScene, ScrubVideo, FrameSequence, LoopVideo, useHeaderTheme,
+                                   and recipes (Parallax, ScrollWell)
+    gsap/                          the same blocks for GSAP pages, (element, options) functions with a
+                                   destroy(), plus mount(routeRoot) for vanilla pages and the recipes
+    *.ts                           the engine-free cores both engines share (scene, reveal, count-up,
+                                   header-theme, scroll-well) and config.ts + scale.ts (scaled travel)
+    css/                           the stylesheets → src/animation/css/: animation.css (the pre-JS gate
+                                   and failsafe, Lenis, print, @property --fill and --scene-p) and one per
+                                   block (reveal, split, scene, rail, scroll-effects, header-theme)
   scripts/
     audit-motion.mjs               static scan for the silent motion failure modes (self-tested)
     verify-motion.mjs              Playwright: every reveal fires, scene state at progress 0…1
@@ -60,15 +61,15 @@ To run the skill's own checks: `npm ci && npm run verify` from the repository ro
 
 ## The system in one paragraph
 
-Sort every animation by who supplies time. **Trigger** is the default: a `Stage` fires once on
+Sort every animation by who supplies time. **Trigger** is the default: a `Reveal` group fires once on
 arrival and its items move on one tick, translate plus opacity, a 1.3s move on
 `cubic-bezier(0.15, 0.6, 0.2, 1)` with a separately clocked 0.17s fade, trigger lines set by
 `rootMargin` and never by a visibility fraction. **Scroll** is a deliberate promotion, allowed once per
 page: a CSS-sticky pin in `lvh` over a measured range wrapper, mode changes as latches with
 hysteresis, springs only on visuals, and every value over the pin written by hand. **Media** is the
 most expensive: an all-intra video whose loops wrap on `requestVideoFrameCallback` and whose state
-is always re-derived from scroll. Read `scroll-animation/references/motion-architecture.md` for why
-each of those choices is what it is.
+is always re-derived from scroll. Read `scroll-animation/references/entrances.md`, `scenes.md` and
+`video.md` for why each of those choices is what it is.
 
 ## Companion skill: fluid-design
 

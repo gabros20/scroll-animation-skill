@@ -126,3 +126,31 @@ body {
   height: 80vh;
   padding: 40px;
 }
+
+/* scroll-well: at 1280x800, a well that fits (rests centred at 160), one taller than the viewport and one at the top
+   of a pinned scene's range wrapper; the wells are 1200 px apart, so only one is ever engaged. */
+html.smooth {
+  scroll-behavior: smooth;
+}
+.well {
+  width: 70%;
+  margin: 0 auto;
+  padding: 24px;
+  background: #c9c0ad;
+}
+.well.fits {
+  height: 480px;
+}
+.well.tall {
+  height: 1400px;
+}
+.well.clamped {
+  height: 400px;
+}
+.scene {
+  height: 2400px;
+}
+.end {
+  height: 400px;
+  padding: 24px;
+}
