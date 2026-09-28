@@ -7,8 +7,9 @@
  * here, not just this file.
  */
 :root {
-  /* paper */
-  --folio-paper: #f5f1e8;
+  /* paper. #f4f0e9 is the paper the orbit clip on `/` decodes to, so the
+     page runs straight into the frame with no visible edge. */
+  --folio-paper: #f4f0e9;
   --folio-paper-raised: #ece5d6;
   --folio-line: #ddd4c0;
 
@@ -27,12 +28,13 @@
      prefers-color-scheme swap: Folio has no OS-driven dark mode, this is a
      section-level design choice that also flips the header ink. */
   --folio-dark-bg: #17140f;
-  --folio-dark-paper: #f5f1e8;
+  --folio-dark-paper: #f4f0e9;
   --folio-dark-muted: #948c7c;
 
-  /* The sticky header's height. SiteHeader sizes itself from it, so the two
-     can't drift; animation.css reads it for scroll-padding-top, and the
-     animation blocks for anchor offsets and sticky tops. */
+  /* The fixed header's height. SiteHeader sizes itself from it and the body
+     pads by it, so the three can't drift; animation.css reads it for
+     scroll-padding-top, and the animation blocks for anchor offsets, sticky
+     tops and the header-ink probe. */
   --header-h: 4.25rem;
 }
 
@@ -59,6 +61,30 @@
 body {
   background: var(--color-paper);
   color: var(--color-ink);
+}
+
+/*
+ * Header ink (header-theme): SiteHeader carries data-header-ink, the token of
+ * the section under its bottom edge. Unmarked sections are paper, so only the
+ * dark token needs a colour here; the header's own text-ink is the default.
+ * Everything in the bar paints in currentColor, and header-theme.css gives
+ * the whole bar one 200 ms transition.
+ */
+[data-header][data-header-ink="dark"] {
+  color: var(--color-dark-paper);
+}
+
+/*
+ * header-theme.css transitions the header and everything in it. A link that
+ * inherits its colour from a container that is transitioning too restarts
+ * its own transition on every frame of the container's, and lands two to
+ * three times late (measured: 430 ms in Chromium, 590 in WebKit, for 200).
+ * Here the containers only pass the ink down and the links carry the one
+ * 200 ms transition.
+ */
+[data-header],
+[data-header] nav {
+  transition: none;
 }
 
 /*

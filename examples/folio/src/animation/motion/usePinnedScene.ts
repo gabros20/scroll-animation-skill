@@ -20,13 +20,12 @@
  *   computes nearness from the rect, and any progress strictly between 0 and 1 proves the range straddles the view.
  * - Rehydrate: on mount, wake, resize, tab return, bfcache restore, focus and reduced-motion changes the scene
  *   re-derives mode, acts and band from scroll, coalesced to one frame, and hands the result to `onRehydrate`.
- * - Reduced motion (live, on config.ts REDUCED_MOTION_QUERY) holds the head; css/scene.css collapses the runway.
+ * - Reduced motion (live, motion/useReducedMotionLive.ts) holds the head; css/scene.css collapses the runway.
  * - Hide/show safe: everything is created in effects and torn down in their cleanup (Next's Activity hides routes).
  */
 import { useMotionValue, useMotionValueEvent, useScroll, type MotionValue } from 'motion/react'
-import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type RefObject } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 
-import { REDUCED_MOTION_QUERY } from '../config'
 import {
   ACT_HYSTERESIS,
   SCENE_HOLDS,
@@ -46,25 +45,12 @@ import {
   type SceneMode,
   type SceneRehydrate,
 } from '../scene'
+import { useReducedMotionLive } from './useReducedMotionLive'
 
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect
 
-/**
- * Reduced motion, live: the same query css/scene.css collapses on, so the JS hold and the CSS collapse always agree.
- * Motion 13.4's useReducedMotion reads the setting once per mount (useState, despite its docs), so a visitor who
- * switches it mid-visit would get a collapsed runway over a still-scrubbing scene.
- */
-function subscribeReduced(onChange: () => void) {
-  const query = window.matchMedia(REDUCED_MOTION_QUERY)
-  query.addEventListener('change', onChange)
-  return () => query.removeEventListener('change', onChange)
-}
-const readReduced = () => window.matchMedia(REDUCED_MOTION_QUERY).matches
-const readReducedOnServer = () => false
-
-export function useReducedMotionLive(): boolean {
-  return useSyncExternalStore(subscribeReduced, readReduced, readReducedOnServer)
-}
+/** Re-exported for imports that predate motion/useReducedMotionLive.ts; removed with the v1 leftovers. */
+export { useReducedMotionLive }
 
 /** Module constant: a fresh array each render would resubscribe the scroll listener. */
 const PIN_OFFSET = ['start start', 'end end'] as const satisfies [string, string]

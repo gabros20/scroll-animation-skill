@@ -11,8 +11,8 @@
   "files": {
     "config.ts": "83ff17150c8cc8e2",
     "scale.ts": "322b05138c6a47d1",
-    "css/animation.css": "82b851a4be68fb3e",
-    "gsap/setup.ts": "694d3d67425bdddc",
+    "css/animation.css": "95eb55e7b0213941",
+    "gsap/setup.ts": "fb9601866eb05ace",
     "motion/MotionProvider.tsx": "68e3d30eb593279e",
     "smooth/authority.ts": "4e4a711f6a20aaaa",
     "smooth/lenis.ts": "3388063654afd797",
@@ -23,11 +23,25 @@
     "media/video-controller.ts": "363424cd3bf6a2ef",
     "media/camera.ts": "aac8e28e75cb8011",
     "gsap/scrub-video.ts": "45718d491829b1ea",
-    "motion/usePinnedScene.ts": "ececb1279b9371a2",
+    "motion/usePinnedScene.ts": "f70b2f7b4803323d",
     "motion/PinnedScene.tsx": "a2aa87d7431ac1cd",
     "media/frame-sequence.ts": "70fb5f080360b1a0",
     "motion/FrameSequence.tsx": "b76a7c7398dfecef",
     "motion/ScrubVideo.tsx": "3c48158b20a506f1",
-    "motion/LoopVideo.tsx": "2fa982fdf1c343dd"
+    "motion/LoopVideo.tsx": "2fa982fdf1c343dd",
+    "motion/useReducedMotionLive.ts": "f16b298eb3d9321e",
+    "motion/Reveal.tsx": "d7474e002468a7be",
+    "css/reveal.css": "2d31e05119550d32",
+    "motion/SplitWords.tsx": "5e49833fc89d4d73",
+    "split-words.ts": "d76af3671f7a3f06",
+    "css/split.css": "ec0c0f651018e84a",
+    "count-up.ts": "fc01d059966850e7",
+    "motion/CountUp.tsx": "23d23fb0521f6ae4",
+    "header-theme.ts": "373b8b927140728d",
+    "motion/useHeaderTheme.ts": "0a479438b2642f4e",
+    "css/header-theme.css": "b1f36954f889a33d",
+    "gsap/horizontal-rail.ts": "cb387c1c2915a062",
+    "css/rail.css": "8b42bee648cfbded",
+    "css/scroll-effects.css": "4eea7b80222ee406"
   }
 }
