@@ -393,7 +393,7 @@ const rules = [
         while ((m = re.exec(content))) {
           pushFinding(acc, {
             rule: this.id, file, content, index: m.index, matchLen: m[0].length, severity: 'error',
-            why: 'display: contents generates no box, so IntersectionObserver has nothing to observe. If the element carrying this rule also has whileInView, data-stage or is a Stage, its reveal never fires (motion-architecture.md §8).',
+            why: 'display: contents generates no box, so IntersectionObserver has nothing to observe. If the element carrying this rule also has whileInView or data-reveal, or is a Reveal (v1: data-stage, Stage), its reveal never fires (motion-architecture.md §8).',
             fix: 'Give the element a real box (e.g. display: flex/block) or move the reveal trigger to an ancestor that does generate one.'
           })
         }
@@ -402,12 +402,12 @@ const rules = [
       for (const tag of extractTags(content)) {
         const hasContents = /\bcontents\b/.test(tag.text) && /className\s*=/.test(tag.text)
         if (!hasContents) continue
-        const hasTrigger = /whileInView|data-stage\b|<Stage\b/.test(tag.text)
+        const hasTrigger = /whileInView|data-stage\b|<Stage\b|data-reveal(?![\w-])|<Reveal\b/.test(tag.text)
         if (!hasTrigger) continue
         pushFinding(acc, {
           rule: this.id, file, content, index: tag.index, matchLen: tag.text.length, severity: 'error',
-          why: 'This element carries a contents class alongside a reveal trigger (whileInView/data-stage/Stage). display: contents generates no box, so the trigger never fires — a whole stat grid has shipped stuck at opacity 0 this way.',
-          fix: 'Drop contents from this element, or move whileInView/data-stage to a wrapping element that keeps a real box.'
+          why: 'This element carries a contents class alongside a reveal trigger (whileInView, data-reveal, Reveal; v1: data-stage, Stage). display: contents generates no box, so the trigger never fires — a whole stat grid has shipped stuck at opacity 0 this way.',
+          fix: 'Drop contents from this element, or move the trigger (whileInView, data-reveal, Reveal) to a wrapping element that keeps a real box.'
         })
       }
     }

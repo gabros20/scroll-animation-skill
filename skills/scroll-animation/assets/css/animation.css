@@ -53,14 +53,15 @@ html[data-animation-failsafe] :is([data-stage-veil], [data-reveal-veil]) {
 }
 
 /*
-  <noscript> rule for Motion pages: put it in the document <head>, not in a stylesheet (it has to apply even when
-  this file never loads). Motion server-renders an entrance item's hidden `initial` state as an inline style, which
-  the gate above can't reach; with JavaScript off nothing would ever clear it.
+  <noscript> rule, for v1 Stage pages only: put it in the document <head>, not in a stylesheet (it has to apply even
+  when this file never loads). Stage server-renders an item's hidden `initial` state as an inline style, which the
+  gate above can't reach; with JavaScript off nothing would ever clear it. Reveal needs no rule: its hidden state is
+  CSS under the gate (css/reveal.css), never an inline style.
 
     <noscript>
       <style>
-        [data-stage-item], [data-reveal-item] { opacity: 1 !important; transform: none !important; }
-        [data-stage-veil], [data-reveal-veil] { display: none !important; }
+        [data-stage-item] { opacity: 1 !important; transform: none !important; }
+        [data-stage-veil] { display: none !important; }
       </style>
     </noscript>
 */
@@ -109,6 +110,10 @@ html.lenis body {
   :is([data-stage-item], [data-reveal-item]) {
     opacity: 1 !important;
     transform: none !important;
+    translate: none !important;
+    scale: none !important;
+    clip-path: none !important;
+    filter: none !important;
     visibility: visible !important;
   }
   :is([data-stage-veil], [data-reveal-veil]) {

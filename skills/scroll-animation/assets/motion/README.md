@@ -10,14 +10,17 @@ React 19 and Motion 13 (`motion/react`). `scroll-animation add <block>` copies a
 2. Mount `MotionProvider` (`MotionProvider.tsx`, the `motion-provider` block) once near the root. It runs
    `LazyMotion strict`, so blocks render `m.*` and a stray `motion.*` throws instead of silently loading the full
    bundle; `MotionConfig reducedMotion="user"`; and it marks the engine ready, which switches off the CSS failsafe.
-3. Import `css/animation.css`, and `css/scene.css` for pinned scenes (`../css/README.md`). The `<noscript>` rule for
-   server-rendered hidden states is in `animation.css`'s comments; it belongs in `<head>`.
+   The block also ships `useReducedMotionLive()` (`useReducedMotionLive.ts`): `MotionConfig` never reaches a hand
+   write, and Motion 13.4's `useReducedMotion()` reads the setting once per mount.
+3. Import `css/animation.css`, plus `css/reveal.css` for entrances and `css/scene.css` for pinned scenes
+   (`../css/README.md`).
 
 ## The v2 blocks
 
 | File | Block | What it is | Reference |
 | --- | --- | --- | --- |
-| `usePinnedScene.ts`, `PinnedScene.tsx` | `pinned-scene` | the range wrapper, sticky pin and content layer: exact progress and band (MotionValues; `pinned` can be a render function of them), head/scrub/tail modes, acts made `inert`, rehydrate from scroll; also `useReducedMotionLive()` | `references/scenes.md` |
+| `Reveal.tsx` | `reveal` | triggered entrances: a `Reveal` group plays its `RevealItem`s (rise, fade, clip, scale-in) on the measured curves at the trigger line, or on mount; `RevealVeil` lifts a load veil. The hidden state is CSS under the pre-JS gate, so the server renders no inline style | `references/motion-architecture.md` |
+| `usePinnedScene.ts`, `PinnedScene.tsx` | `pinned-scene` | the range wrapper, sticky pin and content layer: exact progress and band (MotionValues; `pinned` can be a render function of them), head/scrub/tail modes, acts made `inert`, rehydrate from scroll | `references/scenes.md` |
 | `ScrubVideo.tsx` | `scrub-video` | a scrubbed all-intra video on `PinnedScene`, with loops or holds, a camera and a backdrop | `references/video.md` |
 | `FrameSequence.tsx` | `frame-sequence` | an image sequence on a canvas, fed a MotionValue or a number | `references/sequences.md` |
 | `LoopVideo.tsx` | `loop-video` | an in-view background loop with a WCAG 2.2.2 pause control | `references/video.md` |

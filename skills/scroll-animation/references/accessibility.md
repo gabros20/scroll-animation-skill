@@ -67,7 +67,7 @@ Each engine covers only its own animations. Anything you write by hand checks th
   ```
 - **Motion.** `MotionConfig reducedMotion="user"` (in `MotionProvider`) drops transform and layout animation. A
   `useMotionValueEvent` writer, a typewriter or any timing-only sequence reads the setting itself, live, with
-  `useReducedMotionLive()` (in `motion/usePinnedScene.ts`): Motion 13.4's `useReducedMotion()` reads it once, at mount.
+  `useReducedMotionLive()` (`motion/useReducedMotionLive.ts`): Motion 13.4's `useReducedMotion()` reads it once, at mount.
 - **View Transitions.** CSS can't intercept `document.startViewTransition()`: guard the call in JS, and shorten the
   pseudo-element animations under `reduce`.
   ```css

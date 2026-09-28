@@ -1,0 +1,42 @@
+/* The fixture's layout: one row per group, groups a screen and a half apart, so every group starts well below the
+   trigger line of the one before. Nothing here touches opacity, transform or clip-path: css/reveal.css owns them. */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #111;
+  color: #eee;
+  font: 16px/1.4 system-ui, sans-serif;
+}
+.row {
+  display: flex;
+  gap: 16px;
+  padding: 0 16px;
+}
+.row > [data-reveal-item] {
+  flex: 1;
+  height: 120px;
+  margin: 0;
+  background: #2d6cdf;
+  font-size: 16px;
+}
+.first {
+  margin-top: 40px;
+}
+.spacer {
+  height: 150vh;
+}
+.tail {
+  height: 100vh;
+}
+.veil {
+  background: #111;
+}
+/* Items with a translate of their own, which has to compose with every engine's reveal and be intact once it lands
+   (GSAP folds it into its transform while it tweens). */
+#view-rise {
+  translate: 12px 0;
+}
+#view-scale {
+  translate: 5% 0;
+}

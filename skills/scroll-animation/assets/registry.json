@@ -67,7 +67,7 @@
       "reference": "references/scroll-authority.md"
     },
     "motion-provider": {
-      "summary": "LazyMotion strict + MotionConfig reducedMotion=\"user\" at the root of a Motion tree; marks the engine ready",
+      "summary": "LazyMotion strict + MotionConfig reducedMotion=\"user\" at the root of a Motion tree; marks the engine ready; useReducedMotionLive() for hand writers",
       "clock": "none",
       "tier": "primitive",
       "profiles": [
@@ -78,7 +78,8 @@
       "engines": {
         "motion": {
           "files": [
-            "motion/MotionProvider.tsx"
+            "motion/MotionProvider.tsx",
+            "motion/useReducedMotionLive.ts"
           ],
           "requires": [
             "config"
@@ -276,6 +277,58 @@
           "packages": [
             "motion"
           ]
+        }
+      },
+      "reference": "references/motion-architecture.md"
+    },
+    "reveal": {
+      "summary": "Triggered entrances (rise, fade, clip, scale-in) on the measured curves, at the trigger line or on mount: a CSS resting state under the pre-JS gate, failsafe-safe, live reduced motion, a load veil, Activity-safe",
+      "clock": "trigger",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "motion": {
+          "files": [
+            "motion/Reveal.tsx",
+            "css/reveal.css"
+          ],
+          "requires": [
+            "base-css",
+            "config",
+            "motion-provider"
+          ],
+          "packages": [
+            "motion",
+            "react"
+          ]
+        },
+        "gsap": {
+          "files": [
+            "gsap/reveal.ts",
+            "css/reveal.css"
+          ],
+          "requires": [
+            "base-css",
+            "gsap-setup"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        },
+        "agnostic": {
+          "files": [
+            "reveal.ts",
+            "css/reveal.css"
+          ],
+          "requires": [
+            "base-css",
+            "config"
+          ],
+          "packages": []
         }
       },
       "reference": "references/motion-architecture.md"
@@ -518,6 +571,7 @@
           ],
           "requires": [
             "config",
+            "motion-provider",
             "scene-core",
             "scene-css"
           ],
