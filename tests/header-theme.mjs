@@ -689,11 +689,106 @@ const CHECKS = {
       const { page: reduced } = await t.open('', { reducedMotion: 'reduce' })
       const still = await reduced.evaluate(() => window.__t.style('[data-header]'))
       const same = (s) => /color/.test(s.property) && s.duration.split(', ').every((d) => d === '0.2s') && /ease-out/.test(s.timing)
+      const inherited = (s) => s.property.split(', ').filter((p) => ['color', 'fill', 'stroke'].includes(p))
       return [
         [
-          'css/header-theme.css: one 200 ms ease-out colour transition on the header and every part; none under reduced motion',
-          same(header) && same(logo) && still.duration.split(', ').every((d) => d === '0s'),
-          `header ${header.duration} ${header.timing} · logo ${logo.duration} · reduced: ${still.duration}`,
+          'css/header-theme.css: one 200 ms ease-out transition, every colour on the header, only what doesn\'t inherit on its parts; none under reduced motion',
+          same(header) && inherited(header).length === 3 && same(logo) && inherited(logo).length === 0 &&
+            still.duration.split(', ').every((d) => d === '0s'),
+          `header ${header.property} ${header.duration} ${header.timing} · logo ${logo.property} · reduced: ${still.duration}`,
+        ],
+      ]
+    },
+  },
+
+  // A link two levels down inherits the header's colour. Transitioning it there too made it restart on every frame of
+  // the header's transition and trail it by 200–400 ms (seen in Folio).
+  trail: {
+    pages: ['native'],
+    async run(t) {
+      const { page } = await t.open()
+      await jump(page, scrollFor(T.day + 400))
+      await inkBecomes(page, 'day')
+      await page.evaluate(() => window.__t.frames(30))
+      const r = await page.evaluate(
+        (y) =>
+          new Promise((resolve) => {
+            const header = document.querySelector('[data-header]')
+            const link = document.querySelector('[data-link]')
+            let flip = 0
+            let final = ''
+            let headerAt = 0
+            let linkAt = 0
+            const start = performance.now()
+            window.__fx.scrollTo(y, true)
+            const tick = (now) => {
+              if (!flip && header.getAttribute('data-header-ink') === 'night') {
+                flip = now
+                // The ink's target colour, read off a probe that takes the same rule without a transition.
+                const probe = header.cloneNode(false)
+                probe.style.transition = 'none'
+                probe.style.visibility = 'hidden'
+                document.body.append(probe)
+                final = getComputedStyle(probe).color
+                probe.remove()
+              }
+              if (flip && !headerAt && getComputedStyle(header).color === final) headerAt = now
+              if (flip && !linkAt && getComputedStyle(link).color === final) linkAt = now
+              if ((headerAt && linkAt) || now - start > 2000) {
+                resolve({ final, header: headerAt && Math.round(headerAt - flip), link: linkAt && Math.round(linkAt - flip) })
+              } else requestAnimationFrame(tick)
+            }
+            requestAnimationFrame(tick)
+          }),
+        scrollFor(T.hero + 500),
+      )
+      return [
+        [
+          'a nested link that inherits the ink lands with the header, not on a transition of its own',
+          r.header > 0 && r.link > 0 && r.link - r.header <= 50,
+          JSON.stringify(r),
+        ],
+      ]
+    },
+  },
+
+  // A sticky header's offsetTop is its place in the document, which runs with the scroll once it sticks: mounted mid-page
+  // (a route shown again, a resize), a probe read from it lands off screen. The block probes where it sticks instead.
+  sticky: {
+    pages: ['native'],
+    async run(t) {
+      const { page } = await t.open()
+      await page.evaluate(() => {
+        const header = document.querySelector('[data-header]')
+        header.style.position = 'sticky'
+        header.style.top = '0px'
+      })
+      const rows = []
+      for (const token of ['day', 'brand', 'night']) {
+        const y = await page.evaluate((tk) => {
+          const el = document.querySelector(`[data-header-theme="${tk}"]`)
+          const header = document.querySelector('[data-header]')
+          return el.getBoundingClientRect().top + window.scrollY + 100 - header.offsetHeight
+        }, token)
+        await jump(page, y)
+        await page.evaluate(() => window.__fx.mount())
+        const ms = await until(page, (w) => window.__t.ink() === w, token, 2000)
+        const seen = await page.evaluate(() => {
+          const line = document.querySelector('[data-header]').getBoundingClientRect().bottom + 0.5
+          let token = null
+          for (const el of document.querySelectorAll('[data-header-theme]')) {
+            const r = el.getBoundingClientRect()
+            if (r.height > 0 && r.top <= line && r.bottom > line) token = el.getAttribute('data-header-theme')
+          }
+          return token
+        })
+        rows.push({ token, ms, seen, ink: await page.evaluate(() => window.__t.ink()) })
+      }
+      return [
+        [
+          'a sticky header mounted mid-page, once stuck, takes the ink of the section under its bottom edge',
+          rows.every((r) => r.ms !== null && r.seen === r.token),
+          rows.map((r) => `${r.token}: ink ${r.ink}, on screen ${r.seen}${r.ms === null ? ' (never)' : ''}`).join(' · '),
         ],
       ]
     },
