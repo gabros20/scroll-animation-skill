@@ -36,7 +36,7 @@ jobs:
           version: 10
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: npm ci
-      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright install --with-deps chromium webkit firefox
       - run: npm run pretest
       - run: npm run test:foundation
       - run: npm run test:traces
@@ -53,7 +53,7 @@ jobs:
         working-directory: examples/folio
       - run: pnpm build
         working-directory: examples/folio
-      - run: pnpm exec playwright install chromium webkit
+      - run: pnpm exec playwright install chromium webkit firefox
         working-directory: examples/folio
       - run: pnpm check:authority
         working-directory: examples/folio

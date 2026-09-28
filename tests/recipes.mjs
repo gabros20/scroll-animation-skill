@@ -857,6 +857,10 @@ const CHECKS = {
       const { page } = await t.open({ reducedMotion: 'reduce' })
       const tops = await call(page, 'tops')
       await page.mouse.move(640, 400)
+      // Two notches: from 200 a native page lands at 900 (Linux Chromium pages 87.5% of the viewport) or 960 (macOS),
+      // a step at 800. From 100, Linux's native page landed exactly on the next section top and read as a step.
+      await page.mouse.wheel(0, 100)
+      await settledY(page)
       await page.mouse.wheel(0, 100)
       const wheel = await settledY(page)
       await page.keyboard.press('PageDown')
