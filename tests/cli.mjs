@@ -159,10 +159,11 @@ try {
   for (const f of ['gsap/scrollPull.ts', 'gsap/config.ts', 'gsap/eases.ts']) expect(existsSync(join(g, 'lib/motion', f)), `custom --dir got ${f}`)
 
   r = run(g, 'add', 'header-theme')
-  expect(r.code === 0 && existsSync(join(g, 'lib/motion/gsap/headerTheme.ts')), "a later add with no --dir reuses the lock's recorded directory", r.out)
+  expect(r.code === 0 && existsSync(join(g, 'lib/motion/header-theme.ts')), "a later add with no --dir reuses the lock's recorded directory", r.out)
+  expect(!existsSync(join(g, 'lib/motion/motion/useHeaderTheme.ts')), 'a GSAP project gets the agnostic header-theme core, not the Motion hook', r.out)
   expect(!existsSync(join(g, 'src/animation')), 'no default src/animation was created once a lock directory existed')
   const lock2 = JSON.parse(readFileSync(join(g, 'lib/motion/.scroll-animation.lock.json'), 'utf8'))
-  expect(Object.keys(lock2.files).some((f) => f.includes('headerTheme')) && Object.keys(lock2.files).some((f) => f.includes('scrollPull')), 'the lock accumulates files across separate add calls', JSON.stringify(lock2))
+  expect(Object.keys(lock2.files).some((f) => f.includes('header-theme')) && Object.keys(lock2.files).some((f) => f.includes('scrollPull')), 'the lock accumulates files across separate add calls', JSON.stringify(lock2))
 
   // ── add: engine disambiguation ───────────────────────────────────────
   const amb = join(root, 'ambiguous')
@@ -172,6 +173,9 @@ try {
   expect(r.code === 2 && r.out.includes('--engine'), 'add fails clearly (usage) when no installed dependency picks an engine', r.out)
   r = run(amb, 'add', 'stage', '--engine', 'gsap')
   expect(r.code === 0 && existsSync(join(amb, 'src/animation/gsap/stage.ts')), '--engine overrides when auto-detection is ambiguous', r.out)
+
+  r = run(amb, 'add', 'reveal', '--dry-run')
+  expect(r.code === 0 && /write\s+reveal\.ts/.test(r.out) && !r.out.includes('gsap/reveal.ts'), 'with no engine installed, a block with an agnostic engine takes it', r.out)
 
   const both = join(root, 'both-engines')
   mkdirSync(both, { recursive: true })

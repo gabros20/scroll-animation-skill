@@ -80,8 +80,8 @@ jobs:
 
   # The entrance, text and layered blocks in Chromium, WebKit and Firefox. Firefox stable has no CSS scroll-driven
   # timelines, so its runs prove every static fallback. Reveal in its three engines (Motion, GSAP, CSS + IO), the
-  # horizontal rail, the text blocks (their late web font is a system monospace served slowly: DejaVu Sans Mono) and
-  # the CSS scroll effects.
+  # horizontal rail, the text blocks (their late web font is a system monospace served slowly: DejaVu Sans Mono), the
+  # CSS scroll effects, the header ink under each scroll authority, and count-up.
   blocks:
     runs-on: ubuntu-latest
     steps:
@@ -96,3 +96,5 @@ jobs:
       - run: npm run test:rail
       - run: npm run test:text
       - run: npm run test:scroll-effects
+      - run: npm run test:header-theme
+      - run: npm run test:count-up
