@@ -9,8 +9,9 @@ Plain TypeScript for GSAP pages: Vite, Astro, a static page, or React through `u
 1. `npm i gsap` (and `@gsap/react` in React).
 2. Call `setupGsap()` (`setup.ts`) once, client-side, before any block runs. It registers ScrollTrigger and the
    measured eases, turns on `ignoreMobileResize` (an iOS toolbar isn't a layout change) and marks the engine ready.
-3. Import `css/animation.css`, then `css/scene.css` for pinned scenes, then `css/animation.gsap.css` only with the v1
-   entrance blocks below (`../css/README.md`).
+3. Import `css/animation.css`, then `css/reveal.css` for entrances, `css/split.css` for SplitWords, `css/scene.css`
+   for pinned scenes, `css/rail.css` for rails, and `css/animation.gsap.css` only with the v1 entrance blocks below
+   (`../css/README.md`).
 4. Mount per route: in React inside `useGSAP(() => …, { scope })`, on a vanilla page inside the route's
    `mount(routeRoot)`, and call `destroy()` when the route goes away or is hidden.
 
@@ -18,18 +19,22 @@ Plain TypeScript for GSAP pages: Vite, Astro, a static page, or React through `u
 
 | File | Block | Call | Reference |
 | --- | --- | --- | --- |
+| `reveal.ts` | `reveal` | `reveal(root, options)`: every `[data-reveal]` group under `root` plays its `[data-reveal-item]`s at the trigger line or on mount, on ScrollTrigger.batch | `references/motion-architecture.md` |
+| `split-reveal.ts` | `split-reveal` | `splitReveal(el, options)`: SplitText lines rise at the trigger line once the font is in; aria by element; the original nodes back after | `references/accessibility.md` §5 |
+| `horizontal-rail.ts` | `horizontal-rail` | `horizontalRail(root, options)`: a pinned scene sliding a track of panels sideways; RTL, focus that follows, a native scroller under reduced motion | `references/scenes.md` |
 | `pinned-scene.ts` | `pinned-scene` | `pinnedScene(root, options)`: exact progress, head/scrub/tail modes, acts made `inert`; `pin: 'gsap'` under ScrollSmoother | `references/scenes.md` |
 | `scrub-video.ts` | `scrub-video` | `scrubVideo(root, options)`: a pinned scene plus the video controller, camera and backdrop | `references/video.md` |
 | `frame-sequence.ts` | `frame-sequence` | `frameSequence(canvas, { manifest, trigger })` or `{ manifest, progress: () => p }` | `references/sequences.md` |
 | `loop-video.ts` | `loop-video` | `loopVideo(video, options)`, or `initLoopVideos(root)` over `[data-loop-video]`, with a WCAG 2.2.2 pause control | `references/video.md` |
-| `setup.ts` | `gsap-setup` | `setupGsap({ plugins })`, `MOTION_CONDITIONS`, `CONDITIONS`, `EASES` | `references/scroll-authority.md` |
+| `setup.ts` | `gsap-setup` | `setupGsap({ plugins })`, `MOTION_CONDITIONS`, `CONDITIONS`, `EASES`, `lineFromMargin(margin)` (the IntersectionObserver trigger line as ScrollTrigger positions) | `references/scroll-authority.md` |
 
 The engine-agnostic cores they drive sit one level up: `scene.ts`, `media/video-controller.ts`, `media/camera.ts` and
 `media/frame-sequence.ts`, shared with the Motion blocks.
 
 - **Build ScrollTriggers on `MOTION_CONDITIONS` only.** When a `gsap.matchMedia` condition changes, GSAP 3.15 leaves
-  the page at scroll 0, so the breakpoint never goes in the conditions of a build that creates triggers; branch on
-  `isDesktop()` inside it. Create scenes outside your own `matchMedia` callbacks.
+  the page at scroll 0 (Chromium, WebKit and Firefox), so the breakpoint never goes in the conditions of a build that
+  creates triggers; branch on `isDesktop()` inside it. Create scenes outside your own `matchMedia` callbacks. The
+  entrances keep their triggers outside the build altogether, so a reduced-motion switch can't move the reader.
 - **Create scenes in page order** (or give `refreshPriority`), so ScrollTrigger refreshes them top to bottom.
 - **Scenes read a ScrollTrigger with no pin** on the range wrapper, which matches the wrapper's rect maths once
   refreshed (spike S5), and keep it fresh with one shared ResizeObserver on `<body>`. On a ScrollSmoother page, where

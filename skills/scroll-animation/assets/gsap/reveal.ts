@@ -37,7 +37,15 @@
  *   folds them into the transform for the length of the entrance and they are handed back when it lands.
  */
 import { MOTION, TRIGGERS, failsafeFired } from '../config'
-import { EASES, MOTION_CONDITIONS, ScrollTrigger, gsap, setupGsap, type MotionConditions } from './setup'
+import {
+  EASES,
+  MOTION_CONDITIONS,
+  ScrollTrigger,
+  gsap,
+  lineFromMargin,
+  setupGsap,
+  type MotionConditions,
+} from './setup'
 
 export interface RevealOptions {
   /** 'view' (default): each item as it crosses the line. 'mount': at once. */
@@ -202,27 +210,6 @@ function readGroup(group: Element | null, defaults: RevealOptions): Group {
     stagger: Number.isFinite(stagger) && stagger >= 0 ? stagger : (defaults.stagger ?? MOTION.lineStagger),
     replay: trigger === 'view' && (!!group?.hasAttribute('data-reveal-replay') || defaults.replay === true),
   }
-}
-
-/**
- * A rootMargin as ScrollTrigger positions: `start` where the item's top meets the bottom edge of the margin box,
- * `end` where its bottom leaves the top edge. TRIGGERS.reveal ('0px 0px -20% 0px') is start 'top 80%', end
- * 'bottom top', the same line an IntersectionObserver draws.
- */
-function lineFromMargin(margin: string): { start: string; end: string } {
-  const values = margin.trim().split(/\s+/)
-  const top = values[0] ?? '0px'
-  const bottom = values[2] ?? top
-  return { start: `top ${edgeAt('bottom', bottom)}`, end: `bottom ${edgeAt('top', top)}` }
-}
-
-/** A viewport edge moved outward by a margin (the bottom edge down, the top edge up), as a ScrollTrigger position. */
-function edgeAt(edge: 'top' | 'bottom', length: string): string {
-  const match = /^(-?\d*\.?\d+)(px|%)?$/.exec(length)
-  // Down the screen is positive.
-  const offset = (match ? Number(match[1]) : 0) * (edge === 'bottom' ? 1 : -1)
-  if (match?.[2] === '%') return `${(edge === 'bottom' ? 100 : 0) + offset}%`
-  return offset === 0 ? edge : `${edge}${offset > 0 ? '+=' : '-='}${Math.abs(offset)}`
 }
 
 const isShown = (el: Element) => el.getAttribute('data-reveal-state') === 'shown'

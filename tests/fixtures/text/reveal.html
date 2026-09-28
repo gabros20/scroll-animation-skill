@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>text fixture: split-reveal and a late web font</title>
+    <!--
+      split-reveal (spikes S6a, S6b). The heading and the paragraph are set in 'Late', which the preview server
+      answers itself, TEXT_FONT_DELAY ms after the request, with font-display: swap: they first lay out in Georgia.
+      tests/text.mjs fills <body> from src/samples.ts.
+    -->
+    <style>
+      @font-face {
+        font-family: 'Late';
+        src: url('/__late-font');
+        font-display: swap;
+      }
+    </style>
+    <link rel="stylesheet" href="./src/fixture.css" />
+  </head>
+  <body>
+    <!--reveal-->
+    <script type="module" src="./src/reveal.ts"></script>
+  </body>
+</html>

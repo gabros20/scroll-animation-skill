@@ -79,8 +79,8 @@ jobs:
       - run: npm run test:scrub-video
 
   # The entrance, text and layered blocks in Chromium, WebKit and Firefox. Firefox stable has no CSS scroll-driven
-  # timelines, so its runs prove every static fallback. Reveal in its three engines (Motion, GSAP, CSS + IO) and the
-  # horizontal rail.
+  # timelines, so its runs prove every static fallback. Reveal in its three engines (Motion, GSAP, CSS + IO), the
+  # horizontal rail, and the text blocks (their late web font is a system monospace served slowly: DejaVu Sans Mono).
   blocks:
     runs-on: ubuntu-latest
     steps:
@@ -88,7 +88,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - run: sudo apt-get update && sudo apt-get install -y fonts-dejavu-core
       - run: npm ci
       - run: npx playwright install --with-deps chromium webkit firefox
       - run: npm run test:reveal
       - run: npm run test:rail
+      - run: npm run test:text
