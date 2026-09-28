@@ -77,3 +77,18 @@ jobs:
       - run: npm run test:sequence
       - run: npm run test:loop-video
       - run: npm run test:scrub-video
+
+  # The entrance, text and layered blocks in Chromium, WebKit and Firefox. Firefox stable has no CSS scroll-driven
+  # timelines, so its runs prove every static fallback. Reveal in its three engines (Motion, GSAP, CSS + IO) and the
+  # horizontal rail.
+  blocks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit firefox
+      - run: npm run test:reveal
+      - run: npm run test:rail
