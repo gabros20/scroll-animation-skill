@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en" style="--header-h: 80px">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>scroll-effects fixture: sticky stacks</title>
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/animation.css" />
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/scroll-effects.css" />
+    <link rel="stylesheet" href="./src/page.css" />
+  </head>
+  <body>
+    <!-- Under an 80 px header (--header-h, so scroll-padding-top and the cards' sticky top). Stack A: four tuned cards
+         exactly as tall as the viewport under the header, the last held by a 200 px ::after spacer (src/page.css).
+         Stack B: thirteen 400 px cards on the defaults, past the 12-card name table, with no spacer. -->
+    <div class="spacer"></div>
+    <section data-scroll-fx="sticky-stack" data-probe="stack-a" style="--fx-scale-from: 0.8; --fx-fade-from: 0.5">
+      <article class="card full" data-probe="a1">A1</article>
+      <article class="card full" data-probe="a2">A2</article>
+      <article class="card full" data-probe="a3">A3</article>
+      <article class="card full" data-probe="a4">A4</article>
+    </section>
+    <div class="spacer"></div>
+    <section data-scroll-fx="sticky-stack" data-probe="stack-b">
+      <article class="card short" data-probe="b1">B1</article>
+      <article class="card short" data-probe="b2">B2</article>
+      <article class="card short" data-probe="b3">B3</article>
+      <article class="card short" data-probe="b4">B4</article>
+      <article class="card short" data-probe="b5">B5</article>
+      <article class="card short" data-probe="b6">B6</article>
+      <article class="card short" data-probe="b7">B7</article>
+      <article class="card short" data-probe="b8">B8</article>
+      <article class="card short" data-probe="b9">B9</article>
+      <article class="card short" data-probe="b10">B10</article>
+      <article class="card short" data-probe="b11">B11</article>
+      <article class="card short" data-probe="b12">B12</article>
+      <article class="card short" data-probe="b13">B13</article>
+    </section>
+    <div class="spacer"></div>
+    <script type="module" src="./src/probe.ts"></script>
+  </body>
+</html>

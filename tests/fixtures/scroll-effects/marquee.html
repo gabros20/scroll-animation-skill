@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>scroll-effects fixture: marquees</title>
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/animation.css" />
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/scroll-effects.css" />
+    <link rel="stylesheet" href="./src/page.css" />
+  </head>
+  <body>
+    <!-- Two 600 px marquees of two 900 px copies each; the second runs reversed. The button pauses the first. -->
+    <div class="spacer short"></div>
+    <div class="marquee" id="ticker" data-scroll-fx="marquee" data-probe="m1" style="--fx-marquee-duration: 8s">
+      <div data-probe="m1-track">
+        <ul class="copy-list" data-probe="m1-copy1">
+          <li><a href="#one">One</a></li>
+          <li><a href="#two">Two</a></li>
+          <li><a href="#three">Three</a></li>
+          <li><a href="#four">Four</a></li>
+          <li><a href="#five">Five</a></li>
+          <li><a href="#six">Six</a></li>
+        </ul>
+        <ul class="copy-list" data-probe="m1-copy2" aria-hidden="true" inert>
+          <li><a href="#one">One</a></li>
+          <li><a href="#two">Two</a></li>
+          <li><a href="#three">Three</a></li>
+          <li><a href="#four">Four</a></li>
+          <li><a href="#five">Five</a></li>
+          <li><a href="#six">Six</a></li>
+        </ul>
+      </div>
+    </div>
+    <button class="toggle" type="button" aria-controls="ticker" aria-pressed="false" data-probe="toggle">
+      Pause the ticker
+    </button>
+    <div
+      class="marquee"
+      id="ticker-reversed"
+      data-scroll-fx="marquee"
+      data-probe="m2"
+      style="--fx-marquee-duration: 8s; --fx-marquee-direction: reverse"
+    >
+      <div data-probe="m2-track">
+        <ul class="copy-list" data-probe="m2-copy1">
+          <li>One</li>
+          <li>Two</li>
+          <li>Three</li>
+          <li>Four</li>
+          <li>Five</li>
+          <li>Six</li>
+        </ul>
+        <ul class="copy-list" data-probe="m2-copy2" aria-hidden="true" inert>
+          <li>One</li>
+          <li>Two</li>
+          <li>Three</li>
+          <li>Four</li>
+          <li>Five</li>
+          <li>Six</li>
+        </ul>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <script type="module" src="./src/probe.ts"></script>
+  </body>
+</html>

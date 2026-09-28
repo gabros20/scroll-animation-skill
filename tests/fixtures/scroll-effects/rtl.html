@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>scroll-effects fixture: right to left</title>
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/animation.css" />
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/scroll-effects.css" />
+    <link rel="stylesheet" href="./src/page.css" />
+  </head>
+  <body>
+    <!-- A right-to-left document: the progress bar grows from the right, and the marquee runs rightward. -->
+    <div class="bar" data-scroll-fx="progress" data-probe="progress" aria-hidden="true"></div>
+    <div class="spacer short"></div>
+    <div class="marquee" id="ticker" data-scroll-fx="marquee" data-probe="m1" style="--fx-marquee-duration: 8s">
+      <div data-probe="m1-track">
+        <ul class="copy-list" data-probe="m1-copy1">
+          <li>١</li>
+          <li>٢</li>
+          <li>٣</li>
+          <li>٤</li>
+          <li>٥</li>
+          <li>٦</li>
+        </ul>
+        <ul class="copy-list" data-probe="m1-copy2" aria-hidden="true" inert>
+          <li>١</li>
+          <li>٢</li>
+          <li>٣</li>
+          <li>٤</li>
+          <li>٥</li>
+          <li>٦</li>
+        </ul>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <div class="spacer"></div>
+    <script type="module" src="./src/probe.ts"></script>
+  </body>
+</html>
