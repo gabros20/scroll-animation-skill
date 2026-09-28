@@ -1,0 +1,63 @@
+/*
+ * css/rail.css — the horizontal rail's track (gsap/horizontal-rail.ts), its reduced-motion scroller and print rules.
+ * Import it after scene.css, which gives the root, pin and spacer their geometry.
+ *
+ *   <section data-scene-root data-rail>
+ *     <div data-scene-pin>                                         sticky, 100lvh; clips the track
+ *       <div data-rail-track role="region" aria-label="…">         one row that fills the pin; its panels overflow it
+ *         <article data-rail-panel>…</article>                     sized in vw, % of the track, or fluid units
+ *       </div>
+ *     </div>
+ *     <div data-scene-spacer aria-hidden="true"></div>             the runway: the rail sets its height to the travel
+ *   </section>
+ *
+ * The rail measures the overflow (the track's scroll width, end padding included, minus the pin's width). Gutters go on
+ * the track as padding, never on the pin: the track moves through the pin's padding box, so a padded pin would cut the
+ * last panel short by its padding. The pin passes clicks through (scene.css); the track takes them back, so links in
+ * the panels work, and under reduced motion so do wheel and touch scrolling.
+ */
+
+[data-rail-track] {
+  display: flex;
+  height: 100%;
+  pointer-events: auto;
+  /* The rail writes `translate` on every scroll frame: keep the track on its own layer. */
+  will-change: transform;
+}
+
+[data-rail-panel] {
+  flex: none;
+}
+
+/* Reduced motion: scene.css releases the pin and collapses the runway, the rail writes no translate, and the track is
+   a native horizontal scroller that snaps panel by panel. It is focusable while it is one (the rail adds
+   tabindex="0": Safari never makes a scroller focusable by itself), so the ring shows where the arrow keys go.
+   overscroll-behavior stops a swipe past the last panel from turning into the browser's back gesture. */
+@media (prefers-reduced-motion: reduce) {
+  [data-rail-track] {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    translate: none !important;
+    will-change: auto;
+  }
+  [data-rail-panel] {
+    scroll-snap-align: start;
+  }
+  [data-rail-track]:focus-visible {
+    outline: 2px solid;
+    outline-offset: -2px;
+  }
+}
+
+/* Print: every panel in flow, one under the next, none left translated off the page. */
+@media print {
+  [data-rail-track] {
+    display: block;
+    height: auto;
+    translate: none !important;
+  }
+  [data-rail-panel] {
+    break-inside: avoid;
+  }
+}

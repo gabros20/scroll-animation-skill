@@ -1,0 +1,53 @@
+/* The rail fixture's page: an intro screen, the rail, a long outro. Panel widths are in vw so a resize changes the
+   travel; one panel is as wide as its image, which loads late (window.__t.loadImage). */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #f4f1ea;
+  color: #1a1a1a;
+  font: 16px/1.4 system-ui, sans-serif;
+}
+
+.intro,
+.outro {
+  box-sizing: border-box;
+  padding: 40px;
+}
+.intro {
+  min-height: 100vh;
+}
+.outro {
+  min-height: 150vh;
+}
+
+[data-rail-track] {
+  gap: 24px;
+}
+
+[data-rail-panel] {
+  box-sizing: border-box;
+  padding: 40px;
+  background: #d9d2c3;
+}
+[data-rail-panel]:nth-child(even) {
+  background: #c9c0ad;
+}
+
+.w45 {
+  width: 45vw;
+}
+.w55 {
+  width: 55vw;
+}
+.w60 {
+  width: 60vw;
+}
+.w70 {
+  width: 70vw;
+}
+
+.late img {
+  display: block;
+  height: 300px;
+}
