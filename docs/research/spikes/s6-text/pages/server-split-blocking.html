@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>S6d server-split words, render-blocking script</title>
+    <!--
+      S6d contrast case: the same markup behind a classic, render-blocking
+      <script src> in <head>. The runner answers /__slow.js itself, 2 s late.
+    -->
+    <link rel="stylesheet" href="../src/server-split.css" />
+    <script src="/__slow.js"></script>
+  </head>
+  <body>
+    <main>
+      <h1 id="h"><span class="sr-only">Every line arrives when its reader does</span><span aria-hidden="true"><span class="w" style="--i: 0">Every</span> <span class="w" style="--i: 1">line</span> <span class="w" style="--i: 2">arrives</span> <span class="w" style="--i: 3">when</span> <span class="w" style="--i: 4">its</span> <span class="w" style="--i: 5">reader</span> <span class="w" style="--i: 6">does</span></span></h1>
+      <p id="p" class="lede"><span class="sr-only">Server-split words start moving with the first paint, before a single script has run.</span><span aria-hidden="true"><span class="w" style="--i: 0">Server-split</span> <span class="w" style="--i: 1">words</span> <span class="w" style="--i: 2">start</span> <span class="w" style="--i: 3">moving</span> <span class="w" style="--i: 4">with</span> <span class="w" style="--i: 5">the</span> <span class="w" style="--i: 6">first</span> <span class="w" style="--i: 7">paint,</span> <span class="w" style="--i: 8">before</span> <span class="w" style="--i: 9">a</span> <span class="w" style="--i: 10">single</span> <span class="w" style="--i: 11">script</span> <span class="w" style="--i: 12">has</span> <span class="w" style="--i: 13">run.</span></span></p>
+      <p id="below">The paragraph under the split text. If anything above it changes size, it moves.</p>
+    </main>
+  </body>
+</html>
