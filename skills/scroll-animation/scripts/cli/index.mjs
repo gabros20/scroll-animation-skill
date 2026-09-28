@@ -31,7 +31,7 @@ function version() {
 
 const HELP = `scroll-animation ${version()} — copy-and-own scroll motion blocks (GSAP + Motion)
 
-  scroll-animation add <block…> [--engine gsap|motion] [--dir path] [--dry-run] [--force]
+  scroll-animation add <block…> [--engine gsap|motion|agnostic] [--dir path] [--dry-run] [--force]
       copy blocks and their requires into src/animation (or the project's existing lock
       directory), record hashes in .scroll-animation.lock.json, and print the npm packages
       to install; refuses to overwrite a hand-edited or unrecorded file unless --force
