@@ -1,0 +1,338 @@
+/*
+ * css/scroll-effects.css: scroll-linked decoration in plain CSS, with no engine and no JavaScript beyond the marquee's
+ * pause button, which the page provides. An element opts in with data-scroll-fx="…", a space-separated list, so
+ * effects compose on one element. Import it after css/animation.css.
+ *
+ *   <img data-scroll-fx="parallax" alt="…">                    drifts across its pass through the viewport
+ *   <figure data-scroll-fx="fade-in scale-in">…</figure>        fades and grows in while it enters
+ *   <div data-scroll-fx="exit-fade">…</div>                     fades as it leaves at the top (a scene's riding copy)
+ *   <div data-scroll-fx="progress" aria-hidden="true"></div>    a reading-progress bar: place, size and colour it
+ *   <section data-scroll-fx="sticky-stack">                     each direct child is a sticky card that shrinks
+ *     <article>…</article> <article>…</article>                 while the next one slides over it (§4)
+ *   </section>
+ *   <div data-scroll-fx="marquee" id="ticker">                  time-driven, not scroll-driven; needs a pause
+ *     <div><ul>…</ul><ul aria-hidden="true" inert>…</ul></div>  button (§5)
+ *   </div>
+ *
+ * Tuning goes on the element itself; a stack's cards read the stack's. The properties don't inherit, so a range tuned
+ * on a section never leaks into an effect nested inside it. For a site-wide default, use a selector that matches the
+ * elements, e.g. [data-scroll-fx~='parallax'] { --fx-parallax: 40px }. A scaled length works.
+ *   --fx-parallax      parallax's drift either side of the layout position (60px). Positive lags behind the page, so
+ *                      it reads as further away; negative runs ahead.
+ *   --fx-fade-from     the faded opacity: fade-in starts there; exit-fade and a covered card end there (0; cards: 1)
+ *   --fx-scale-from    the reduced scale: scale-in starts there, and a covered card ends there (0.9)
+ *   --fx-range-start   the animation-range of every effect on the element, e.g. `entry 25%` and `cover 50%`. Put
+ *   --fx-range-end     effects that need different ranges on nested elements.
+ *
+ * The rules come from docs/research/spikes-2026-09.md §S7 (measured in Chromium 153, WebKit 26.6 and Firefox 155):
+ * - The static style is the finished state: every element fully shown and in place, which is what readers see without
+ *   the effect (S7a, S7e). Every scroll-driven rule sits inside @supports and `screen and (prefers-reduced-motion:
+ *   no-preference)`. So Firefox, which ships without scroll-driven animations (and runs an unguarded recipe on the
+ *   document timeline), a reader who asked for less motion, and print all see the content at rest.
+ * - animation-timeline and animation-range are declared after the animation shorthand, which resets both (S7a).
+ * - No ancestor between an effect and the page scroller may set `overflow: hidden` or `overflow-x: hidden`. It
+ *   becomes the effect's scroll container, which never scrolls, so the effect freezes part-way. Use `overflow: clip`,
+ *   which clips without scrolling. Never put `overflow-x: hidden` on both html and body: that freezes every effect on
+ *   the page (S7c).
+ * - A named timeline that drives another element is scoped with timeline-scope, once per instance. Chromium needs it,
+ *   and without it Safari and Firefox bind the name to another instance's timeline (S7b). Only the stack uses names.
+ * - Only transform (through the translate and scale properties, so `transform` stays free) and opacity. On native
+ *   scroll a timeline's transform paints in the scroll's own frame in Chromium, and at most a frame late in Safari
+ *   26; a layout property is always a frame late (S1, S7f).
+ * - Decoration only. Under Lenis, Safari reads the previous frame's scroll (S1), so anything that must stay
+ *   registered to moving content is GSAP's job. Under ScrollSmoother, view() never progresses (S2), so the view()
+ *   effects switch off on html[data-scroll-authority="smoother"] and show their static state.
+ * - view() measures the viewport inside its scroll-padding. With animation.css's `scroll-padding-top: --header-h`,
+ *   every range's top edge is the fixed header's bottom edge: the line that copy disappears under.
+ */
+
+/* ── 1. The tuning properties ──────────────────────────────────────────────────────────────────────
+ * Registered only to stop inheritance. With syntax '*' any value is accepted, and with no initial value an unset
+ * property falls back to each effect's default below. */
+@property --fx-parallax {
+  syntax: '*';
+  inherits: false;
+}
+@property --fx-fade-from {
+  syntax: '*';
+  inherits: false;
+}
+@property --fx-scale-from {
+  syntax: '*';
+  inherits: false;
+}
+@property --fx-range-start {
+  syntax: '*';
+  inherits: false;
+}
+@property --fx-range-end {
+  syntax: '*';
+  inherits: false;
+}
+
+/* ── 2. Parallax, fade-in, exit-fade, scale-in: each element on its own view() ─────────────────────
+ * One rule declares all four as a single animation list, one slot per effect, and each effect puts its keyframes'
+ * name in its slot. A `none` slot leaves nothing attached, so any combination runs together on one element.
+ *   parallax   translate from -d to +d over cover 0% → 100%: the whole pass. It sits at its layout position when
+ *              centred in the viewport, and it adds to the element's own translate (animation-composition: add).
+ *   fade-in    opacity from --fx-fade-from over entry 0% → 100%. The fade completes once the element is fully in
+ *              view, or once its top reaches the top if it's taller than the viewport.
+ *   exit-fade  opacity to --fx-fade-from over exit-crossing 10% → 35% (v1 FadeOnExit's defaults). The range measures
+ *              the element against its own height, so the fade starts once 10% of the element has passed above the
+ *              top edge and finishes at 35%, while the rest of the element is still on screen.
+ *   scale-in   scale from --fx-scale-from over entry 0% → 100%.
+ * Each keyframes block leaves out its resting end, which then takes the value underneath: the element's own opacity
+ * or scale (a shape at opacity 0.6 fades in to 0.6), or, for exit-fade, whatever fade-in left. That, and exit-fade's
+ * slot after fade-in's, is what lets the two fades share an element. fill: forwards keeps exit-fade off the element
+ * before its range, where it has nothing to do. The ranges use the untransformed box, so the drift and the scale never
+ * move them (S7a). */
+@keyframes fx-parallax {
+  from {
+    translate: 0 calc(var(--fx-parallax, 60px) * -1);
+  }
+  to {
+    translate: 0 var(--fx-parallax, 60px);
+  }
+}
+@keyframes fx-fade-in {
+  from {
+    opacity: var(--fx-fade-from, 0);
+  }
+}
+@keyframes fx-exit-fade {
+  to {
+    opacity: var(--fx-fade-from, 0);
+  }
+}
+@keyframes fx-scale-in {
+  from {
+    scale: var(--fx-scale-from, 0.9);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media screen and (prefers-reduced-motion: no-preference) {
+    /* Every opted-in element resets the slots, so a nested element never inherits its parent's effects. */
+    [data-scroll-fx] {
+      --_fx-parallax: none;
+      --_fx-fade-in: none;
+      --_fx-exit-fade: none;
+      --_fx-scale-in: none;
+    }
+    [data-scroll-fx~='parallax'] {
+      --_fx-parallax: fx-parallax;
+    }
+    [data-scroll-fx~='fade-in'] {
+      --_fx-fade-in: fx-fade-in;
+    }
+    [data-scroll-fx~='exit-fade'] {
+      --_fx-exit-fade: fx-exit-fade;
+    }
+    [data-scroll-fx~='scale-in'] {
+      --_fx-scale-in: fx-scale-in;
+    }
+    :where(:root:not([data-scroll-authority='smoother']))
+      :is(
+        [data-scroll-fx~='parallax'],
+        [data-scroll-fx~='fade-in'],
+        [data-scroll-fx~='exit-fade'],
+        [data-scroll-fx~='scale-in']
+      ) {
+      animation:
+        var(--_fx-parallax) linear both,
+        var(--_fx-fade-in) linear both,
+        var(--_fx-exit-fade) linear forwards,
+        var(--_fx-scale-in) linear both;
+      animation-composition: add, replace, replace, replace;
+      animation-timeline: view(), view(), view(), view();
+      animation-range-start:
+        var(--fx-range-start, cover 0%), var(--fx-range-start, entry 0%), var(--fx-range-start, exit-crossing 10%),
+        var(--fx-range-start, entry 0%);
+      animation-range-end:
+        var(--fx-range-end, cover 100%), var(--fx-range-end, entry 100%), var(--fx-range-end, exit-crossing 35%),
+        var(--fx-range-end, entry 100%);
+    }
+  }
+}
+
+/* ── 3. Reading progress ───────────────────────────────────────────────────────────────────────────
+ * The bar grows from its inline-start edge with the page's scroll(root). It scales rather than changing width or
+ * left, because a timeline's transform paints in the scroll's own frame and a layout property paints a frame late
+ * (S7f). At rest it isn't drawn: a bar frozen at any length would report a position that's wrong everywhere else on
+ * the page. It's fixed UI, so on a ScrollSmoother page it sits outside #smooth-wrapper, where it keeps running
+ * because the root still scrolls. --fx-range-start/end take lengths or percentages of the page here, e.g. 600px to
+ * start after a hero. */
+[data-scroll-fx~='progress'] {
+  scale: 0 1;
+  transform-origin: 0 50%;
+}
+[data-scroll-fx~='progress']:dir(rtl) {
+  transform-origin: 100% 50%;
+}
+@keyframes fx-progress {
+  from {
+    scale: 0 1;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+@supports (animation-timeline: scroll()) {
+  @media screen and (prefers-reduced-motion: no-preference) {
+    [data-scroll-fx~='progress'] {
+      animation: fx-progress linear both;
+      animation-timeline: scroll(root block);
+      animation-range-start: var(--fx-range-start, normal);
+      animation-range-end: var(--fx-range-end, normal);
+    }
+  }
+}
+
+/* ── 4. Sticky stack ───────────────────────────────────────────────────────────────────────────────
+ * Every direct child of the stack is a card that sticks under the fixed header (--header-h). Card N shrinks to
+ * --fx-scale-from (0.9) and dims to --fx-fade-from (1: no dimming) on card N+1's view timeline over its entry range,
+ * so it changes exactly while the next card slides in (S7d). It never runs on a stuck card's own view(): Chromium and
+ * Safari stretch that card's ranges over its stuck travel, and Firefox freezes them (S7d). For the same reason a tuned
+ * range has to end by the time the next card sticks. Each stack scopes its own names, so two stacks on a page never
+ * drive each other's cards (S7b).
+ * - Names exist for 12 cards. In a longer stack, the 12th card and every card after it still stick but don't shrink.
+ *   For more, add each extra card's line below and its name to timeline-scope.
+ * - A card at most calc(100svh - var(--header-h, 0px)) tall is fully visible while stuck. A taller card is covered
+ *   before its bottom edge ever shows. At exactly that height, a card's shrink ends as the next card reaches the header.
+ * - The last card leaves with the stack as soon as it arrives. A card only sticks inside the stack's content box, so
+ *   padding at the end doesn't hold it, but a spacer that isn't a card does, in all three engines:
+ *   `.my-stack::after { content: ''; display: block; height: 50svh }` holds it for 50svh of scroll.
+ * - A card's own effects go on an element inside it, because the stack owns the card's animation.
+ * - Without scroll-driven animations (Firefox) and under reduced motion, the cards still stick, unscaled. Sticky is
+ *   layout, not animation: it adds no scroll distance, and the reader scrolls the same page. Under ScrollSmoother,
+ *   sticky never sticks (S2), and the stack becomes a column of cards. */
+[data-scroll-fx~='sticky-stack'] > * {
+  position: sticky;
+  top: var(--header-h, 0px);
+  transform-origin: 50% 0;
+}
+@keyframes fx-stack-card {
+  to {
+    scale: var(--fx-scale-from, 0.9);
+    opacity: var(--fx-fade-from, 1);
+  }
+}
+@supports (animation-timeline: view()) and (timeline-scope: --fx-card-2) {
+  @media screen and (prefers-reduced-motion: no-preference) {
+    [data-scroll-fx~='sticky-stack'] {
+      timeline-scope:
+        --fx-card-2, --fx-card-3, --fx-card-4, --fx-card-5, --fx-card-6, --fx-card-7, --fx-card-8, --fx-card-9,
+        --fx-card-10, --fx-card-11, --fx-card-12;
+    }
+    /* Each card names its own view timeline and points at the next card's. */
+    [data-scroll-fx~='sticky-stack'] > :nth-child(1) {
+      --_fx-next: --fx-card-2;
+    }
+    [data-scroll-fx~='sticky-stack'] > :nth-child(2) {
+      --_fx-next: --fx-card-3;
+      view-timeline: --fx-card-2 block;
+    }
+    [data-scroll-fx~='sticky-stack'] > :nth-child(3) {
+      --_fx-next: --fx-card-4;
+      view-timeline: --fx-card-3 block;
+    }
+    [data-scroll-fx~='sticky-stack'] > :nth-child(4) {
+      --_fx-next: --fx-card-5;
+      view-timeline: --fx-card-4 block;
+    }
+    [data-scroll-fx~='sticky-stack'] > :nth-child(5) {
+      --_fx-next: --fx-card-6;
+      view-timeline: --fx-card-5 block;
+    }
+    [data-scroll-fx~='sticky-stack'] > :nth-child(6) {
+      --_fx-next: --fx-card-7;
+      view-timeline: --fx-card-6 block;
+    }
+    [data-scroll-fx~='sticky-stack'] > :nth-child(7) {
+      --_fx-next: --fx-card-8;
+      view-timeline: --fx-card-7 block;
+    }
+    [data-scroll-fx~='sticky-stack'] > :nth-child(8) {
+      --_fx-next: --fx-card-9;
+      view-timeline: --fx-card-8 block;
+    }
+    [data-scroll-fx~='sticky-stack'] > :nth-child(9) {
+      --_fx-next: --fx-card-10;
+      view-timeline: --fx-card-9 block;
+    }
+    [data-scroll-fx~='sticky-stack'] > :nth-child(10) {
+      --_fx-next: --fx-card-11;
+      view-timeline: --fx-card-10 block;
+    }
+    [data-scroll-fx~='sticky-stack'] > :nth-child(11) {
+      --_fx-next: --fx-card-12;
+      view-timeline: --fx-card-11 block;
+    }
+    [data-scroll-fx~='sticky-stack'] > :nth-child(12) {
+      view-timeline: --fx-card-12 block;
+    }
+    /* Cards take their tuning from the stack. The last card is never covered, and a card after the 11th has no next
+       name. Either one, animated, would have no timeline and would hold its last keyframe, shrunk for good (S7b). */
+    :where(:root:not([data-scroll-authority='smoother']))
+      [data-scroll-fx~='sticky-stack']
+      > :nth-child(-n + 11):not(:last-child) {
+      --fx-scale-from: inherit;
+      --fx-fade-from: inherit;
+      --fx-range-start: inherit;
+      --fx-range-end: inherit;
+      animation: fx-stack-card linear both;
+      animation-timeline: var(--_fx-next);
+      animation-range-start: var(--fx-range-start, entry 0%);
+      animation-range-end: var(--fx-range-end, entry 100%);
+    }
+  }
+}
+
+/* ── 5. Marquee ────────────────────────────────────────────────────────────────────────────────────
+ * Time-driven, not scroll-driven, so it isn't behind @supports and it runs in Firefox too. The marquee's only child is
+ * the track: the items, followed by an identical copy that is aria-hidden and inert, so assistive technology and the
+ * Tab key reach each item once. The track slides one copy's width, which is half its own, then starts over from where
+ * it began. The loop is seamless when the copies match and each copy is at least as wide as the marquee. Put no gap on
+ * the track: space the items inside each copy, and end each copy with the same space (padding-inline-end).
+ * - It moves on its own for more than 5 s, so WCAG 2.2.2 requires a pause control, and the page must provide one: a
+ *   button outside the marquee that toggles data-marquee-paused on it (or on any ancestor: on html it pauses every
+ *   marquee) and aria-pressed on itself.
+ *     <button type="button" aria-controls="ticker" aria-pressed="false">Pause the ticker</button>
+ *     button.addEventListener('click', () => {
+ *       const paused = button.getAttribute('aria-pressed') !== 'true'
+ *       button.setAttribute('aria-pressed', String(paused))
+ *       document.getElementById('ticker').toggleAttribute('data-marquee-paused', paused)
+ *     })
+ * - It also pauses while hovered or while focus is inside it, and it stays still under reduced motion.
+ * - --fx-marquee-duration (30s) is the length of one loop, and --fx-marquee-direction: reverse runs it the other
+ *   way. Both inherit. In a right-to-left document it runs rightward, mirrored.
+ * - overflow: hidden is only the fallback where clip is unknown (Safari before 16), which has no view() to freeze. */
+[data-scroll-fx~='marquee'] {
+  overflow: hidden;
+  overflow: clip;
+}
+[data-scroll-fx~='marquee'] > * {
+  display: flex;
+  width: max-content;
+}
+@keyframes fx-marquee {
+  to {
+    translate: -50% 0;
+  }
+}
+@keyframes fx-marquee-rtl {
+  to {
+    translate: 50% 0;
+  }
+}
+@media screen and (prefers-reduced-motion: no-preference) {
+  [data-scroll-fx~='marquee'] > * {
+    animation: fx-marquee var(--fx-marquee-duration, 30s) linear infinite var(--fx-marquee-direction, normal);
+  }
+  [data-scroll-fx~='marquee'] > :dir(rtl) {
+    animation-name: fx-marquee-rtl;
+  }
+  [data-scroll-fx~='marquee']:is(:hover, :focus-within, [data-marquee-paused], [data-marquee-paused] *) > * {
+    animation-play-state: paused;
+  }
+}

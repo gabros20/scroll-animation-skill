@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { CountUp } from "@/animation/motion/CountUp";
+import { Reveal, RevealItem, type RevealEffect } from "@/animation/motion/Reveal";
+import { SplitWords } from "@/animation/motion/SplitWords";
 import { MediaSlot } from "@/components/media-slot";
+import { Rail } from "@/components/rail";
 import { getJournalArticle } from "@/content/journal";
+import { folioObjects } from "@/content/objects";
 import { mediaExists, mediaSrc } from "@/lib/media";
-import { ScrubScene, SequenceScene } from "./fixtures";
+import { MarqueeToggle, ScrubScene, SequenceScene } from "./fixtures";
 
 export const metadata: Metadata = {
   title: "Blocks",
@@ -41,12 +46,22 @@ const GROUPS: Group[] = [
   {
     clock: "Trigger",
     blocks: [
-      { name: "Reveal", body: "Fade, rise, clip or scale-in on arrival, once per element." },
+      {
+        name: "Reveal",
+        body: "Fade, rise, clip or scale-in on arrival, once per element.",
+        fixture: "fixture-reveal",
+      },
       {
         name: "SplitWords",
         body: "Server-safe per-word split for an LCP-safe hero headline.",
+        fixture: "fixture-split-words",
       },
       { name: "split-reveal", body: "GSAP SplitText reveal for headlines below the fold." },
+      {
+        name: "CountUp",
+        body: "A number that counts up once as it arrives; the server renders the final value.",
+        fixture: "fixture-count-up",
+      },
     ],
   },
   {
@@ -54,7 +69,8 @@ const GROUPS: Group[] = [
     blocks: [
       {
         name: "scroll-effects",
-        body: "Parallax, exit fade, progress bar and sticky stack, in CSS.",
+        body: "Parallax, fade and scale in, exit fade, a progress bar, a sticky stack and a marquee, in CSS.",
+        fixture: "fixture-scroll-effects",
       },
       {
         name: "PinnedScene",
@@ -64,10 +80,12 @@ const GROUPS: Group[] = [
       {
         name: "horizontal-rail",
         body: "A GSAP-driven horizontal gallery with a native scroll fallback.",
+        fixture: "fixture-rail",
       },
       {
         name: "header-theme",
         body: "Flips header ink as the page crosses a dark section.",
+        fixture: "fixture-header-theme",
       },
     ],
   },
@@ -139,6 +157,22 @@ function Fixture({
   );
 }
 
+const REVEAL_EFFECTS: RevealEffect[] = ["rise", "fade", "clip", "scale-in"];
+
+const COUNTS = [
+  { label: "Defaults", count: <CountUp to={1280} /> },
+  { label: "Fraction digits from `to`", count: <CountUp to={98.6} /> },
+  {
+    label: "A year: from 1990, no grouping",
+    count: <CountUp from={1990} to={2026} format={{ grouping: false }} />,
+  },
+  { label: "Locale de-DE", count: <CountUp to={12500.75} format={{ locale: "de-DE" }} /> },
+];
+
+const STACK_CARDS = ["First card", "Second card", "Third card"];
+
+const RAIL_PANELS = ["One", "Two", "Three", "Four", "Five", "Six"];
+
 function Pending() {
   return (
     <p className="px-6 font-sans text-sm text-muted sm:px-10">
@@ -162,8 +196,8 @@ export default function BlocksPage() {
           pages are the design reference; nothing here is styled to be looked at.
         </p>
         <p className="mt-2 max-w-xl font-sans text-sm text-muted">
-          The catalogue lists every block in the plan, grouped by clock. The media
-          blocks that have shipped run below it as fixtures, on their defaults.
+          The catalogue lists every block in the plan, grouped by clock. The blocks
+          that have shipped run below it as fixtures, on their defaults.
         </p>
 
         <div className="mt-16 space-y-16">
@@ -203,6 +237,153 @@ export default function BlocksPage() {
         >
           Fixtures
         </h2>
+
+        <Fixture
+          id="fixture-reveal"
+          name="Reveal"
+          note="Motion. One group, one item per effect, staggered in document order once the group's top crosses 80% of the viewport. With JavaScript off or reduced motion, everything is at rest from the first paint."
+        >
+          <Reveal className="grid gap-6 px-6 sm:grid-cols-2 sm:px-10 lg:grid-cols-4">
+            {REVEAL_EFFECTS.map((effect) => (
+              <RevealItem
+                key={effect}
+                effect={effect}
+                className="flex h-40 items-end bg-paper-raised p-4 font-sans text-sm"
+              >
+                {effect}
+              </RevealItem>
+            ))}
+          </Reveal>
+        </Fixture>
+
+        <Fixture
+          id="fixture-split-words"
+          name="SplitWords"
+          note="Split on the server and risen by CSS from the first frame, with no JavaScript. It is made for the hero, so down here it has finished before you arrive: reload with it in view. The second line is Japanese, split at Intl.Segmenter's word boundaries on the server."
+        >
+          <div className="px-6 sm:px-10">
+            <SplitWords
+              as="p"
+              text="Every line arrives when its reader does."
+              className="max-w-3xl font-display text-4xl leading-tight"
+            />
+            <div lang="ja">
+              <SplitWords as="p" locale="ja" text="吾輩は猫である。名前はまだ無い。" className="mt-6 text-2xl" />
+            </div>
+          </div>
+        </Fixture>
+
+        <Fixture
+          id="fixture-count-up"
+          name="CountUp"
+          note="Motion. The server renders each final value; the count rewinds to its start once about 60% of the number is visible and plays once. Screen readers hear the final value, and reduced motion shows it at once."
+        >
+          <dl className="grid gap-8 px-6 sm:grid-cols-2 sm:px-10 lg:grid-cols-4">
+            {COUNTS.map(({ label, count }) => (
+              <div key={label}>
+                <dt className="font-sans text-sm text-muted">{label}</dt>
+                <dd className="mt-2 font-display text-5xl tabular-nums">{count}</dd>
+              </div>
+            ))}
+          </dl>
+        </Fixture>
+
+        <Fixture
+          id="fixture-scroll-effects"
+          name="scroll-effects"
+          note="CSS on scroll and view timelines (Chromium, Safari 26), each element opted in with data-scroll-fx on its defaults: parallax inside a clipping frame, fade-in, scale-in and exit-fade, then a sticky stack. Firefox, reduced motion and print show the finished state, and the stack still sticks. The marquee runs on time, not scroll, so it has a pause button."
+        >
+          <div className="grid gap-6 px-6 sm:grid-cols-2 sm:px-10 lg:grid-cols-4">
+            <div className="relative h-72 overflow-clip bg-paper-raised">
+              <MediaSlot
+                kind="image"
+                src="objects/glass-shade.avif"
+                alt="A hand-blown glass lamp shade."
+                width={640}
+                height={800}
+                fx="parallax"
+                className="absolute inset-x-0 -top-15 h-[calc(100%+7.5rem)] w-full object-cover"
+              />
+              <p className="absolute bottom-3 left-3 rounded-full bg-ink px-3 py-1 font-sans text-xs text-paper">
+                parallax
+              </p>
+            </div>
+            {["fade-in", "scale-in", "exit-fade"].map((effect) => (
+              <div
+                key={effect}
+                data-scroll-fx={effect}
+                className="flex h-72 items-end bg-paper-raised p-4 font-sans text-sm"
+              >
+                {effect}
+              </div>
+            ))}
+          </div>
+          <ol data-scroll-fx="sticky-stack" className="mt-16 px-6 sm:px-10">
+            {STACK_CARDS.map((card) => (
+              <li
+                key={card}
+                className="flex h-[50svh] items-end border border-line bg-paper-raised p-6 font-sans text-sm"
+              >
+                sticky-stack: {card.toLowerCase()}
+              </li>
+            ))}
+          </ol>
+          <div className="mt-16 px-6 sm:px-10">
+            <MarqueeToggle controls="fixture-marquee" />
+          </div>
+          <div data-scroll-fx="marquee" id="fixture-marquee" className="mt-4">
+            <div>
+              {[false, true].map((copy) => (
+                <ul
+                  key={String(copy)}
+                  aria-hidden={copy || undefined}
+                  inert={copy || undefined}
+                  className="flex gap-12 pe-12 font-display text-3xl whitespace-nowrap"
+                >
+                  {folioObjects.map((object) => (
+                    <li key={object.name}>{object.name}</li>
+                  ))}
+                </ul>
+              ))}
+            </div>
+          </div>
+        </Fixture>
+
+        <Fixture
+          id="fixture-rail"
+          name="horizontal-rail"
+          note="GSAP, on pinned-scene's default holds. The runway is the measured travel, so the track moves one pixel per pixel of scroll between the holds. Reduced motion: no pin, no runway, and the track is a native horizontal snap scroller."
+        >
+          <Rail
+            labelledBy="fixture-rail-heading"
+            trackClassName="items-center scroll-px-6 px-6 pt-(--header-h) sm:scroll-px-10 sm:px-10"
+          >
+            <ul className="flex flex-none gap-6 sm:gap-10">
+              {RAIL_PANELS.map((panel) => (
+                <li
+                  key={panel}
+                  data-rail-panel=""
+                  className="flex h-[50svh] w-[min(80vw,32rem)] items-end bg-paper-raised p-6 font-sans text-sm"
+                >
+                  Panel {panel.toLowerCase()}
+                </li>
+              ))}
+            </ul>
+          </Rail>
+        </Fixture>
+
+        <Fixture
+          id="fixture-header-theme"
+          name="header-theme"
+          note="The header is transparent and fixed on every page. While this band, marked data-header-theme=&quot;dark&quot;, is under the header's bottom edge, the header's ink is dark-paper; it flips back as the band leaves. No scroll listener: an IntersectionObserver band at that edge."
+        >
+          <div
+            data-header-theme="dark"
+            className="flex h-[70svh] items-end bg-dark-bg px-6 py-10 font-sans text-sm text-dark-paper sm:px-10"
+          >
+            data-header-theme=&quot;dark&quot;
+          </div>
+        </Fixture>
 
         <Fixture
           id="fixture-frame-sequence"

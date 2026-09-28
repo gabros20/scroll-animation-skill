@@ -14,6 +14,8 @@ type MediaSlotProps = {
   className?: string;
   /** Passed to next/image for the LCP hero image only. */
   priority?: boolean;
+  /** Image only: scroll-effects.css effects for the element (data-scroll-fx). */
+  fx?: string;
 };
 
 /**
@@ -32,11 +34,13 @@ export function MediaSlot({
   height,
   className = "",
   priority = false,
+  fx,
 }: MediaSlotProps) {
   if (!mediaExists(src)) {
     return (
       <div
         aria-hidden="true"
+        data-scroll-fx={fx}
         className={`media-placeholder flex items-end justify-start ${className}`}
         style={{ aspectRatio: `${width} / ${height}` }}
       >
@@ -55,6 +59,7 @@ export function MediaSlot({
         width={width}
         height={height}
         priority={priority}
+        data-scroll-fx={fx}
         className={className}
       />
     );

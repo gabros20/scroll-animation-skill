@@ -26,7 +26,9 @@
  * - The resting state is css/reveal.css under the pre-JS gate, not an inline SSR style: the server renders items
  *   with no style at all, so a reader with JavaScript off sees everything with no <noscript> rule, and Motion starts
  *   each move from the item's computed resting value (--reveal-distance, --reveal-scale).
- * - Hydration gates the start: until then the items rest hidden, so a `mount` group needs RevealVeil over it.
+ * - Hydration gates the start: until then a `mount` group's items rest hidden. A RevealVeil over them hides that wait,
+ *   but it holds the whole first paint, the LCP element included: leave it out when the first screen has a SplitWords
+ *   headline or a hero image, which paint at once (references/entrances.md §7).
  * - The failsafe (css/animation.css): if it revealed the page before hydration, items settle where they are
  *   (data-reveal-state="shown", no movement): nothing hides and replays.
  * - Reduced motion, live (useReducedMotionLive): items settle, visible and still, and stay settled when it is

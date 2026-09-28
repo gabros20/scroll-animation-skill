@@ -17,7 +17,7 @@ a template had room for it.
 ## Palette
 
 ```css
---folio-paper: #f5f1e8; /* page background */
+--folio-paper: #f4f0e9; /* page background: the orbit clip's decoded paper, so its frame edge disappears */
 --folio-paper-raised: #ece5d6; /* card background, one step off paper */
 --folio-line: #ddd4c0; /* hairlines, dividers */
 
@@ -29,7 +29,7 @@ a template had room for it.
 --folio-accent-ink: #fbede3; /* text on accent */
 
 --folio-dark-bg: #17140f; /* the one deliberately dark section */
---folio-dark-paper: #f5f1e8; /* text on dark-bg */
+--folio-dark-paper: #f4f0e9; /* text on dark-bg */
 --folio-dark-muted: #948c7c; /* secondary text on dark-bg */
 ```
 
@@ -99,8 +99,8 @@ One idea per viewport, four scenes plus the hero:
 Index: a two-up grid of article cards, cover image, category, title, dek, date and read time. Each
 cover is the shared-element source for the article's hero (view transitions, Phase 4).
 
-Article: cover hero, byline, a reading-progress bar (decorative until Phase 3 wires a scroll
-listener), body copy with one CSS-parallax figure roughly a third of the way through, and one loop
+Article: cover hero, byline, a reading-progress bar (CSS `scroll()` timeline, no
+script; static in Firefox), body copy with one CSS-parallax figure roughly a third of the way through, and one loop
 video with a pause button around two-thirds through. Two articles ship now, both fictional:
 
 - **"The Kiln That Never Went Cold"** (Objects): a wood kiln that has fired every five to six

@@ -55,6 +55,30 @@ export function SequenceScene({ manifest, label }: { manifest: string; label: st
   );
 }
 
+/**
+ * The marquee's pause control (scroll-effects.css §5): it runs on its own for
+ * more than 5 s, so WCAG 2.2.2 wants one. A toggle keeps its label and
+ * reports its state through aria-pressed.
+ */
+export function MarqueeToggle({ controls }: { controls: string }) {
+  const [paused, setPaused] = useState(false);
+
+  return (
+    <button
+      type="button"
+      aria-controls={controls}
+      aria-pressed={paused}
+      onClick={() => {
+        document.getElementById(controls)?.toggleAttribute("data-marquee-paused", !paused);
+        setPaused(!paused);
+      }}
+      className="rounded-full border border-line px-3 py-1.5 font-sans text-xs aria-pressed:bg-ink aria-pressed:text-paper"
+    >
+      Pause the marquee
+    </button>
+  );
+}
+
 /** ScrubVideo (Motion): the same clip `/` scrubs with GSAP. */
 export function ScrubScene({
   src,

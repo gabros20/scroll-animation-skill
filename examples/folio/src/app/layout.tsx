@@ -6,7 +6,12 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 import "@/animation/css/animation.css";
+import "@/animation/css/reveal.css";
+import "@/animation/css/split.css";
+import "@/animation/css/scroll-effects.css";
+import "@/animation/css/header-theme.css";
 import "@/animation/css/scene.css";
+import "@/animation/css/rail.css";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -44,7 +49,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             once this has run, so a reader without JavaScript sees everything. */}
         <script dangerouslySetInnerHTML={{ __html: GATE_SCRIPT }} />
       </head>
-      <body className="flex min-h-screen flex-col font-sans antialiased">
+      {/* The header is fixed (header-theme probes its bottom edge): the
+          body's top padding is the room it used to take in the flow. */}
+      <body className="flex min-h-screen flex-col pt-(--header-h) font-sans antialiased">
         <MotionProvider>
           <SiteHeader />
           <main className="flex-1">{children}</main>
