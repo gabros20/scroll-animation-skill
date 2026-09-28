@@ -315,6 +315,41 @@ const CHECKS = {
     }
   },
 
+  // What the page is without its script: no rail mounted (so no data-scene-state) and no pre-JS gate. The fixtures run
+  // no GATE_SCRIPT, so the same page also shows that a mounted rail is never turned into a scroller, and that a gated
+  // page never gets one before its rail mounts.
+  nojs: {
+    pages: ['native'],
+    async run(t) {
+      const { page } = await t.open()
+      const r = await page.evaluate(async () => {
+        const track = document.querySelector('[data-rail-track]')
+        const mounted = getComputedStyle(track).overflowX
+        window.__rail.destroy()
+        await window.__t.frames(2)
+        const overflowX = getComputedStyle(track).overflowX
+        track.scrollLeft = track.scrollWidth
+        await window.__t.frames(2)
+        const panels = track.querySelectorAll('[data-rail-panel]')
+        const tr = track.getBoundingClientRect()
+        const lr = panels[panels.length - 1].getBoundingClientRect()
+        const lastInView = lr.left >= tr.left - 1 && lr.right <= tr.right + 1
+        document.documentElement.setAttribute('data-animation', 'on')
+        await window.__t.frames(2)
+        const gated = getComputedStyle(track).overflowX
+        document.documentElement.removeAttribute('data-animation')
+        return { mounted, overflowX, lastInView, gated }
+      })
+      return [
+        [
+          'no script: the track is a native scroller with the last panel in reach; mounted, or gated, it is not',
+          r.mounted !== 'auto' && r.overflowX === 'auto' && r.lastInView && r.gated !== 'auto',
+          JSON.stringify(r)
+        ]
+      ]
+    }
+  },
+
   focus: {
     pages: PAGES,
     async run(t) {

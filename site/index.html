@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--animation-gate-->
+    <title>scroll-animation: motion for editorial sites, on four clocks</title>
+    <meta
+      name="description"
+      content="A skill for coding agents: tested, copy-and-own scroll animation blocks for GSAP, Motion and CSS, the references behind them, and a CLI."
+    />
+    <link rel="stylesheet" href="/src/styles/home.css" />
+    <script type="module" src="/src/pages/home.ts"></script>
+  </head>
+  <body>
+    <!-- Fixed UI stays outside #smooth-wrapper: ScrollSmoother transforms the content, and fixed stops working there. -->
+    <header class="site-header" data-header data-header-ink-default="dark" data-header-ink="dark">
+      <a class="site-header__mark" href="/">scroll-animation</a>
+      <nav class="site-header__nav" aria-label="Site">
+        <a href="/" aria-current="page">Home</a>
+        <a href="/guide/">Guide</a>
+      </nav>
+    </header>
+
+    <div id="smooth-wrapper">
+      <div id="smooth-content">
+        <main id="main">
+          <section class="hero" data-header-theme="dark">
+            <div class="hero__decor" aria-hidden="true">
+              <span class="orb orb--large" data-speed="clamp(0.75)"></span>
+              <span class="orb orb--small" data-speed="clamp(1.2)"></span>
+              <span class="orb orb--ring" data-lag="0.35"></span>
+            </div>
+            <div class="hero__body">
+              <p class="eyebrow">scroll-animation · a skill for coding agents</p>
+              <h1 class="hero__title" data-split-words>Every animation runs on one of four clocks</h1>
+              <p class="hero__lede">
+                Tested, copy-and-own blocks for GSAP, Motion and CSS, the references that explain every decision, and
+                a CLI that copies the blocks into your project. This page is built from them.
+              </p>
+              <p><a class="button" href="/guide/">Read the guide</a></p>
+            </div>
+          </section>
+
+          <section class="intro" data-header-theme="light" data-reveal>
+            <h2 class="section-title" data-split-reveal>Name the clock first</h2>
+            <p class="intro__text" data-reveal-item>
+              It decides the cost, the engine and which traps apply. Trigger first; promote to scroll or media only
+              where the reader should drive the motion.
+            </p>
+          </section>
+
+          <section class="clocks" data-scene-root data-header-theme="light" aria-label="The four clocks">
+            <div class="clocks__pin" data-scene-pin>
+              <div class="dial" aria-hidden="true">
+                <div class="dial__row" data-clock="trigger">
+                  <span class="dial__name">trigger</span><span class="dial__meter"><span data-clock-fill></span></span>
+                </div>
+                <div class="dial__row" data-clock="scroll">
+                  <span class="dial__name">scroll</span><span class="dial__meter"><span data-clock-fill></span></span>
+                </div>
+                <div class="dial__row" data-clock="media">
+                  <span class="dial__name">media</span><span class="dial__meter"><span data-clock-fill></span></span>
+                </div>
+                <div class="dial__row" data-clock="render">
+                  <span class="dial__name">render</span><span class="dial__meter"><span data-clock-fill></span></span>
+                </div>
+              </div>
+            </div>
+            <div class="clocks__acts" data-scene-content>
+              <article class="act" data-reveal>
+                <p class="act__count" data-reveal-item>Clock 1 of 4</p>
+                <h3 class="act__title" data-reveal-item>Trigger</h3>
+                <p data-reveal-item>
+                  Plays once when content arrives: an entrance on the measured curve, a headline split into words by
+                  the build, a number counting up. <code>reveal</code>, <code>split-words</code>,
+                  <code>split-reveal</code>, <code>count-up</code>.
+                </p>
+              </article>
+              <article class="act" data-reveal>
+                <p class="act__count" data-reveal-item>Clock 2 of 4</p>
+                <h3 class="act__title" data-reveal-item>Scroll</h3>
+                <p data-reveal-item>
+                  A function of the reader's position in a range: this pinned scene, the rail below, the header's ink.
+                  Under ScrollSmoother every scroll-linked value comes from ScrollTrigger. <code>pinned-scene</code>,
+                  <code>horizontal-rail</code>, <code>header-theme</code>.
+                </p>
+              </article>
+              <article class="act" data-reveal>
+                <p class="act__count" data-reveal-item>Clock 3 of 4</p>
+                <h3 class="act__title" data-reveal-item>Media</h3>
+                <p data-reveal-item>
+                  Follows what a video decoder presents: a scrubbed video, an image sequence on a canvas, a loop with
+                  a pause control. Heavy media is prepared at build time and probed, never assumed.
+                  <code>scrub-video</code>, <code>frame-sequence</code>, <code>loop-video</code>.
+                </p>
+              </article>
+              <article class="act" data-reveal>
+                <p class="act__count" data-reveal-item>Clock 4 of 4</p>
+                <h3 class="act__title" data-reveal-item>Render</h3>
+                <p data-reveal-item>
+                  A render loop: WebGL or a canvas drawing every frame, on the same tick as the scroll. Per-frame work
+                  stops off-screen, in hidden tabs and in hidden routes.
+                </p>
+              </article>
+            </div>
+          </section>
+
+          <section class="intro" data-header-theme="dark" data-reveal>
+            <h2 class="section-title" data-split-reveal>Each job goes to the engine that does it best</h2>
+            <p class="intro__text" data-reveal-item>
+              CSS for decoration, Motion for React component and section motion, GSAP for timelines and its plugins.
+              When a route already loads GSAP, its entrances use GSAP rather than adding Motion.
+            </p>
+          </section>
+
+          <section class="engines" data-scene-root data-rail data-header-theme="dark">
+            <div class="engines__pin" data-scene-pin>
+              <div class="engines__track" data-rail-track role="region" aria-label="The engine map">
+                <article class="engine" data-rail-panel>
+                  <p class="engine__name">CSS</p>
+                  <h3 class="engine__job">Decoration</h3>
+                  <p>
+                    Parallax, fades and a reading-progress bar on scroll and view timelines, opted in with
+                    <code>data-scroll-fx</code>. No script; Firefox, reduced motion and ScrollSmoother pages show the
+                    static state.
+                  </p>
+                  <a href="/guide/#decoration">The guide's parallax figure</a>
+                </article>
+                <article class="engine" data-rail-panel>
+                  <p class="engine__name">Motion</p>
+                  <h3 class="engine__job">React components and sections</h3>
+                  <p>
+                    <code>Reveal</code>, <code>PinnedScene</code>, <code>ScrubVideo</code> and <code>SplitWords</code>
+                    under LazyMotion strict, reduced motion followed live. Scroll-linked styles are written by hand,
+                    never bound through <code>style</code>.
+                  </p>
+                  <a href="/guide/#clocks">The four clocks</a>
+                </article>
+                <article class="engine" data-rail-panel>
+                  <p class="engine__name">GSAP</p>
+                  <h3 class="engine__job">Timelines and plugins</h3>
+                  <p>
+                    ScrollTrigger pins, SplitText, ScrollSmoother. This page is GSAP only: the smoother owns scrolling,
+                    and ScrollTrigger pins the clocks and this rail.
+                  </p>
+                  <a href="/guide/#authority">One scroll authority per page</a>
+                </article>
+                <article class="engine" data-rail-panel>
+                  <p class="engine__name">Three</p>
+                  <h3 class="engine__job">The render clock</h3>
+                  <p>
+                    WebGL on the scroll's own tick: <code>advance()</code> from the GSAP ticker, after the scroll, lands
+                    a plane on its DOM box in the same frame. Under reduced motion, a poster; the canvas never mounts.
+                  </p>
+                  <a href="/guide/#reduced-motion">Reduced motion</a>
+                </article>
+              </div>
+            </div>
+            <div data-scene-spacer aria-hidden="true"></div>
+          </section>
+
+          <section class="stats" data-header-theme="light" data-count-ups aria-label="The skill in numbers">
+            <ul class="stats__list">
+              <li class="stat">
+                <span class="stat__value"><span data-count-up>4</span></span>
+                <span class="stat__label">clocks: trigger, scroll, media, render</span>
+              </li>
+              <li class="stat">
+                <span class="stat__value"><span data-count-up>3</span></span>
+                <span class="stat__label">scroll authorities: native, Lenis, ScrollSmoother</span>
+              </li>
+              <li class="stat">
+                <span class="stat__value"><span data-count-up>10</span></span>
+                <span class="stat__label">universal invariants: break one and the motion breaks</span>
+              </li>
+              <li class="stat">
+                <span class="stat__value"><span data-count-up>1.3</span> s</span>
+                <span class="stat__label">the entrance, its curve measured frame by frame</span>
+              </li>
+            </ul>
+          </section>
+
+          <section class="blocks" data-header-theme="dark">
+            <h2 class="section-title" data-split-reveal>The blocks on this page</h2>
+            <div data-reveal>
+              <p class="blocks__lede" data-reveal-item>
+                Copied into <code>src/animation/</code> by <code>scroll-animation add</code> and recorded in its lock
+                file. The page only wires them.
+              </p>
+              <ul class="blocks__list">
+                <li data-reveal-item><code>smooth-smoother</code> ScrollSmoother owns the scroll; reduced motion runs it in native mode</li>
+                <li data-reveal-item><code>pinned-scene</code> the four clocks, pinned by ScrollTrigger</li>
+                <li data-reveal-item><code>horizontal-rail</code> the engine map; a native snap scroller under reduced motion</li>
+                <li data-reveal-item><code>split-words</code> the headline, split into words when the site is built</li>
+                <li data-reveal-item><code>split-reveal</code> these headings, line by line once their font is in</li>
+                <li data-reveal-item><code>reveal</code> the copy, on the measured entrance curve</li>
+                <li data-reveal-item><code>count-up</code> the numbers above, from the final value in the HTML</li>
+                <li data-reveal-item><code>header-theme</code> the header's ink, from the section under it</li>
+                <li data-reveal-item><code>mount</code> creates them in page order on the route's root</li>
+              </ul>
+            </div>
+          </section>
+
+          <section class="closing" data-header-theme="light" data-reveal data-reveal-margin="0px">
+            <h2 class="section-title" data-split-reveal>One scroll authority per page</h2>
+            <p class="intro__text" data-reveal-item>
+              This page runs ScrollSmoother, so sticky, fixed and CSS scroll timelines are out inside its content: the
+              pins are ScrollTrigger's, and the header lives outside the wrapper. The guide scrolls natively and runs
+              its decoration on CSS timelines.
+            </p>
+            <p data-reveal-item><a class="button" href="/guide/">Read the guide</a></p>
+          </section>
+        </main>
+
+        <footer class="site-footer" data-header-theme="dark">
+          <p>scroll-animation · <a href="/guide/">Guide</a></p>
+        </footer>
+      </div>
+    </div>
+  </body>
+</html>

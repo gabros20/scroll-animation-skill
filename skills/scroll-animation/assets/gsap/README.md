@@ -26,6 +26,7 @@ Plain TypeScript for GSAP pages: Vite, Astro, a static page, or React through `u
 | `scrub-video.ts` | `scrub-video` | `scrubVideo(root, options)`: a pinned scene plus the video controller, camera and backdrop | `references/video.md` |
 | `frame-sequence.ts` | `frame-sequence` | `frameSequence(canvas, { manifest, trigger })` or `{ manifest, progress: () => p }` | `references/sequences.md` |
 | `loop-video.ts` | `loop-video` | `loopVideo(video, options)`, or `initLoopVideos(root)` over `[data-loop-video]`, with a WCAG 2.2.2 pause control | `references/video.md` |
+| `mount.ts` | `mount` | `mount(routeRoot, { selector: (el) => handle })` on a vanilla page: every match created in document order across block types inside one `gsap.context`, one refresh; the returned cleanup destroys in reverse. React uses `useGSAP` instead | `references/scroll-authority.md` |
 | `setup.ts` | `gsap-setup` | `setupGsap({ plugins })`, `MOTION_CONDITIONS`, `CONDITIONS`, `EASES`, `lineFromMargin(margin)` (the IntersectionObserver trigger line as ScrollTrigger positions) | `references/scroll-authority.md` |
 
 The engine-agnostic cores they drive sit one level up: `scene.ts`, `media/video-controller.ts`, `media/camera.ts` and

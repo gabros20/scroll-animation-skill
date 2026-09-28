@@ -16,12 +16,13 @@
  * CSS animation outranks inline styles, so it also beats Motion's server-rendered `initial` opacity. When it fires,
  * GATE_SCRIPT latches html[data-animation-failsafe], which keeps the page revealed after a late boot (engines then
  * skip the entrances instead of hiding and replaying them). */
+/* The resets name `transform` only. Every entrance hides with it (never with translate or scale), and Lightning CSS,
+   the minifier in Vite 8 and Tailwind v4, merges `transform`, `translate` and `scale` in one block into a single
+   `transform: translate(0,0) scale(1)`: the two resets are lost and an identity transform is left in place. */
 @keyframes animation-failsafe {
   to {
     opacity: 1;
     transform: none;
-    translate: none;
-    scale: none;
     clip-path: none;
     filter: none;
     visibility: visible;
@@ -42,8 +43,6 @@ html[data-animation='on']:not([data-animation-ready]) :is([data-stage-veil], [da
 html[data-animation-failsafe] :is([data-stage-item], [data-reveal-item]) {
   opacity: 1 !important;
   transform: none !important;
-  translate: none !important;
-  scale: none !important;
   clip-path: none !important;
   filter: none !important;
   visibility: visible !important;
@@ -110,8 +109,6 @@ html.lenis body {
   :is([data-stage-item], [data-reveal-item]) {
     opacity: 1 !important;
     transform: none !important;
-    translate: none !important;
-    scale: none !important;
     clip-path: none !important;
     filter: none !important;
     visibility: visible !important;

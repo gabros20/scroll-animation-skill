@@ -1,5 +1,6 @@
 /*
- * css/rail.css — the horizontal rail's track (gsap/horizontal-rail.ts), its reduced-motion scroller and print rules.
+ * css/rail.css — the horizontal rail's track (gsap/horizontal-rail.ts), its native scroller (reduced motion, no
+ * JavaScript) and print rules.
  * Import it after scene.css, which gives the root, pin and spacer their geometry.
  *
  *   <section data-scene-root data-rail>
@@ -48,6 +49,19 @@
     outline: 2px solid;
     outline-offset: -2px;
   }
+}
+
+/* No JavaScript: no rail measures a runway or slides the track, so the same native scroller keeps every panel in
+   reach (invariant 8). It applies while the pre-JS gate is missing and no rail has mounted (a mounted rail stamps
+   data-scene-state on its root). On a page with GATE_SCRIPT and JavaScript it never applies, so the track doesn't turn
+   into a scroller while the bundle loads; on a page without the gate it stops the moment the rail mounts. */
+html:not([data-animation='on']) [data-rail]:not([data-scene-state]) [data-rail-track] {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+}
+html:not([data-animation='on']) [data-rail]:not([data-scene-state]) [data-rail-panel] {
+  scroll-snap-align: start;
 }
 
 /* Print: every panel in flow, one under the next, none left translated off the page. */

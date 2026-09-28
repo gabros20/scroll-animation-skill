@@ -1,0 +1,68 @@
+/*
+ * css/split.css: the server-split words of motion/SplitWords.tsx (or splitWordsHTML in split-words.ts on a vanilla
+ * page), animated by CSS alone from the first frame. Import it once; it needs nothing else.
+ *
+ *   <h1 data-split-words style="--split-delay:0.2s;--split-stagger:0.05s">     both optional
+ *     <span data-split-copy>Every line arrives</span>                            the sentence, visually hidden
+ *     <span aria-hidden="true"><span data-split-word style="--i:0">Every</span> <span data-split-word style="--i:1">line</span> …</span>
+ *   </h1>
+ *
+ * - It starts at the first frame and waits for nothing: no pre-JS gate (html[data-animation]), no script, no font,
+ *   no hydration (spike S6d). This is the LCP element: a hidden state waiting on JavaScript would hold it back.
+ * - Only transform and opacity move, so nothing reflows: CLS 0, and the content below never moves (S6d). The words
+ *   are inline-block with or without the animation, so reduced motion lays out the same.
+ * - Word --i rises --split-distance (0.4em) on CURVES.entrance over MOTION.entrance.duration, and fades in short
+ *   and late against the move (MOTION.entranceFade). It starts at --split-delay + --i × --split-stagger (default
+ *   MOTION.lineStagger). `backwards` fill: a word waits hidden, and once it lands the animation lets go of it.
+ * - Reduced motion: no animation at all. The animation is gated behind no-preference, so there is nothing to reset
+ *   (S7e).
+ * - The numbers mirror config.ts. tests/text.mjs reads them off the running animations and fails if they drift.
+ */
+
+/* Visually hidden, still in the accessibility tree: the element's name. */
+[data-split-copy] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+[data-split-word] {
+  display: inline-block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-split-word] {
+    animation-name: split-word-rise, split-word-fade;
+    animation-duration: 1.3s, 0.17s;
+    animation-timing-function: cubic-bezier(0.15, 0.6, 0.2, 1), linear;
+    animation-delay:
+      calc(var(--split-delay, 0s) + var(--i, 0) * var(--split-stagger, 0.067s)),
+      calc(var(--split-delay, 0s) + var(--i, 0) * var(--split-stagger, 0.067s) + 0.13s);
+    animation-fill-mode: backwards;
+  }
+}
+
+@keyframes split-word-rise {
+  from {
+    transform: translateY(var(--split-distance, 0.4em));
+  }
+}
+
+@keyframes split-word-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* A page printed mid-entrance prints every word at rest. */
+@media print {
+  [data-split-word] {
+    animation: none;
+  }
+}

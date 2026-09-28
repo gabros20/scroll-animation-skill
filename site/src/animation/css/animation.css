@@ -1,0 +1,146 @@
+/*
+ * css/animation.css: the base layer every engine shares. Import it once, after your reset. It holds:
+ *   1. the pre-JS gate and the failsafe (content reads without JavaScript, and a failed boot reveals it),
+ *   2. the smooth-scroll base (Lenis's required rules; no global scroll-behavior),
+ *   3. reduced motion's structural half (scenes collapse to normal flow),
+ *   4. print,
+ *   5. the typed custom properties motion writes.
+ * GSAP's resting states for attribute-driven entrances live next door in animation.gsap.css.
+ */
+
+/* ── 1. The pre-JS gate and the failsafe ───────────────────────────────────────────────────────────
+ * An inline <head> script (GATE_SCRIPT in config.ts) sets html[data-animation="on"] before first paint. Hidden
+ * entrance states apply only under it, so a reader with JavaScript off sees every word. Each engine sets
+ * html[data-animation-ready] when it boots (setupGsap, MotionProvider). If none has after 4 s (the bundle failed or
+ * is still loading on a bad connection), the failsafe animation reveals entrance items and removes the load veil; a
+ * CSS animation outranks inline styles, so it also beats Motion's server-rendered `initial` opacity. When it fires,
+ * GATE_SCRIPT latches html[data-animation-failsafe], which keeps the page revealed after a late boot (engines then
+ * skip the entrances instead of hiding and replaying them). */
+/* The resets name `transform` only. Every entrance hides with it (never with translate or scale), and Lightning CSS,
+   the minifier in Vite 8 and Tailwind v4, merges `transform`, `translate` and `scale` in one block into a single
+   `transform: translate(0,0) scale(1)`: the two resets are lost and an identity transform is left in place. */
+@keyframes animation-failsafe {
+  to {
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+    filter: none;
+    visibility: visible;
+  }
+}
+@keyframes animation-failsafe-veil {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+html[data-animation='on']:not([data-animation-ready]) :is([data-stage-item], [data-reveal-item]) {
+  animation: animation-failsafe 0s 4s forwards;
+}
+html[data-animation='on']:not([data-animation-ready]) :is([data-stage-veil], [data-reveal-veil]) {
+  animation: animation-failsafe-veil 0s 4s forwards;
+}
+html[data-animation-failsafe] :is([data-stage-item], [data-reveal-item]) {
+  opacity: 1 !important;
+  transform: none !important;
+  clip-path: none !important;
+  filter: none !important;
+  visibility: visible !important;
+}
+html[data-animation-failsafe] :is([data-stage-veil], [data-reveal-veil]) {
+  display: none !important;
+}
+
+/*
+  <noscript> rule, for v1 Stage pages only: put it in the document <head>, not in a stylesheet (it has to apply even
+  when this file never loads). Stage server-renders an item's hidden `initial` state as an inline style, which the
+  gate above can't reach; with JavaScript off nothing would ever clear it. Reveal needs no rule: its hidden state is
+  CSS under the gate (css/reveal.css), never an inline style.
+
+    <noscript>
+      <style>
+        [data-stage-item] { opacity: 1 !important; transform: none !important; }
+        [data-stage-veil] { display: none !important; }
+      </style>
+    </noscript>
+*/
+
+/* ── 2. Smooth-scroll base ─────────────────────────────────────────────────────────────────────────
+ * No global `scroll-behavior: smooth`: with ScrollTrigger or a smoother on the page it corrupts ScrollTrigger's
+ * refresh pass (which scrolls to measure) and double-smooths anchor jumps. A purely native page may add it itself
+ * (references/scroll-authority.md §3). Anchor targets clear a fixed header: set --header-h on :root (on
+ * fluid-design, `--header-h: var(--fluid-header-h)`).
+ * The Lenis rules below are lenis/dist/lenis.css (v1.3), inlined so a project doesn't need a second import. */
+html {
+  scroll-padding-top: var(--header-h, 0px);
+}
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: clip;
+}
+.lenis [data-lenis-prevent],
+.lenis [data-lenis-prevent-wheel],
+.lenis [data-lenis-prevent-touch],
+.lenis [data-lenis-prevent-vertical],
+.lenis [data-lenis-prevent-horizontal] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+.lenis.lenis-autoToggle {
+  transition-property: overflow;
+  transition-duration: 1ms;
+  transition-behavior: allow-discrete;
+}
+
+/* ── 3. Reduced motion, the structural half ────────────────────────────────────────────────────────
+ * A pinned scene is not an animation a library can degrade: it is a runway written from scroll. Its structural
+ * collapse (the pin released, the runway gone, empty pacing acts at zero height) ships with the scene geometry in
+ * css/scene.css, so it comes with every scene and costs nothing on a page without one. */
+
+/* ── 4. Print ──────────────────────────────────────────────────────────────────────────────────────
+ * Entrance items print visible, and a ScrollSmoother wrapper stops clipping the page to one viewport. Scenes print
+ * their acts in flow through css/scene.css. */
+@media print {
+  :is([data-stage-item], [data-reveal-item]) {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+    filter: none !important;
+    visibility: visible !important;
+  }
+  :is([data-stage-veil], [data-reveal-veil]) {
+    display: none !important;
+  }
+  #smooth-wrapper {
+    position: static !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  #smooth-content {
+    transform: none !important;
+  }
+}
+
+/* ── 5. Typed custom properties ────────────────────────────────────────────────────────────────────
+ * Registered as <number> so they interpolate: WebKit pops an untyped custom property between values (a mask sweep
+ * driven by --fill jumps instead of wiping). inherits: false keeps a per-frame write from invalidating the element's
+ * whole subtree. Use the same shape for any other custom property that feeds a gradient, a filter or a calc(). */
+@property --fill {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+/* Scene progress for scaled distances: the engine writes 0..1 to --scene-p on the moving element and CSS multiplies
+ * it into a length, e.g. translate: calc(var(--scene-p) * 600 * var(--fluid, 1px)) 0, so the distance follows a
+ * viewport-scaled layout live through a resize with no unit maths in JS (references/scenes.md §12). */
+@property --scene-p {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}

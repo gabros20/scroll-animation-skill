@@ -98,3 +98,25 @@ jobs:
       - run: npm run test:scroll-effects
       - run: npm run test:header-theme
       - run: npm run test:count-up
+
+  # The storefront (site/), which is also the vanilla GSAP + ScrollSmoother example: a Vite build of both pages, then
+  # its checks against `vite preview` in Chromium, WebKit and Firefox: each page's scroll authority, the pinned
+  # timeline and the rail under ScrollSmoother, every entrance landing, reduced motion, JavaScript off, layout shift
+  # during load, and mount()'s creation order and cleanup.
+  site:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium webkit firefox
+      - run: pnpm check
