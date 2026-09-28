@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>reveal fixture (agnostic)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- tests/reveal.mjs replaces this with <script>GATE_SCRIPT</script>, taken from config.ts -->
+    <!--gate-script-->
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/animation.css" />
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/reveal.css" />
+    <link rel="stylesheet" href="./src/fixture.css" />
+  </head>
+  <body>
+    <!-- tests/reveal.mjs injects page.ts's attribute markup here -->
+    <!--page-->
+    <div data-reveal-veil class="veil"></div>
+    <script type="module" src="./src/agnostic-entry.ts"></script>
+  </body>
+</html>

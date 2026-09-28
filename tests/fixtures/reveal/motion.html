@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>reveal fixture (motion)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- tests/reveal.mjs replaces this with <script>GATE_SCRIPT</script>, taken from config.ts -->
+    <!--gate-script-->
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/animation.css" />
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/reveal.css" />
+    <link rel="stylesheet" href="./src/fixture.css" />
+  </head>
+  <body>
+    <!-- tests/reveal.mjs injects the server render of src/motion-app.tsx here -->
+    <div id="root"><!--ssr--></div>
+    <script type="module" src="./src/motion-entry.tsx"></script>
+  </body>
+</html>

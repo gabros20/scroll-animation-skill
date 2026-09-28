@@ -152,7 +152,7 @@ preset whose size class misses the subject (0.785 off inside the range), so it i
 - Quantise a coarse write (a colour to 1/256) and skip repeats, so a still frame writes nothing.
 - A binding and a hand writer may share a node, never a property: the next render clobbers the hand write.
 - Reduced motion is the writer's job, because `MotionConfig` never reaches a hand write: read `scene.reduced()` or
-  `useReducedMotionLive()` (exported by `usePinnedScene.ts`). Motion 13.4's `useReducedMotion()` reads once per mount.
+  `useReducedMotionLive()` (`motion/useReducedMotionLive.ts`). Motion 13.4's `useReducedMotion()` reads once per mount.
 
 A paused GSAP timeline is the same pattern: `pinnedScene(root, { onProgress: (p) => tl.progress(p) })`.
 
