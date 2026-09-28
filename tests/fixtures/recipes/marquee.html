@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>recipes fixture: marquee-velocity (gsap)</title>
+    <link rel="stylesheet" href="./src/page.css" />
+  </head>
+  <body>
+    <!-- A 600 px marquee of two 900 px copies, its pause button, and a long page to scroll. -->
+    <div class="spacer short"></div>
+    <div class="marquee" data-marquee id="ticker">
+      <div data-marquee-track>
+        <ul class="copy">
+          <li><a href="#one">One</a></li>
+          <li><a href="#two">Two</a></li>
+          <li><a href="#three">Three</a></li>
+          <li><a href="#four">Four</a></li>
+          <li><a href="#five">Five</a></li>
+          <li><a href="#six" id="last-item">Six</a></li>
+        </ul>
+        <ul class="copy" aria-hidden="true" inert>
+          <li><a href="#one">One</a></li>
+          <li><a href="#two">Two</a></li>
+          <li><a href="#three">Three</a></li>
+          <li><a href="#four">Four</a></li>
+          <li><a href="#five">Five</a></li>
+          <li><a href="#six">Six</a></li>
+        </ul>
+      </div>
+    </div>
+    <button type="button" id="toggle" aria-controls="ticker" aria-pressed="false">Pause the ticker</button>
+    <div class="spacer"></div>
+    <div class="spacer"></div>
+    <div class="spacer"></div>
+    <script type="module" src="./src/marquee.ts"></script>
+  </body>
+</html>

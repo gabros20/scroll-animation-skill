@@ -81,7 +81,8 @@ jobs:
   # The entrance, text and layered blocks in Chromium, WebKit and Firefox. Firefox stable has no CSS scroll-driven
   # timelines, so its runs prove every static fallback. Reveal in its three engines (Motion, GSAP, CSS + IO), the
   # horizontal rail, the text blocks (their late web font is a system monospace served slowly: DejaVu Sans Mono), the
-  # CSS scroll effects, the header ink under each scroll authority, and count-up.
+  # CSS scroll effects, the header ink under each scroll authority, count-up, and the layered recipes (each destroy()
+  # checked for leftover listeners, observers, triggers and tweens).
   blocks:
     runs-on: ubuntu-latest
     steps:
@@ -98,6 +99,7 @@ jobs:
       - run: npm run test:scroll-effects
       - run: npm run test:header-theme
       - run: npm run test:count-up
+      - run: npm run test:recipes
 
   # The storefront (site/), which is also the vanilla GSAP + ScrollSmoother example: a Vite build of both pages, then
   # its checks against `vite preview` in Chromium, WebKit and Firefox: each page's scroll authority, the pinned

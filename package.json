@@ -25,6 +25,7 @@
     "test:count-up": "node tests/count-up.mjs",
     "test:text": "node tests/text.mjs",
     "test:scroll-effects": "node tests/scroll-effects.mjs",
+    "test:recipes": "node tests/recipes.mjs",
     "test:smoke": "node tests/run-smoke.mjs",
     "test:audit": "node skills/scroll-animation/scripts/tools/audit-motion.mjs --selftest",
     "test:cli": "node tests/cli.mjs",

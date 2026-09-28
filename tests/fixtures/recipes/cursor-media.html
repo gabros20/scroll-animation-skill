@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>recipes fixture: cursor-media (gsap)</title>
+    <link rel="stylesheet" href="./src/page.css" />
+  </head>
+  <body>
+    <!-- Four items as wide as their text, a 240 x 160 preview centred 24 px right of its point (page.css). -->
+    <div class="spacer short"></div>
+    <div data-cursor-media id="list">
+      <ul>
+        <li><a href="#harbour" data-cursor-media-item="harbour">Harbour</a></li>
+        <li><a href="#field" data-cursor-media-item="field">Field notes</a></li>
+        <li><a href="#tide" data-cursor-media-item="tide">Tide tables</a></li>
+        <li><a href="#north" data-cursor-media-item="north">North light</a></li>
+      </ul>
+      <div data-cursor-media-preview aria-hidden="true">
+        <div data-cursor-media-for="harbour" class="m1"></div>
+        <div data-cursor-media-for="field" class="m2"></div>
+        <div data-cursor-media-for="tide" class="m3"></div>
+        <div data-cursor-media-for="north" class="m4"></div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <script type="module" src="./src/cursor-media.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>recipes fixture: draw-on-scroll (gsap)</title>
+    <link rel="stylesheet" href="./src/page.css" />
+  </head>
+  <body>
+    <!-- A wave (one path), then two equal lines in one svg: they draw one after the other. -->
+    <main>
+      <div class="spacer"></div>
+      <svg class="drawing" id="wave" viewBox="0 0 600 200" aria-hidden="true">
+        <path data-draw d="M0 100 C 150 0, 150 200, 300 100 S 450 0, 600 100" fill="none" stroke="#1a1a1a" stroke-width="4" />
+      </svg>
+      <div class="spacer"></div>
+      <svg class="drawing" id="pair" viewBox="0 0 600 200" aria-hidden="true">
+        <line data-draw x1="0" y1="50" x2="600" y2="50" stroke="#1a1a1a" stroke-width="4" />
+        <line data-draw x1="0" y1="150" x2="600" y2="150" stroke="#1a1a1a" stroke-width="4" />
+      </svg>
+      <div class="spacer"></div>
+    </main>
+    <script type="module" src="./src/draw.ts"></script>
+  </body>
+</html>

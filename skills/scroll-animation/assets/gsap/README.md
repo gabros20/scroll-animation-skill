@@ -49,6 +49,21 @@ The engine-agnostic cores they drive sit one level up: `scene.ts`, `media/video-
 The reference build's camera numbers are not shipped: `camera` defaults to identity (a plain covering video). Measure
 your own (`references/scenes.md` §7, `references/video.md` §15).
 
+## Recipes
+
+One file each to copy and adapt, typechecked and covered by `tests/recipes.mjs` in three browsers. Each header says
+when to use it, the cheaper alternative (often `css/scroll-effects.css`), its markup and its reduced-motion
+behaviour, and `destroy()` undoes everything it wrote. Create them after the page's scroll authority.
+
+| File | Block | Call |
+| --- | --- | --- |
+| `parallax.ts` | `parallax` | `parallax(root, options)`: `[data-parallax]` elements drift by `data-parallax-speed` of their pass, scrubbed once |
+| `colour-track.ts` | `colour-track` | `colourTrack(root, options)`: the page colour hands over between `[data-colour-track]` sections in OKLCH |
+| `marquee-velocity.ts` | `marquee-velocity` | `marqueeVelocity(el, options)`: a looping row whose speed follows scroll velocity; needs its WCAG 2.2.2 pause toggle |
+| `cursor-media.ts` | `cursor-media` | `cursorMedia(root, options)`: a media preview that follows a fine pointer over a list of links, and sits at the focused item for the keyboard |
+| `draw-on-scroll.ts` | `draw-on-scroll` | `drawOnScroll(root, options)`: SVG strokes drawn with DrawSVGPlugin as the reader scrolls |
+| `stepped-sections.ts` | `stepped-sections` | `steppedSections(root, options)`: one full-viewport section per wheel notch, swipe or key; read its warnings first |
+
 ## The v1 attribute blocks
 
 `initFluidMotion(root, { countUp?, headerTheme? })` (`index.ts`) wires the v1 attribute blocks found under `root`:
