@@ -205,8 +205,8 @@ const well = createScrollWell(el)                                    // no engin
   frame at a time, so call the handle's `suspend()` just before a router jump, `scrollIntoView` or the authority's
   `scrollTo`. Where there is no handle (`<ScrollWell />`, `mount()`), call `suspendScrollWells()`.
 - **Native scrolling only.** Under Lenis or ScrollSmoother it pulls nothing and warns once: a second writer would fight
-  the smoother. It learns the owner from `<html data-scroll-authority>`, which only the smooth blocks stamp, so keep it
-  off routes where a site's own Lenis runs ([brownfield-coexistence.md](brownfield-coexistence.md) §4). The audit's
+  the smoother. It learns the owner from `<html data-scroll-authority>`, or, for a site's own Lenis, from the `lenis`
+  class Lenis puts on `<html>` ([brownfield-coexistence.md](brownfield-coexistence.md) §4). The audit's
   `lenis-with-scroll-well` flags a well in a Lenis project.
 - Under reduced motion (live) it doesn't pull.
 

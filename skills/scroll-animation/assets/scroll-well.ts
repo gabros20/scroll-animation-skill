@@ -52,9 +52,9 @@
  *   suspendScrollWells() just before it.
  * - One well pulls at a time: the first to engage owns the page until it lets go, and the next waits its turn.
  * - Native scrolling only: Lenis and ScrollSmoother own the scroll position (one scroll authority per page), so under
- *   either it pulls nothing and warns once. It reads <html data-scroll-authority> each time it engages and on every
- *   frame it pulls, so an authority started after it (a route's SmoothScroll, whose effect runs after its children's)
- *   still stops it.
+ *   either it pulls nothing and warns once. It reads the owner (getScrollAuthority: <html data-scroll-authority>, or
+ *   Lenis's own `lenis` class for a Lenis the skill didn't start) each time it engages and on every frame it pulls, so
+ *   an authority started after it (a route's SmoothScroll, whose effect runs after its children's) still stops it.
  * - Reduced motion, live: no pull, and turning it on mid-visit stops the pull at once.
  * - destroy() removes every listener, observer and frame callback. The page stays where it is.
  */
