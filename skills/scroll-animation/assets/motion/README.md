@@ -44,6 +44,12 @@ while awake. Everything else is a triggered entrance or a `LoopVideo`.
 The reference build's camera numbers are not shipped: `camera` defaults to identity (a plain covering video). Measure
 your own (`references/scenes.md` §7, `references/video.md` §15).
 
+## Recipes
+
+| File | Block | What it is |
+| --- | --- | --- |
+| `Parallax.tsx` | `parallax` | `<Parallax speed>`: its children drift against the scroll by a fraction of their pass, written by hand from `useScroll` (never a bound `style`, spike S3); no drift under reduced motion. The GSAP version is `gsap/parallax.ts` |
+
 ## The v1 components
 
 `components/` (with `lib/` and `hooks/`) holds the v1 blocks the pack still ships: `Stage`, `StageItem` and `StageVeil`

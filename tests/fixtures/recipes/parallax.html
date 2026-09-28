@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>recipes fixture: parallax (gsap)</title>
+    <link rel="stylesheet" href="./src/page.css" />
+  </head>
+  <body>
+    <!-- Two layers between spacers: speed 0.2 (lags) and −0.15 (runs ahead). ?lenis runs the page under Lenis. -->
+    <main>
+      <div class="spacer"></div>
+      <div class="layer" data-parallax data-parallax-speed="0.2"></div>
+      <div class="spacer"></div>
+      <div class="layer small" data-parallax data-parallax-speed="-0.15"></div>
+      <div class="spacer"></div>
+    </main>
+    <script type="module" src="./src/parallax.ts"></script>
+  </body>
+</html>

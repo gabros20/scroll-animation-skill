@@ -587,6 +587,162 @@
       },
       "reference": "references/scenes.md"
     },
+    "parallax": {
+      "summary": "Elements that drift against the scroll by a fraction of their pass, at their layout position when centred: GSAP (scrubbed once, a hand-written translate) and Motion (a hand-written useScroll writer); no drift under reduced motion",
+      "clock": "scroll",
+      "tier": "recipe",
+      "profiles": [
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/parallax.ts"
+          ],
+          "requires": [
+            "gsap-setup",
+            "scroll-authority"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        },
+        "motion": {
+          "files": [
+            "motion/Parallax.tsx"
+          ],
+          "requires": [
+            "motion-provider",
+            "scroll-authority"
+          ],
+          "packages": [
+            "motion",
+            "react"
+          ]
+        }
+      },
+      "reference": "references/scroll-authority.md"
+    },
+    "colour-track": {
+      "summary": "A page colour that hands over from section to section in step with the scroll, blended in OKLCH with color-mix() through --track-a, --track-b and --track-p; exact, with no catch-up, under reduced motion",
+      "clock": "scroll",
+      "tier": "recipe",
+      "profiles": [
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/colour-track.ts"
+          ],
+          "requires": [
+            "gsap-setup",
+            "scroll-authority"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        }
+      },
+      "reference": "references/scroll-authority.md"
+    },
+    "marquee-velocity": {
+      "summary": "A seamless looping row whose speed and direction follow the scroll velocity (quickTo on the loop's timeScale), paused on hover, focus, off screen and by its WCAG 2.2.2 toggle; stopped under reduced motion",
+      "clock": "render",
+      "tier": "recipe",
+      "profiles": [
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/marquee-velocity.ts"
+          ],
+          "requires": [
+            "gsap-setup"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        }
+      },
+      "reference": "references/accessibility.md"
+    },
+    "cursor-media": {
+      "summary": "A list of links whose media preview follows a fine pointer (quickTo on x and y) and sits at the item for keyboard focus and under reduced motion; nothing on touch screens",
+      "clock": "render",
+      "tier": "recipe",
+      "profiles": [
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/cursor-media.ts"
+          ],
+          "requires": [
+            "gsap-setup"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        }
+      },
+      "reference": "references/accessibility.md"
+    },
+    "draw-on-scroll": {
+      "summary": "SVG strokes that draw as the reader scrolls (DrawSVGPlugin, scrubbed once, one pen across a drawing), with the pathLength CSS alternative; fully drawn under reduced motion, without JavaScript and in print",
+      "clock": "scroll",
+      "tier": "recipe",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/draw-on-scroll.ts"
+          ],
+          "requires": [
+            "gsap-setup",
+            "scroll-authority"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        }
+      },
+      "reference": "references/scroll-authority.md"
+    },
+    "stepped-sections": {
+      "summary": "A presentation mode that steps one full-viewport section per wheel notch, swipe or key (Observer through ScrollTrigger.observe), never trapping assistive technology; normal scrolling under reduced motion and without JavaScript",
+      "clock": "trigger",
+      "tier": "recipe",
+      "profiles": [
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/stepped-sections.ts"
+          ],
+          "requires": [
+            "gsap-setup",
+            "scroll-authority"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        }
+      },
+      "reference": "references/accessibility.md"
+    },
     "scroll-well": {
       "summary": "A continuous scroll attractor that pulls its parent to a centred rest.",
       "clock": "scroll",

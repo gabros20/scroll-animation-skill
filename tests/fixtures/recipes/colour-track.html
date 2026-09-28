@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en" style="--brick: rgb(231 111 81)">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>recipes fixture: colour-track (gsap)</title>
+    <link rel="stylesheet" href="./src/page.css" />
+  </head>
+  <body>
+    <!-- Blue into yellow: an RGB blend passes through grey, an OKLCH one doesn't. The third colour is a var() on :root. -->
+    <main>
+      <section data-colour-track="#0000ff"><h2>Blue</h2></section>
+      <section data-colour-track="#ffff00"><h2>Yellow</h2></section>
+      <section data-colour-track="var(--brick)"><h2>Brick</h2></section>
+      <div class="spacer"></div>
+    </main>
+    <script type="module" src="./src/colour-track.ts"></script>
+  </body>
+</html>
