@@ -19,9 +19,9 @@
  * - The probe line is the header's bottom edge by default (`line: 1`, a fraction of its height from its top edge; 0.5
  *   is its middle). It is read from layout (offsetTop, offsetHeight), so a transform on the header (an entrance,
  *   hide-on-scroll) doesn't move it. A sticky header is probed where it sticks, its `top`: its offsetTop is its place
- *   in the document, which runs with the scroll once it is stuck. A ResizeObserver on the header and a window resize listener rebuild the band when
- *   the line or the viewport moves. Nothing runs while the page scrolls except the observer's own callbacks, one per
- *   section edge crossing the line.
+ *   in the document, which runs with the scroll once it is stuck. A ResizeObserver on the header and a window resize
+ *   listener rebuild the band when the line or the viewport moves. Nothing runs while the page scrolls except the
+ *   observer's own callbacks, one per section edge crossing the line.
  * - Sections that overlap at the line: the last in document order wins, so a nested section beats its parent, and a
  *   later sibling pulled over an earlier one wins where it covers it.
  * - Sections added, removed or re-themed later (a client-side navigation, a theme switch) are picked up by a

@@ -108,9 +108,8 @@ plain px layout.
 - **Another scaled unit** (a custom property holding one design px as a length): describe it in `SCALE.units`.
 - **Plain px**: leave `SCALE = null`; `scaledPx(n)` returns `n`. Keep the breakpoint in `config.ts` alone and import it
   everywhere: copies of one number drift.
-- **v1 blocks still in the pack** (the stage, the scroll well) read `ENGAGE_QUERY` from their own constants: point it
-  at the same source. The scroll well multiplies `--fluid` itself (a unit of 1 without it), and `anchor-check.mjs`
-  reads `--fluid-header-h`, then `--header-h`.
+- **No block keeps its own copy:** each reads what it needs from `config.ts`, the scroll well included.
+  `anchor-check.mjs` reads the header from `--fluid-header-h`, then `--header-h`.
 
 Scaled travel (`--scene-p`, `scaledValue`, GSAP's `translate` trap) is in [scenes.md](scenes.md) §12.
 

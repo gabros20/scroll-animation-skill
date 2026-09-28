@@ -18,9 +18,10 @@ export const DESKTOP_QUERY = '(min-width: 1024px)'
 export const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
 
 /**
- * The custom property holding the fixed header's resting height: anchor offsets, header-ink probes, sticky tops,
- * `scroll-padding-top` in css/animation.css. Keep the name; point it at your layout's value in CSS instead
- * (`:root { --header-h: 72px }`, or `var(--fluid-header-h)` on fluid-design), so CSS and code read one variable.
+ * The custom property holding the header's resting height: anchor offsets, sticky tops, `scroll-padding-top` in
+ * css/animation.css. The header-ink probe doesn't read it: header-theme.ts measures the header's own box. Keep the
+ * name; point it at your layout's value in CSS instead (`:root { --header-h: 72px }`, or `var(--fluid-header-h)` on
+ * fluid-design), so CSS and code read one variable.
  */
 export const HEADER_HEIGHT_VAR = '--header-h'
 

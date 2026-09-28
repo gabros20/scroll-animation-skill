@@ -64,7 +64,7 @@
           ]
         }
       },
-      "reference": "references/scroll-authority.md"
+      "reference": "references/gsap.md"
     },
     "mount": {
       "summary": "Attribute-driven mounting on a route root for vanilla GSAP pages: every block its selectors match, created in document order inside one gsap.context, one ScrollTrigger refresh, torn down in reverse; never the document",
@@ -88,7 +88,7 @@
           ]
         }
       },
-      "reference": "references/scroll-authority.md"
+      "reference": "references/gsap.md"
     },
     "motion-provider": {
       "summary": "LazyMotion strict + MotionConfig reducedMotion=\"user\" at the root of a Motion tree; marks the engine ready; useReducedMotionLive() for hand writers",
@@ -113,7 +113,7 @@
           ]
         }
       },
-      "reference": "references/accessibility.md"
+      "reference": "references/motion.md"
     },
     "scroll-authority": {
       "summary": "One scroll owner per page: the handle, the <html data-scroll-authority> stamp, native scrolling as a handle",
@@ -241,7 +241,7 @@
           ]
         }
       },
-      "reference": "references/attribute-contract.md"
+      "reference": "references/preflight.md"
     },
     "gsap-css": {
       "summary": "v1 GSAP resting states: hidden entrance variants, the load veil, the scrub scene's sticky geometry",
@@ -261,7 +261,7 @@
           "packages": []
         }
       },
-      "reference": "references/motion-architecture.md"
+      "reference": "references/entrances.md"
     },
     "stage": {
       "summary": "The triggered entrance system: reveal groups, item variants and the page-load veil.",
@@ -303,7 +303,7 @@
           ]
         }
       },
-      "reference": "references/motion-architecture.md"
+      "reference": "references/entrances.md"
     },
     "reveal": {
       "summary": "Triggered entrances (rise, fade, clip, scale-in) on the measured curves, at the trigger line or on mount: a CSS resting state under the pre-JS gate, failsafe-safe, live reduced motion, a load veil, Activity-safe",
@@ -355,7 +355,7 @@
           "packages": []
         }
       },
-      "reference": "references/motion-architecture.md"
+      "reference": "references/entrances.md"
     },
     "split-words": {
       "summary": "An above-the-fold heading or lede split into words on the server and animated by CSS keyframes from the first frame: no JavaScript, CLS 0, the sentence as its accessible name, Intl.Segmenter for CJK and Thai",
@@ -387,7 +387,7 @@
           "packages": []
         }
       },
-      "reference": "references/accessibility.md"
+      "reference": "references/text.md"
     },
     "split-reveal": {
       "summary": "A heading or paragraph revealed line by line below the fold with GSAP SplitText: split once its font is in, aria by element, the original DOM back after the entrance, live reduced motion, CJK and Thai through Intl.Segmenter",
@@ -412,7 +412,7 @@
           ]
         }
       },
-      "reference": "references/accessibility.md"
+      "reference": "references/text.md"
     },
     "count-up": {
       "summary": "A number that counts up once, ~60% in view: the server text is the final value, frames in its locale written to the text node, screen readers hear the final value, the final value at once under reduced motion, the failsafe and a hidden tab",
@@ -447,7 +447,7 @@
           ]
         }
       },
-      "reference": "references/motion-architecture.md"
+      "reference": "references/entrances.md"
     },
     "fade-on-exit": {
       "summary": "Fades a group out as it scrolls above the viewport; pairs with a pinned scene's riding copy.",
@@ -498,7 +498,7 @@
           "packages": []
         }
       },
-      "reference": "references/scroll-authority.md"
+      "reference": "references/css-scroll-effects.md"
     },
     "loop-video": {
       "summary": "An in-view background video loop with a WCAG 2.2.2 pause control, live reduced-motion and Save-Data gating, a rejected-play fallback and Activity-safe hide/show",
@@ -530,7 +530,7 @@
       "reference": "references/video.md"
     },
     "header-theme": {
-      "summary": "A fixed header's ink follows the section under its probe line: a 1 px IntersectionObserver band, no scroll listener, the same under native scrolling, Lenis and ScrollSmoother; one ink transition and a blend variant",
+      "summary": "A fixed or sticky header's ink follows the section under its probe line: a 1 px IntersectionObserver band, no scroll listener, the same under native scrolling, Lenis and ScrollSmoother; one ink transition and a blend variant",
       "clock": "scroll",
       "tier": "primitive",
       "profiles": [
@@ -559,7 +559,7 @@
           ]
         }
       },
-      "reference": "references/header-theme.md"
+      "reference": "references/layered-visuals.md"
     },
     "horizontal-rail": {
       "summary": "A pinned scene whose band slides a track of panels sideways: measured travel and runway, RTL, keyboard focus that follows, a native snap scroller under reduced motion",
@@ -622,7 +622,7 @@
           ]
         }
       },
-      "reference": "references/scroll-authority.md"
+      "reference": "references/layered-visuals.md"
     },
     "colour-track": {
       "summary": "A page colour that hands over from section to section in step with the scroll, blended in OKLCH with color-mix() through --track-a, --track-b and --track-p; exact, with no catch-up, under reduced motion",
@@ -646,7 +646,7 @@
           ]
         }
       },
-      "reference": "references/scroll-authority.md"
+      "reference": "references/layered-visuals.md"
     },
     "marquee-velocity": {
       "summary": "A seamless looping row whose speed and direction follow the scroll velocity (quickTo on the loop's timeScale), paused on hover, focus, off screen and by its WCAG 2.2.2 toggle; stopped under reduced motion",
@@ -669,7 +669,7 @@
           ]
         }
       },
-      "reference": "references/accessibility.md"
+      "reference": "references/layered-visuals.md"
     },
     "cursor-media": {
       "summary": "A list of links whose media preview follows a fine pointer (quickTo on x and y) and sits at the item for keyboard focus and under reduced motion; nothing on touch screens",
@@ -692,7 +692,7 @@
           ]
         }
       },
-      "reference": "references/accessibility.md"
+      "reference": "references/layered-visuals.md"
     },
     "draw-on-scroll": {
       "summary": "SVG strokes that draw as the reader scrolls (DrawSVGPlugin, scrubbed once, one pen across a drawing), with the pathLength CSS alternative; fully drawn under reduced motion, without JavaScript and in print",
@@ -717,7 +717,7 @@
           ]
         }
       },
-      "reference": "references/scroll-authority.md"
+      "reference": "references/layered-visuals.md"
     },
     "stepped-sections": {
       "summary": "A presentation mode that steps one full-viewport section per wheel notch, swipe or key (Observer through ScrollTrigger.observe), never trapping assistive technology; normal scrolling under reduced motion and without JavaScript",
@@ -741,7 +741,7 @@
           ]
         }
       },
-      "reference": "references/accessibility.md"
+      "reference": "references/layered-visuals.md"
     },
     "scroll-well": {
       "summary": "A continuous scroll attractor that pulls its parent to a centred rest.",
