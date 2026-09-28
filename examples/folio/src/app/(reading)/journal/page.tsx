@@ -24,15 +24,15 @@ export default function JournalIndexPage() {
       </p>
 
       {/*
-        Reveal staggers the cards in as the list arrives: each card's text,
-        not its cover. The covers are in view at load, and the first one is
+        Each card is its own Reveal group, so its text comes in when that card
+        arrives (on a phone, one under the next), never its cover. The covers are in view at load, and the first one is
         the page's LCP element, which never waits for hydration. The cover
         is also the shared-element source for the article hero
         (view-transitions, Phase 4).
       */}
-      <Reveal as="ol" stagger={0.12} className="mt-16 grid gap-12 sm:grid-cols-2 lg:gap-16">
+      <ol className="mt-16 grid gap-12 sm:grid-cols-2 lg:gap-16">
         {journalArticles.map((article) => (
-          <li key={article.slug}>
+          <Reveal as="li" key={article.slug}>
             <Link href={`/journal/${article.slug}`} className="group block">
               <MediaSlot
                 kind="image"
@@ -56,9 +56,9 @@ export default function JournalIndexPage() {
                 </p>
               </RevealItem>
             </Link>
-          </li>
+          </Reveal>
         ))}
-      </Reveal>
+      </ol>
     </div>
   );
 }
