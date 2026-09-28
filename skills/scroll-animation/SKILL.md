@@ -52,10 +52,13 @@ First pick the lane, then the reference:
 
 | Clock | Job | Block (engine) |
 |---|---|---|
-| trigger | content entrance, load veil | `stage` (motion: `Stage`/`StageItem`; gsap: `data-stage`) |
-| trigger | a number counting up | `count-up` (motion, gsap) |
-| scroll | copy fading as it leaves over a pin | `fade-on-exit` (motion, gsap) |
-| scroll | header ink per section | `header-theme` (motion, gsap) |
+| trigger | content entrance, load veil | `reveal` (motion: `Reveal`/`RevealItem`/`RevealVeil`; gsap: `reveal`; agnostic: `mountReveals`) |
+| trigger | an above-the-fold headline, its words in from the first frame | `split-words` (motion: `SplitWords`, a Server Component; agnostic: `splitWordsHTML`) |
+| trigger | a heading or paragraph revealed line by line below the fold | `split-reveal` (gsap: `splitReveal`, SplitText) |
+| trigger | a number counting up | `count-up` (motion: `CountUp`; agnostic: `mountCountUps`) |
+| scroll | parallax, fade and scale in, exit fade, reading progress, sticky stack, marquee | `scroll-effects` (css: `data-scroll-fx`; decoration, off under ScrollSmoother) |
+| scroll | header ink per section | `header-theme` (motion: `useHeaderTheme`; agnostic: `mountHeaderTheme`) |
+| scroll | a horizontal rail of panels | `horizontal-rail` (gsap: `horizontalRail`, on `pinned-scene`) |
 | scroll | a section pulled to rest | `scroll-well` (motion, gsap; not under a smoother) |
 | scroll | a pinned scene: stacked acts, a scroll-driven timeline | `pinned-scene` (motion: `PinnedScene`; gsap: `pinnedScene`) |
 | media | a scrubbed video on a pinned scene | `scrub-video` (motion: `ScrubVideo`; gsap: `scrubVideo`) |

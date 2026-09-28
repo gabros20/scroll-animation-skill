@@ -21,6 +21,8 @@
     "test:scrub-video": "node tests/scrub-video.mjs",
     "test:reveal": "node tests/reveal.mjs",
     "test:rail": "node tests/rail.mjs",
+    "test:header-theme": "node tests/header-theme.mjs",
+    "test:count-up": "node tests/count-up.mjs",
     "test:text": "node tests/text.mjs",
     "test:scroll-effects": "node tests/scroll-effects.mjs",
     "test:smoke": "node tests/run-smoke.mjs",

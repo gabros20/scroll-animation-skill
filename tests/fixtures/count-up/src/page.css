@@ -1,0 +1,26 @@
+/* The count-up fixture's layout: large stats a screen and a bit apart, so each comes into view on its own. Tabular
+   figures keep the digits from jittering while they count. */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #f4f1ea;
+  color: #111;
+  font: 16px/1.4 system-ui, sans-serif;
+}
+h1 {
+  margin: 24px 16px;
+}
+.stat {
+  margin: 0;
+  padding: 0 16px;
+  font-size: 48px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.spacer {
+  height: 130vh;
+}
+.tail {
+  height: 100vh;
+}

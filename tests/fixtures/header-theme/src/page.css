@@ -1,0 +1,54 @@
+/* The header-theme fixture's page: a fixed 64 px header whose inks this file maps to colours (the page's job, not the
+   block's), and full-width bands. over-b is positioned so it paints over the section it is pulled up into. */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #ddd;
+  color: #111;
+  font: 16px/1.4 system-ui, sans-serif;
+}
+
+[data-header] {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  box-sizing: border-box;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  color: #222;
+}
+[data-header] a {
+  color: inherit;
+}
+[data-header][data-header-ink='night'] {
+  color: #fff;
+}
+[data-header][data-header-ink='day'] {
+  color: #111;
+}
+[data-header][data-header-ink='brand'] {
+  color: #ffe9c4;
+}
+
+.band {
+  display: block;
+  box-sizing: border-box;
+}
+.t-night {
+  background: #111;
+}
+.t-day {
+  background: #f4f1ea;
+}
+.t-brand {
+  background: #c43;
+}
+#over-b {
+  position: relative;
+}

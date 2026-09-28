@@ -391,7 +391,7 @@
       "reference": "references/accessibility.md"
     },
     "count-up": {
-      "summary": "A number that counts from 0 on first ~60% visibility.",
+      "summary": "A number that counts up once, ~60% in view: the server text is the final value, frames in its locale written to the text node, screen readers hear the final value, the final value at once under reduced motion, the failsafe and a hidden tab",
       "clock": "trigger",
       "tier": "primitive",
       "profiles": [
@@ -400,24 +400,26 @@
         "immersive"
       ],
       "engines": {
-        "gsap": {
+        "agnostic": {
           "files": [
-            "gsap/countUp.ts"
+            "count-up.ts"
           ],
           "requires": [
-            "v1-config"
+            "config"
           ],
-          "packages": [
-            "gsap"
-          ]
+          "packages": []
         },
         "motion": {
           "files": [
-            "motion/components/CountUp.tsx"
+            "count-up.ts",
+            "motion/CountUp.tsx"
           ],
-          "requires": [],
+          "requires": [
+            "config"
+          ],
           "packages": [
-            "motion"
+            "motion",
+            "react"
           ]
         }
       },
@@ -504,7 +506,7 @@
       "reference": "references/video.md"
     },
     "header-theme": {
-      "summary": "Switches a transparent fixed header's ink to match the section scrolling under it.",
+      "summary": "A fixed header's ink follows the section under its probe line: a 1 px IntersectionObserver band, no scroll listener, the same under native scrolling, Lenis and ScrollSmoother; one ink transition and a blend variant",
       "clock": "scroll",
       "tier": "primitive",
       "profiles": [
@@ -513,21 +515,23 @@
         "immersive"
       ],
       "engines": {
-        "gsap": {
+        "agnostic": {
           "files": [
-            "gsap/headerTheme.ts"
+            "header-theme.ts",
+            "css/header-theme.css"
           ],
           "requires": [],
           "packages": []
         },
         "motion": {
           "files": [
-            "motion/hooks/useHeaderTheme.ts",
-            "motion/hooks/header-theme.ts"
+            "header-theme.ts",
+            "motion/useHeaderTheme.ts",
+            "css/header-theme.css"
           ],
           "requires": [],
           "packages": [
-            "motion"
+            "react"
           ]
         }
       },
