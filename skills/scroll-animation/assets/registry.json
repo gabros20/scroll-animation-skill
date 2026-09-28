@@ -401,6 +401,32 @@
       },
       "reference": "references/header-theme.md"
     },
+    "horizontal-rail": {
+      "summary": "A pinned scene whose band slides a track of panels sideways: measured travel and runway, RTL, keyboard focus that follows, a native snap scroller under reduced motion",
+      "clock": "scroll",
+      "tier": "primitive",
+      "profiles": [
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/horizontal-rail.ts",
+            "css/rail.css"
+          ],
+          "requires": [
+            "pinned-scene",
+            "scene-css",
+            "scroll-authority"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        }
+      },
+      "reference": "references/scenes.md"
+    },
     "scroll-well": {
       "summary": "A continuous scroll attractor that pulls its parent to a centred rest.",
       "clock": "scroll",

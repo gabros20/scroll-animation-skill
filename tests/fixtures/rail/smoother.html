@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>rail fixture (ScrollSmoother, pin: 'gsap')</title>
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/animation.css" />
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/scene.css" />
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/rail.css" />
+    <link rel="stylesheet" href="./src/page.css" />
+  </head>
+  <body>
+    <div id="smooth-wrapper">
+      <div id="smooth-content">
+        <section class="intro"><h1>Before the rail</h1><a href="#start" data-intro>Start</a></section>
+        <section data-scene-root data-rail>
+          <div data-scene-pin>
+            <div data-rail-track role="region" aria-label="Selected work"></div>
+          </div>
+          <div data-scene-spacer aria-hidden="true"></div>
+        </section>
+        <section class="outro"><a href="#after">After the rail</a></section>
+      </div>
+    </div>
+    <script type="module" src="./src/smoother.ts"></script>
+  </body>
+</html>
