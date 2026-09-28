@@ -4,7 +4,8 @@
  * Exactly one authority per page: `native`, `lenis` or `smoother` (GSAP ScrollSmoother). The owner stamps
  * `<html data-scroll-authority="…">` while it runs and removes the stamp when it stops, so a route that is hidden
  * (Next's Activity) or left (a client navigation) can't leave a stale owner behind. `verify` and devtools read the
- * stamp; code reads `getScrollAuthority()` and `currentSmoothScroll()`.
+ * stamp; code reads `getScrollAuthority()` and `currentSmoothScroll()`. A Lenis the skill didn't start (a site's own)
+ * stamps nothing, but Lenis marks the root with its own `lenis` class, so getScrollAuthority() reads that too.
  */
 import { prefersReducedMotion } from '../config'
 
@@ -39,8 +40,12 @@ export function clearAuthority(authority: ScrollAuthority): void {
 
 export function getScrollAuthority(): ScrollAuthority {
   if (typeof document === 'undefined') return 'native'
-  const v = document.documentElement.dataset.scrollAuthority
-  return v === 'lenis' || v === 'smoother' ? v : 'native'
+  const html = document.documentElement
+  const v = html.dataset.scrollAuthority
+  if (v === 'lenis' || v === 'smoother') return v
+  // No stamp: a site's own Lenis still owns the scroll. (A ScrollSmoother started by hand leaves no mark: start it
+  // with createSmoother, which stamps.)
+  return !v && html.classList.contains('lenis') ? 'lenis' : 'native'
 }
 
 /** The page's live handle (its `authority` says who scrolls now), or null when no authority is running. */
