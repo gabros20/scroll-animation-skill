@@ -75,19 +75,6 @@ body {
 }
 
 /*
- * header-theme.css transitions the header and everything in it. A link that
- * inherits its colour from a container that is transitioning too restarts
- * its own transition on every frame of the container's, and lands two to
- * three times late (measured: 430 ms in Chromium, 590 in WebKit, for 200).
- * Here the containers only pass the ink down and the links carry the one
- * 200 ms transition.
- */
-[data-header],
-[data-header] nav {
-  transition: none;
-}
-
-/*
  * Stands in for real media until `pnpm media` unpacks public/media/.
  * MediaSlot (src/components/media-slot.tsx) renders this instead of an
  * <img>/<video> whenever the file it asked for doesn't exist yet.
