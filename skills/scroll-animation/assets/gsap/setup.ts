@@ -33,9 +33,10 @@ export const EASES: Readonly<Record<CurveName, string>> = {
  *
  * Never put the BREAKPOINT in the conditions of a build that creates ScrollTriggers. Measured with GSAP 3.15: when a
  * condition changes, the rebuilt trigger's own refresh zeroes the recorded scroll and the refresh that follows leaves
- * the page at scrollY 0 (Chromium and WebKit), so rotating an iPad across the desktop breakpoint throws the reader to
- * the top. Branch on the breakpoint inside the build (`isDesktop()` from config, function-based values and
- * `invalidateOnRefresh`), or keep the trigger outside the matchMedia and swap only its tweens.
+ * the page at scrollY 0 (Chromium, WebKit and Firefox), so rotating an iPad across the desktop breakpoint throws the
+ * reader to the top. Branch on the breakpoint inside the build (`isDesktop()` from config, function-based values and
+ * `invalidateOnRefresh`), or keep the trigger outside the matchMedia and swap only its tweens. A reduced-motion switch
+ * rebuilds too: an entrance whose trigger must keep the reader's place (reveal, split-reveal) creates it outside.
  */
 export const MOTION_CONDITIONS = {
   reduce: REDUCED_MOTION_QUERY,
@@ -51,6 +52,27 @@ export const CONDITIONS = {
 
 export type Conditions = { [K in keyof typeof CONDITIONS]: boolean }
 export type MotionConditions = { [K in keyof typeof MOTION_CONDITIONS]: boolean }
+
+/**
+ * An IntersectionObserver rootMargin as ScrollTrigger positions, so a GSAP trigger fires on the same line as the
+ * engine-free blocks: `start` where the element's top meets the bottom edge of the margin box, `end` where its bottom
+ * leaves the top edge. TRIGGERS.reveal ('0px 0px -20% 0px') is start 'top 80%', end 'bottom top'.
+ */
+export function lineFromMargin(margin: string): { start: string; end: string } {
+  const values = margin.trim().split(/\s+/)
+  const top = values[0] ?? '0px'
+  const bottom = values[2] ?? top
+  return { start: `top ${edgeAt('bottom', bottom)}`, end: `bottom ${edgeAt('top', top)}` }
+}
+
+/** A viewport edge moved outward by a margin (the bottom edge down, the top edge up), as a ScrollTrigger position. */
+function edgeAt(edge: 'top' | 'bottom', length: string): string {
+  const match = /^(-?\d*\.?\d+)(px|%)?$/.exec(length)
+  // Down the screen is positive.
+  const offset = (match ? Number(match[1]) : 0) * (edge === 'bottom' ? 1 : -1)
+  if (match?.[2] === '%') return `${(edge === 'bottom' ? 100 : 0) + offset}%`
+  return offset === 0 ? edge : `${edge}${offset > 0 ? '+=' : '-='}${Math.abs(offset)}`
+}
 
 let registered = false
 

@@ -110,15 +110,19 @@ once the page settles, and no element inside a scene is still `position: sticky`
 
 ## 5. Split text and screen readers
 
-- **Headings:** GSAP SplitText `aria: "auto"` puts the full text in `aria-label` on the heading and hides the pieces.
-  That works on headings; ARIA doesn't allow naming generic or paragraph elements, so don't rely on it for a `<p>` or
-  a `<div>`.
-- **Paragraphs and other elements:** `aria: "hidden"` plus a visually hidden copy of the text, or `revert()` the split
-  when the entrance finishes. Reverting also stops browser translation from garbling split spans.
-- **Server-split words** (React): render the words as `aria-hidden` spans inside an element whose accessible name is
-  the full sentence, or keep the sentence in a visually hidden span.
+- **Headings with nothing focusable inside:** GSAP SplitText `aria: "auto"` names the heading with `aria-label` and
+  hides the pieces. Only there: ARIA prohibits naming generic and paragraph elements, and a link inside a labelled
+  heading drops out of the tree while staying in the Tab order. A heading that contains a link is running text.
+- **Running text** (paragraphs, list items, headings with links): keep the element's own nodes as its visually hidden
+  content (the same nodes, so links keep their listeners and one Tab stop), and split an `aria-hidden` wrapper of
+  copies with `aria: "hidden"`, its focusables at `tabindex="-1"`. Put `aria: "hidden"` on that inner wrapper, never on
+  the element, or it hides the real text too. Put the original nodes back when the entrance ends (split-reveal's
+  `revertAfter`), which also stops browser translation from garbling split spans.
+- **Server-split words** (`SplitWords`, `splitWordsHTML`): the sentence once in a visually hidden span, the words as
+  `aria-hidden` spans. `innerText` and copy-paste see the sentence twice; that is the price of splitting with no
+  JavaScript.
 - Never split running text into characters, and never split Arabic or Indic scripts below the word: it breaks
-  letter joining and shaping. For CJK and Thai, segment with `Intl.Segmenter`, not spaces.
+  letter joining and shaping. For Chinese, Japanese and Thai, segment with `Intl.Segmenter`, not spaces.
 
 ## 6. Content without JavaScript, print and reader mode
 

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>text fixture: SplitWords</title>
+    <!--
+      SplitWords (spike S6d). tests/text.mjs server-renders motion/SplitWords.tsx in Node (react-dom/server) and
+      puts the markup in <main>. The module bundle only records when it ran; the runner delays it, or turns
+      JavaScript off, to show that the words wait for nothing.
+    -->
+    <script>
+      // Before the first paint: where the paragraph under the split text sits in every frame, and the layout
+      // shifts (only Chromium has the Layout Instability API). tests/text.mjs reads both.
+      window.__below = []
+      window.__shifts = null
+      requestAnimationFrame(function tick() {
+        var below = document.getElementById('below')
+        if (below) window.__below.push(Math.round(below.getBoundingClientRect().top * 100) / 100)
+        if (window.__below.length < 240) requestAnimationFrame(tick)
+      })
+      if ((PerformanceObserver.supportedEntryTypes || []).indexOf('layout-shift') >= 0) {
+        window.__shifts = []
+        new PerformanceObserver(function (list) {
+          list.getEntries().forEach(function (entry) {
+            window.__shifts.push(entry.value)
+          })
+        }).observe({ type: 'layout-shift', buffered: true })
+      }
+    </script>
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/split.css" />
+    <link rel="stylesheet" href="./src/fixture.css" />
+    <script type="module" src="./src/words.ts"></script>
+  </head>
+  <body>
+    <main>
+      <!--words-->
+      <p id="below">The paragraph under the split text. If anything above it changes size, it moves.</p>
+    </main>
+  </body>
+</html>

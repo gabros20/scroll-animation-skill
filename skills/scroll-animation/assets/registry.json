@@ -333,6 +333,63 @@
       },
       "reference": "references/motion-architecture.md"
     },
+    "split-words": {
+      "summary": "An above-the-fold heading or lede split into words on the server and animated by CSS keyframes from the first frame: no JavaScript, CLS 0, the sentence as its accessible name, Intl.Segmenter for CJK and Thai",
+      "clock": "trigger",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "motion": {
+          "files": [
+            "motion/SplitWords.tsx",
+            "split-words.ts",
+            "css/split.css"
+          ],
+          "requires": [],
+          "packages": [
+            "react"
+          ]
+        },
+        "agnostic": {
+          "files": [
+            "split-words.ts",
+            "css/split.css"
+          ],
+          "requires": [],
+          "packages": []
+        }
+      },
+      "reference": "references/accessibility.md"
+    },
+    "split-reveal": {
+      "summary": "A heading or paragraph revealed line by line below the fold with GSAP SplitText: split once its font is in, aria by element, the original DOM back after the entrance, live reduced motion, CJK and Thai through Intl.Segmenter",
+      "clock": "trigger",
+      "tier": "primitive",
+      "profiles": [
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/split-reveal.ts",
+            "split-words.ts"
+          ],
+          "requires": [
+            "config",
+            "gsap-setup"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        }
+      },
+      "reference": "references/accessibility.md"
+    },
     "count-up": {
       "summary": "A number that counts from 0 on first ~60% visibility.",
       "clock": "trigger",

@@ -1,0 +1,89 @@
+/* The text fixture pages. Georgia is the fallback the late web font replaces, as in spike S6a: the swap changes
+   every line break, so a split made before the font would show. */
+html,
+body {
+  margin: 0;
+  background: #fff;
+  color: #111;
+}
+body {
+  font: 18px/1.5 Georgia, serif;
+}
+main {
+  width: min(640px, calc(100vw - 80px));
+  margin: 40px auto;
+}
+main.narrow {
+  width: 320px;
+}
+
+/* SplitWords (words.html, words-cjk.html): S6d's sizes. */
+h1 {
+  font: 400 48px/1.1 Georgia, serif;
+  margin: 0 0 24px;
+}
+.lede {
+  font: 22px/1.4 Georgia, serif;
+  margin: 0 0 24px;
+}
+#below {
+  margin: 0;
+}
+.cjk p {
+  font-size: 20px;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+/* split-reveal (reveal.html, reveal-cjk.html): below the fold, then room to scroll past. */
+.intro {
+  height: 110vh;
+}
+.outro {
+  height: 150vh;
+}
+.pair {
+  position: relative;
+}
+.twin {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  visibility: hidden;
+}
+.late.display {
+  font: 400 44px/1.1 'Late', Georgia, serif;
+  margin: 0 0 24px;
+}
+.late.copy {
+  font: 400 22px/1.5 'Late', Georgia, serif;
+  margin: 0 0 24px;
+}
+.nav {
+  margin: 0 0 24px;
+}
+.probe {
+  position: absolute;
+  top: 0;
+  left: -9999px;
+  font: 400 40px/1 'Late', Georgia, serif;
+  white-space: nowrap;
+}
+.narrow p[data-sample] {
+  font-size: 20px;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+/* react.html */
+section[data-variant] {
+  width: 420px;
+  margin: 16px 24px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+}
+section[data-variant] h2 {
+  font: 400 32px/1.1 Georgia, serif;
+  margin: 0;
+}

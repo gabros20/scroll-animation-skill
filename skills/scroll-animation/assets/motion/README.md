@@ -20,6 +20,7 @@ React 19 and Motion 13 (`motion/react`). `scroll-animation add <block>` copies a
 | File | Block | What it is | Reference |
 | --- | --- | --- | --- |
 | `Reveal.tsx` | `reveal` | triggered entrances: a `Reveal` group plays its `RevealItem`s (rise, fade, clip, scale-in) on the measured curves at the trigger line, or on mount; `RevealVeil` lifts a load veil. The hidden state is CSS under the pre-JS gate, so the server renders no inline style | `references/motion-architecture.md` |
+| `SplitWords.tsx` | `split-words` | an above-the-fold heading or lede split into words on the server, animated by `css/split.css` from the first frame: no JavaScript, CLS 0, the sentence as its name. A Server Component; `splitWordsHTML()` in `split-words.ts` renders the same markup for static HTML | `references/accessibility.md` §5 |
 | `usePinnedScene.ts`, `PinnedScene.tsx` | `pinned-scene` | the range wrapper, sticky pin and content layer: exact progress and band (MotionValues; `pinned` can be a render function of them), head/scrub/tail modes, acts made `inert`, rehydrate from scroll | `references/scenes.md` |
 | `ScrubVideo.tsx` | `scrub-video` | a scrubbed all-intra video on `PinnedScene`, with loops or holds, a camera and a backdrop | `references/video.md` |
 | `FrameSequence.tsx` | `frame-sequence` | an image sequence on a canvas, fed a MotionValue or a number | `references/sequences.md` |
