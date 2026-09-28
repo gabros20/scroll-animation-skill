@@ -98,5 +98,25 @@
     "id": "layout-scale-figma",
     "prompt": "Make the page match our 1440 Figma frame on every laptop size, scaling spacing and type with the viewport.",
     "should_trigger": false
+  },
+  {
+    "id": "css-sticky-card-stack",
+    "prompt": "Make the case-study cards stack as I scroll: each sticks under the header and shrinks as the next one slides over it, in plain CSS.",
+    "should_trigger": true
+  },
+  {
+    "id": "velocity-marquee",
+    "prompt": "The logo ticker should speed up and run backwards with the reader's scroll, and it needs a pause button.",
+    "should_trigger": true
+  },
+  {
+    "id": "scrolltrigger-refresh-order",
+    "prompt": "After our fonts and images load, the ScrollTrigger start markers are off and the pinned section lower down fires too early.",
+    "should_trigger": true
+  },
+  {
+    "id": "morph-menu-icon",
+    "prompt": "Morph the hamburger icon into a close icon with GSAP's MorphSVG when the menu opens.",
+    "should_trigger": false
   }
 ]

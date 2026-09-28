@@ -72,7 +72,8 @@ engines) is internal state, so it stays off unless the URL has `?motion-debug` o
 can't control the URL). It returns one snapshot per live ScrubVideo: the scene's mode, progress,
 wake state and range, and the controller's counters (ticks, frame callbacks, plays, refused plays,
 wraps, recoveries, snaps). The counter that stopped moving names the layer that died. A bare
-`pinnedScene` has `scene.debug()` instead. Without the flag, read the DOM contract:
+`pinnedScene` has `scene.debug()` instead, and `rail.debug()` adds a rail's travel, direction and
+translate. Without the flag, read the DOM contract:
 `data-scene-state` on `[data-scene-root]`, `inert` on the acts, the video's `currentTime`, the
 camera's computed `transform`. `scripts/tools/verify-motion.mjs` reads the contract, so it works
 without the flag.
@@ -106,13 +107,13 @@ USB-connected real device with no extra tooling:
 
 ```css
 :root[data-motion-debug~='markers'] [data-scene-root]         { outline: 1px dashed #f59e0b; }
-:root[data-motion-debug~='markers'] [data-stage]              { outline: 1px solid  #34d399; }
+:root[data-motion-debug~='markers'] [data-reveal]             { outline: 1px solid  #34d399; }
 :root[data-motion-debug~='markers'] [data-scene-state='head'] { outline-color: #22c55e; }
 :root[data-motion-debug~='markers'] [data-scene-media],
 :root[data-motion-debug~='markers'] [data-scene-media] *      { outline: 2px solid #ef4444; }
 ```
 
-A scene's mode attribute (`data-scene-state`, `attribute-contract.md` §3) is written only **on
+A scene's mode attribute, `data-scene-state`, is written only **on
 transition**, not per frame, so a mode flipping is visible as a discrete colour change with nothing
 else open: exactly the observability this needs, at no extra cost, because the latch rule
 (`scenes.md` §3: state per transition, not per frame) already pays for it.
@@ -155,16 +156,21 @@ contract.
   throws at runtime), `fractional-amount` (a fractional `amount`, unsatisfiable on tall content),
   `contents-reveal` (a reveal trigger on a `display: contents` wrapper), `video-attrs` (a video
   missing `muted`/`playsInline`/a deliberate `preload`), `scroll-well-vs-smooth-scroll` (info: a
-  scroll well alongside page-wide smooth scrolling), `lenis-with-scroll-well` (Lenis in the
-  dependencies together with `PullToCentre`/`data-pull-to-centre`), and `gsap-pin-with-sticky-scene`
-  (`pin: true` in a file with v1's `data-scrub-stage`/`ScrubStage`; it doesn't match v2's
-  `data-scene-root` yet). `--selftest` runs every rule over its positive and negative fixtures and
-  asserts each trips (or doesn't).
+  scroll well alongside page-wide smooth scrolling), `lenis-with-scroll-well` (a scroll well, v1's
+  included, in a project that depends on Lenis), `gsap-pin-with-sticky-scene` (`pin: true` in a file
+  that also holds a scene: `data-scene-root` or `-pin`, `PinnedScene`, `ScrubVideo`, `pinnedScene()`,
+  `scrubVideo()` or v1's), and `fixed-travel-on-fluid` (a drawn distance of 80 px or more typed as a
+  plain number on a fluid layout, `scenes.md` §12). `--selftest` runs every rule over its positive and
+  negative fixtures and asserts each trips (or doesn't).
 - **`scripts/tools/verify-motion.mjs <url>`**: the runtime check. It step-scrolls the page with rAF plus a
-  pause per step (a fast scroll outruns `IntersectionObserver` and gives false blanks), waits for the
-  up-to-1.3s entrance to settle, and reports every `[data-stage-item]` still under full opacity. It
-  drives each `[data-scene-root]` (and v1's `[data-scrub-stage]`) to progress `[0, 0.25, 0.5, 0.75, 1]`
-  and records `data-scene-state` (v1's `data-motion-state`) at each step. **It forces
+  pause per step (a fast scroll outruns `IntersectionObserver` and gives false blanks), then gives the
+  last entrances up to 6 s to land. Every `[data-reveal-item]` must reach `data-reveal-state="shown"` and
+  end at full opacity: opacity alone can't tell, since a `clip` item rests hidden at opacity 1. An item
+  in a `data-reveal-replay` group only has to have been shown once, because it resets out of view. Each
+  failure names its group and reason. It drives each `[data-scene-root]` to progress
+  `[0, 0.25, 0.5, 0.75, 1]`, records `data-scene-state` at each step, and checks the states run `head`,
+  `scrub`, `tail` without stepping back, leaving `head` by progress 1. A check with nothing to find
+  reports SKIP, never PASS. **It forces
   `document.documentElement.style.scrollBehavior = 'auto'` for the duration of its stepped `scrollTo`
   calls and restores the old value afterwards.** A page with `html { scroll-behavior: smooth }` would
   otherwise have each step's `scrollTo` cancel the previous step's still-in-flight smooth animation (the same
@@ -185,6 +191,15 @@ contract.
 Both browser scripts resolve Playwright from the target project's `node_modules` first (run them from
 inside the project), then a skill-local install, then print an install hint. Exit codes: `0` pass,
 `1` a check failed, `2` usage error or Playwright unavailable.
+
+**The blocks arrive tested.** In the skill's own repository, `npm run test:reveal`, `test:text`,
+`test:scroll-effects`, `test:header-theme`, `test:count-up`, `test:rail` and `test:recipes` drive each
+entrance, text and layered block, and each recipe, through its fixtures in Chromium, WebKit and
+Firefox; in `site/`, `pnpm build && pnpm check` does the same for the storefront, the vanilla GSAP
+and ScrollSmoother example. Between them they cover the gate and the failsafe, reduced motion switched
+mid-play, hide and show, print, layout shift, and a `destroy()` that leaves nothing behind. A
+project's own checks cover what those suites can't: where the blocks sit, their trigger lines, and
+each ledger row's reduced-motion alternative.
 
 ## 6. Tier 3: a real device
 

@@ -14,6 +14,7 @@ entries come from the Phase 2 worker notes in `.orchestrate/reports/` and the sp
 3. [The scroll well](#3-the-scroll-well)
 4. [Fluid interop](#4-fluid-interop)
 5. [Renames from v1](#5-renames-from-v1)
+6. [Entrances and the v1 motion architecture](#6-entrances-and-the-v1-motion-architecture)
 
 ## 1. Video
 
@@ -176,7 +177,10 @@ it still, it slides the whole backdrop the other way under static copy.
 
 ## 3. The scroll well
 
-Runtime rules: `scenes.md` §8. The block (`scrollPull.ts`, `PullToCentre`) is still v1.
+Runtime rules: `scenes.md` §8. v2 moved v1's block, with its algorithm, numbers and reasons, to `scroll-well.ts` with a
+GSAP and a Motion adapter (renames in §5). New in v2: native scrolling only, so it stands down under Lenis (v1's fought
+it every frame) and ScrollSmoother; `clamp` defaults to `[data-scene-root]`; lengths go through `scaledPx`; and
+`suspend()` is on every handle, with `suspendScrollWells()` for code that holds none (v1's mounts had neither).
 
 - **Rejected: CSS scroll-snap.** Its proximity radius is UA-defined and far from a useful trigger distance, and its
   settle is a UA-paced dart the page can't control.
@@ -199,11 +203,12 @@ v1's `references/fluid-interop.md` is folded into `preflight.md` §3.6 (breakpoi
 (scaled travel, pin units, fluid-height acts).
 
 - v1 kept the breakpoint as `ENGAGE_BREAKPOINT_PX` / `ENGAGE_QUERY` (React) and `ENGAGE_PX` / `ENGAGE_QUERY` (GSAP). v2
-  reads `DESKTOP_QUERY` from `config.ts`, re-exported from fluid-design's generated `fluid.ts` when there is one. The v1
-  blocks still in the pack (the stage and the scroll well) keep reading `ENGAGE_QUERY`.
-- The scroll well's tuning numbers (`maxSpeed` 800 and `minSpeed` 120 reference px per second, `releaseAwayPx` 60 and
-  `reclaimPx` 320 reference px) multiply the resolved `--fluid` unit, read through a probe sized
-  `calc(1000 * var(--fluid, 1px))`: `getPropertyValue` returns the unresolved token, and `parseFloat` on it is `NaN`.
+  reads `DESKTOP_QUERY` from `config.ts`, re-exported from fluid-design's generated `fluid.ts` when there is one. Every
+  block that switches at the breakpoint reads it, the scroll well included.
+- v1's scroll well multiplied its tuning numbers (`maxSpeed` 800 and `minSpeed` 120 reference px per second,
+  `releaseAwayPx` 60 and `reclaimPx` 320 reference px) by the resolved `--fluid` unit, read through its own probe sized
+  `calc(1000 * var(--fluid, 1px))`, because `getPropertyValue` returns the unresolved token and `parseFloat` on it is
+  `NaN`. v2 spends them through `scaledPx`, whose probes in `scale.ts` do the same for each unit in `SCALE`.
 - Under GSAP, the Vite example's peel drift sat at 0 until it moved from the entrance-tweened wrapper to the `<img>`
   inside it: GSAP folds CSS `translate` into its own transform on the first transform tween, freezing px and `calc()`.
 - `--header-h` is fluid-design's earlier name for `--fluid-header-h`; `anchor-check.mjs` reads
@@ -221,3 +226,61 @@ v1's `references/fluid-interop.md` is folded into `preflight.md` §3.6 (breakpoi
 | `--frame-w`, `--frame-h` | `--scene-frame-w`, `--scene-frame-h` |
 | `fluidPx`, `fluidValue`, `fluidEnd`, `useFluidUnit` | `scaledPx`, `scaledValue`, `scaledEnd`, `onScaleChange` (`scale.ts`) |
 | `references/scroll-scenes.md`, `references/fluid-interop.md` | `references/scenes.md`, `preflight.md` §3.6 |
+| `Stage`, `StageItem`, `StageVeil`; `data-stage`, `data-stage-item`, `data-stage-veil`, `data-variant` | `Reveal`, `RevealItem`, `RevealVeil`; `data-reveal`, `data-reveal-item`, `data-reveal-veil`, `data-reveal-effect` (`rise`, `fade`, `clip`, `scale-in`; a negative `--reveal-distance` is v1's `drop`, and `growX`/`growY` have no v2 effect) |
+| `references/motion-architecture.md` | `references/entrances.md`, `text.md`, `motion.md` and `craft.md` |
+| `PullToCentre`, `createScrollPull`, `initPullToCentre` / `PullToCentre.tsx`, `scrollPull.ts`; `data-pull-to-centre`, `data-clamp` | `ScrollWell`, `createScrollWell`, `scrollWell` / `motion/ScrollWell.tsx`, `scroll-well.ts`, `gsap/scroll-well.ts`; `data-scroll-well` (a GSAP page's mount selector), the `clamp` option (default `[data-scene-root]`) |
+| `FadeOnExit`, `initFadeOnExit` / `FadeOnExit.tsx`, `fadeOnExit.ts`; `data-fade-on-exit`, `--exit-from`, `--exit-to` | `data-scroll-fx="exit-fade"` (`css/scroll-effects.css`); `--fx-range-start`, `--fx-range-end` |
+| `MOTION.md` | `ANIMATION.md` |
+
+## 6. Entrances and the v1 motion architecture
+
+Runtime rules: `skills/scroll-animation/references/entrances.md`, `text.md`, `motion.md` and `craft.md`, which replace
+v1's `motion-architecture.md`. Its rules moved there with their one-clause reasons; the history stayed here.
+
+### Three generations
+
+| Generation | Shipped | Fate |
+|---|---|---|
+| 1, wrapper components | `FadeIn`, `Parallax`, `ParallaxLayer`, `RevealText`, `StaggerContainer`, `AnimatedSection`, `AnimatedHeader` | deleted: each owned property values, so every new design needed a new prop, and eleven props deep nobody could safely change one |
+| 2, a timeline compiler | a `timeline()` DSL, a `clock`/`latch`/`registry` runtime, `Scene`/`Scrub`/`Track`/`SceneGroup`, about five files of debug tooling | deleted: about 2,400 lines with one consumer, which was later rebuilt without it |
+| 3, what survived | `Stage`/`StageItem`, a load veil, a count-up, a scroll-exit fader, one bespoke pinned scene | shipped on about 30 sections; v2 rebuilt it as `Reveal`, `count-up`, the `exit-fade` scroll effect and `PinnedScene` |
+
+Generation 2 looked right on paper: Motion has no `gsap.timeline()`, so build a container of time. The site needed one
+scroll-driven scene, and that scene needed mode hysteresis, a frame-accurate media wrap, a handoff glide and a camera,
+none of which the compiler provided; it came in under 300 lines without one. v1's entry condition for building a
+compiler again: two or more sections, each with four or more named spans on a shared ruler and at least one relative
+position between them. v2 keeps the threshold as the point where a GSAP section timeline earns its place (`craft.md`
+§6).
+
+### The escape hatch experiment
+
+Before committing to one library, v1 built the first heavy pinned non-video scene with the default (Motion) only,
+against kill criteria fixed in advance: more than about 150 lines of scene-generic scaffolding, or mid-tier phone frame
+traces losing to a GSAP ScrollTrigger spike of the same scene. Neither tripped. The policy that survived, adding the
+other engine as a scoped island for one section and never mixing engines on one element, became v2's engine per job.
+
+### Trigger lines
+
+- The general line was `-35%` once, which read late on tall content; v2's `TRIGGERS.reveal` is `-20%`.
+- The page-end line: nine footer items never fired under the general line at 1440×900, and on a 1400 px-tall viewport
+  the nav columns starved too, because the taller the viewport, the further down the page that line reaches.
+- The at-rest line, measured on a stat grid at its resting position (its top as a fraction of the viewport): 40% at
+  1440×900, 58% at 768×1024, 63% at 402×874, 77% at 360×780, 90% at 375×667, 94% at 360×640.
+
+### Rejected in v1
+
+| Rejected | Because | In v2 |
+|---|---|---|
+| GSAP as the default scroll engine | the default covered everything but a timeline container, which wasn't needed | superseded: an engine per job |
+| A fluent builder (`timeline().to().label()`) | not serialisable across a server/client boundary | not built |
+| Property values (`from`/`to`) inside a timeline spec | knowing both ends means reading computed styles, which breaks determinism across SSR, resize, remount and reverse seek | not built |
+| A string position language (`'<+=0.4'`) | needs a parser for a language the type system can't check | GSAP's own position parameter, inside GSAP |
+| A driver registry or flag store in production | it fed a debug panel that never caught a bug | not built; `verify` instead |
+| A visual timeline panel, or an editor that owns state | hundreds of unproven lines; the source file is the editing UI, and a tool may emit source but never persist its own values | not built |
+| A scroll-smoothing library (Lenis-class) | its lerp reshapes the velocity everything scroll-linked reads, and gains nothing on iOS touch | superseded: Lenis is a supported authority (`scroll-authority.md`) |
+| Cursor followers, WebGL, horizontal scroll, shared-element FLIP between sections | no problem they solved on that site | superseded: blocks and recipes, used for a content reason (`craft.md` §10) |
+
+The other rejections are runtime rules now, each with its reason: components that own values and layers built ahead
+of demand (`craft.md` §11); nested scenes, a page-wide driver, whole-page scroll narratives and forced beats
+(`craft.md` §6); one MotionValue per breakpoint and "0..1 everywhere" (`motion.md` §3). The momentum-handoff spring
+is in §3 above.

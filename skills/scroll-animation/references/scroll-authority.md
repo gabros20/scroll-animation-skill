@@ -71,7 +71,9 @@ The default. Wheel scrolling on a mouse arrives in steps, so smooth the **consum
 
 Anchors: `html { scroll-padding-top: var(--header-h) }` keeps targets below a fixed header. Add
 `scroll-behavior: smooth` only when no ScrollTrigger runs on the page; Next.js also needs
-`<html data-scroll-behavior="smooth">` for its router to respect it.
+`<html data-scroll-behavior="smooth">` for its router to respect it. A ScrollTrigger refresh stops a native smooth
+`scrollTo` part-way (observed on GSAP 3.15), so a jump that must land goes through the authority's handle with
+`immediate`.
 
 ## 4. Lenis
 
@@ -94,7 +96,7 @@ React: `<SmoothScroll authority="lenis" driver={gsapDriver(gsap, ScrollTrigger)}
   `useSpring` on top of Lenis trails the scroll by 16–18 frames (about 0.3 s).
 - **CSS scroll timelines**: fine for decoration (progress bars, fades, gentle parallax). In Safari they read the
   previous frame's scroll under Lenis, so anything that must stay registered to moving content is driven from Lenis's
-  tick (GSAP or Motion), not a CSS timeline.
+  tick (GSAP or Motion), not a CSS timeline (`css-scroll-effects.md` §4).
 - **Anchors**: `createSmoothScroll` handles same-page `#hash` links itself, offset by the fixed header
   (`HEADER_HEIGHT_VAR`), and pushes the hash.
 - **Modals and menus**: `currentSmoothScroll()?.stop()` on open, `.start()` on close. Never `position: fixed` on the
@@ -124,10 +126,15 @@ const scroll = createSmoother(ScrollSmoother, { smooth: 1, effects: true })
 - Every scroll-linked value comes from ScrollTrigger, pins included (`pin: true`, since sticky is off). Entrances may
   use IntersectionObserver or Motion's `whileInView`; Motion `useScroll` and CSS scroll timelines are out.
 - `data-speed` (with `"auto"` for an image moving inside its frame) and `data-lag` need `effects: true`. Use
-  `clamp(…)` on above-the-fold speeds so elements don't start displaced.
-- Header ink that follows sections must read `smoother.scrollTop()`, not `window.scrollY`, which runs ahead of what the
-  reader sees.
+  `clamp(…)` on above-the-fold speeds so elements don't start displaced (`layered-visuals.md` §2).
+- A header ink probe reads no scroll position, `smoother.scrollTop()` included. The `header-theme` block watches a 1 px
+  IntersectionObserver band, which fires on what the reader sees under every authority. Measured under ScrollSmoother,
+  `window.scrollY` disagreed with the screen on 105–214 frames per pass; the band's ink never did
+  (`layered-visuals.md` §10).
 - Print: the wrapper prints one viewport unless print CSS unwraps it (`accessibility.md` §6).
+- Focus: ScrollSmoother jumps a newly focused element to the viewport's centre on `focusin` (observed on 3.15). A
+  block that brings focused content into view itself waits a frame for that jump to land, then corrects through the
+  handle with `immediate`, as the horizontal rail does (scenes.md §14).
 - **Reduced motion** runs ScrollSmoother in its native mode (`smooth: 0`, the mode it already uses on touch screens
   without `smoothTouch`): the wrapper is back in flow, nothing is transformed, no `data-speed` / `data-lag`, and the
   handle's `scrollTo` jumps. `createSmoother` follows the setting live by re-creating the smoother on the same wrapper;
@@ -174,6 +181,10 @@ elements. Independent effects may keep their own IntersectionObserver-gated loop
 - GSAP work on a route lives in `useGSAP(() => …, { scope })`, which reverts it on unmount and on hide.
 - After a transition settles (fonts loaded, images sized), call `ScrollTrigger.refresh()` once. Reading a
   ScrollTrigger's progress before that returns stale numbers (up to 300 px off after content above it moves).
+- A scene re-created above the viewport (a route shown again) brings its runway back there. WebKit's scroll anchoring
+  then moves the page by the runway's height to keep what the reader sees in place (measured 1708 → 3645 px on a
+  rail's re-create); Chromium and Firefox keep the offset. Restore the reader's place after the re-create, or set
+  `overflow-anchor: none` on the scene.
 
 ## Traps
 

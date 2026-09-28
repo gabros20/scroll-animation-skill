@@ -4,8 +4,8 @@
 
 **Read when:** you're adding a scroll-driven effect, reviewing whether a page's motion budget still
 holds, or diagnosing dropped frames and jank on a real device.
-**Skip when:** the work is a single triggered reveal with no scroll binding (`motion-architecture.md`
-§3's triage already keeps that case cheap by construction). Render performance with no motion in it
+**Skip when:** the work is a single triggered reveal with no scroll binding (`entrances.md`
+§1's triage already keeps that case cheap by construction). Render performance with no motion in it
 (fonts, image `sizes`, Core Web Vitals budgets for layout) belongs to the `fluid-design` skill's
 `references/performance.md` when it is installed.
 **Depends on:** `scenes.md` for what makes a scene expensive in the first place;
@@ -61,7 +61,7 @@ simultaneously, not per component.
 > **Only 1–3 scroll-driven scenes should intersect the viewport at once.** In practice, one
 > `ScrubVideo` per page.
 
-This is `motion-architecture.md` §3's triage restated as a hard number: at dozens of animated
+This is `entrances.md` §1's triage restated as a hard number: at dozens of animated
 sections on one page, this ceiling *is* the performance budget. It's enforced by IO-gating (§6), so
 each scene's decoder and rAF loop only run while genuinely near the viewport, but the ceiling itself
 is a design constraint, not just an implementation detail. Stacking more than a handful of
@@ -114,6 +114,10 @@ should scale a video via a per-frame `transform` write while its box dimensions 
 Letting CSS own `width`/`height` means the scaling never triggers a layout-invalidating write, no
 matter how large the multiplier.
 
+Colour is the middle cost: a `background-color` change skips layout but still repaints.
+`colour-track` repaints its target on every frame of a handover and nothing between handovers, so
+keep the target to the element that needs the colour ([layered-visuals.md](layered-visuals.md) §8).
+
 ## 6. IO-gate every rAF and video
 
 Every `requestAnimationFrame` loop and every video's decode/playback state must be gated on an
@@ -143,8 +147,8 @@ Setting a custom property on a **parent** element for descendants to read via `v
 recalculation of every descendant on every write, because the browser cannot know in advance which
 descendants consume the property; it has to re-evaluate the whole subtree. Set the property **on the
 element that's actually animated**, driven by a static class rather than a JS write to an ancestor.
-This is why entrance distances (`--hero-lift` and friends) live on the stage item itself, set by a
-breakpoint utility, never on a shared ancestor.
+This is why entrance distances (`--reveal-distance`, `--reveal-scale`) live on the item itself, set
+by a breakpoint utility, never on a shared ancestor.
 
 ## 9. CSS over JS for predetermined motion
 
@@ -193,9 +197,8 @@ never `motion.div`: `strict` mode throws on the non-lazy `motion.*` component AP
 is a feature, not friction. It stops a future contributor from quietly reintroducing the full bundle
 one import at a time. `scripts/tools/audit-motion.mjs`'s `motion-strict` rule flags any `motion.*` left in a strict project.
 
-GSAP's equivalent: import only the modules a page uses (`initStages`, `initCountUps`, …) rather than
-`initFluidMotion` when a page needs one primitive; a page with just count-up numbers has no reason to
-pull in the scroll well's (`scrollPull.ts`) cost.
+GSAP's equivalent: import only the blocks a page uses (`reveal`, `mountCountUps`, …), each its own file, and
+mount them per route; a page with just count-up numbers has no reason to pull in the scroll well's cost.
 
 ## 13. Motion asset and JS budgets
 
@@ -213,7 +216,7 @@ pull in the scroll well's (`scrollPull.ts`) cost.
   someone "fixes" it later by re-encoding. Catch it before the commit, not after.
 - **INP ≤ 200ms at p75** is the Core Web Vital motion can break: a long main-thread task from a
   per-frame writer or a large hydration of animated leaves shows up there. Keep sections as server
-  components with only the animated leaves on the client (`motion-architecture.md` §4).
+  components with only the animated leaves on the client (`entrances.md` §2).
 - **Wire the budget into CI** (bundle-size deltas for the animation library and motion modules,
   asset sizes for video) rather than trusting review. `verification.md` covers the runtime-behaviour
   checks a budget cannot: a value that "looks right" in a Lighthouse score but is measurably wrong
@@ -227,6 +230,7 @@ pull in the scroll well's (`scrollPull.ts`) cost.
 - [ ] ★ Every rAF loop and video is IO-gated with two margins (§6).
 - [ ] No `width`/`height`/`top`/`padding` on any scroll-linked path; accordion disclosure excepted
   (§5).
+- [ ] A colour track's target is only the element that needs the colour (§5).
 - [ ] Custom properties are set on the animated element, never a parent (§8).
 - [ ] No permanent `will-change`; the video `translateZ(0)` anchor is the only standing exception
   (§10).
