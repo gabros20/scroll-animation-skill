@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--animation-gate-->
+    <title>Guide · scroll-animation</title>
+    <meta
+      name="description"
+      content="How the scroll-animation storefront moves: one scroll authority per page, four clocks, reduced motion as an alternate scene, content that reads without JavaScript."
+    />
+    <link rel="stylesheet" href="/src/styles/guide.css" />
+    <script type="module" src="/src/pages/guide.ts"></script>
+  </head>
+  <body>
+    <header class="site-header" data-header data-header-ink-default="light" data-header-ink="light">
+      <a class="site-header__mark" href="/">scroll-animation</a>
+      <nav class="site-header__nav" aria-label="Site">
+        <a href="/">Home</a>
+        <a href="/guide/" aria-current="page">Guide</a>
+      </nav>
+      <!-- Scroll clock, no script: css/scroll-effects.css scales it with the page's scroll(root) timeline. -->
+      <div class="reading-progress" data-scroll-fx="progress" aria-hidden="true"></div>
+    </header>
+
+    <main id="main">
+      <article class="guide">
+        <header class="guide__head" data-header-theme="light">
+          <p class="eyebrow">Guide</p>
+          <h1 class="guide__title">How this storefront moves</h1>
+          <p class="guide__lede">
+            The home page is Expressive: ScrollSmoother, a pinned scene, a rail. This page is Reading: native
+            scrolling, decoration on CSS timelines, entrances that play once. Both are built from the same blocks.
+          </p>
+        </header>
+
+        <section class="guide__section" id="authority" data-header-theme="light" data-reveal>
+          <h2 data-reveal-item>One scroll authority per page</h2>
+          <p data-reveal-item>
+            A page has exactly one scroll authority: native (the browser), Lenis (it smooths the real scroll position)
+            or ScrollSmoother (it moves a transformed content wrapper). Two owners fight over the same position every
+            frame.
+          </p>
+          <p data-reveal-item>
+            Native is the default for reading-first and accessibility-first pages, like this one. ScrollSmoother suits
+            a page that is GSAP only and leans on <code>data-speed</code> and <code>data-lag</code>, with its fixed UI
+            outside the content wrapper: the home page. Lenis is the choice whenever a page mixes engines.
+          </p>
+          <p data-reveal-item>
+            The owner stamps itself on <code>&lt;html data-scroll-authority&gt;</code>. Here it reads
+            <code>native</code>; on the home page, <code>smoother</code>.
+          </p>
+        </section>
+
+        <figure class="figure" id="decoration" data-header-theme="dark">
+          <div class="figure__frame">
+            <div class="figure__art" data-scroll-fx="parallax" aria-hidden="true">
+              <span class="figure__ring figure__ring--1"></span>
+              <span class="figure__ring figure__ring--2"></span>
+              <span class="figure__ring figure__ring--3"></span>
+              <span class="figure__ring figure__ring--4"></span>
+            </div>
+          </div>
+          <figcaption class="figure__caption">
+            Parallax from <code>css/scroll-effects.css</code>: the art drifts on its own <code>view()</code> timeline,
+            with no script. Firefox, reduced motion and print show it at rest.
+          </figcaption>
+        </figure>
+
+        <section class="guide__section" id="clocks" data-header-theme="light" data-reveal>
+          <h2 data-reveal-item>Four clocks</h2>
+          <p data-reveal-item>
+            Every animation runs on one of four clocks: trigger (it plays once when content arrives), scroll (a
+            function of the reader's position in a range), media (it follows what a video decoder presents) and render
+            (a render loop). Name the clock first: it decides the cost, the engine and which traps apply.
+          </p>
+          <p data-reveal-item>
+            The paragraphs on this page run on the trigger clock. The bar under the header runs on the scroll clock,
+            with no JavaScript at all.
+          </p>
+        </section>
+
+        <section class="guide__section" id="reduced-motion" data-header-theme="light" data-reveal>
+          <h2 data-split-reveal>Reduced motion is an alternate scene</h2>
+          <p data-reveal-item>
+            <code>prefers-reduced-motion: reduce</code> doesn't mean the same animation, faster. It means a composition
+            with no positional movement that still tells the story.
+          </p>
+          <p data-reveal-item>
+            Here, that is every entrance shown at rest, this heading unsplit, and the bar and the parallax gone. On the
+            home page ScrollSmoother runs in its native mode, the pinned scene collapses to normal flow and the rail
+            becomes a native scroller that snaps panel by panel. Both pages follow the setting live.
+          </p>
+        </section>
+
+        <section class="guide__section" id="no-js" data-header-theme="light" data-reveal>
+          <h2 data-reveal-item>Content reads without JavaScript</h2>
+          <p data-reveal-item>
+            Hidden entrance states apply only under <code>html[data-animation="on"]</code>, which an inline script in
+            the head sets before the first paint. A reader with JavaScript off sees every word, and if no engine boots
+            within 4 seconds a CSS failsafe reveals the page.
+          </p>
+          <p data-reveal-item>
+            The home page's headline is split into words when the site is built, and CSS animates it from the first
+            frame: nothing on its path to the first paint waits for a script.
+          </p>
+        </section>
+
+        <aside class="guide__aside" data-header-theme="dark" data-reveal data-reveal-margin="0px">
+          <h2 data-reveal-item>Checked in three engines</h2>
+          <p data-reveal-item>
+            The site's checks drive both pages in Chromium, WebKit and Firefox: the scroll authority each page stamps,
+            the pinned timeline rising through its pin, the rail's track moving, every entrance landing, reduced
+            motion, JavaScript off, layout shift during load, and <code>mount()</code> creating the blocks in page
+            order and leaving nothing behind.
+          </p>
+          <p data-reveal-item><a class="button" href="/">Back to the home page</a></p>
+        </aside>
+      </article>
+    </main>
+
+    <footer class="site-footer" data-header-theme="dark">
+      <p>scroll-animation · <a href="/">Home</a></p>
+    </footer>
+  </body>
+</html>

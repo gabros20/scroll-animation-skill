@@ -1,0 +1,157 @@
+/*
+ * styles/site.css — what both pages share: tokens, type, the fixed header and its inks, section themes, buttons. Plain
+ * and readable on purpose; the design pass comes later.
+ *
+ * - Sections take their palette from the same token that sets the header's ink: [data-header-theme="dark"|"light"].
+ * - No transform in here, and no `overflow: hidden` on anything that holds a pin or a scroll effect (use `clip`).
+ */
+
+:root {
+  --header-h: 64px;
+  --paper: #f4f1ea;
+  --ink: #16140f;
+  --accent: #d4552b;
+  --gutter: clamp(20px, 5vw, 64px);
+  --measure: 38rem;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font: 400 1.0625rem/1.6 var(--font-sans);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-underline-offset: 0.2em;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+
+/* ── Sections ─────────────────────────────────────────────────────────────────────────────────── */
+[data-header-theme='light'] {
+  --muted: #5f594d;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+[data-header-theme='dark'] {
+  --muted: #b8b0a0;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.eyebrow {
+  font: 600 0.8125rem/1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.section-title {
+  font-size: clamp(2rem, 4.5vw, 3.5rem);
+  max-width: 18ch;
+}
+
+.button {
+  display: inline-block;
+  padding: 0.7em 1.2em;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.button:hover {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+/* ── The fixed header ──────────────────────────────────────────────────────────────────────────────
+ * Its ink, text and a translucent backdrop, follows the section under its bottom edge (header-theme.ts); the server
+ * renders the first section's ink. css/header-theme.css holds the one transition for both. */
+.site-header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 10;
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 var(--gutter);
+  color: var(--paper);
+}
+
+[data-header][data-header-ink='light'] {
+  color: var(--ink);
+  background-color: color-mix(in srgb, var(--paper) 90%, transparent);
+}
+
+[data-header][data-header-ink='dark'] {
+  color: var(--paper);
+  background-color: color-mix(in srgb, var(--ink) 90%, transparent);
+}
+
+.site-header__mark {
+  font: 700 1rem/1 var(--font-mono);
+  text-decoration: none;
+}
+
+.site-header__nav {
+  display: flex;
+  gap: 20px;
+  font-weight: 500;
+}
+
+.site-header__nav a {
+  text-decoration: none;
+}
+
+.site-header__nav a[aria-current='page'] {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+.site-footer {
+  padding: 48px var(--gutter) 64px;
+  font-size: 0.9375rem;
+}

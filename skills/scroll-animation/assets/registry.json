@@ -66,6 +66,30 @@
       },
       "reference": "references/scroll-authority.md"
     },
+    "mount": {
+      "summary": "Attribute-driven mounting on a route root for vanilla GSAP pages: every block its selectors match, created in document order inside one gsap.context, one ScrollTrigger refresh, torn down in reverse; never the document",
+      "clock": "none",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "gsap": {
+          "files": [
+            "gsap/mount.ts"
+          ],
+          "requires": [
+            "gsap-setup"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        }
+      },
+      "reference": "references/scroll-authority.md"
+    },
     "motion-provider": {
       "summary": "LazyMotion strict + MotionConfig reducedMotion=\"user\" at the root of a Motion tree; marks the engine ready; useReducedMotionLive() for hand writers",
       "clock": "none",

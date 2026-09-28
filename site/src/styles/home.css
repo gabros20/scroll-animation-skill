@@ -1,0 +1,288 @@
+/*
+ * styles/home.css — `/`, in cascade order: the animation base first (css/animation.css), each block's stylesheet,
+ * then the site. No css/scroll-effects.css: CSS scroll and view timelines never progress under ScrollSmoother.
+ */
+@import '../animation/css/animation.css';
+@import '../animation/css/reveal.css';
+@import '../animation/css/split.css';
+@import '../animation/css/scene.css';
+@import '../animation/css/rail.css';
+@import '../animation/css/header-theme.css';
+@import './site.css';
+
+[data-header-theme='light'] {
+  --accent-ink: #b4411b;
+}
+
+[data-header-theme='dark'] {
+  --accent-ink: #f08a5d;
+}
+
+/* ── Hero ──────────────────────────────────────────────────────────────────────────────────────────
+ * The headline is the LCP element: split into words when the site is built (plugins/animation-html.ts), animated by
+ * css/split.css from the first frame. The orbs are decoration for ScrollSmoother's data-speed and data-lag. */
+.hero {
+  position: relative;
+  min-height: 100svh;
+  display: grid;
+  align-items: end;
+  padding: calc(var(--header-h) + 6svh) var(--gutter) 10svh;
+  overflow: clip;
+}
+
+.hero__body {
+  position: relative;
+  display: grid;
+  gap: 28px;
+  max-width: 62rem;
+}
+
+.hero__title {
+  font-size: clamp(2.75rem, 7vw, 6rem);
+  max-width: 16ch;
+}
+
+.hero__lede {
+  max-width: var(--measure);
+  font-size: clamp(1.125rem, 1.6vw, 1.3125rem);
+  color: var(--muted);
+}
+
+.hero__decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.orb--large {
+  top: 12%;
+  right: -8vw;
+  width: min(46vw, 640px);
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 35% 35%, #e0764b, var(--accent) 45%, #7a2d14 100%);
+  opacity: 0.9;
+}
+
+.orb--small {
+  top: 18%;
+  left: 52%;
+  width: min(12vw, 150px);
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 35% 35%, #f5e9d7, #b8ab93);
+}
+
+.orb--ring {
+  bottom: 14%;
+  right: 30%;
+  width: min(22vw, 300px);
+  aspect-ratio: 1;
+  border: 2px solid color-mix(in srgb, var(--paper) 40%, transparent);
+}
+
+/* ── Section intros ────────────────────────────────────────────────────────────────────────────── */
+.intro,
+.closing {
+  display: grid;
+  gap: 24px;
+  padding: 20svh var(--gutter) 12svh;
+}
+
+.closing {
+  padding-bottom: 24svh;
+  justify-items: start;
+}
+
+.intro__text {
+  max-width: var(--measure);
+  font-size: 1.25rem;
+}
+
+/* ── The four clocks: a scene ScrollTrigger pins (pages/clocks.ts) ─────────────────────────────────
+ * The acts ride over the pin with no background (css/scene.css pulls them back over it); the dial sits in the pin's
+ * right column, so the copy never covers it. Its resting state is the timeline's last frame: every clock lit, every
+ * meter full. */
+.clocks__pin {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: var(--header-h) var(--gutter) 0;
+}
+
+.dial {
+  grid-column: 2;
+  justify-self: center;
+  display: grid;
+  gap: 22px;
+  width: min(100%, 26rem);
+}
+
+.dial__row {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  align-items: center;
+  gap: 16px;
+}
+
+.dial__name {
+  font: 600 0.9375rem/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dial__meter {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  overflow: clip;
+}
+
+[data-clock-fill] {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: 0 50%;
+}
+
+.act {
+  display: grid;
+  align-content: center;
+  gap: 16px;
+  min-height: 100svh;
+  max-width: 46rem;
+  padding: var(--header-h) var(--gutter);
+}
+
+.act__count {
+  font: 600 0.8125rem/1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+}
+
+.act__title {
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+}
+
+.act p:last-child {
+  max-width: 30rem;
+  font-size: 1.1875rem;
+}
+
+@media (max-width: 47.99rem) {
+  .clocks__pin {
+    grid-template-columns: 1fr;
+    align-items: end;
+    padding-bottom: 8svh;
+  }
+  .dial {
+    grid-column: 1;
+    width: 100%;
+    gap: 14px;
+  }
+  .act {
+    align-content: start;
+    padding-top: calc(var(--header-h) + 6svh);
+  }
+}
+
+/* ── The engine map: a horizontal rail (gsap/horizontal-rail.ts) ───────────────────────────────────
+ * Gutters are the track's padding, never the pin's: the rail measures the track through the pin's padding box. */
+.engines__track {
+  align-items: center;
+  gap: 24px;
+  padding-inline: var(--gutter);
+  scroll-padding-inline: var(--gutter);
+}
+
+.engine {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(80vw, 30rem);
+  min-height: min(64svh, 30rem);
+  padding: 32px;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 20px;
+}
+
+.engine__name {
+  font: 700 0.9375rem/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+}
+
+.engine__job {
+  font-size: clamp(1.625rem, 3vw, 2.25rem);
+}
+
+.engine a {
+  margin-top: auto;
+}
+
+/* ── Stats: count-up.ts counts each from the final value in the HTML ──────────────────────────── */
+.stats {
+  padding: 16svh var(--gutter);
+}
+
+.stats__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 40px 32px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stat {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.stat__value {
+  font: 600 clamp(3rem, 7vw, 5rem) / 1 var(--font-serif);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat__label {
+  max-width: 17rem;
+}
+
+/* ── The blocks on this page ───────────────────────────────────────────────────────────────────── */
+.blocks {
+  display: grid;
+  gap: 32px;
+  padding: 18svh var(--gutter) 16svh;
+}
+
+.blocks__lede {
+  max-width: var(--measure);
+  font-size: 1.25rem;
+}
+
+.blocks__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: 0 40px;
+  margin: 32px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.blocks__list li {
+  padding: 14px 0;
+  border-top: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+}
+
+.blocks__list code {
+  display: block;
+  font-weight: 700;
+  color: var(--accent-ink);
+}
