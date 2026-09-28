@@ -47,11 +47,12 @@ motion must never scroll a multi-viewport runway past a frozen frame.
 Each engine covers only its own animations. Anything you write by hand checks the query itself.
 
 - **CSS.** Put decorative keyframes inside `@media (prefers-reduced-motion: no-preference)`, or reset them under
-  `reduce`. For scroll-driven CSS reset the timeline too: `animation: none` alone leaves `animation-timeline`
-  attached.
+  `reduce` with `animation: none`. For scroll-driven animations that shorthand is a full reset, timeline and range
+  included (spike S7e). Never reset with a near-zero duration (the animation keeps scrubbing) or with
+  `animation-timeline: none` (it holds the last keyframe).
   ```css
   @media (prefers-reduced-motion: reduce) {
-    .parallax { animation: none; animation-timeline: auto; }
+    .parallax { animation: none; }
   }
   ```
 - **GSAP.** Build inside `gsap.matchMedia()` with `MOTION_CONDITIONS` (reduced motion only); when the visitor
@@ -139,7 +140,7 @@ scrolling, and remove all of these under reduced motion.
 ## Traps
 
 - [ ] Every ledger row has a reduced-motion alternative, and it was checked with the setting emulated.
-- [ ] CSS scroll-driven animations reset `animation-timeline` under reduced motion.
+- [ ] CSS scroll-driven animations reset with `animation: none` under reduced motion, never a near-zero duration.
 - [ ] Loops, marquees and ambient WebGL longer than 5 s have a pause control.
 - [ ] Off-screen acts are `inert`; rails scroll focused panels into view.
 - [ ] `scroll-padding-top` matches the fixed header.

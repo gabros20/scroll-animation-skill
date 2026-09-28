@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>S6a SplitText and a late web font</title>
+    <!--
+      S6a. A display heading in a web font that arrives late: the runner answers
+      /__late-font itself, 1 s after the request, with font-display: swap, so the
+      heading first lays out in Georgia and swaps when the font lands.
+
+      ?mode=unsplit     baseline: no splitting
+      ?mode=auto        SplitText lines+words, mask: 'lines', autoSplit: true, onSplit returns the reveal
+      ?mode=noauto      the same with autoSplit: false
+      ?mode=ready       the old pattern: document.fonts.ready.then(split), autoSplit: false
+      ?mode=ready-auto  document.fonts.ready.then(split), autoSplit: true
+      ?mode=load-auto   document.fonts.load('400 56px Late').then(split), autoSplit: true
+
+      #twin is an invisible, unsplit copy of the heading in the same box: its
+      line breaks are what the heading's should be once the font is in.
+      #below is long enough (in Georgia) for WebKit to count the page as
+      visually non-empty and paint before the font arrives.
+    -->
+    <script>
+      // Before any stylesheet: every FontFaceSet event from the very start.
+      window.__fontEvents = []
+      for (const type of ['loading', 'loadingdone', 'loadingerror']) {
+        document.fonts.addEventListener(type, () => window.__fontEvents.push({ type, t: Math.round(performance.now()) }))
+      }
+    </script>
+    <style>
+      @font-face {
+        font-family: 'Late';
+        src: url('/__late-font');
+        font-display: swap;
+      }
+      html,
+      body {
+        margin: 0;
+        background: #fff;
+        color: #111;
+      }
+      .wrap {
+        position: relative;
+        width: min(760px, calc(100vw - 80px));
+        margin: 40px auto;
+      }
+      h1,
+      .twin {
+        font: 400 56px/1 'Late', Georgia, serif;
+        margin: 0 0 24px;
+      }
+      .twin {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        visibility: hidden;
+      }
+      p {
+        font: 18px/1.5 Georgia, serif;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <h1 id="title">Scroll-driven stories reward patience: every line arrives exactly when its reader does, and not a moment before.</h1>
+      <div id="twin" class="twin" aria-hidden="true">Scroll-driven stories reward patience: every line arrives exactly when its reader does, and not a moment before.</div>
+      <p id="below">
+        The paragraph under the heading. If the heading grows or shrinks, this paragraph moves, which is what a layout shift is.
+        It is set in Georgia, which is already installed, so it can paint straight away while the heading's web font is still on
+        its way. A page this short needs the extra words: WebKit holds its first paint until enough text is ready to show.
+      </p>
+    </main>
+    <script type="module" src="../src/font.js"></script>
+  </body>
+</html>

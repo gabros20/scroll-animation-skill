@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>S7b timeline-scope</title>
+    <!--
+      S7b. A named view-timeline on a subject in one column drives an element in
+      the other column (a sibling's descendant):
+        .scoped     timeline-scope on the common ancestor
+        .unscoped   the same markup without timeline-scope
+        .desc       control: the animated element is inside the subject (no scope needed)
+        .dup x2     two unscoped stages that declare the same name, --dup
+        .dups x2    the same pair, each stage with its own timeline-scope
+      Each .fill animates over the subject's default range (cover 0%..100%).
+    -->
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      .spacer {
+        height: 1500px;
+      }
+      .stage {
+        display: flex;
+        gap: 40px;
+      }
+      .col {
+        width: 300px;
+      }
+      .subject {
+        height: 300px;
+        background: #ddd;
+      }
+      .target {
+        padding-top: 120px;
+      }
+      .fill {
+        width: 60px;
+        height: 60px;
+        background: #000;
+        /* static fallback: the finished state */
+        opacity: 1;
+        margin-left: 40px;
+      }
+      @keyframes fill {
+        from { opacity: 0; margin-left: 0px; }
+        to { opacity: 1; margin-left: 40px; }
+      }
+      @supports (animation-timeline: view()) {
+        .scoped { timeline-scope: --s1; }
+        .scoped .subject { view-timeline: --s1 block; }
+        .scoped .fill { animation: fill linear both; animation-timeline: --s1; }
+
+        .unscoped .subject { view-timeline: --s2 block; }
+        .unscoped .fill { animation: fill linear both; animation-timeline: --s2; }
+
+        .desc .subject { view-timeline: --s3 block; }
+        .desc .fill { animation: fill linear both; animation-timeline: --s3; }
+
+        /* two unscoped stages that reuse one name: which subject does each fill follow? */
+        .dup .subject { view-timeline: --dup block; }
+        .dup .fill { animation: fill linear both; animation-timeline: --dup; }
+
+        /* the same pair, each stage scoping the name */
+        .dups { timeline-scope: --dups; }
+        .dups .subject { view-timeline: --dups block; }
+        .dups .fill { animation: fill linear both; animation-timeline: --dups; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="spacer"></div>
+    <div class="stage scoped">
+      <div class="col"><div class="subject" data-subject="subj-scoped"></div></div>
+      <div class="col"><div class="target"><div class="fill" data-probe="scoped" data-subject-of="subj-scoped"></div></div></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="stage unscoped">
+      <div class="col"><div class="subject" data-subject="subj-unscoped"></div></div>
+      <div class="col"><div class="target"><div class="fill" data-probe="unscoped" data-subject-of="subj-unscoped"></div></div></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="stage desc">
+      <div class="col">
+        <div class="subject" data-subject="subj-desc"><div class="target"><div class="fill" data-probe="desc" data-subject-of="subj-desc"></div></div></div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <div class="stage dup">
+      <div class="col"><div class="subject" data-subject="subj-dup-a"></div></div>
+      <div class="col"><div class="target"><div class="fill" data-probe="dup-a" data-subject-of="subj-dup-a"></div></div></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="stage dup">
+      <div class="col"><div class="subject" data-subject="subj-dup-b"></div></div>
+      <div class="col"><div class="target"><div class="fill" data-probe="dup-b" data-subject-of="subj-dup-b"></div></div></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="stage dups">
+      <div class="col"><div class="subject" data-subject="subj-dups-a"></div></div>
+      <div class="col"><div class="target"><div class="fill" data-probe="dups-a" data-subject-of="subj-dups-a"></div></div></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="stage dups">
+      <div class="col"><div class="subject" data-subject="subj-dups-b"></div></div>
+      <div class="col"><div class="target"><div class="fill" data-probe="dups-b" data-subject-of="subj-dups-b"></div></div></div>
+    </div>
+    <div class="spacer"></div>
+    <script type="module" src="../src/probe.js"></script>
+  </body>
+</html>

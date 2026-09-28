@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>S6b SplitText aria modes</title>
+    <!--
+      S6b. A heading and a paragraph (with a link and an <em> inside) split by
+      SplitText 3.15, type 'lines,words'.
+
+      ?aria=unsplit   baseline, no SplitText
+      ?aria=auto      SplitText's default: aria-label on the element, aria-hidden on every piece
+      ?aria=hidden    aria-hidden on the element itself
+      ?aria=none      SplitText adds no aria attributes
+    -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        font: 18px/1.5 Georgia, serif;
+      }
+      main {
+        width: 480px;
+        margin: 40px auto;
+      }
+      h1 {
+        font-size: 40px;
+        line-height: 1.1;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 id="h">Every line arrives when its reader does</h1>
+      <p id="p">Split text still needs a name that <a href="#notes">screen readers</a> can read, and <em>emphasis</em> that survives.</p>
+    </main>
+    <script type="module" src="../src/aria.js"></script>
+  </body>
+</html>

@@ -1,0 +1,5429 @@
+{
+ "spike": "S6",
+ "date": "2026-09-28T10:21:14.493Z",
+ "engines": {
+  "chromium": {
+   "version": "153.0.8010.12",
+   "a": {
+    "font": "/System/Library/Fonts/Supplemental/Courier New.ttf",
+    "fontDelayMs": 1000,
+    "unsplit": {
+     "fontRequestedAtMs": 39,
+     "scriptAt": 57.7,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1046.1
+      },
+      {
+       "type": "loadingdone",
+       "t": 1046.2,
+       "faces": [
+        "Late"
+       ]
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 28
+      },
+      {
+       "type": "loadingdone",
+       "t": 1046
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 54,
+       "font": "loading",
+       "set": "loading"
+      },
+      {
+       "t": 1054,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": null,
+     "splits": [],
+     "revealAcrossResplits": [],
+     "final": {
+      "fcp": 36,
+      "font": "loaded",
+      "splitCount": 0,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "linesMatchUnsplit": true,
+      "tallestLineBox": null,
+      "lineHeightPx": 56,
+      "maskOverflow": null,
+      "h1Height": 336,
+      "twinHeight": 336,
+      "ariaLabel": null
+     },
+     "shifts": {
+      "layoutShift": {
+       "cls": 0.0263,
+       "entries": [
+        {
+         "t": 1055,
+         "value": 0.0263,
+         "hadRecentInput": false,
+         "sources": [
+          {
+           "node": "p#below",
+           "from": 288,
+           "to": 400,
+           "h": [
+            108,
+            108
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      "belowMoves": [
+       {
+        "t": 1054,
+        "px": 112,
+        "h1Height": 336,
+        "lines": null,
+        "font": "loaded"
+       }
+      ],
+      "frames": 171
+     },
+     "afterResizeTo700": {
+      "splitCount": 0,
+      "linesMatchUnsplit": true,
+      "shownLines": 8,
+      "twinLines": 8,
+      "tallestLineBox": null
+     },
+     "errors": []
+    },
+    "auto": {
+     "fontRequestedAtMs": 25,
+     "scriptAt": 30.8,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1063
+      },
+      {
+       "type": "loadingdone",
+       "t": 1063.1,
+       "faces": [
+        "Late"
+       ]
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 22
+      },
+      {
+       "type": "loadingdone",
+       "t": 1063
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 25,
+       "font": "loading",
+       "set": "loading"
+      },
+      {
+       "t": 1075,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": null,
+     "splits": [
+      {
+       "t": 32.5,
+       "font": "loading",
+       "lineCount": 4,
+       "h1Height": 224
+      },
+      {
+       "t": 1064.3,
+       "font": "loaded",
+       "lineCount": 6,
+       "h1Height": 336
+      }
+     ],
+     "revealAcrossResplits": [
+      {
+       "splitAt": 1064.3,
+       "frames": [
+        [
+         1025,
+         50
+        ],
+        [
+         1042,
+         49
+        ],
+        [
+         1058,
+         48
+        ],
+        [
+         1075,
+         47
+        ],
+        [
+         1092,
+         47
+        ],
+        [
+         1108,
+         46
+        ]
+       ]
+      }
+     ],
+     "final": {
+      "fcp": 28,
+      "font": "loaded",
+      "splitCount": 2,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "linesMatchUnsplit": true,
+      "tallestLineBox": 56,
+      "lineHeightPx": 56,
+      "maskOverflow": "clip",
+      "h1Height": 336,
+      "twinHeight": 336,
+      "ariaLabel": "Scroll-driven stories reward patience: every line arrives exactly when its reader does, and not a moment before."
+     },
+     "shifts": {
+      "layoutShift": {
+       "cls": 0.0263,
+       "entries": [
+        {
+         "t": 1077,
+         "value": 0.0263,
+         "hadRecentInput": false,
+         "sources": [
+          {
+           "node": "p#below",
+           "from": 288,
+           "to": 400,
+           "h": [
+            108,
+            108
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      "belowMoves": [
+       {
+        "t": 1075,
+        "px": 112,
+        "h1Height": 336,
+        "lines": 6,
+        "font": "loaded"
+       }
+      ],
+      "frames": 170
+     },
+     "afterResizeTo700": {
+      "splitCount": 3,
+      "linesMatchUnsplit": true,
+      "shownLines": 8,
+      "twinLines": 8,
+      "tallestLineBox": 56
+     },
+     "errors": []
+    },
+    "noauto": {
+     "fontRequestedAtMs": 27,
+     "scriptAt": 32.3,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1028.8
+      },
+      {
+       "type": "loadingdone",
+       "t": 1028.9,
+       "faces": [
+        "Late"
+       ]
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 24
+      },
+      {
+       "type": "loadingdone",
+       "t": 1029
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 40,
+       "font": "loading",
+       "set": "loading"
+      },
+      {
+       "t": 1040,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": null,
+     "splits": [
+      {
+       "t": 33.9,
+       "font": "loading",
+       "lineCount": 4,
+       "h1Height": 224
+      }
+     ],
+     "revealAcrossResplits": [],
+     "final": {
+      "fcp": 28,
+      "font": "loaded",
+      "splitCount": 1,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories reward",
+       "patience: every line arrives",
+       "exactly when its reader does,",
+       "and not a moment before."
+      ],
+      "linesMatchUnsplit": false,
+      "tallestLineBox": 112,
+      "lineHeightPx": 56,
+      "maskOverflow": "clip",
+      "h1Height": 448,
+      "twinHeight": 336,
+      "ariaLabel": "Scroll-driven stories reward patience: every line arrives exactly when its reader does, and not a moment before."
+     },
+     "shifts": {
+      "layoutShift": {
+       "cls": 0.29694,
+       "entries": [
+        {
+         "t": 1041,
+         "value": 0.29694,
+         "hadRecentInput": false,
+         "sources": [
+          {
+           "node": "p#below",
+           "from": 288,
+           "to": 512,
+           "h": [
+            108,
+            108
+           ]
+          },
+          {
+           "node": "div.line-mask",
+           "from": 96,
+           "to": 152,
+           "h": [
+            56,
+            112
+           ]
+          },
+          {
+           "node": "div.line-mask",
+           "from": 208,
+           "to": 376,
+           "h": [
+            56,
+            112
+           ]
+          },
+          {
+           "node": "div.line-mask",
+           "from": 152,
+           "to": 264,
+           "h": [
+            56,
+            112
+           ]
+          },
+          {
+           "node": "#text",
+           "from": 64,
+           "to": 91,
+           "h": [
+            64,
+            61
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      "belowMoves": [
+       {
+        "t": 1040,
+        "px": 224,
+        "h1Height": 448,
+        "lines": 4,
+        "font": "loaded"
+       }
+      ],
+      "frames": 169
+     },
+     "afterResizeTo700": {
+      "splitCount": 1,
+      "linesMatchUnsplit": false,
+      "shownLines": 4,
+      "twinLines": 8,
+      "tallestLineBox": 112
+     },
+     "errors": []
+    },
+    "ready": {
+     "fontRequestedAtMs": 23,
+     "scriptAt": 29,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1031.2
+      },
+      {
+       "type": "loadingdone",
+       "t": 1031.3,
+       "faces": [
+        "Late"
+       ]
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 20
+      },
+      {
+       "type": "loadingdone",
+       "t": 1031
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 39,
+       "font": "loading",
+       "set": "loading"
+      },
+      {
+       "t": 1039,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": 1031.4,
+     "fontAtReady": "loaded",
+     "splits": [
+      {
+       "t": 1035.4,
+       "font": "loaded",
+       "lineCount": 6,
+       "h1Height": 336
+      }
+     ],
+     "revealAcrossResplits": [],
+     "final": {
+      "fcp": 24,
+      "font": "loaded",
+      "splitCount": 1,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "linesMatchUnsplit": true,
+      "tallestLineBox": 56,
+      "lineHeightPx": 56,
+      "maskOverflow": "clip",
+      "h1Height": 336,
+      "twinHeight": 336,
+      "ariaLabel": "Scroll-driven stories reward patience: every line arrives exactly when its reader does, and not a moment before."
+     },
+     "shifts": {
+      "layoutShift": {
+       "cls": 0.0263,
+       "entries": [
+        {
+         "t": 1041,
+         "value": 0.0263,
+         "hadRecentInput": false,
+         "sources": [
+          {
+           "node": "p#below",
+           "from": 288,
+           "to": 400,
+           "h": [
+            108,
+            108
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      "belowMoves": [
+       {
+        "t": 1039,
+        "px": 112,
+        "h1Height": 336,
+        "lines": 6,
+        "font": "loaded"
+       }
+      ],
+      "frames": 169
+     },
+     "afterResizeTo700": {
+      "splitCount": 1,
+      "linesMatchUnsplit": false,
+      "shownLines": 6,
+      "twinLines": 8,
+      "tallestLineBox": 112
+     },
+     "errors": []
+    },
+    "ready-auto": {
+     "fontRequestedAtMs": 21,
+     "scriptAt": 29.6,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1029.2
+      },
+      {
+       "type": "loadingdone",
+       "t": 1029.6,
+       "faces": [
+        "Late"
+       ]
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 20
+      },
+      {
+       "type": "loadingdone",
+       "t": 1030
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 27,
+       "font": "loading",
+       "set": "loading"
+      },
+      {
+       "t": 1027,
+       "font": "loaded",
+       "set": "loading"
+      },
+      {
+       "t": 1043,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": 1029.6,
+     "fontAtReady": "loaded",
+     "splits": [
+      {
+       "t": 1031.8,
+       "font": "loaded",
+       "lineCount": 6,
+       "h1Height": 336
+      }
+     ],
+     "revealAcrossResplits": [],
+     "final": {
+      "fcp": 28,
+      "font": "loaded",
+      "splitCount": 1,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "linesMatchUnsplit": true,
+      "tallestLineBox": 56.00001525878906,
+      "lineHeightPx": 56,
+      "maskOverflow": "clip",
+      "h1Height": 336,
+      "twinHeight": 336,
+      "ariaLabel": "Scroll-driven stories reward patience: every line arrives exactly when its reader does, and not a moment before."
+     },
+     "shifts": {
+      "layoutShift": {
+       "cls": 0.0263,
+       "entries": [
+        {
+         "t": 1029,
+         "value": 0.0263,
+         "hadRecentInput": false,
+         "sources": [
+          {
+           "node": "p#below",
+           "from": 288,
+           "to": 400,
+           "h": [
+            108,
+            108
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      "belowMoves": [
+       {
+        "t": 1027,
+        "px": 112,
+        "h1Height": 336,
+        "lines": null,
+        "font": "loaded"
+       }
+      ],
+      "frames": 169
+     },
+     "afterResizeTo700": {
+      "splitCount": 2,
+      "linesMatchUnsplit": true,
+      "shownLines": 8,
+      "twinLines": 8,
+      "tallestLineBox": 56
+     },
+     "errors": []
+    },
+    "load-auto": {
+     "fontRequestedAtMs": 26,
+     "scriptAt": 31.3,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1033.4
+      },
+      {
+       "type": "loadingdone",
+       "t": 1037.1,
+       "faces": [
+        "Late"
+       ]
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 23
+      },
+      {
+       "type": "loadingdone",
+       "t": 1037
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 25,
+       "font": "loading",
+       "set": "loading"
+      },
+      {
+       "t": 1041,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": 1033.5,
+     "fontAtReady": "loaded",
+     "splits": [
+      {
+       "t": 1035.4,
+       "font": "loaded",
+       "lineCount": 6,
+       "h1Height": 336
+      },
+      {
+       "t": 1038.5,
+       "font": "loaded",
+       "lineCount": 6,
+       "h1Height": 336
+      }
+     ],
+     "revealAcrossResplits": [
+      {
+       "splitAt": 1038.5,
+       "frames": [
+        [
+         1008,
+         null
+        ],
+        [
+         1025,
+         null
+        ],
+        [
+         1041,
+         100
+        ],
+        [
+         1058,
+         100
+        ],
+        [
+         1074,
+         99
+        ],
+        [
+         1091,
+         98
+        ]
+       ]
+      }
+     ],
+     "final": {
+      "fcp": 28,
+      "font": "loaded",
+      "splitCount": 2,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "linesMatchUnsplit": true,
+      "tallestLineBox": 56.00001525878906,
+      "lineHeightPx": 56,
+      "maskOverflow": "clip",
+      "h1Height": 336,
+      "twinHeight": 336,
+      "ariaLabel": "Scroll-driven stories reward patience: every line arrives exactly when its reader does, and not a moment before."
+     },
+     "shifts": {
+      "layoutShift": {
+       "cls": 0.0263,
+       "entries": [
+        {
+         "t": 1043,
+         "value": 0.0263,
+         "hadRecentInput": false,
+         "sources": [
+          {
+           "node": "p#below",
+           "from": 288,
+           "to": 400,
+           "h": [
+            108,
+            108
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      "belowMoves": [
+       {
+        "t": 1041,
+        "px": 112,
+        "h1Height": 336,
+        "lines": 6,
+        "font": "loaded"
+       }
+      ],
+      "frames": 170
+     },
+     "afterResizeTo700": {
+      "splitCount": 3,
+      "linesMatchUnsplit": true,
+      "shownLines": 8,
+      "twinLines": 8,
+      "tallestLineBox": 56
+     },
+     "errors": []
+    }
+   },
+   "b": {
+    "unsplit": {
+     "tabFocus": {
+      "tag": "a",
+      "text": "screen readers",
+      "insideAriaHidden": false
+     },
+     "attrs": [
+      {
+       "id": "h",
+       "ariaLabel": null,
+       "ariaHidden": null,
+       "piecesHidden": 0,
+       "linkText": null,
+       "linkHiddenInside": null
+      },
+      {
+       "id": "p",
+       "ariaLabel": null,
+       "ariaHidden": null,
+       "piecesHidden": 0,
+       "linkText": "screen readers",
+       "linkHiddenInside": 0
+      }
+     ],
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph:\n  - text: Split text still needs a name that\n  - link \"screen readers\":\n    - /url: \"#notes\"\n  - text: can read, and\n  - emphasis: emphasis\n  - text: that survives."
+     },
+     "getByRole": {
+      "heading": 1,
+      "anyHeading": 1,
+      "link": 1,
+      "anyLink": 1
+     },
+     "chromiumAxTree": [
+      {
+       "role": "heading",
+       "name": "Every line arrives when its reader does",
+       "ignored": false,
+       "textExposed": "Every line arrives when its reader does"
+      },
+      {
+       "role": "paragraph",
+       "name": "",
+       "ignored": false,
+       "textExposed": "Split text still needs a name that screen readers can read, and emphasis that survives."
+      },
+      {
+       "role": "link",
+       "name": "screen readers",
+       "ignored": false,
+       "textExposed": "screen readers"
+      }
+     ]
+    },
+    "auto": {
+     "tabFocus": {
+      "tag": "a",
+      "text": "screen readers",
+      "insideAriaHidden": true
+     },
+     "attrs": [
+      {
+       "id": "h",
+       "ariaLabel": "Every line arrives when its reader does",
+       "ariaHidden": null,
+       "piecesHidden": 9,
+       "linkText": null,
+       "linkHiddenInside": null
+      },
+      {
+       "id": "p",
+       "ariaLabel": "Split text still needs a name that screen readers can read, and emphasis that survives.",
+       "ariaHidden": null,
+       "piecesHidden": 17,
+       "linkText": "screen readers",
+       "linkHiddenInside": 2
+      }
+     ],
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph"
+     },
+     "getByRole": {
+      "heading": 1,
+      "anyHeading": 1,
+      "link": 0,
+      "anyLink": 0
+     },
+     "chromiumAxTree": [
+      {
+       "role": "heading",
+       "name": "Every line arrives when its reader does",
+       "ignored": false,
+       "textExposed": ""
+      },
+      {
+       "role": "paragraph",
+       "name": "Split text still needs a name that screen readers can read, and emphasis that survives.",
+       "ignored": false,
+       "textExposed": ""
+      },
+      {
+       "role": "link",
+       "name": "",
+       "ignored": false,
+       "textExposed": ""
+      }
+     ]
+    },
+    "hidden": {
+     "tabFocus": {
+      "tag": "a",
+      "text": "screen readers",
+      "insideAriaHidden": true
+     },
+     "attrs": [
+      {
+       "id": "h",
+       "ariaLabel": null,
+       "ariaHidden": "true",
+       "piecesHidden": 9,
+       "linkText": null,
+       "linkHiddenInside": null
+      },
+      {
+       "id": "p",
+       "ariaLabel": null,
+       "ariaHidden": "true",
+       "piecesHidden": 17,
+       "linkText": "screen readers",
+       "linkHiddenInside": 2
+      }
+     ],
+     "ariaSnapshot": {
+      "h1": "",
+      "p": ""
+     },
+     "getByRole": {
+      "heading": 0,
+      "anyHeading": 0,
+      "link": 0,
+      "anyLink": 0
+     },
+     "chromiumAxTree": [
+      {
+       "role": "paragraph",
+       "name": "",
+       "ignored": false,
+       "textExposed": ""
+      },
+      {
+       "role": "link",
+       "name": "",
+       "ignored": false,
+       "textExposed": ""
+      }
+     ]
+    },
+    "none": {
+     "tabFocus": {
+      "tag": "a",
+      "text": "screen readers",
+      "insideAriaHidden": false
+     },
+     "attrs": [
+      {
+       "id": "h",
+       "ariaLabel": null,
+       "ariaHidden": null,
+       "piecesHidden": 0,
+       "linkText": null,
+       "linkHiddenInside": null
+      },
+      {
+       "id": "p",
+       "ariaLabel": null,
+       "ariaHidden": null,
+       "piecesHidden": 0,
+       "linkText": "screen readers",
+       "linkHiddenInside": 0
+      }
+     ],
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph:\n  - text: Split text still needs a name that\n  - link \"screen readers\":\n    - /url: \"#notes\"\n  - text: can read, and\n  - emphasis: emphasis\n  - text: that survives."
+     },
+     "getByRole": {
+      "heading": 1,
+      "anyHeading": 1,
+      "link": 1,
+      "anyLink": 1
+     },
+     "chromiumAxTree": [
+      {
+       "role": "heading",
+       "name": "Every line arrives when its reader does",
+       "ignored": false,
+       "textExposed": "Everylinearriveswhenitsreaderdoes"
+      },
+      {
+       "role": "paragraph",
+       "name": "",
+       "ignored": false,
+       "textExposed": "Splittextstillneedsanamethatscreenreaderscanread,andemphasisthatsurvives."
+      },
+      {
+       "role": "link",
+       "name": "screen readers",
+       "ignored": false,
+       "textExposed": "screenreaders"
+      }
+     ]
+    }
+   },
+   "c": {
+    "table": {
+     "once": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\"",
+      "suffix removed": "UNMOUNTED errors=1",
+      "text A again": "UNMOUNTED errors=1"
+     },
+     "gsap-deps": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\"",
+      "suffix removed": "UNMOUNTED errors=1",
+      "text A again": "UNMOUNTED errors=1"
+     },
+     "gsap-revert": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\"",
+      "suffix removed": "UNMOUNTED errors=1",
+      "text A again": "UNMOUNTED errors=1"
+     },
+     "keyed": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "ok",
+      "suffix removed": "ok",
+      "text A again": "ok"
+     },
+     "unowned": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "ok",
+      "suffix removed": "ok",
+      "text A again": "ok"
+     },
+     "inner-html": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\"",
+      "suffix removed": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\"",
+      "text A again": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\""
+     },
+     "react-words": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "ok",
+      "suffix removed": "ok",
+      "text A again": "ok"
+     }
+    },
+    "errors": {
+     "once": [
+      "uncaught: NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node."
+     ],
+     "gsap-deps": [
+      "uncaught: NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node."
+     ],
+     "gsap-revert": [
+      "uncaught: NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node."
+     ],
+     "keyed": [],
+     "unowned": [],
+     "inner-html": [],
+     "react-words": []
+    },
+    "raw": {
+     "mount": {
+      "once": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-deps": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-revert": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "keyed": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "unowned": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "inner-html": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "react-words": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": []
+      }
+     },
+     "same props": {
+      "once": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-deps": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-revert": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "keyed": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "unowned": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "inner-html": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "react-words": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": []
+      }
+     },
+     "new text": {
+      "once": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-deps": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-revert": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "keyed": {
+       "shown": "Pack my box with five dozen liquor jugs (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "Pack my box with five dozen liquor jugs (beta)",
+       "errors": []
+      },
+      "unowned": {
+       "shown": "Pack my box with five dozen liquor jugs (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "Pack my box with five dozen liquor jugs (beta)",
+       "errors": []
+      },
+      "inner-html": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "react-words": {
+       "shown": "Pack my box with five dozen liquor jugs (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": []
+      }
+     },
+     "suffix removed": {
+      "once": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node."
+       ]
+      },
+      "gsap-deps": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node."
+       ]
+      },
+      "gsap-revert": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node."
+       ]
+      },
+      "keyed": {
+       "shown": "Pack my box with five dozen liquor jugs",
+       "expected": "Pack my box with five dozen liquor jugs",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "Pack my box with five dozen liquor jugs",
+       "errors": []
+      },
+      "unowned": {
+       "shown": "Pack my box with five dozen liquor jugs",
+       "expected": "Pack my box with five dozen liquor jugs",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "Pack my box with five dozen liquor jugs",
+       "errors": []
+      },
+      "inner-html": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "Pack my box with five dozen liquor jugs",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "react-words": {
+       "shown": "Pack my box with five dozen liquor jugs",
+       "expected": "Pack my box with five dozen liquor jugs",
+       "ok": true,
+       "mounted": true,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": []
+      }
+     },
+     "text A again": {
+      "once": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node."
+       ]
+      },
+      "gsap-deps": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node."
+       ]
+      },
+      "gsap-revert": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node."
+       ]
+      },
+      "keyed": {
+       "shown": "The quick brown fox jumps over the lazy dog",
+       "expected": "The quick brown fox jumps over the lazy dog",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog",
+       "errors": []
+      },
+      "unowned": {
+       "shown": "The quick brown fox jumps over the lazy dog",
+       "expected": "The quick brown fox jumps over the lazy dog",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog",
+       "errors": []
+      },
+      "inner-html": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "react-words": {
+       "shown": "The quick brown fox jumps over the lazy dog",
+       "expected": "The quick brown fox jumps over the lazy dog",
+       "ok": true,
+       "mounted": true,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": []
+      }
+     }
+    },
+    "pageErrors": []
+   },
+   "d": {
+    "module bundle 2 s late": {
+     "snaps": [
+      {
+       "at": 300,
+       "t": 307,
+       "fcp": 60,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 53,
+       "states": [
+        "running"
+       ],
+       "firstWordOpacity": 0.888793,
+       "lastWordOpacity": 0,
+       "belowTop": 255.19
+      },
+      {
+       "at": 900,
+       "t": 901,
+       "fcp": 60,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 53,
+       "states": [
+        "finished",
+        "running"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 0.320286,
+       "belowTop": 255.19
+      },
+      {
+       "at": 1500,
+       "t": 1502,
+       "fcp": 60,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 53,
+       "states": [
+        "finished"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 1,
+       "belowTop": 255.19
+      },
+      {
+       "at": 2700,
+       "t": 2702,
+       "fcp": 60,
+       "bundleRanAt": 2029,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 53,
+       "states": [
+        "finished"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 1,
+       "belowTop": 255.19
+      }
+     ],
+     "cls": {
+      "cls": 0,
+      "entries": 0
+     },
+     "belowMoved": false,
+     "inkAt1500VsFinal": 1,
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph: Server-split words start moving with the first paint, before a single script has run."
+     },
+     "headingByName": 1,
+     "innerText": "Every line arrives when its reader does Every line arrives when its reader does",
+     "chromiumAxTree": [
+      {
+       "role": "heading",
+       "name": "Every line arrives when its reader does",
+       "ignored": false,
+       "textExposed": "Every line arrives when its reader does"
+      },
+      {
+       "role": "paragraph",
+       "name": "",
+       "ignored": false,
+       "textExposed": "Server-split words start moving with the first paint, before a single script has run."
+      },
+      {
+       "role": "paragraph",
+       "name": "",
+       "ignored": false,
+       "textExposed": "The paragraph under the split text. If anything above it changes size, it moves."
+      }
+     ],
+     "errors": []
+    },
+    "JavaScript disabled": {
+     "snaps": [
+      {
+       "at": 300,
+       "t": 307,
+       "fcp": 28,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 7,
+       "states": [
+        "running"
+       ],
+       "firstWordOpacity": 0.91774,
+       "lastWordOpacity": 0,
+       "belowTop": 255.19
+      },
+      {
+       "at": 900,
+       "t": 901,
+       "fcp": 28,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 7,
+       "states": [
+        "finished",
+        "running"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 0.574379,
+       "belowTop": 255.19
+      },
+      {
+       "at": 1500,
+       "t": 1503,
+       "fcp": 28,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 7,
+       "states": [
+        "finished"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 1,
+       "belowTop": 255.19
+      },
+      {
+       "at": 2700,
+       "t": 2701,
+       "fcp": 28,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 7,
+       "states": [
+        "finished"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 1,
+       "belowTop": 255.19
+      }
+     ],
+     "cls": "not measured (JavaScript disabled)",
+     "belowMoved": false,
+     "inkAt1500VsFinal": 1,
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph: Server-split words start moving with the first paint, before a single script has run."
+     },
+     "headingByName": 1,
+     "innerText": "Every line arrives when its reader does Every line arrives when its reader does",
+     "chromiumAxTree": [
+      {
+       "role": "heading",
+       "name": "Every line arrives when its reader does",
+       "ignored": false,
+       "textExposed": "Every line arrives when its reader does"
+      },
+      {
+       "role": "paragraph",
+       "name": "",
+       "ignored": false,
+       "textExposed": "Server-split words start moving with the first paint, before a single script has run."
+      },
+      {
+       "role": "paragraph",
+       "name": "",
+       "ignored": false,
+       "textExposed": "The paragraph under the split text. If anything above it changes size, it moves."
+      }
+     ],
+     "errors": []
+    },
+    "render-blocking <script> 2 s late": {
+     "snaps": [
+      {
+       "at": 300,
+       "t": 304,
+       "fcp": null,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 0,
+       "anims": 0,
+       "firstStart": null,
+       "states": [],
+       "firstWordOpacity": null,
+       "lastWordOpacity": null,
+       "belowTop": null
+      },
+      {
+       "at": 900,
+       "t": 903,
+       "fcp": null,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 0,
+       "anims": 0,
+       "firstStart": null,
+       "states": [],
+       "firstWordOpacity": null,
+       "lastWordOpacity": null,
+       "belowTop": null
+      },
+      {
+       "at": 1500,
+       "t": 1501,
+       "fcp": null,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 0,
+       "anims": 0,
+       "firstStart": null,
+       "states": [],
+       "firstWordOpacity": null,
+       "lastWordOpacity": null,
+       "belowTop": null
+      },
+      {
+       "at": 2700,
+       "t": 2702,
+       "fcp": 2036,
+       "bundleRanAt": null,
+       "slowRanAt": 2018,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 2028,
+       "states": [
+        "finished",
+        "running"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 0,
+       "belowTop": 255.19
+      }
+     ],
+     "cls": {
+      "cls": 0,
+      "entries": 0
+     },
+     "belowMoved": false,
+     "inkAt1500VsFinal": null,
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph: Server-split words start moving with the first paint, before a single script has run."
+     },
+     "headingByName": 1,
+     "innerText": "Every line arrives when its reader does Every line arrives when its reader does",
+     "chromiumAxTree": [
+      {
+       "role": "heading",
+       "name": "Every line arrives when its reader does",
+       "ignored": false,
+       "textExposed": "Every line arrives when its reader does"
+      },
+      {
+       "role": "paragraph",
+       "name": "",
+       "ignored": false,
+       "textExposed": "Server-split words start moving with the first paint, before a single script has run."
+      },
+      {
+       "role": "paragraph",
+       "name": "",
+       "ignored": false,
+       "textExposed": "The paragraph under the split text. If anything above it changes size, it moves."
+      }
+     ],
+     "errors": []
+    }
+   },
+   "e": {
+    "supported": true,
+    "samples": {
+     "ja": {
+      "text": "吾輩は猫である。名前はまだ無い。どこで生れたかとんと見当がつかぬ。",
+      "segmenter": {
+       "resolvedLocale": "ja",
+       "segments": [
+        "吾輩",
+        "は",
+        "猫",
+        "で",
+        "ある",
+        "[。]",
+        "名前",
+        "は",
+        "まだ",
+        "無い",
+        "[。]",
+        "どこ",
+        "で",
+        "生れ",
+        "たか",
+        "とんと",
+        "見当",
+        "が",
+        "つ",
+        "か",
+        "ぬ",
+        "[。]"
+       ]
+      },
+      "roundTrips": true,
+      "unsplitLines": [
+       "吾輩は猫である。名前はまだ無い。",
+       "どこで生れたかとんと見当がつか",
+       "ぬ。"
+      ],
+      "default": {
+       "words": 1,
+       "lines": [
+        "吾輩は猫である。名前はまだ無い。どこで生れたかとんと見当がつかぬ。"
+       ],
+       "renderedLines": [
+        "吾輩は猫である。名前はまだ無い。",
+        "どこで生れたかとんと見当がつか",
+        "ぬ。"
+       ]
+      },
+      "segmenterSplit": {
+       "words": 22,
+       "lines": [
+        "吾輩は猫である。名前はまだ無い。",
+        "どこで生れたかとんと見当がつかぬ",
+        "。"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": false,
+       "lineStartsWithPunctuation": true
+      },
+      "segmenterGlued": {
+       "words": 19,
+       "lines": [
+        "吾輩は猫である。名前はまだ無い。",
+        "どこで生れたかとんと見当がつか",
+        "ぬ。"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": true,
+       "lineStartsWithPunctuation": false
+      }
+     },
+     "zh": {
+      "text": "我们在春天的早晨出发，沿着河边慢慢地走到城市的另一头。",
+      "segmenter": {
+       "resolvedLocale": "zh",
+       "segments": [
+        "我们",
+        "在",
+        "春天",
+        "的",
+        "早晨",
+        "出发",
+        "[，]",
+        "沿着",
+        "河",
+        "边",
+        "慢慢地",
+        "走到",
+        "城市",
+        "的",
+        "另一",
+        "头",
+        "[。]"
+       ]
+      },
+      "roundTrips": true,
+      "unsplitLines": [
+       "我们在春天的早晨出发，沿着河边",
+       "慢慢地走到城市的另一头。"
+      ],
+      "default": {
+       "words": 1,
+       "lines": [
+        "我们在春天的早晨出发，沿着河边慢慢地走到城市的另一头。"
+       ],
+       "renderedLines": [
+        "我们在春天的早晨出发，沿着河边",
+        "慢慢地走到城市的另一头。"
+       ]
+      },
+      "segmenterSplit": {
+       "words": 17,
+       "lines": [
+        "我们在春天的早晨出发，沿着河边",
+        "慢慢地走到城市的另一头。"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": true,
+       "lineStartsWithPunctuation": false
+      },
+      "segmenterGlued": {
+       "words": 15,
+       "lines": [
+        "我们在春天的早晨出发，沿着河边",
+        "慢慢地走到城市的另一头。"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": true,
+       "lineStartsWithPunctuation": false
+      }
+     },
+     "th": {
+      "text": "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรคระหว่างคำ แต่จะเว้นวรรคเมื่อจบประโยค",
+      "segmenter": {
+       "resolvedLocale": "th",
+       "segments": [
+        "ภาษา",
+        "ไทย",
+        "เขียน",
+        "ติด",
+        "กัน",
+        "โดย",
+        "ไม่",
+        "เว้น",
+        "วรรค",
+        "ระหว่าง",
+        "คำ",
+        "[ ]",
+        "แต่",
+        "จะ",
+        "เว้น",
+        "วรรค",
+        "เมื่อ",
+        "จบ",
+        "ประโยค"
+       ]
+      },
+      "roundTrips": true,
+      "unsplitLines": [
+       "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรค",
+       "ระหว่างคำ แต่จะเว้นวรรคเมื่อจบ",
+       "ประโยค"
+      ],
+      "default": {
+       "words": 2,
+       "lines": [
+        "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรคระหว่างคำ",
+        "แต่จะเว้นวรรคเมื่อจบประโยค"
+       ],
+       "renderedLines": [
+        "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรค",
+        "ระหว่างคำ",
+        "แต่จะเว้นวรรคเมื่อจบประโยค"
+       ]
+      },
+      "segmenterSplit": {
+       "words": 18,
+       "lines": [
+        "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรค",
+        "ระหว่างคำ แต่จะเว้นวรรคเมื่อจบ",
+        "ประโยค"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": true,
+       "lineStartsWithPunctuation": false
+      },
+      "segmenterGlued": {
+       "words": 18,
+       "lines": [
+        "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรค",
+        "ระหว่างคำ แต่จะเว้นวรรคเมื่อจบ",
+        "ประโยค"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": true,
+       "lineStartsWithPunctuation": false
+      }
+     }
+    }
+   }
+  },
+  "webkit": {
+   "version": "26.6",
+   "a": {
+    "font": "/System/Library/Fonts/Supplemental/Courier New.ttf",
+    "fontDelayMs": 1000,
+    "unsplit": {
+     "fontRequestedAtMs": 71,
+     "scriptAt": 70,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1059
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 47
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 101,
+       "font": "error",
+       "set": "loading"
+      },
+      {
+       "t": 1068,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": null,
+     "splits": [],
+     "revealAcrossResplits": [],
+     "final": {
+      "fcp": 102,
+      "font": "loaded",
+      "splitCount": 0,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "linesMatchUnsplit": true,
+      "tallestLineBox": null,
+      "lineHeightPx": 56,
+      "maskOverflow": null,
+      "h1Height": 336,
+      "twinHeight": 336,
+      "ariaLabel": null
+     },
+     "shifts": {
+      "layoutShift": "unsupported",
+      "belowMoves": [
+       {
+        "t": 1068,
+        "px": 112,
+        "h1Height": 336,
+        "lines": null,
+        "font": "loaded"
+       }
+      ],
+      "frames": 168
+     },
+     "afterResizeTo700": {
+      "splitCount": 0,
+      "linesMatchUnsplit": true,
+      "shownLines": 8,
+      "twinLines": 8,
+      "tallestLineBox": null
+     },
+     "errors": []
+    },
+    "auto": {
+     "fontRequestedAtMs": 14,
+     "scriptAt": 21,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1018
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 9
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 27,
+       "font": "error",
+       "set": "loading"
+      },
+      {
+       "t": 1025,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": null,
+     "splits": [
+      {
+       "t": 24,
+       "font": "error",
+       "lineCount": 4,
+       "h1Height": 224
+      }
+     ],
+     "revealAcrossResplits": [],
+     "final": {
+      "fcp": 10,
+      "font": "loaded",
+      "splitCount": 1,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories reward",
+       "patience: every line arrives",
+       "exactly when its reader does,",
+       "and not a moment before."
+      ],
+      "linesMatchUnsplit": false,
+      "tallestLineBox": 112.015625,
+      "lineHeightPx": 56,
+      "maskOverflow": "clip",
+      "h1Height": 448,
+      "twinHeight": 336,
+      "ariaLabel": "Scroll-driven stories reward patience: every line arrives exactly when its reader does, and not a moment before."
+     },
+     "shifts": {
+      "layoutShift": "unsupported",
+      "belowMoves": [
+       {
+        "t": 1025,
+        "px": 224.1,
+        "h1Height": 448,
+        "lines": 4,
+        "font": "loaded"
+       }
+      ],
+      "frames": 169
+     },
+     "afterResizeTo700": {
+      "splitCount": 2,
+      "linesMatchUnsplit": true,
+      "shownLines": 8,
+      "twinLines": 8,
+      "tallestLineBox": 56
+     },
+     "errors": []
+    },
+    "noauto": {
+     "fontRequestedAtMs": 16,
+     "scriptAt": 25,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1016
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 10
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 28,
+       "font": "error",
+       "set": "loading"
+      },
+      {
+       "t": 1020,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": null,
+     "splits": [
+      {
+       "t": 27,
+       "font": "error",
+       "lineCount": 4,
+       "h1Height": 224
+      }
+     ],
+     "revealAcrossResplits": [],
+     "final": {
+      "fcp": 15,
+      "font": "loaded",
+      "splitCount": 1,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories reward",
+       "patience: every line arrives",
+       "exactly when its reader does,",
+       "and not a moment before."
+      ],
+      "linesMatchUnsplit": false,
+      "tallestLineBox": 112.015625,
+      "lineHeightPx": 56,
+      "maskOverflow": "clip",
+      "h1Height": 448,
+      "twinHeight": 336,
+      "ariaLabel": "Scroll-driven stories reward patience: every line arrives exactly when its reader does, and not a moment before."
+     },
+     "shifts": {
+      "layoutShift": "unsupported",
+      "belowMoves": [
+       {
+        "t": 1020,
+        "px": 224.1,
+        "h1Height": 448,
+        "lines": 4,
+        "font": "loaded"
+       }
+      ],
+      "frames": 168
+     },
+     "afterResizeTo700": {
+      "splitCount": 1,
+      "linesMatchUnsplit": false,
+      "shownLines": 4,
+      "twinLines": 8,
+      "tallestLineBox": 112.015625
+     },
+     "errors": []
+    },
+    "ready": {
+     "fontRequestedAtMs": 14,
+     "scriptAt": 22,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1015
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 9
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 32,
+       "font": "error",
+       "set": "loading"
+      },
+      {
+       "t": 1026,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": 1015,
+     "fontAtReady": "loaded",
+     "splits": [
+      {
+       "t": 1017,
+       "font": "loaded",
+       "lineCount": 6,
+       "h1Height": 336
+      }
+     ],
+     "revealAcrossResplits": [],
+     "final": {
+      "fcp": 10,
+      "font": "loaded",
+      "splitCount": 1,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "linesMatchUnsplit": true,
+      "tallestLineBox": 56.00000762939453,
+      "lineHeightPx": 56,
+      "maskOverflow": "clip",
+      "h1Height": 336,
+      "twinHeight": 336,
+      "ariaLabel": "Scroll-driven stories reward patience: every line arrives exactly when its reader does, and not a moment before."
+     },
+     "shifts": {
+      "layoutShift": "unsupported",
+      "belowMoves": [
+       {
+        "t": 1026,
+        "px": 112,
+        "h1Height": 336,
+        "lines": 6,
+        "font": "loaded"
+       }
+      ],
+      "frames": 169
+     },
+     "afterResizeTo700": {
+      "splitCount": 1,
+      "linesMatchUnsplit": false,
+      "shownLines": 6,
+      "twinLines": 8,
+      "tallestLineBox": 112.015625
+     },
+     "errors": []
+    },
+    "ready-auto": {
+     "fontRequestedAtMs": 15,
+     "scriptAt": 21,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1022
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 9
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 22,
+       "font": "error",
+       "set": "loading"
+      },
+      {
+       "t": 1032,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": 1022,
+     "fontAtReady": "loaded",
+     "splits": [
+      {
+       "t": 1028,
+       "font": "loaded",
+       "lineCount": 6,
+       "h1Height": 336
+      }
+     ],
+     "revealAcrossResplits": [],
+     "final": {
+      "fcp": 10,
+      "font": "loaded",
+      "splitCount": 1,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "linesMatchUnsplit": true,
+      "tallestLineBox": 56,
+      "lineHeightPx": 56,
+      "maskOverflow": "clip",
+      "h1Height": 336,
+      "twinHeight": 336,
+      "ariaLabel": "Scroll-driven stories reward patience: every line arrives exactly when its reader does, and not a moment before."
+     },
+     "shifts": {
+      "layoutShift": "unsupported",
+      "belowMoves": [
+       {
+        "t": 1032,
+        "px": 112,
+        "h1Height": 336,
+        "lines": 6,
+        "font": "loaded"
+       }
+      ],
+      "frames": 169
+     },
+     "afterResizeTo700": {
+      "splitCount": 2,
+      "linesMatchUnsplit": true,
+      "shownLines": 8,
+      "twinLines": 8,
+      "tallestLineBox": 56
+     },
+     "errors": []
+    },
+    "load-auto": {
+     "fontRequestedAtMs": 86,
+     "scriptAt": 53,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1063
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 45
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 53,
+       "font": "error",
+       "set": "loading"
+      },
+      {
+       "t": 1069,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": 1063,
+     "fontAtReady": "loaded",
+     "splits": [
+      {
+       "t": 1066,
+       "font": "loaded",
+       "lineCount": 6,
+       "h1Height": 336
+      }
+     ],
+     "revealAcrossResplits": [],
+     "final": {
+      "fcp": 46,
+      "font": "loaded",
+      "splitCount": 1,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "linesMatchUnsplit": true,
+      "tallestLineBox": 56.00000762939453,
+      "lineHeightPx": 56,
+      "maskOverflow": "clip",
+      "h1Height": 336,
+      "twinHeight": 336,
+      "ariaLabel": "Scroll-driven stories reward patience: every line arrives exactly when its reader does, and not a moment before."
+     },
+     "shifts": {
+      "layoutShift": "unsupported",
+      "belowMoves": [
+       {
+        "t": 1069,
+        "px": 112,
+        "h1Height": 336,
+        "lines": 6,
+        "font": "loaded"
+       }
+      ],
+      "frames": 170
+     },
+     "afterResizeTo700": {
+      "splitCount": 2,
+      "linesMatchUnsplit": true,
+      "shownLines": 8,
+      "twinLines": 8,
+      "tallestLineBox": 56
+     },
+     "errors": []
+    }
+   },
+   "b": {
+    "unsplit": {
+     "tabFocus": null,
+     "attrs": [
+      {
+       "id": "h",
+       "ariaLabel": null,
+       "ariaHidden": null,
+       "piecesHidden": 0,
+       "linkText": null,
+       "linkHiddenInside": null
+      },
+      {
+       "id": "p",
+       "ariaLabel": null,
+       "ariaHidden": null,
+       "piecesHidden": 0,
+       "linkText": "screen readers",
+       "linkHiddenInside": 0
+      }
+     ],
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph:\n  - text: Split text still needs a name that\n  - link \"screen readers\":\n    - /url: \"#notes\"\n  - text: can read, and\n  - emphasis: emphasis\n  - text: that survives."
+     },
+     "getByRole": {
+      "heading": 1,
+      "anyHeading": 1,
+      "link": 1,
+      "anyLink": 1
+     }
+    },
+    "auto": {
+     "tabFocus": null,
+     "attrs": [
+      {
+       "id": "h",
+       "ariaLabel": "Every line arrives when its reader does",
+       "ariaHidden": null,
+       "piecesHidden": 9,
+       "linkText": null,
+       "linkHiddenInside": null
+      },
+      {
+       "id": "p",
+       "ariaLabel": "Split text still needs a name that screen readers can read, and emphasis that survives.",
+       "ariaHidden": null,
+       "piecesHidden": 17,
+       "linkText": "screen readers",
+       "linkHiddenInside": 2
+      }
+     ],
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph"
+     },
+     "getByRole": {
+      "heading": 1,
+      "anyHeading": 1,
+      "link": 0,
+      "anyLink": 0
+     }
+    },
+    "hidden": {
+     "tabFocus": null,
+     "attrs": [
+      {
+       "id": "h",
+       "ariaLabel": null,
+       "ariaHidden": "true",
+       "piecesHidden": 9,
+       "linkText": null,
+       "linkHiddenInside": null
+      },
+      {
+       "id": "p",
+       "ariaLabel": null,
+       "ariaHidden": "true",
+       "piecesHidden": 17,
+       "linkText": "screen readers",
+       "linkHiddenInside": 2
+      }
+     ],
+     "ariaSnapshot": {
+      "h1": "",
+      "p": ""
+     },
+     "getByRole": {
+      "heading": 0,
+      "anyHeading": 0,
+      "link": 0,
+      "anyLink": 0
+     }
+    },
+    "none": {
+     "tabFocus": null,
+     "attrs": [
+      {
+       "id": "h",
+       "ariaLabel": null,
+       "ariaHidden": null,
+       "piecesHidden": 0,
+       "linkText": null,
+       "linkHiddenInside": null
+      },
+      {
+       "id": "p",
+       "ariaLabel": null,
+       "ariaHidden": null,
+       "piecesHidden": 0,
+       "linkText": "screen readers",
+       "linkHiddenInside": 0
+      }
+     ],
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph:\n  - text: Split text still needs a name that\n  - link \"screen readers\":\n    - /url: \"#notes\"\n  - text: can read, and\n  - emphasis: emphasis\n  - text: that survives."
+     },
+     "getByRole": {
+      "heading": 1,
+      "anyHeading": 1,
+      "link": 1,
+      "anyLink": 1
+     }
+    }
+   },
+   "c": {
+    "table": {
+     "once": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\"",
+      "suffix removed": "UNMOUNTED errors=1",
+      "text A again": "UNMOUNTED errors=1"
+     },
+     "gsap-deps": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\"",
+      "suffix removed": "UNMOUNTED errors=1",
+      "text A again": "UNMOUNTED errors=1"
+     },
+     "gsap-revert": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\"",
+      "suffix removed": "UNMOUNTED errors=1",
+      "text A again": "UNMOUNTED errors=1"
+     },
+     "keyed": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "ok",
+      "suffix removed": "ok",
+      "text A again": "ok"
+     },
+     "unowned": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "ok",
+      "suffix removed": "ok",
+      "text A again": "ok"
+     },
+     "inner-html": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\"",
+      "suffix removed": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\"",
+      "text A again": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\""
+     },
+     "react-words": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "ok",
+      "suffix removed": "ok",
+      "text A again": "ok"
+     }
+    },
+    "errors": {
+     "once": [
+      "uncaught: NotFoundError: The object can not be found here."
+     ],
+     "gsap-deps": [
+      "uncaught: NotFoundError: The object can not be found here."
+     ],
+     "gsap-revert": [
+      "uncaught: NotFoundError: The object can not be found here."
+     ],
+     "keyed": [],
+     "unowned": [],
+     "inner-html": [],
+     "react-words": []
+    },
+    "raw": {
+     "mount": {
+      "once": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-deps": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-revert": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "keyed": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "unowned": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "inner-html": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "react-words": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": []
+      }
+     },
+     "same props": {
+      "once": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-deps": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-revert": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "keyed": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "unowned": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "inner-html": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "react-words": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": []
+      }
+     },
+     "new text": {
+      "once": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-deps": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-revert": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "keyed": {
+       "shown": "Pack my box with five dozen liquor jugs (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "Pack my box with five dozen liquor jugs (beta)",
+       "errors": []
+      },
+      "unowned": {
+       "shown": "Pack my box with five dozen liquor jugs (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "Pack my box with five dozen liquor jugs (beta)",
+       "errors": []
+      },
+      "inner-html": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "react-words": {
+       "shown": "Pack my box with five dozen liquor jugs (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": []
+      }
+     },
+     "suffix removed": {
+      "once": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: The object can not be found here."
+       ]
+      },
+      "gsap-deps": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: The object can not be found here."
+       ]
+      },
+      "gsap-revert": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: The object can not be found here."
+       ]
+      },
+      "keyed": {
+       "shown": "Pack my box with five dozen liquor jugs",
+       "expected": "Pack my box with five dozen liquor jugs",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "Pack my box with five dozen liquor jugs",
+       "errors": []
+      },
+      "unowned": {
+       "shown": "Pack my box with five dozen liquor jugs",
+       "expected": "Pack my box with five dozen liquor jugs",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "Pack my box with five dozen liquor jugs",
+       "errors": []
+      },
+      "inner-html": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "Pack my box with five dozen liquor jugs",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "react-words": {
+       "shown": "Pack my box with five dozen liquor jugs",
+       "expected": "Pack my box with five dozen liquor jugs",
+       "ok": true,
+       "mounted": true,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": []
+      }
+     },
+     "text A again": {
+      "once": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: The object can not be found here."
+       ]
+      },
+      "gsap-deps": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: The object can not be found here."
+       ]
+      },
+      "gsap-revert": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: The object can not be found here."
+       ]
+      },
+      "keyed": {
+       "shown": "The quick brown fox jumps over the lazy dog",
+       "expected": "The quick brown fox jumps over the lazy dog",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog",
+       "errors": []
+      },
+      "unowned": {
+       "shown": "The quick brown fox jumps over the lazy dog",
+       "expected": "The quick brown fox jumps over the lazy dog",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog",
+       "errors": []
+      },
+      "inner-html": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "react-words": {
+       "shown": "The quick brown fox jumps over the lazy dog",
+       "expected": "The quick brown fox jumps over the lazy dog",
+       "ok": true,
+       "mounted": true,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": []
+      }
+     }
+    },
+    "pageErrors": []
+   },
+   "d": {
+    "module bundle 2 s late": {
+     "snaps": [
+      {
+       "at": 300,
+       "t": 294,
+       "fcp": 37,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 32,
+       "states": [
+        "running"
+       ],
+       "firstWordOpacity": 0.900161,
+       "lastWordOpacity": 0,
+       "belowTop": 255.2
+      },
+      {
+       "at": 900,
+       "t": 893,
+       "fcp": 37,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 32,
+       "states": [
+        "finished",
+        "running"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 0.472659,
+       "belowTop": 255.2
+      },
+      {
+       "at": 1500,
+       "t": 1495,
+       "fcp": 37,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 32,
+       "states": [
+        "finished"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 1,
+       "belowTop": 255.2
+      },
+      {
+       "at": 2700,
+       "t": 2694,
+       "fcp": 37,
+       "bundleRanAt": 2038,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 32,
+       "states": [
+        "finished"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 1,
+       "belowTop": 255.2
+      }
+     ],
+     "cls": "unsupported",
+     "belowMoved": false,
+     "inkAt1500VsFinal": 1,
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph: Server-split words start moving with the first paint, before a single script has run."
+     },
+     "headingByName": 1,
+     "innerText": "Every line arrives when its reader doesEvery line arrives when itsreader does",
+     "errors": []
+    },
+    "JavaScript disabled": {
+     "snaps": [
+      {
+       "at": 300,
+       "t": 295,
+       "fcp": 11,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 8,
+       "states": [
+        "running"
+       ],
+       "firstWordOpacity": 0.920507,
+       "lastWordOpacity": 0,
+       "belowTop": 255.2
+      },
+      {
+       "at": 900,
+       "t": 891,
+       "fcp": 11,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 8,
+       "states": [
+        "finished",
+        "running"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 0.573599,
+       "belowTop": 255.2
+      },
+      {
+       "at": 1500,
+       "t": 1494,
+       "fcp": 11,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 8,
+       "states": [
+        "finished"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 1,
+       "belowTop": 255.2
+      },
+      {
+       "at": 2700,
+       "t": 2693,
+       "fcp": 11,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 8,
+       "states": [
+        "finished"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 1,
+       "belowTop": 255.2
+      }
+     ],
+     "cls": "not measured (JavaScript disabled)",
+     "belowMoved": false,
+     "inkAt1500VsFinal": 1,
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph: Server-split words start moving with the first paint, before a single script has run."
+     },
+     "headingByName": 1,
+     "innerText": "Every line arrives when its reader doesEvery line arrives when itsreader does",
+     "errors": [
+      "console.warning: The resource http://127.0.0.1:59220/assets/modulepreload-polyfill-C5t25fxl.js was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it wasn't preloaded for nothing."
+     ]
+    },
+    "render-blocking <script> 2 s late": {
+     "snaps": [
+      {
+       "at": 300,
+       "t": 295,
+       "fcp": null,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 0,
+       "anims": 0,
+       "firstStart": null,
+       "states": [],
+       "firstWordOpacity": null,
+       "lastWordOpacity": null,
+       "belowTop": null
+      },
+      {
+       "at": 900,
+       "t": 894,
+       "fcp": null,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 0,
+       "anims": 0,
+       "firstStart": null,
+       "states": [],
+       "firstWordOpacity": null,
+       "lastWordOpacity": null,
+       "belowTop": null
+      },
+      {
+       "at": 1500,
+       "t": 1494,
+       "fcp": null,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 0,
+       "anims": 0,
+       "firstStart": null,
+       "states": [],
+       "firstWordOpacity": null,
+       "lastWordOpacity": null,
+       "belowTop": null
+      },
+      {
+       "at": 2700,
+       "t": 2695,
+       "fcp": 2029,
+       "bundleRanAt": null,
+       "slowRanAt": 2017,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 2019,
+       "states": [
+        "finished",
+        "running"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 0,
+       "belowTop": 255.2
+      }
+     ],
+     "cls": "unsupported",
+     "belowMoved": false,
+     "inkAt1500VsFinal": null,
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph: Server-split words start moving with the first paint, before a single script has run."
+     },
+     "headingByName": 1,
+     "innerText": "Every line arrives when its reader doesEvery line arrives when itsreader does",
+     "errors": []
+    }
+   },
+   "e": {
+    "supported": true,
+    "samples": {
+     "ja": {
+      "text": "吾輩は猫である。名前はまだ無い。どこで生れたかとんと見当がつかぬ。",
+      "segmenter": {
+       "resolvedLocale": "ja",
+       "segments": [
+        "吾輩",
+        "は",
+        "猫",
+        "で",
+        "ある",
+        "[。]",
+        "名前",
+        "は",
+        "まだ",
+        "無い",
+        "[。]",
+        "どこ",
+        "で",
+        "生れ",
+        "たか",
+        "とんと",
+        "見当",
+        "が",
+        "つ",
+        "か",
+        "ぬ",
+        "[。]"
+       ]
+      },
+      "roundTrips": true,
+      "unsplitLines": [
+       "吾輩は猫である。名前はまだ無い。",
+       "どこで生れたかとんと見当がつか",
+       "ぬ。"
+      ],
+      "default": {
+       "words": 1,
+       "lines": [
+        "吾輩は猫である。名前はまだ無い。どこで生れたかとんと見当がつかぬ。"
+       ],
+       "renderedLines": [
+        "吾輩は猫である。名前はまだ無い。",
+        "どこで生れたかとんと見当がつか",
+        "ぬ。"
+       ]
+      },
+      "segmenterSplit": {
+       "words": 22,
+       "lines": [
+        "吾輩は猫である。名前はまだ無い。",
+        "どこで生れたかとんと見当がつかぬ",
+        "。"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": false,
+       "lineStartsWithPunctuation": true
+      },
+      "segmenterGlued": {
+       "words": 19,
+       "lines": [
+        "吾輩は猫である。名前はまだ無い。",
+        "どこで生れたかとんと見当がつか",
+        "ぬ。"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": true,
+       "lineStartsWithPunctuation": false
+      }
+     },
+     "zh": {
+      "text": "我们在春天的早晨出发，沿着河边慢慢地走到城市的另一头。",
+      "segmenter": {
+       "resolvedLocale": "zh",
+       "segments": [
+        "我们",
+        "在",
+        "春天",
+        "的",
+        "早晨",
+        "出发",
+        "[，]",
+        "沿着",
+        "河",
+        "边",
+        "慢慢地",
+        "走到",
+        "城市",
+        "的",
+        "另一",
+        "头",
+        "[。]"
+       ]
+      },
+      "roundTrips": true,
+      "unsplitLines": [
+       "我们在春天的早晨出发，沿着河边慢",
+       "慢地走到城市的另一头。"
+      ],
+      "default": {
+       "words": 1,
+       "lines": [
+        "我们在春天的早晨出发，沿着河边慢慢地走到城市的另一头。"
+       ],
+       "renderedLines": [
+        "我们在春天的早晨出发，沿着河边慢",
+        "慢地走到城市的另一头。"
+       ]
+      },
+      "segmenterSplit": {
+       "words": 17,
+       "lines": [
+        "我们在春天的早晨出发，沿着河边",
+        "慢慢地走到城市的另一头。"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": false,
+       "lineStartsWithPunctuation": false
+      },
+      "segmenterGlued": {
+       "words": 15,
+       "lines": [
+        "我们在春天的早晨出发，沿着河边",
+        "慢慢地走到城市的另一头。"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": false,
+       "lineStartsWithPunctuation": false
+      }
+     },
+     "th": {
+      "text": "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรคระหว่างคำ แต่จะเว้นวรรคเมื่อจบประโยค",
+      "segmenter": {
+       "resolvedLocale": "th",
+       "segments": [
+        "ภาษา",
+        "ไทย",
+        "เขียน",
+        "ติด",
+        "กัน",
+        "โดย",
+        "ไม่",
+        "เว้น",
+        "วรรค",
+        "ระหว่าง",
+        "คำ",
+        "[ ]",
+        "แต่",
+        "จะ",
+        "เว้น",
+        "วรรค",
+        "เมื่อ",
+        "จบ",
+        "ประโยค"
+       ]
+      },
+      "roundTrips": true,
+      "unsplitLines": [
+       "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรค",
+       "ระหว่างคำ แต่จะเว้นวรรคเมื่อจบ",
+       "ประโยค"
+      ],
+      "default": {
+       "words": 2,
+       "lines": [
+        "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรคระหว่างคำ",
+        "แต่จะเว้นวรรคเมื่อจบประโยค"
+       ],
+       "renderedLines": [
+        "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรค",
+        "ระหว่างคำ",
+        "แต่จะเว้นวรรคเมื่อจบประโยค"
+       ]
+      },
+      "segmenterSplit": {
+       "words": 18,
+       "lines": [
+        "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรค",
+        "ระหว่างคำ แต่จะเว้นวรรคเมื่อจบ",
+        "ประโยค"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": true,
+       "lineStartsWithPunctuation": false
+      },
+      "segmenterGlued": {
+       "words": 18,
+       "lines": [
+        "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรค",
+        "ระหว่างคำ แต่จะเว้นวรรคเมื่อจบ",
+        "ประโยค"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": true,
+       "lineStartsWithPunctuation": false
+      }
+     }
+    }
+   }
+  },
+  "firefox": {
+   "version": "155.0",
+   "a": {
+    "font": "/System/Library/Fonts/Supplemental/Courier New.ttf",
+    "fontDelayMs": 1000,
+    "unsplit": {
+     "fontRequestedAtMs": 114,
+     "scriptAt": 115,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1109
+      },
+      {
+       "type": "loadingdone",
+       "t": 1112,
+       "faces": [
+        "\"Late\""
+       ]
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 75
+      },
+      {
+       "type": "loadingdone",
+       "t": 1112
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 118,
+       "font": "loading",
+       "set": "loading"
+      },
+      {
+       "t": 1109,
+       "font": "loaded",
+       "set": "loading"
+      },
+      {
+       "t": 1118,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": null,
+     "splits": [],
+     "revealAcrossResplits": [],
+     "final": {
+      "fcp": 78,
+      "font": "loaded",
+      "splitCount": 0,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "linesMatchUnsplit": true,
+      "tallestLineBox": null,
+      "lineHeightPx": 56,
+      "maskOverflow": null,
+      "h1Height": 336,
+      "twinHeight": 336,
+      "ariaLabel": null
+     },
+     "shifts": {
+      "layoutShift": "unsupported",
+      "belowMoves": [
+       {
+        "t": 1109,
+        "px": 112,
+        "h1Height": 336,
+        "lines": null,
+        "font": "loaded"
+       }
+      ],
+      "frames": 345
+     },
+     "afterResizeTo700": {
+      "splitCount": 0,
+      "linesMatchUnsplit": true,
+      "shownLines": 8,
+      "twinLines": 8,
+      "tallestLineBox": null
+     },
+     "errors": []
+    },
+    "auto": {
+     "fontRequestedAtMs": 70,
+     "scriptAt": 93,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1085
+      },
+      {
+       "type": "loadingdone",
+       "t": 1087,
+       "faces": [
+        "\"Late\""
+       ]
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 37
+      },
+      {
+       "type": "loadingdone",
+       "t": 1087
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 94,
+       "font": "loading",
+       "set": "loading"
+      },
+      {
+       "t": 1085,
+       "font": "loaded",
+       "set": "loading"
+      },
+      {
+       "t": 1094,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": null,
+     "splits": [
+      {
+       "t": 94,
+       "font": "loading",
+       "lineCount": 4,
+       "h1Height": 224
+      },
+      {
+       "t": 1089,
+       "font": "loaded",
+       "lineCount": 6,
+       "h1Height": 336
+      }
+     ],
+     "revealAcrossResplits": [
+      {
+       "splitAt": 1089,
+       "frames": [
+        [
+         1053,
+         52
+        ],
+        [
+         1061,
+         51
+        ],
+        [
+         1069,
+         51
+        ],
+        [
+         1077,
+         51
+        ],
+        [
+         1085,
+         50
+        ],
+        [
+         1094,
+         50
+        ],
+        [
+         1103,
+         49
+        ],
+        [
+         1110,
+         49
+        ],
+        [
+         1119,
+         49
+        ],
+        [
+         1128,
+         48
+        ],
+        [
+         1136,
+         48
+        ],
+        [
+         1144,
+         47
+        ]
+       ]
+      }
+     ],
+     "final": {
+      "fcp": 44,
+      "font": "loaded",
+      "splitCount": 2,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "linesMatchUnsplit": true,
+      "tallestLineBox": 56,
+      "lineHeightPx": 56,
+      "maskOverflow": "clip",
+      "h1Height": 336,
+      "twinHeight": 336,
+      "ariaLabel": "Scroll-driven stories reward patience: every line arrives exactly when its reader does, and not a moment before."
+     },
+     "shifts": {
+      "layoutShift": "unsupported",
+      "belowMoves": [
+       {
+        "t": 1085,
+        "px": 224,
+        "h1Height": 448,
+        "lines": 4,
+        "font": "loaded"
+       },
+       {
+        "t": 1094,
+        "px": -112,
+        "h1Height": 336,
+        "lines": 6,
+        "font": "loaded"
+       }
+      ],
+      "frames": 313
+     },
+     "afterResizeTo700": {
+      "splitCount": 3,
+      "linesMatchUnsplit": true,
+      "shownLines": 8,
+      "twinLines": 8,
+      "tallestLineBox": 56
+     },
+     "errors": []
+    },
+    "noauto": {
+     "fontRequestedAtMs": 77,
+     "scriptAt": 94,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1071
+      },
+      {
+       "type": "loadingdone",
+       "t": 1076,
+       "faces": [
+        "\"Late\""
+       ]
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 42
+      },
+      {
+       "type": "loadingdone",
+       "t": 1076
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 99,
+       "font": "loading",
+       "set": "loading"
+      },
+      {
+       "t": 1073,
+       "font": "loaded",
+       "set": "loading"
+      },
+      {
+       "t": 1082,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": null,
+     "splits": [
+      {
+       "t": 95,
+       "font": "loading",
+       "lineCount": 4,
+       "h1Height": 224
+      }
+     ],
+     "revealAcrossResplits": [],
+     "final": {
+      "fcp": 49,
+      "font": "loaded",
+      "splitCount": 1,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories reward",
+       "patience: every line arrives",
+       "exactly when its reader does,",
+       "and not a moment before."
+      ],
+      "linesMatchUnsplit": false,
+      "tallestLineBox": 112,
+      "lineHeightPx": 56,
+      "maskOverflow": "clip",
+      "h1Height": 448,
+      "twinHeight": 336,
+      "ariaLabel": "Scroll-driven stories reward patience: every line arrives exactly when its reader does, and not a moment before."
+     },
+     "shifts": {
+      "layoutShift": "unsupported",
+      "belowMoves": [
+       {
+        "t": 1073,
+        "px": 224,
+        "h1Height": 448,
+        "lines": 4,
+        "font": "loaded"
+       }
+      ],
+      "frames": 344
+     },
+     "afterResizeTo700": {
+      "splitCount": 1,
+      "linesMatchUnsplit": false,
+      "shownLines": 4,
+      "twinLines": 8,
+      "tallestLineBox": 112
+     },
+     "errors": []
+    },
+    "ready": {
+     "fontRequestedAtMs": 25,
+     "scriptAt": 37,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1033
+      },
+      {
+       "type": "loadingdone",
+       "t": 1043,
+       "faces": [
+        "\"Late\""
+       ]
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 22
+      },
+      {
+       "type": "loadingdone",
+       "t": 1043
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 36,
+       "font": "loading",
+       "set": "loading"
+      },
+      {
+       "t": 1036,
+       "font": "loaded",
+       "set": "loading"
+      },
+      {
+       "t": 1044,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": 1037,
+     "fontAtReady": "loaded",
+     "splits": [
+      {
+       "t": 1040,
+       "font": "loaded",
+       "lineCount": 6,
+       "h1Height": 336
+      }
+     ],
+     "revealAcrossResplits": [],
+     "final": {
+      "fcp": 22,
+      "font": "loaded",
+      "splitCount": 1,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "linesMatchUnsplit": true,
+      "tallestLineBox": 56,
+      "lineHeightPx": 56,
+      "maskOverflow": "clip",
+      "h1Height": 336,
+      "twinHeight": 336,
+      "ariaLabel": "Scroll-driven stories reward patience: every line arrives exactly when its reader does, and not a moment before."
+     },
+     "shifts": {
+      "layoutShift": "unsupported",
+      "belowMoves": [
+       {
+        "t": 1036,
+        "px": 112,
+        "h1Height": 336,
+        "lines": null,
+        "font": "loaded"
+       }
+      ],
+      "frames": 338
+     },
+     "afterResizeTo700": {
+      "splitCount": 1,
+      "linesMatchUnsplit": false,
+      "shownLines": 6,
+      "twinLines": 8,
+      "tallestLineBox": 112
+     },
+     "errors": []
+    },
+    "ready-auto": {
+     "fontRequestedAtMs": 20,
+     "scriptAt": 31,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1031
+      },
+      {
+       "type": "loadingdone",
+       "t": 1047,
+       "faces": [
+        "\"Late\""
+       ]
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 15
+      },
+      {
+       "type": "loadingdone",
+       "t": 1047
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 30,
+       "font": "loading",
+       "set": "loading"
+      },
+      {
+       "t": 1038,
+       "font": "loaded",
+       "set": "loading"
+      },
+      {
+       "t": 1046,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": 1040,
+     "fontAtReady": "loaded",
+     "splits": [
+      {
+       "t": 1043,
+       "font": "loaded",
+       "lineCount": 6,
+       "h1Height": 336
+      },
+      {
+       "t": 1050,
+       "font": "loaded",
+       "lineCount": 6,
+       "h1Height": 336
+      }
+     ],
+     "revealAcrossResplits": [
+      {
+       "splitAt": 1050,
+       "frames": [
+        [
+         1012,
+         null
+        ],
+        [
+         1021,
+         null
+        ],
+        [
+         1038,
+         null
+        ],
+        [
+         1046,
+         100
+        ],
+        [
+         1055,
+         100
+        ],
+        [
+         1062,
+         100
+        ],
+        [
+         1071,
+         99
+        ],
+        [
+         1080,
+         99
+        ],
+        [
+         1088,
+         98
+        ],
+        [
+         1096,
+         98
+        ],
+        [
+         1105,
+         97
+        ]
+       ]
+      }
+     ],
+     "final": {
+      "fcp": 20,
+      "font": "loaded",
+      "splitCount": 2,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "linesMatchUnsplit": true,
+      "tallestLineBox": 56,
+      "lineHeightPx": 56,
+      "maskOverflow": "clip",
+      "h1Height": 336,
+      "twinHeight": 336,
+      "ariaLabel": "Scroll-driven stories reward patience: every line arrives exactly when its reader does, and not a moment before."
+     },
+     "shifts": {
+      "layoutShift": "unsupported",
+      "belowMoves": [
+       {
+        "t": 1038,
+        "px": 112,
+        "h1Height": 336,
+        "lines": null,
+        "font": "loaded"
+       }
+      ],
+      "frames": 338
+     },
+     "afterResizeTo700": {
+      "splitCount": 3,
+      "linesMatchUnsplit": true,
+      "shownLines": 8,
+      "twinLines": 8,
+      "tallestLineBox": 56
+     },
+     "errors": []
+    },
+    "load-auto": {
+     "fontRequestedAtMs": 23,
+     "scriptAt": 36,
+     "fontEvents": [
+      {
+       "type": "Late loaded",
+       "t": 1033
+      },
+      {
+       "type": "loadingdone",
+       "t": 1043,
+       "faces": [
+        "\"Late\""
+       ]
+      }
+     ],
+     "fontSetEventsFromHead": [
+      {
+       "type": "loading",
+       "t": 13
+      },
+      {
+       "type": "loadingdone",
+       "t": 1043
+      }
+     ],
+     "fontStatuses": [
+      {
+       "t": 41,
+       "font": "loading",
+       "set": "loading"
+      },
+      {
+       "t": 1033,
+       "font": "loaded",
+       "set": "loading"
+      },
+      {
+       "t": 1049,
+       "font": "loaded",
+       "set": "loaded"
+      }
+     ],
+     "readyAt": 1033,
+     "fontAtReady": "loaded",
+     "splits": [
+      {
+       "t": 1037,
+       "font": "loaded",
+       "lineCount": 6,
+       "h1Height": 336
+      },
+      {
+       "t": 1047,
+       "font": "loaded",
+       "lineCount": 6,
+       "h1Height": 336
+      }
+     ],
+     "revealAcrossResplits": [
+      {
+       "splitAt": 1047,
+       "frames": [
+        [
+         1008,
+         null
+        ],
+        [
+         1016,
+         null
+        ],
+        [
+         1024,
+         null
+        ],
+        [
+         1033,
+         100
+        ],
+        [
+         1049,
+         100
+        ],
+        [
+         1058,
+         99
+        ],
+        [
+         1066,
+         99
+        ],
+        [
+         1074,
+         98
+        ],
+        [
+         1083,
+         98
+        ],
+        [
+         1091,
+         98
+        ],
+        [
+         1099,
+         97
+        ],
+        [
+         1107,
+         97
+        ]
+       ]
+      }
+     ],
+     "final": {
+      "fcp": 16,
+      "font": "loaded",
+      "splitCount": 2,
+      "twinLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "shownLines": [
+       "Scroll-driven stories",
+       "reward patience: every",
+       "line arrives exactly",
+       "when its reader does,",
+       "and not a moment",
+       "before."
+      ],
+      "linesMatchUnsplit": true,
+      "tallestLineBox": 56,
+      "lineHeightPx": 56,
+      "maskOverflow": "clip",
+      "h1Height": 336,
+      "twinHeight": 336,
+      "ariaLabel": "Scroll-driven stories reward patience: every line arrives exactly when its reader does, and not a moment before."
+     },
+     "shifts": {
+      "layoutShift": "unsupported",
+      "belowMoves": [
+       {
+        "t": 1033,
+        "px": 112,
+        "h1Height": 336,
+        "lines": 6,
+        "font": "loaded"
+       }
+      ],
+      "frames": 337
+     },
+     "afterResizeTo700": {
+      "splitCount": 3,
+      "linesMatchUnsplit": true,
+      "shownLines": 8,
+      "twinLines": 8,
+      "tallestLineBox": 56
+     },
+     "errors": []
+    }
+   },
+   "b": {
+    "unsplit": {
+     "tabFocus": {
+      "tag": "a",
+      "text": "screen readers",
+      "insideAriaHidden": false
+     },
+     "attrs": [
+      {
+       "id": "h",
+       "ariaLabel": null,
+       "ariaHidden": null,
+       "piecesHidden": 0,
+       "linkText": null,
+       "linkHiddenInside": null
+      },
+      {
+       "id": "p",
+       "ariaLabel": null,
+       "ariaHidden": null,
+       "piecesHidden": 0,
+       "linkText": "screen readers",
+       "linkHiddenInside": 0
+      }
+     ],
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph:\n  - text: Split text still needs a name that\n  - link \"screen readers\":\n    - /url: \"#notes\"\n  - text: can read, and\n  - emphasis: emphasis\n  - text: that survives."
+     },
+     "getByRole": {
+      "heading": 1,
+      "anyHeading": 1,
+      "link": 1,
+      "anyLink": 1
+     }
+    },
+    "auto": {
+     "tabFocus": {
+      "tag": "a",
+      "text": "screen readers",
+      "insideAriaHidden": true
+     },
+     "attrs": [
+      {
+       "id": "h",
+       "ariaLabel": "Every line arrives when its reader does",
+       "ariaHidden": null,
+       "piecesHidden": 9,
+       "linkText": null,
+       "linkHiddenInside": null
+      },
+      {
+       "id": "p",
+       "ariaLabel": "Split text still needs a name that screen readers can read, and emphasis that survives.",
+       "ariaHidden": null,
+       "piecesHidden": 17,
+       "linkText": "screen readers",
+       "linkHiddenInside": 2
+      }
+     ],
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph"
+     },
+     "getByRole": {
+      "heading": 1,
+      "anyHeading": 1,
+      "link": 0,
+      "anyLink": 0
+     }
+    },
+    "hidden": {
+     "tabFocus": {
+      "tag": "a",
+      "text": "screen readers",
+      "insideAriaHidden": true
+     },
+     "attrs": [
+      {
+       "id": "h",
+       "ariaLabel": null,
+       "ariaHidden": "true",
+       "piecesHidden": 9,
+       "linkText": null,
+       "linkHiddenInside": null
+      },
+      {
+       "id": "p",
+       "ariaLabel": null,
+       "ariaHidden": "true",
+       "piecesHidden": 17,
+       "linkText": "screen readers",
+       "linkHiddenInside": 2
+      }
+     ],
+     "ariaSnapshot": {
+      "h1": "",
+      "p": ""
+     },
+     "getByRole": {
+      "heading": 0,
+      "anyHeading": 0,
+      "link": 0,
+      "anyLink": 0
+     }
+    },
+    "none": {
+     "tabFocus": {
+      "tag": "a",
+      "text": "screen readers",
+      "insideAriaHidden": false
+     },
+     "attrs": [
+      {
+       "id": "h",
+       "ariaLabel": null,
+       "ariaHidden": null,
+       "piecesHidden": 0,
+       "linkText": null,
+       "linkHiddenInside": null
+      },
+      {
+       "id": "p",
+       "ariaLabel": null,
+       "ariaHidden": null,
+       "piecesHidden": 0,
+       "linkText": "screen readers",
+       "linkHiddenInside": 0
+      }
+     ],
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph:\n  - text: Split text still needs a name that\n  - link \"screen readers\":\n    - /url: \"#notes\"\n  - text: can read, and\n  - emphasis: emphasis\n  - text: that survives."
+     },
+     "getByRole": {
+      "heading": 1,
+      "anyHeading": 1,
+      "link": 1,
+      "anyLink": 1
+     }
+    }
+   },
+   "c": {
+    "table": {
+     "once": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\"",
+      "suffix removed": "UNMOUNTED errors=1",
+      "text A again": "UNMOUNTED errors=1"
+     },
+     "gsap-deps": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\"",
+      "suffix removed": "UNMOUNTED errors=1",
+      "text A again": "UNMOUNTED errors=1"
+     },
+     "gsap-revert": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\"",
+      "suffix removed": "UNMOUNTED errors=1",
+      "text A again": "UNMOUNTED errors=1"
+     },
+     "keyed": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "ok",
+      "suffix removed": "ok",
+      "text A again": "ok"
+     },
+     "unowned": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "ok",
+      "suffix removed": "ok",
+      "text A again": "ok"
+     },
+     "inner-html": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\"",
+      "suffix removed": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\"",
+      "text A again": "STALE shows \"The quick brown fox jumps over the lazy dog (beta)\""
+     },
+     "react-words": {
+      "mount": "ok",
+      "same props": "ok",
+      "new text": "ok",
+      "suffix removed": "ok",
+      "text A again": "ok"
+     }
+    },
+    "errors": {
+     "once": [
+      "uncaught: NotFoundError: Node.removeChild: The node to be removed is not a child of this node"
+     ],
+     "gsap-deps": [
+      "uncaught: NotFoundError: Node.removeChild: The node to be removed is not a child of this node"
+     ],
+     "gsap-revert": [
+      "uncaught: NotFoundError: Node.removeChild: The node to be removed is not a child of this node"
+     ],
+     "keyed": [],
+     "unowned": [],
+     "inner-html": [],
+     "react-words": []
+    },
+    "raw": {
+     "mount": {
+      "once": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-deps": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-revert": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "keyed": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "unowned": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "inner-html": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "react-words": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": []
+      }
+     },
+     "same props": {
+      "once": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-deps": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-revert": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "keyed": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "unowned": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "inner-html": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "react-words": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": []
+      }
+     },
+     "new text": {
+      "once": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-deps": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "gsap-revert": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "keyed": {
+       "shown": "Pack my box with five dozen liquor jugs (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "Pack my box with five dozen liquor jugs (beta)",
+       "errors": []
+      },
+      "unowned": {
+       "shown": "Pack my box with five dozen liquor jugs (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "Pack my box with five dozen liquor jugs (beta)",
+       "errors": []
+      },
+      "inner-html": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "react-words": {
+       "shown": "Pack my box with five dozen liquor jugs (beta)",
+       "expected": "Pack my box with five dozen liquor jugs (beta)",
+       "ok": true,
+       "mounted": true,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": []
+      }
+     },
+     "suffix removed": {
+      "once": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: Node.removeChild: The node to be removed is not a child of this node"
+       ]
+      },
+      "gsap-deps": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: Node.removeChild: The node to be removed is not a child of this node"
+       ]
+      },
+      "gsap-revert": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: Node.removeChild: The node to be removed is not a child of this node"
+       ]
+      },
+      "keyed": {
+       "shown": "Pack my box with five dozen liquor jugs",
+       "expected": "Pack my box with five dozen liquor jugs",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "Pack my box with five dozen liquor jugs",
+       "errors": []
+      },
+      "unowned": {
+       "shown": "Pack my box with five dozen liquor jugs",
+       "expected": "Pack my box with five dozen liquor jugs",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "Pack my box with five dozen liquor jugs",
+       "errors": []
+      },
+      "inner-html": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "Pack my box with five dozen liquor jugs",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "react-words": {
+       "shown": "Pack my box with five dozen liquor jugs",
+       "expected": "Pack my box with five dozen liquor jugs",
+       "ok": true,
+       "mounted": true,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": []
+      }
+     },
+     "text A again": {
+      "once": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: Node.removeChild: The node to be removed is not a child of this node"
+       ]
+      },
+      "gsap-deps": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: Node.removeChild: The node to be removed is not a child of this node"
+       ]
+      },
+      "gsap-revert": {
+       "shown": null,
+       "expected": null,
+       "ok": true,
+       "mounted": false,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": [
+        "uncaught: NotFoundError: Node.removeChild: The node to be removed is not a child of this node"
+       ]
+      },
+      "keyed": {
+       "shown": "The quick brown fox jumps over the lazy dog",
+       "expected": "The quick brown fox jumps over the lazy dog",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog",
+       "errors": []
+      },
+      "unowned": {
+       "shown": "The quick brown fox jumps over the lazy dog",
+       "expected": "The quick brown fox jumps over the lazy dog",
+       "ok": true,
+       "mounted": true,
+       "lines": 2,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog",
+       "errors": []
+      },
+      "inner-html": {
+       "shown": "The quick brown fox jumps over the lazy dog (beta)",
+       "expected": "The quick brown fox jumps over the lazy dog",
+       "ok": false,
+       "mounted": true,
+       "lines": 3,
+       "nestedSplits": 0,
+       "ariaLabel": "The quick brown fox jumps over the lazy dog (beta)",
+       "errors": []
+      },
+      "react-words": {
+       "shown": "The quick brown fox jumps over the lazy dog",
+       "expected": "The quick brown fox jumps over the lazy dog",
+       "ok": true,
+       "mounted": true,
+       "lines": 0,
+       "nestedSplits": 0,
+       "ariaLabel": null,
+       "errors": []
+      }
+     }
+    },
+    "pageErrors": []
+   },
+   "d": {
+    "module bundle 2 s late": {
+     "snaps": [
+      {
+       "at": 300,
+       "t": 304,
+       "fcp": 34,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 26,
+       "states": [
+        "running"
+       ],
+       "firstWordOpacity": 0.910944,
+       "lastWordOpacity": 0,
+       "belowTop": 255.2
+      },
+      {
+       "at": 900,
+       "t": 904,
+       "fcp": 34,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 26,
+       "states": [
+        "finished",
+        "running"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 0.539064,
+       "belowTop": 255.2
+      },
+      {
+       "at": 1500,
+       "t": 1503,
+       "fcp": 34,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 26,
+       "states": [
+        "finished"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 1,
+       "belowTop": 255.2
+      },
+      {
+       "at": 2700,
+       "t": 2702,
+       "fcp": 34,
+       "bundleRanAt": 2031,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 26,
+       "states": [
+        "finished"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 1,
+       "belowTop": 255.2
+      }
+     ],
+     "cls": "unsupported",
+     "belowMoved": false,
+     "inkAt1500VsFinal": 1,
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph: Server-split words start moving with the first paint, before a single script has run."
+     },
+     "headingByName": 1,
+     "innerText": "Every line arrives when its reader does Every line arrives when its reader does",
+     "errors": []
+    },
+    "JavaScript disabled": {
+     "snaps": [
+      {
+       "at": 300,
+       "t": 307,
+       "fcp": 23,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 20,
+       "states": [
+        "running"
+       ],
+       "firstWordOpacity": 0.917785,
+       "lastWordOpacity": 0,
+       "belowTop": 255.2
+      },
+      {
+       "at": 900,
+       "t": 905,
+       "fcp": 23,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 20,
+       "states": [
+        "finished",
+        "running"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 0.539533,
+       "belowTop": 255.2
+      },
+      {
+       "at": 1500,
+       "t": 1502,
+       "fcp": 23,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 20,
+       "states": [
+        "finished"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 1,
+       "belowTop": 255.2
+      },
+      {
+       "at": 2700,
+       "t": 2708,
+       "fcp": 23,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 20,
+       "states": [
+        "finished"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 1,
+       "belowTop": 255.2
+      }
+     ],
+     "cls": "not measured (JavaScript disabled)",
+     "belowMoved": false,
+     "inkAt1500VsFinal": 1,
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph: Server-split words start moving with the first paint, before a single script has run."
+     },
+     "headingByName": 1,
+     "innerText": "Every line arrives when its reader does Every line arrives when its reader does",
+     "errors": []
+    },
+    "render-blocking <script> 2 s late": {
+     "snaps": [
+      {
+       "at": 300,
+       "t": 302,
+       "fcp": null,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 0,
+       "anims": 0,
+       "firstStart": null,
+       "states": [],
+       "firstWordOpacity": null,
+       "lastWordOpacity": null,
+       "belowTop": null
+      },
+      {
+       "at": 900,
+       "t": 902,
+       "fcp": null,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 0,
+       "anims": 0,
+       "firstStart": null,
+       "states": [],
+       "firstWordOpacity": null,
+       "lastWordOpacity": null,
+       "belowTop": null
+      },
+      {
+       "at": 1500,
+       "t": 1502,
+       "fcp": null,
+       "bundleRanAt": null,
+       "slowRanAt": null,
+       "words": 0,
+       "anims": 0,
+       "firstStart": null,
+       "states": [],
+       "firstWordOpacity": null,
+       "lastWordOpacity": null,
+       "belowTop": null
+      },
+      {
+       "at": 2700,
+       "t": 2704,
+       "fcp": 2061,
+       "bundleRanAt": null,
+       "slowRanAt": 2038,
+       "words": 21,
+       "anims": 21,
+       "firstStart": 2043,
+       "states": [
+        "finished",
+        "running"
+       ],
+       "firstWordOpacity": 1,
+       "lastWordOpacity": 0,
+       "belowTop": 255.2
+      }
+     ],
+     "cls": "unsupported",
+     "belowMoved": false,
+     "inkAt1500VsFinal": null,
+     "ariaSnapshot": {
+      "h1": "- heading \"Every line arrives when its reader does\" [level=1]",
+      "p": "- paragraph: Server-split words start moving with the first paint, before a single script has run."
+     },
+     "headingByName": 1,
+     "innerText": "Every line arrives when its reader does Every line arrives when its reader does",
+     "errors": []
+    }
+   },
+   "e": {
+    "supported": true,
+    "samples": {
+     "ja": {
+      "text": "吾輩は猫である。名前はまだ無い。どこで生れたかとんと見当がつかぬ。",
+      "segmenter": {
+       "resolvedLocale": "ja",
+       "segments": [
+        "吾輩",
+        "は",
+        "猫",
+        "[で]",
+        "[ある]",
+        "[。]",
+        "名前",
+        "はま",
+        "だ",
+        "[無い]",
+        "[。]",
+        "どこ",
+        "で",
+        "生れ",
+        "たか",
+        "とんと",
+        "見当",
+        "が",
+        "つ",
+        "か",
+        "[ぬ]",
+        "[。]"
+       ]
+      },
+      "roundTrips": true,
+      "unsplitLines": [
+       "吾輩は猫である。名前はまだ無い。",
+       "どこで生れたかとんと見当がつか",
+       "ぬ。"
+      ],
+      "default": {
+       "words": 1,
+       "lines": [
+        "吾輩は猫である。名前はまだ無い。どこで生れたかとんと見当がつかぬ。"
+       ],
+       "renderedLines": [
+        "吾輩は猫である。名前はまだ無い。",
+        "どこで生れたかとんと見当がつか",
+        "ぬ。"
+       ]
+      },
+      "segmenterSplit": {
+       "words": 22,
+       "lines": [
+        "吾輩は猫である。名前はまだ無い。",
+        "どこで生れたかとんと見当がつかぬ",
+        "。"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": false,
+       "lineStartsWithPunctuation": true
+      },
+      "segmenterGlued": {
+       "words": 19,
+       "lines": [
+        "吾輩は猫である。名前はまだ無い。",
+        "どこで生れたかとんと見当がつか",
+        "ぬ。"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": true,
+       "lineStartsWithPunctuation": false
+      }
+     },
+     "zh": {
+      "text": "我们在春天的早晨出发，沿着河边慢慢地走到城市的另一头。",
+      "segmenter": {
+       "resolvedLocale": "zh",
+       "segments": [
+        "我们",
+        "在",
+        "春天",
+        "的",
+        "早晨",
+        "[出发]",
+        "[，]",
+        "沿着",
+        "河",
+        "边",
+        "慢慢地",
+        "走到",
+        "城市",
+        "的",
+        "另一",
+        "[头]",
+        "[。]"
+       ]
+      },
+      "roundTrips": true,
+      "unsplitLines": [
+       "我们在春天的早晨出发，沿着河边",
+       "慢慢地走到城市的另一头。"
+      ],
+      "default": {
+       "words": 1,
+       "lines": [
+        "我们在春天的早晨出发，沿着河边慢慢地走到城市的另一头。"
+       ],
+       "renderedLines": [
+        "我们在春天的早晨出发，沿着河边",
+        "慢慢地走到城市的另一头。"
+       ]
+      },
+      "segmenterSplit": {
+       "words": 17,
+       "lines": [
+        "我们在春天的早晨出发，沿着河边",
+        "慢慢地走到城市的另一头。"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": true,
+       "lineStartsWithPunctuation": false
+      },
+      "segmenterGlued": {
+       "words": 15,
+       "lines": [
+        "我们在春天的早晨出发，沿着河边",
+        "慢慢地走到城市的另一头。"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": true,
+       "lineStartsWithPunctuation": false
+      }
+     },
+     "th": {
+      "text": "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรคระหว่างคำ แต่จะเว้นวรรคเมื่อจบประโยค",
+      "segmenter": {
+       "resolvedLocale": "th",
+       "segments": [
+        "ภาษา",
+        "ไทย",
+        "เขียน",
+        "ติดกัน",
+        "โดย",
+        "ไม่",
+        "เว้นวรรค",
+        "ระหว่าง",
+        "[คำ]",
+        "[ ]",
+        "แต่",
+        "จะ",
+        "เว้น",
+        "วรรค",
+        "เมื่อ",
+        "จบ",
+        "ประโยค"
+       ]
+      },
+      "roundTrips": true,
+      "unsplitLines": [
+       "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรค",
+       "ระหว่างคำ แต่จะเว้นวรรคเมื่อจบ",
+       "ประโยค"
+      ],
+      "default": {
+       "words": 2,
+       "lines": [
+        "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรคระหว่างคำ",
+        "แต่จะเว้นวรรคเมื่อจบประโยค"
+       ],
+       "renderedLines": [
+        "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรค",
+        "ระหว่างคำ",
+        "แต่จะเว้นวรรคเมื่อจบประโยค"
+       ]
+      },
+      "segmenterSplit": {
+       "words": 16,
+       "lines": [
+        "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรค",
+        "ระหว่างคำ แต่จะเว้นวรรคเมื่อจบ",
+        "ประโยค"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": true,
+       "lineStartsWithPunctuation": false
+      },
+      "segmenterGlued": {
+       "words": 16,
+       "lines": [
+        "ภาษาไทยเขียนติดกันโดยไม่เว้นวรรค",
+        "ระหว่างคำ แต่จะเว้นวรรคเมื่อจบ",
+        "ประโยค"
+       ],
+       "textPreserved": true,
+       "ariaLabelIsText": true,
+       "matchesUnsplit": true,
+       "lineStartsWithPunctuation": false
+      }
+     }
+    }
+   }
+  }
+ },
+ "nodeSegmenter": {
+  "node": "v24.16.0",
+  "icu": "78.3",
+  "samples": {
+   "ja": {
+    "resolvedLocale": "ja",
+    "segments": [
+     "吾輩",
+     "は",
+     "猫",
+     "で",
+     "ある",
+     "[。]",
+     "名前",
+     "は",
+     "まだ",
+     "無い",
+     "[。]",
+     "どこ",
+     "で",
+     "生れ",
+     "たか",
+     "とんと",
+     "見当",
+     "が",
+     "つ",
+     "か",
+     "ぬ",
+     "[。]"
+    ]
+   },
+   "zh": {
+    "resolvedLocale": "zh",
+    "segments": [
+     "我们",
+     "在",
+     "春天",
+     "的",
+     "早晨",
+     "出发",
+     "[，]",
+     "沿着",
+     "河",
+     "边",
+     "慢慢地",
+     "走到",
+     "城市",
+     "的",
+     "另一",
+     "头",
+     "[。]"
+    ]
+   },
+   "th": {
+    "resolvedLocale": "th",
+    "segments": [
+     "ภาษา",
+     "ไทย",
+     "เขียน",
+     "ติด",
+     "กัน",
+     "โดย",
+     "ไม่",
+     "เว้น",
+     "วรรค",
+     "ระหว่าง",
+     "คำ",
+     "[ ]",
+     "แต่",
+     "จะ",
+     "เว้น",
+     "วรรค",
+     "เมื่อ",
+     "จบ",
+     "ประโยค"
+    ]
+   }
+  }
+ }
+}

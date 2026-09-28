@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>S7e reduced motion</title>
+    <!--
+      S7e. Seven identical view()-driven boxes in one row (range cover 0%..100%,
+      so every value reads back as progress). Each one gets a different
+      prefers-reduced-motion treatment. The static style is the finished state
+      (opacity 1, margin-left 40px, scale none), so "fully reset" means: no
+      animation attached and that style at every scroll offset.
+
+      Every reduce rule is one class more specific than the rule it overrides,
+      so the cascade can't be what decides the result.
+    -->
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      .spacer {
+        height: 1500px;
+      }
+      .row {
+        display: flex;
+        gap: 30px;
+        height: 200px;
+      }
+      .box {
+        width: 60px;
+        height: 200px;
+        background: #000;
+        opacity: 1;
+        margin-left: 40px;
+      }
+      @keyframes rm {
+        from { opacity: 0; margin-left: 0px; scale: 0.5; }
+        to { opacity: 1; margin-left: 40px; scale: 1; }
+      }
+      @supports (animation-timeline: view()) {
+        .anim {
+          animation: rm linear both;
+          animation-timeline: view();
+          animation-range: cover 0% cover 100%;
+        }
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        @supports (animation-timeline: view()) {
+          .gated {
+            animation: rm linear both;
+            animation-timeline: view();
+            animation-range: cover 0% cover 100%;
+          }
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .anim.none-auto { animation: none; animation-timeline: auto; }
+        .anim.none { animation: none; }
+        .anim.name-none { animation-name: none; }
+        .anim.timeline-none { animation-timeline: none; }
+        /* the common global reset, scoped to one element */
+        .anim.duration { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="spacer"></div>
+    <div class="row">
+      <div class="box anim" data-probe="control"></div>
+      <div class="box anim none-auto" data-probe="none+timeline-auto"></div>
+      <div class="box anim none" data-probe="animation-none"></div>
+      <div class="box anim name-none" data-probe="name-none"></div>
+      <div class="box anim timeline-none" data-probe="timeline-none"></div>
+      <div class="box anim duration" data-probe="duration-0.01ms"></div>
+      <div class="box gated" data-probe="no-preference-gate"></div>
+    </div>
+    <div class="spacer"></div>
+    <script type="module" src="../src/probe.js"></script>
+  </body>
+</html>

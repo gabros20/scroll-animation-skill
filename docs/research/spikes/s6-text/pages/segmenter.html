@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>S6e Intl.Segmenter and SplitText on CJK and Thai</title>
+    <!--
+      S6e. Intl.Segmenter granularity 'word' on Japanese, Chinese and Thai, and
+      what SplitText does with the same text: four copies of each sample, in
+      a 320px column:
+        [data-split="none"]       unsplit, for the browser's own line breaks
+        [data-split="default"]    SplitText type 'words,lines' as-is (it splits words on spaces)
+        [data-split="segmenter"]  SplitText with prepareText inserting U+200B at Intl.Segmenter word
+                                  boundaries, and wordDelimiter { delimiter: /\u200B/, replaceWith: '' }
+        [data-split="segmenter-glued"]  the same, with punctuation kept on the word before it
+      The samples are set by src/segmenter.js.
+    -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #fff;
+      }
+      .col {
+        width: 320px;
+        margin: 24px;
+        font-size: 20px;
+        line-height: 1.5;
+      }
+      .col p {
+        margin: 0 0 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="col" id="col"></div>
+    <script type="module" src="../src/segmenter.js"></script>
+  </body>
+</html>

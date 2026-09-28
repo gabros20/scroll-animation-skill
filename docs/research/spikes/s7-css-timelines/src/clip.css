@@ -1,0 +1,52 @@
+/* S7c. Ancestors between a view() subject and the page scroller.
+   Every .subject animates over its default view() range (cover 0%..100%). */
+html,
+body {
+  margin: 0;
+}
+.spacer {
+  height: 1200px;
+}
+.wrap {
+  padding: 50px 0;
+  background: #f4f4f4;
+}
+.w-hidden { overflow: hidden; }
+.w-xhidden { overflow-x: hidden; }
+.w-clip { overflow: clip; }
+.w-xclip { overflow-x: clip; }
+/* a fixed-height frame with a taller child: the image-parallax shape */
+.frame {
+  height: 300px;
+  background: #eee;
+}
+.frame-hidden { overflow: hidden; }
+.frame-clip { overflow: clip; }
+.subject {
+  width: 60px;
+  height: 200px;
+  background: #000;
+  /* static fallback: the finished state */
+  opacity: 1;
+  margin-left: 40px;
+}
+.frame .subject {
+  height: 500px;
+}
+@keyframes p {
+  from { opacity: 0; margin-left: 0px; }
+  to { opacity: 1; margin-left: 40px; }
+}
+@supports (animation-timeline: view()) {
+  .subject {
+    animation: p linear both;
+    animation-timeline: view();
+  }
+  /* the frame names its own view timeline; the child uses it by name */
+  .frame-named { view-timeline: --frame block; }
+  .frame-named .subject { animation-timeline: --frame; }
+}
+/* page-level variants */
+.body-xhidden body { overflow-x: hidden; }
+.htmlbody-xhidden,
+.htmlbody-xhidden body { overflow-x: hidden; }
