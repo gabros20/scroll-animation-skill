@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>scroll-effects fixture: under ScrollSmoother</title>
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/animation.css" />
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/scroll-effects.css" />
+    <link rel="stylesheet" href="./src/page.css" />
+    <style>
+      /* The control: scroll-effects.css's fade-in without its authority switch, to show what the switch prevents:
+         inside the smoothed content view() never progresses (S2). */
+      @supports (animation-timeline: view()) {
+        @media screen and (prefers-reduced-motion: no-preference) {
+          .control {
+            animation: fx-fade-in linear both;
+            animation-timeline: view();
+            animation-range: entry 0% entry 100%;
+          }
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Fixed UI, so outside the wrapper, as ScrollSmoother requires. -->
+    <div class="bar" data-scroll-fx="progress" data-probe="progress" aria-hidden="true"></div>
+    <div id="smooth-wrapper">
+      <div id="smooth-content">
+        <div class="spacer"></div>
+        <div class="row">
+          <div class="box" data-scroll-fx="parallax" data-probe="parallax" style="--fx-parallax: 100px"></div>
+          <div class="box" data-scroll-fx="fade-in" data-probe="fade-in"></div>
+          <div class="box" data-scroll-fx="exit-fade" data-probe="exit-fade"></div>
+          <div class="box" data-scroll-fx="scale-in" data-probe="scale-in" style="--fx-scale-from: 0.5"></div>
+          <div class="box control" data-probe="control"></div>
+        </div>
+        <div class="spacer"></div>
+        <section data-scroll-fx="sticky-stack" data-probe="stack">
+          <article class="card short" data-probe="s1">1</article>
+          <article class="card short" data-probe="s2">2</article>
+          <article class="card short" data-probe="s3">3</article>
+        </section>
+        <div class="spacer"></div>
+      </div>
+    </div>
+    <script type="module" src="./src/smoother.ts"></script>
+  </body>
+</html>

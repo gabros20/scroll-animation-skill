@@ -22,6 +22,7 @@
     "test:reveal": "node tests/reveal.mjs",
     "test:rail": "node tests/rail.mjs",
     "test:text": "node tests/text.mjs",
+    "test:scroll-effects": "node tests/scroll-effects.mjs",
     "test:smoke": "node tests/run-smoke.mjs",
     "test:audit": "node skills/scroll-animation/scripts/tools/audit-motion.mjs --selftest",
     "test:cli": "node tests/cli.mjs",

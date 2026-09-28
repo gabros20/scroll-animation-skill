@@ -452,6 +452,28 @@
       },
       "reference": "references/scenes.md"
     },
+    "scroll-effects": {
+      "summary": "Scroll-linked decoration in plain CSS, opted in with data-scroll-fx: parallax, fade-in, exit fade, scale-in, a reading-progress bar and a sticky stack on scroll/view timelines, plus a time-driven marquee; the static state on Firefox, under reduced motion, in print and under ScrollSmoother",
+      "clock": "scroll",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "css": {
+          "files": [
+            "css/scroll-effects.css"
+          ],
+          "requires": [
+            "base-css"
+          ],
+          "packages": []
+        }
+      },
+      "reference": "references/scroll-authority.md"
+    },
     "loop-video": {
       "summary": "An in-view background video loop with a WCAG 2.2.2 pause control, live reduced-motion and Save-Data gating, a rejected-play fallback and Activity-safe hide/show",
       "clock": "media",

@@ -1,0 +1,150 @@
+/* The scroll-effects fixture's pages, at tests/scroll-effects.mjs's 1000 x 600 viewport (a 600 px scrollport). Every
+   probe sits at a known document offset, so the test derives what each one must show from the spec's range maths. */
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+body {
+  background: #f4f1ea;
+  color: #1a1a1a;
+  font: 16px/1.4 system-ui, sans-serif;
+}
+
+.spacer {
+  height: 1500px;
+}
+.spacer.short {
+  height: 100px;
+}
+
+/* A row of 60 px subjects, 200 px tall (shorter than the viewport) or 900 px (taller). */
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  height: 200px;
+  padding-left: 20px;
+}
+.row.tall {
+  height: 900px;
+}
+.box {
+  flex: none;
+  width: 60px;
+  height: 200px;
+  background: #1a1a1a;
+}
+.row.tall .box {
+  height: 900px;
+}
+/* A translate of its own, which parallax adds to. */
+.box.own {
+  translate: 10px 20px;
+}
+.chip {
+  width: 30px;
+  height: 100px;
+  background: #b33;
+}
+
+/* The progress bar: fixed UI along the top edge. */
+.bar {
+  position: fixed;
+  top: 0;
+  inset-inline: 0;
+  z-index: 10;
+  height: 4px;
+  background: #b33;
+}
+.bar-late {
+  top: 8px;
+}
+
+/* The image-parallax shape: a 300 px frame and a 500 px child. */
+.frame {
+  width: 200px;
+  height: 300px;
+  margin-left: 20px;
+  background: #ddd;
+}
+.frame-clip {
+  overflow: clip;
+}
+.frame-hidden {
+  overflow: hidden;
+}
+.frame .fill {
+  height: 500px;
+  background: #1a1a1a;
+}
+
+/* A pinned scene's riding copy (scene.css gives the geometry): a 600 px act holding the copy, then a pacing act. */
+.scene [data-scene-pin] {
+  background: #c9c0ad;
+}
+.act {
+  box-sizing: border-box;
+  height: 600px;
+  padding: 200px 0 0 20px;
+}
+.copy {
+  width: 300px;
+  height: 200px;
+  background: #1a1a1a;
+}
+.scene [data-scene-spacer] {
+  height: 1200px;
+}
+
+/* Sticky stacks: cards as tall as the viewport under the header, and shorter ones. */
+.card {
+  box-sizing: border-box;
+  padding: 24px;
+  background: #d9d2c3;
+  border: 1px solid #1a1a1a;
+}
+.card:nth-child(even) {
+  background: #c9c0ad;
+}
+.card.full {
+  height: calc(100svh - var(--header-h, 0px));
+}
+.card.short {
+  height: 400px;
+}
+/* Stack A holds its last card for 200 px (scroll-effects.css §4's spacer); stack B lets it leave with the stack. */
+[data-probe='stack-a']::after {
+  content: '';
+  display: block;
+  height: 200px;
+}
+
+/* Marquees: 600 px wide, each copy 900 px (six 130 px items, 20 px apart, and the same 20 px at its end). */
+.marquee {
+  width: 600px;
+  margin: 0 0 40px 100px;
+  background: #ddd;
+}
+.copy-list {
+  display: flex;
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+  padding-inline-end: 20px;
+  list-style: none;
+}
+.copy-list li {
+  flex: none;
+  width: 130px;
+  height: 40px;
+  background: #1a1a1a;
+}
+.copy-list a {
+  display: block;
+  height: 100%;
+  color: #fff;
+}
+.toggle {
+  margin: 0 0 40px 100px;
+}
