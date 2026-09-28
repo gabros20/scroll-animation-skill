@@ -208,103 +208,6 @@
       },
       "reference": "references/scroll-authority.md"
     },
-    "v1-config": {
-      "summary": "v1 constants, eases and fluid helpers the v1 blocks import (replaced by config in v2)",
-      "clock": "none",
-      "tier": "primitive",
-      "profiles": [
-        "reading",
-        "expressive",
-        "immersive"
-      ],
-      "engines": {
-        "gsap": {
-          "files": [
-            "gsap/config.ts",
-            "gsap/eases.ts",
-            "gsap/fluid.ts"
-          ],
-          "requires": [],
-          "packages": [
-            "gsap"
-          ]
-        },
-        "motion": {
-          "files": [
-            "motion/lib/constants.ts",
-            "motion/lib/fluid.ts",
-            "motion/hooks/useFluidUnit.ts"
-          ],
-          "requires": [],
-          "packages": [
-            "motion"
-          ]
-        }
-      },
-      "reference": "references/preflight.md"
-    },
-    "gsap-css": {
-      "summary": "v1 GSAP resting states: hidden entrance variants, the load veil, the scrub scene's sticky geometry",
-      "clock": "none",
-      "tier": "primitive",
-      "profiles": [
-        "reading",
-        "expressive",
-        "immersive"
-      ],
-      "engines": {
-        "css": {
-          "files": [
-            "css/animation.gsap.css"
-          ],
-          "requires": [],
-          "packages": []
-        }
-      },
-      "reference": "references/entrances.md"
-    },
-    "stage": {
-      "summary": "The triggered entrance system: reveal groups, item variants and the page-load veil.",
-      "clock": "trigger",
-      "tier": "primitive",
-      "profiles": [
-        "reading",
-        "expressive",
-        "immersive"
-      ],
-      "engines": {
-        "gsap": {
-          "files": [
-            "gsap/stage.ts",
-            "gsap/veil.ts"
-          ],
-          "requires": [
-            "base-css",
-            "gsap-css",
-            "v1-config"
-          ],
-          "packages": [
-            "gsap"
-          ]
-        },
-        "motion": {
-          "files": [
-            "motion/components/Stage.tsx",
-            "motion/lib/transitions.ts",
-            "motion/lib/variants.ts",
-            "motion/lib/cx.ts"
-          ],
-          "requires": [
-            "base-css",
-            "v1-config"
-          ],
-          "packages": [
-            "motion"
-          ]
-        }
-      },
-      "reference": "references/entrances.md"
-    },
     "reveal": {
       "summary": "Triggered entrances (rise, fade, clip, scale-in) on the measured curves, at the trigger line or on mount: a CSS resting state under the pre-JS gate, failsafe-safe, live reduced motion, a load veil, Activity-safe",
       "clock": "trigger",
@@ -448,35 +351,6 @@
         }
       },
       "reference": "references/entrances.md"
-    },
-    "fade-on-exit": {
-      "summary": "Fades a group out as it scrolls above the viewport; pairs with a pinned scene's riding copy.",
-      "clock": "scroll",
-      "tier": "primitive",
-      "profiles": [
-        "reading",
-        "expressive",
-        "immersive"
-      ],
-      "engines": {
-        "gsap": {
-          "files": [
-            "gsap/fadeOnExit.ts"
-          ],
-          "requires": [],
-          "packages": []
-        },
-        "motion": {
-          "files": [
-            "motion/components/FadeOnExit.tsx"
-          ],
-          "requires": [],
-          "packages": [
-            "motion"
-          ]
-        }
-      },
-      "reference": "references/scenes.md"
     },
     "scroll-effects": {
       "summary": "Scroll-linked decoration in plain CSS, opted in with data-scroll-fx: parallax, fade-in, exit fade, scale-in, a reading-progress bar and a sticky stack on scroll/view timelines, plus a time-driven marquee; the static state on Firefox, under reduced motion, in print and under ScrollSmoother",
@@ -744,33 +618,51 @@
       "reference": "references/layered-visuals.md"
     },
     "scroll-well": {
-      "summary": "A continuous scroll attractor that pulls its parent to a centred rest.",
+      "summary": "A section that pulls the scroll to rest while it holds most of the view (centred, or its nearer edge when it is taller than the viewport): a step added to the reader's scroll each frame, released by scrolling away, paused for anchor jumps, clamped inside a pinned scene, lengths on the layout scale; native scrolling only, none under reduced motion",
       "clock": "scroll",
-      "tier": "primitive",
+      "tier": "recipe",
       "profiles": [
-        "reading",
         "expressive",
         "immersive"
       ],
       "engines": {
-        "gsap": {
+        "agnostic": {
           "files": [
-            "gsap/scrollPull.ts"
+            "scroll-well.ts"
           ],
           "requires": [
-            "v1-config"
+            "config",
+            "scroll-authority"
           ],
           "packages": []
         },
-        "motion": {
+        "gsap": {
           "files": [
-            "motion/components/PullToCentre.tsx",
-            "motion/lib/scrollPull.ts"
+            "gsap/scroll-well.ts",
+            "scroll-well.ts"
           ],
           "requires": [
-            "v1-config"
+            "config",
+            "gsap-setup",
+            "scroll-authority"
           ],
-          "packages": []
+          "packages": [
+            "gsap"
+          ]
+        },
+        "motion": {
+          "files": [
+            "motion/ScrollWell.tsx",
+            "scroll-well.ts"
+          ],
+          "requires": [
+            "config",
+            "scroll-authority"
+          ],
+          "packages": [
+            "motion",
+            "react"
+          ]
         }
       },
       "reference": "references/scenes.md"

@@ -543,10 +543,16 @@ const CHECKS = {
       await page.evaluate(() => window.__t.frames(3))
       const left2 = await page.evaluate(() => window.__t.leftovers())
       const clean = (l) =>
-        l.styled.length === 0 && l.state === null && l.pinAttr === '' && l.tabindex === null && l.pinSpacers === 0 && l.pinParent
+        l.styled.length === 0 &&
+        l.emptyStyle.length === 0 &&
+        l.state === null &&
+        l.pinAttr === '' &&
+        l.tabindex === null &&
+        l.pinSpacers === 0 &&
+        l.pinParent
       return [
         [
-          'destroy() leaves no inline styles, state or pin-spacer, and a second destroy() is a no-op',
+          'destroy() leaves no inline styles (not even an empty style attribute), state or pin-spacer, and a second destroy() is a no-op',
           clean(left) && clean(left2) && twice === 'ok',
           `${JSON.stringify(left)} · second destroy: ${twice} · after re-create + destroy: ${JSON.stringify(left2)}`
         ],

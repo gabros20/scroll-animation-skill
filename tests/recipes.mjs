@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // recipes.mjs — the layered DOM recipes in Chromium, WebKit and Firefox: assets/gsap/{parallax,colour-track,
-// marquee-velocity,cursor-media,draw-on-scroll,stepped-sections}.ts and motion/Parallax.tsx. A light smoke per recipe:
+// marquee-velocity,cursor-media,draw-on-scroll,stepped-sections,scroll-well}.ts, motion/Parallax.tsx,
+// motion/ScrollWell.tsx and the scroll well's engine-free core (assets/scroll-well.ts). A light smoke per recipe:
 // it mounts and answers the scroll or the pointer as its header says (checked in numbers), takes its reduced-motion
 // fallback, leaves nothing behind after destroy() (tests/fixtures/recipes/src/harness.ts spies on listeners and
 // observers, snapshots every attribute and counts triggers, Observers and tweens) and throws nothing. Builds
@@ -11,8 +12,9 @@
 //   node tests/recipes.mjs [--browsers chromium,webkit,firefox] [--pages parallax,…] [--only responds,reduced,…]
 //
 // Pages: parallax (GSAP; ?lenis runs it under Lenis), parallax-motion (React), colour-track, marquee, cursor-media,
-// draw, stepped. WebKit tabs to links only with Option held, as Safari does by default, so its keyboard checks press
-// Alt+Tab.
+// draw, stepped, scroll-well (GSAP; ?core runs the engine-free core, ?lenis runs it under Lenis) and
+// scroll-well-motion (React). WebKit tabs to links only with Option held, as Safari does by default, so its keyboard
+// checks press Alt+Tab.
 
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -25,7 +27,17 @@ const fixtureRoot = join(testsDir, 'fixtures', 'recipes')
 const outDir = join(testsDir, '.scratch', 'recipes-dist')
 
 const BROWSERS = { chromium, webkit, firefox }
-const PAGES = ['parallax', 'parallax-motion', 'colour-track', 'marquee', 'cursor-media', 'draw', 'stepped']
+const PAGES = [
+  'parallax',
+  'parallax-motion',
+  'colour-track',
+  'marquee',
+  'cursor-media',
+  'draw',
+  'stepped',
+  'scroll-well',
+  'scroll-well-motion',
+]
 const VIEWPORT = { width: 1280, height: 800 }
 /** A scrub (0.5 s of expo catch-up), a spring or a step settles well inside this. */
 const SETTLE_MS = 4000
@@ -235,6 +247,202 @@ async function parallaxLive(t) {
       before.ms !== null && off.translate === 0 && off.inline === '' && back.ms !== null && y1 === y0 && y2 === y0,
       `drift ${before.translate} → ${off.translate} ('${off.inline}') → ${back.translate} (want ${back.expected}) · scrollY ${y0} → ${y1} → ${y2}`,
     ],
+  ]
+}
+
+// ── scroll-well ──────────────────────────────────────────────────────────
+// At 1280x800: #fits (480 px) rests centred, its top at 160; #tall (1400 px) rests at its nearer edge; #clamped
+// (400 px) sits at the top of a [data-scene-root], so it rests at the scene's start (top 0), not centred (top 200).
+
+/** The box of `id` once it has stopped moving for 400 ms: the pull landed, or nothing pulls. */
+async function settledBox(page, id, timeout = SETTLE_MS) {
+  let last = await call(page, 'box', id)
+  const t0 = Date.now()
+  let still = 0
+  while (Date.now() - t0 < timeout) {
+    await wait(100)
+    const box = await call(page, 'box', id)
+    still = box.top === last.top ? still + 1 : 0
+    last = box
+    if (still >= 4) break
+  }
+  return last
+}
+
+/** A fresh visit: the page first shows only the spacer above `id` (no well engaged), then puts `id`'s edge at `at`. */
+async function visit(page, id, at, edge = 'top') {
+  await call(page, 'place', id, (await call(page, 'view')) + 200)
+  await wait(150)
+  await call(page, 'place', id, at, edge)
+}
+
+/** Resolves once the pull has moved #fits off 500, where visit() put it. */
+const pullStarted = (page) =>
+  until(async () => {
+    const box = await call(page, 'box', 'fits')
+    return { ...box, ok: box.top < 495 }
+  }, 2000)
+
+async function wellRest(t, { query = '' } = {}) {
+  const { page } = await t.open({ query })
+  const view = await call(page, 'view')
+  const of = query === '?core' ? ' (the engine-free core)' : ''
+  await visit(page, 'fits', 500)
+  const fits = await settledBox(page, 'fits')
+  await visit(page, 'tall', 350)
+  const down = await settledBox(page, 'tall')
+  await visit(page, 'tall', view - 350, 'bottom')
+  const up = await settledBox(page, 'tall')
+  await visit(page, 'tall', -300)
+  await wait(1000)
+  const band = await call(page, 'box', 'tall')
+  await visit(page, 'clamped', 300)
+  const clamped = await settledBox(page, 'clamped')
+  return [
+    [
+      `a section that fits the viewport is pulled to rest centred${of}`,
+      near(fits.top, (view - 480) / 2, 2),
+      `top ${fits.top} (want ${(view - 480) / 2})`,
+    ],
+    [
+      `a taller one reaches for the nearer edge: its top arriving downwards, its bottom arriving upwards${of}`,
+      near(down.top, 0, 2) && near(up.bottom, view, 2),
+      `top ${down.top} (want 0) · bottom ${up.bottom} (want ${view})`,
+    ],
+    [`read through the middle of a taller one, nothing pulls${of}`, near(band.top, -300, 0.5), `top ${band.top} after 1 s (placed at -300)`],
+    [
+      `inside a pinned scene it rests at the scene's start, not centred: the default clamp${of}`,
+      near(clamped.top, 0, 2),
+      `top ${clamped.top} (want 0; centred would be ${(view - 400) / 2})`,
+    ],
+  ]
+}
+
+async function wellRelease(t) {
+  const { page } = await t.open()
+  const centre = ((await call(page, 'view')) - 480) / 2
+  // Arrived, then 100 px away: a decision. Arriving spent the forgiveness, so the page stays where the reader left it.
+  await visit(page, 'fits', 500)
+  const rested = await settledBox(page, 'fits')
+  await call(page, 'place', 'fits', centre - 100)
+  await wait(1200)
+  const left = await call(page, 'box', 'fits')
+  // Mid-pull, 100 px past rest: an overshoot. Quiet close to rest before it ever arrived, it is forgiven once.
+  await visit(page, 'fits', 500)
+  const started = await pullStarted(page)
+  await call(page, 'place', 'fits', centre - 100)
+  const forgiven = await until(async () => {
+    const box = await call(page, 'box', 'fits')
+    return { ...box, ok: near(box.top, centre, 2) }
+  })
+  return [
+    [
+      'scrolling away from rest releases it: once it has arrived, the page stays where the reader left it',
+      near(rested.top, centre, 2) && near(left.top, centre - 100, 1),
+      `rested at ${rested.top} · moved to ${centre - 100} → ${left.top} after 1.2 s`,
+    ],
+    [
+      'an overshoot before it has arrived is forgiven once: after a quiet moment the pull comes back and lands',
+      started.ms !== null && forgiven.ms !== null,
+      `pull started (${started.top}) · overshot to ${centre - 100} → ${forgiven.top}${forgiven.ms !== null ? ` after ${forgiven.ms} ms` : ''}`,
+    ],
+  ]
+}
+
+async function wellAnchor(t) {
+  const { page } = await t.open()
+  const centre = ((await call(page, 'view')) - 480) / 2
+  await visit(page, 'fits', 500)
+  const rested = await settledBox(page, 'fits')
+  // A same-page anchor from inside a well at rest, on a page that scrolls smoothly: the jump passes all three wells.
+  await page.click('#to-end')
+  const y = await settledY(page, 8000)
+  const end = await call(page, 'box', 'end')
+  // A smooth scroll of the page's own, announced with suspendScrollWells().
+  await visit(page, 'fits', 500)
+  await settledBox(page, 'fits')
+  const from = await call(page, 'y')
+  await call(page, 'suspendedSmoothBy', 1000)
+  const to = await settledY(page, 6000)
+  return [
+    [
+      'an anchor click from a well at rest lands on its target: every well suspends itself for the smooth jump',
+      near(rested.top, centre, 2) && near(end.top, 0, 1),
+      `well at ${rested.top} · #end top ${end.top} at scrollY ${y}`,
+    ],
+    [
+      "after suspendScrollWells(), a smooth scroll of the page's own leaves a well at rest and lands",
+      near(to, from + 1000, 1),
+      `scrollY ${from} → ${to} (want ${from + 1000})`,
+    ],
+  ]
+}
+
+async function wellReduced(t) {
+  const reduced = await t.open({ reducedMotion: 'reduce' })
+  const centre = ((await call(reduced.page, 'view')) - 480) / 2
+  await visit(reduced.page, 'fits', 500)
+  await wait(1200)
+  const still = await call(reduced.page, 'box', 'fits')
+  await reduced.page.emulateMedia({ reducedMotion: 'no-preference' })
+  const pulled = await until(async () => {
+    const box = await call(reduced.page, 'box', 'fits')
+    return { ...box, ok: near(box.top, centre, 2) }
+  })
+  // Switched on mid-pull: the pull stops where it is.
+  const { page } = await t.open()
+  await visit(page, 'fits', 500)
+  await pullStarted(page)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  const stopped = await call(page, 'box', 'fits')
+  await wait(1000)
+  const after = await call(page, 'box', 'fits')
+  return [
+    ['reduced motion: nothing pulls, and the page stays where the reader put it', near(still.top, 500, 0.5), `top ${still.top} after 1.2 s (placed at 500)`],
+    [
+      'reduced motion switched off while engaged: the pull starts, live',
+      pulled.ms !== null,
+      `top ${pulled.top}${pulled.ms !== null ? ` after ${pulled.ms} ms` : ''} (want ${centre})`,
+    ],
+    [
+      'reduced motion switched on mid-pull: the pull stops where it is',
+      stopped.top > centre + 2 && near(after.top, stopped.top, 3),
+      `top ${stopped.top} at the switch → ${after.top} a second later`,
+    ],
+  ]
+}
+
+async function wellAuthority(t) {
+  const { page } = await t.open({ query: '?lenis' })
+  const warnings = []
+  page.on('console', (msg) => msg.type() === 'warning' && warnings.push(msg.text()))
+  await visit(page, 'fits', 500)
+  await wait(1200)
+  const box = await call(page, 'box', 'fits')
+  const said = warnings.filter((w) => w.includes('scroll well'))
+  return [
+    [
+      'under Lenis it pulls nothing, and warns once',
+      near(box.top, 500, 1) && said.length === 1,
+      `top ${box.top} after 1.2 s (placed at 500) · warnings: ${warnings.join(' | ') || 'none'}`,
+    ],
+  ]
+}
+
+async function wellDestroy(t) {
+  const { page } = await t.open()
+  // Mid-pull, as a route change during one would.
+  await visit(page, 'fits', 500)
+  await pullStarted(page)
+  const at = await page.evaluate(() => {
+    window.__t.destroy()
+    return Math.round(document.getElementById('fits').getBoundingClientRect().top * 10) / 10
+  })
+  await wait(800)
+  const after = await call(page, 'box', 'fits')
+  return [
+    ['destroy() mid-pull stops the pull, and the page stays where it was', near(after.top, at, 1) && at > 162, `top ${at} at destroy → ${after.top}`],
+    await destroyCheck(page),
   ]
 }
 
@@ -685,6 +893,24 @@ const CHECKS = {
         await destroyCheck(page),
       ]
     },
+  },
+
+  'scroll-well': {
+    rest: (t) => wellRest(t),
+    core: (t) => wellRest(t, { query: '?core' }),
+    release: wellRelease,
+    anchor: wellAnchor,
+    reduced: wellReduced,
+    authority: wellAuthority,
+    destroy: wellDestroy,
+  },
+
+  'scroll-well-motion': {
+    rest: (t) => wellRest(t),
+    release: wellRelease,
+    anchor: wellAnchor,
+    reduced: wellReduced,
+    destroy: wellDestroy,
   },
 }
 

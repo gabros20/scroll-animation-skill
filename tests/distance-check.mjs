@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // distance-check.mjs <url> — the scaled-travel check (scenes.md §12).
 // For each viewport: scroll past the end of #travel, then read how far
-// #travel-var (CSS multiplies --scene-p) and #travel-fn (GSAP fluidValue)
-// moved, and compare with 240 × the resolved --fluid. Also resizes in place
+// #travel-var (CSS multiplies --scene-p) and #travel-fn (GSAP scaledValue,
+// scale.ts on FLUID_DESIGN_SCALE) moved, and compare with 240 × the resolved
+// --fluid. Also resizes in place
 // (no reload) to prove the distance follows a resize, which is the whole
 // point of function values + invalidateOnRefresh and of the CSS pattern.
 import { chromium } from 'playwright'
@@ -68,15 +69,15 @@ for (const vp of steps) {
   )
 }
 const folded = await page.evaluate(() => document.getElementById('fold-canary').style.translate === 'none')
-console.log(`gsap folds CSS translate into its transform (documented behaviour): ${folded ? 'yes, as documented' : 'NO: update motion-architecture.md §7 and scenes.md §12'}`)
+console.log(`gsap folds CSS translate into its transform (documented behaviour): ${folded ? 'yes, as documented' : 'NO: update entrances.md §4 and scenes.md §12'}`)
 if (!folded) fail++
 
-// fluidPx's `el` param (scenes.md §12): main.ts read #fluid-el-scope's
+// scaledPx's `el` param (scenes.md §12): main.ts read #fluid-el-scope's
 // literal --_fluid-m-ui (500px/1000) through `el`, which must win over
 // whatever the page's own `ui` unit resolves to at this viewport.
-const scoped = await page.evaluate(() => window.__fluidPxScoped)
+const scoped = await page.evaluate(() => window.__scaledPxScoped)
 const scopedPass = Math.abs(scoped - 24) <= TOL
-console.log(`fluidPx(48, 'ui', el) reads the element's own mirror: ${scoped} ${scopedPass ? 'PASS' : 'FAIL (expected 24)'}`)
+console.log(`scaledPx(48, 'ui', el) reads the element's own mirror: ${scoped} ${scopedPass ? 'PASS' : 'FAIL (expected 24)'}`)
 if (!scopedPass) fail++
 
 await browser.close()

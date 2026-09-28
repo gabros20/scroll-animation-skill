@@ -42,7 +42,7 @@ try {
   try {
     json = JSON.parse(r.out)
   } catch {}
-  expect(r.code === 0 && !!json?.stage?.engines?.gsap && !!json?.stage?.engines?.motion, 'list --json is valid JSON with per-engine files', r.out)
+  expect(r.code === 0 && !!json?.reveal?.engines?.gsap && !!json?.reveal?.engines?.motion, 'list --json is valid JSON with per-engine files', r.out)
 
   r = run(root, 'list', '--engine', 'css')
   expect(r.code === 0 && r.out.includes(`${countWhere((b) => b.engines.css)} block(s)`) && r.out.includes('base-css') && !r.out.includes('gsap-setup'), 'list --engine keeps only blocks offering that engine', r.out)
@@ -57,9 +57,8 @@ try {
   expect(r.code === 0 && /^\d+\.\d+\.\d+$/.test(r.out.trim()), '--version prints a bare semver', r.out)
 
   // ── registry.mjs: requires across engines (resolveEngineFor) ─────────
-  // v1's real blocks never need this yet (every requires edge today matches engines on both
-  // sides), so these are synthetic fixture blocks layered onto a clone of the real, shipped
-  // registry — reusing real, existing asset/reference files (so validateRegistry's existence
+  // Synthetic fixture blocks layered onto a clone of the real, shipped registry, so each edge case
+  // stands alone — reusing real, existing asset/reference files (so validateRegistry's existence
   // checks stay honest) rather than writing new ones. This exercises exactly what `add` and
   // `generate --check` call (resolveTransitive / validateRegistry) without touching the shared
   // assets/registry.json on disk, which other agents are reading and writing concurrently.
@@ -69,8 +68,8 @@ try {
     clock: 'none',
     tier: 'primitive',
     profiles: ['reading', 'expressive', 'immersive'],
-    engines: Object.fromEntries(engines.map((e) => [e, { files: ['gsap/config.ts'], requires: requires ?? [], packages: [] }])),
-    reference: 'references/attribute-contract.md'
+    engines: Object.fromEntries(engines.map((e) => [e, { files: ['config.ts'], requires: requires ?? [], packages: [] }])),
+    reference: 'references/scenes.md'
   })
 
   // gsap block requiring an agnostic-only block: resolveTransitive copies both.
@@ -117,7 +116,7 @@ try {
   const cycleProblems = validateRegistry(fxCycle, { pkgVersion: fxCycle.version })
   expect(cycleProblems.some((p) => /requires cycle/.test(p) && p.includes('fx-cycle-a') && p.includes('fx-cycle-b')), 'generate --check (validateRegistry) reports the same cycle', JSON.stringify(cycleProblems))
 
-  // the shipped registry itself has no such edges yet (v1), so it stays entirely clean.
+  // the shipped registry itself stays entirely clean.
   expect(validateRegistry(realRegistry, { pkgVersion: realRegistry.version }).length === 0, 'the real, shipped registry.json is unaffected by any of the above', JSON.stringify(validateRegistry(realRegistry, { pkgVersion: realRegistry.version })))
 
   // ── add: greenfield Motion project ──────────────────────────────────
@@ -125,25 +124,26 @@ try {
   mkdirSync(m, { recursive: true })
   writeFileSync(join(m, 'package.json'), JSON.stringify({ dependencies: { motion: '^12.0.0', react: '^19.0.0' } }))
 
-  r = run(m, 'add', 'stage')
+  r = run(m, 'add', 'reveal')
   expect(r.code === 0 && !/Install: .*\bmotion\b/.test(r.out), 'add auto-picks the engine matching an installed dependency and skips packages already installed', r.out)
-  const stageFiles = resolveTransitive(REG, ['stage'], 'motion').flatMap((entry) => entry.files)
-  expect(stageFiles.includes('motion/components/Stage.tsx') && stageFiles.includes('css/animation.css'), 'stage (motion) resolves its own files plus its requires across engines')
-  for (const f of stageFiles) expect(existsSync(join(m, 'src/animation', f)), `add copied ${f} (stage + its requires)`)
+  const revealFiles = resolveTransitive(REG, ['reveal'], 'motion').flatMap((entry) => entry.files)
+  expect(revealFiles.includes('motion/Reveal.tsx') && revealFiles.includes('css/animation.css') && revealFiles.includes('config.ts'), 'reveal (motion) resolves its own files plus its requires across engines')
+  for (const f of revealFiles) expect(existsSync(join(m, 'src/animation', f)), `add copied ${f} (reveal + its requires)`)
+  expect(!existsSync(join(m, 'src/animation/gsap/reveal.ts')) && !existsSync(join(m, 'src/animation/reveal.ts')), 'the Motion project gets the Motion reveal only, not the GSAP or engine-free one')
   expect(existsSync(join(m, 'src/animation/.scroll-animation.lock.json')), 'add wrote the lock file')
   const lock1 = JSON.parse(readFileSync(join(m, 'src/animation/.scroll-animation.lock.json'), 'utf8'))
-  expect(lock1.dir === 'src/animation' && lock1.engines.includes('motion') && Object.keys(lock1.files).length === stageFiles.length, 'the lock records dir, engine and every file hash', JSON.stringify(lock1))
+  expect(lock1.dir === 'src/animation' && lock1.engines.includes('motion') && Object.keys(lock1.files).length === revealFiles.length, 'the lock records dir, engine and every file hash', JSON.stringify(lock1))
 
-  r = run(m, 'add', 'stage')
+  r = run(m, 'add', 'reveal')
   expect(r.code === 0 && r.out.includes('nothing to write') && r.out.includes('up to date'), 'a second, identical add is a no-op', r.out)
 
-  appendFileSync(join(m, 'src/animation/motion/lib/cx.ts'), '// mine\n')
-  r = run(m, 'add', 'stage')
-  expect(r.code === 1 && r.out.includes('Refusing to overwrite') && r.out.includes('cx.ts'), 'add refuses to overwrite a hand-edited file, and nothing else runs', r.out)
-  expect(readFileSync(join(m, 'src/animation/motion/lib/cx.ts'), 'utf8').includes('// mine'), 'the hand edit survives the refusal (nothing was written)')
+  appendFileSync(join(m, 'src/animation/motion/Reveal.tsx'), '// mine\n')
+  r = run(m, 'add', 'reveal')
+  expect(r.code === 1 && r.out.includes('Refusing to overwrite') && r.out.includes('Reveal.tsx'), 'add refuses to overwrite a hand-edited file, and nothing else runs', r.out)
+  expect(readFileSync(join(m, 'src/animation/motion/Reveal.tsx'), 'utf8').includes('// mine'), 'the hand edit survives the refusal (nothing was written)')
 
-  r = run(m, 'add', 'stage', '--force')
-  expect(r.code === 0 && !readFileSync(join(m, 'src/animation/motion/lib/cx.ts'), 'utf8').includes('// mine'), '--force overwrites the hand edit', r.out)
+  r = run(m, 'add', 'reveal', '--force')
+  expect(r.code === 0 && !readFileSync(join(m, 'src/animation/motion/Reveal.tsx'), 'utf8').includes('// mine'), '--force overwrites the hand edit', r.out)
 
   r = run(m, 'add', 'scrub-video', '--dry-run')
   expect(r.code === 0 && r.out.includes('dry run') && /write\s+motion\/ScrubVideo\.tsx/.test(r.out), '--dry-run reports what it would write', r.out)
@@ -156,23 +156,24 @@ try {
 
   r = run(g, 'add', 'scroll-well', '--dir', 'lib/motion')
   expect(r.code === 0, 'add --dir writes to a custom directory', r.out)
-  for (const f of ['gsap/scrollPull.ts', 'gsap/config.ts', 'gsap/eases.ts']) expect(existsSync(join(g, 'lib/motion', f)), `custom --dir got ${f}`)
+  for (const f of ['gsap/scroll-well.ts', 'scroll-well.ts', 'gsap/setup.ts', 'smooth/authority.ts', 'scale.ts']) expect(existsSync(join(g, 'lib/motion', f)), `custom --dir got ${f}`)
+  expect(!existsSync(join(g, 'lib/motion/motion/ScrollWell.tsx')), 'a GSAP project gets the GSAP scroll well, not the Motion one', r.out)
 
   r = run(g, 'add', 'header-theme')
   expect(r.code === 0 && existsSync(join(g, 'lib/motion/header-theme.ts')), "a later add with no --dir reuses the lock's recorded directory", r.out)
   expect(!existsSync(join(g, 'lib/motion/motion/useHeaderTheme.ts')), 'a GSAP project gets the agnostic header-theme core, not the Motion hook', r.out)
   expect(!existsSync(join(g, 'src/animation')), 'no default src/animation was created once a lock directory existed')
   const lock2 = JSON.parse(readFileSync(join(g, 'lib/motion/.scroll-animation.lock.json'), 'utf8'))
-  expect(Object.keys(lock2.files).some((f) => f.includes('header-theme')) && Object.keys(lock2.files).some((f) => f.includes('scrollPull')), 'the lock accumulates files across separate add calls', JSON.stringify(lock2))
+  expect(Object.keys(lock2.files).some((f) => f.includes('header-theme')) && Object.keys(lock2.files).some((f) => f.includes('scroll-well')), 'the lock accumulates files across separate add calls', JSON.stringify(lock2))
 
   // ── add: engine disambiguation ───────────────────────────────────────
   const amb = join(root, 'ambiguous')
   mkdirSync(amb, { recursive: true })
   writeFileSync(join(amb, 'package.json'), JSON.stringify({}))
-  r = run(amb, 'add', 'stage')
+  r = run(amb, 'add', 'pinned-scene')
   expect(r.code === 2 && r.out.includes('--engine'), 'add fails clearly (usage) when no installed dependency picks an engine', r.out)
-  r = run(amb, 'add', 'stage', '--engine', 'gsap')
-  expect(r.code === 0 && existsSync(join(amb, 'src/animation/gsap/stage.ts')), '--engine overrides when auto-detection is ambiguous', r.out)
+  r = run(amb, 'add', 'pinned-scene', '--engine', 'gsap')
+  expect(r.code === 0 && existsSync(join(amb, 'src/animation/gsap/pinned-scene.ts')), '--engine overrides when auto-detection is ambiguous', r.out)
 
   r = run(amb, 'add', 'reveal', '--dry-run')
   expect(r.code === 0 && /write\s+reveal\.ts/.test(r.out) && !r.out.includes('gsap/reveal.ts'), 'with no engine installed, a block with an agnostic engine takes it', r.out)
@@ -180,7 +181,7 @@ try {
   const both = join(root, 'both-engines')
   mkdirSync(both, { recursive: true })
   writeFileSync(join(both, 'package.json'), JSON.stringify({ dependencies: { gsap: '^3', motion: '^12' } }))
-  r = run(both, 'add', 'stage')
+  r = run(both, 'add', 'pinned-scene')
   expect(r.code === 2 && r.out.includes('more than one'), 'add fails clearly when more than one installed dependency matches', r.out)
 
   // single-engine blocks ignore a non-matching --engine instead of failing

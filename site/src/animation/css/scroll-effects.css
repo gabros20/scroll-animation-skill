@@ -77,7 +77,7 @@
  *              centred in the viewport, and it adds to the element's own translate (animation-composition: add).
  *   fade-in    opacity from --fx-fade-from over entry 0% → 100%. The fade completes once the element is fully in
  *              view, or once its top reaches the top if it's taller than the viewport.
- *   exit-fade  opacity to --fx-fade-from over exit-crossing 10% → 35% (v1 FadeOnExit's defaults). The range measures
+ *   exit-fade  opacity to --fx-fade-from over exit-crossing 10% → 35% (v1's exit fade defaults). The range measures
  *              the element against its own height, so the fade starts once 10% of the element has passed above the
  *              top edge and finishes at 35%, while the rest of the element is still on screen.
  *   scale-in   scale from --fx-scale-from over entry 0% → 100%.

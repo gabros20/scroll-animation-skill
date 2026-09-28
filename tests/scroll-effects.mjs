@@ -337,7 +337,7 @@ const CHECKS = {
         joined('parallax: translate runs from -d to +d over cover 0–100%, 0 at the midpoint (100px, and the 60px default)', [s('parallax'), s('parallax-default')]),
         joined("parallax adds to the element's own translate (10px 20px), and a negative distance drifts the other way", [s('parallax-own')]),
         joined('fade-in: opacity runs from --fx-fade-from to 1 over entry 0–100% (0), and over a tuned range (0.25, cover 0–50%)', [s('fade-in'), s('fade-in-tuned')]),
-        joined("exit-fade: opacity runs from 1 to 0 over exit-crossing 10–35% (v1 FadeOnExit's defaults) and stays 0 past it", [s('exit-fade')]),
+        joined("exit-fade: opacity runs from 1 to 0 over exit-crossing 10–35% (v1's exit fade defaults) and stays 0 past it", [s('exit-fade')]),
         joined('scale-in: scale runs from --fx-scale-from to 1 over entry 0–100% (0.5, and the 0.9 default)', [s('scale-in'), s('scale-in-default')]),
         joined('all four on one element: each follows its own range, and exit-fade takes over from fade-in', [s('composed')]),
         joined('a subject taller than the viewport (900 px): fade-in + exit-fade, parallax + scale-in', [s('tall-fade'), s('tall-parallax-scale')]),

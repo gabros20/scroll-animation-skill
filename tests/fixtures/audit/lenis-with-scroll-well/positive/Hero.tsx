@@ -1,11 +1,11 @@
 import Lenis from 'lenis'
-import { PullToCentre } from '../components/PullToCentre'
+import { ScrollWell } from '../animation/motion/ScrollWell'
 
 export function Hero() {
   const lenis = new Lenis()
   return (
     <section>
-      <PullToCentre />
+      <ScrollWell />
     </section>
   )
 }

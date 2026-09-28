@@ -43,12 +43,14 @@ Options:
   --viewports <list>  comma-separated WxH pairs (default: 1440x900,390x844).
                        A width <= 480 is emulated as touch/mobile.
   --browser <name>    the Playwright engine for --reveal/--scenes (default chromium)
-  --reveal            step-scroll (scroll-behavior forced to auto) and check
-                       every [data-reveal-item] (v1 [data-stage-item]) ends visible
-  --scenes            for each scene ([data-scene-root], v1 [data-scrub-stage]), scroll to progress
-                       0/.25/.5/.75/1, record data-scene-state (v1 data-motion-state) + a
-                       screenshot, and check the states run head > scrub > tail in order,
-                       never step back, and have left head by progress 1
+  --reveal            step-scroll (scroll-behavior forced to auto) and check every
+                       [data-reveal-item] reaches data-reveal-state="shown" and ends opaque;
+                       an item of a data-reveal-replay group has to be shown once (it
+                       resets out of view)
+  --scenes            for each scene ([data-scene-root]), scroll to progress
+                       0/.25/.5/.75/1, record its data-scene-state + a screenshot, and
+                       check the states run head > scrub > tail in order, never step
+                       back, and have left head by progress 1
   --anchors           delegate to anchor-check.mjs (a REAL smooth scroll
                        through the page's own scroll-behavior/scroll well)
   -h, --help          print this message and exit
@@ -152,23 +154,41 @@ async function resolvePlaywrightModule() {
 
 // ── --reveal ────────────────────────────────────────────────────────────
 
+// How long the last entrances get to land once the page is stepped through: MOTION.entrance (1.3 s) after its place
+// in a batch's stagger (MOTION.lineStagger, 0.067 s per item). Every engine marks an item shown when its reveal lands,
+// so a passing page ends the wait as soon as its last item is shown.
+const REVEAL_SETTLE_MS = 6000
+
 // Step-scroll to the bottom with rAF + 200ms per step -- a fast scroll
-// outruns IntersectionObserver and gives false blanks. Then report every
-// [data-reveal-item] (v1 [data-stage-item]) still under opacity 0.99. Moved wholesale from the
-// fluid-design skill's `fluid verify` (scripts/tools/verify.mjs) (its --reveal), which never scanned
-// scene state -- that half is `checkScenes` below.
+// outruns IntersectionObserver and gives false blanks. Every
+// [data-reveal-item] must then reach data-reveal-state="shown" (every engine
+// writes it when a reveal lands: reveal.ts, gsap/reveal.ts, motion/Reveal.tsx)
+// and end opaque. Opacity alone can't tell: a `clip` item rests hidden
+// behind its clip-path at full opacity. An item of a data-reveal-replay group
+// resets once it is out of view, so it only has to have been shown once.
+// Moved from the fluid-design skill's `fluid verify`
+// (scripts/tools/verify.mjs), which never scanned scene state -- that half is
+// `checkScenes` below.
 async function checkReveal(page) {
   await page.evaluate(async () => {
+    // Every item seen shown on the way down (a replay group hides its items again once they are out of view).
+    const seen = new Set()
+    const note = (el) => el.getAttribute('data-reveal-state') === 'shown' && seen.add(el)
+    document.querySelectorAll('[data-reveal-item]').forEach(note)
+    const observer = new MutationObserver((records) => records.forEach((r) => note(r.target)))
+    observer.observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['data-reveal-state'] })
+    window.__verifyReveal = { seen, observer }
+
     // Force instant scrolling for the duration of this stepping. A page
-    // that sets `html { scroll-behavior: smooth }` (animation.css's
-    // default) queues a smooth animation on every `scrollTo` below; the
-    // NEXT step's `scrollTo` then cancels that animation before it arrives
-    // -- same mechanism as scrollPull's `instant` writes cancelling an
-    // anchor jump (references/scenes.md §8). The harness never
-    // actually reaches the lower steps, so everything past wherever it
-    // stalled reads as a reveal failure that has nothing to do with
-    // IntersectionObserver. Measured: this made --reveal fail in every cell
-    // (30/54 items hidden) on a page with smooth scrolling on.
+    // that sets `html { scroll-behavior: smooth }` queues a smooth animation
+    // on every `scrollTo` below; the NEXT step's `scrollTo` then cancels that
+    // animation before it arrives -- the same mechanism as a scroll well's
+    // `instant` writes cancelling an anchor jump (references/scenes.md, the
+    // scroll well). The harness never actually reaches the lower steps, so
+    // everything past wherever it stalled reads as a reveal failure that has
+    // nothing to do with IntersectionObserver. Measured: this made --reveal
+    // fail in every cell (30/54 items hidden) on a page with smooth
+    // scrolling on.
     const root = document.documentElement
     const previousScrollBehavior = root.style.scrollBehavior
     root.style.scrollBehavior = 'auto'
@@ -183,33 +203,51 @@ async function checkReveal(page) {
         await step()
       }
       window.scrollTo(0, max)
-      // Final settle: the entrance transition runs up to 1.3s
-      // (references/attribute-contract.md §4), so a stage item triggered by
-      // the last step may still be mid-transition at the 200ms mark. Give
-      // it real room before reading opacity, or a perfectly working reveal
-      // reads as a false failure.
-      await new Promise((resolve) => setTimeout(resolve, 1500))
     } finally {
       root.style.scrollBehavior = previousScrollBehavior
     }
   })
 
-  return page.evaluate(() => {
-    const items = [...document.querySelectorAll('[data-reveal-item], [data-stage-item]')]
-    const hidden = []
-    items.forEach((el, i) => {
-      const op = Number(getComputedStyle(el).opacity)
-      if (op < 0.99) {
+  const read = () =>
+    page.evaluate(() => {
+      const { seen } = window.__verifyReveal
+      const items = [...document.querySelectorAll('[data-reveal-item]')]
+      const hidden = []
+      items.forEach((el, i) => {
+        const group = el.closest('[data-reveal]')
+        const replay = !!group?.hasAttribute('data-reveal-replay')
+        const state = el.getAttribute('data-reveal-state')
+        const opacity = Number(getComputedStyle(el).opacity)
+        const reason = replay
+          ? (seen.has(el) ? null : 'never shown (replay group)')
+          : state !== 'shown'
+            ? (seen.has(el) ? 'shown, then reset' : 'never shown')
+            : opacity < 0.99
+              ? `shown, opacity ${opacity}`
+              : null
+        if (!reason) return
         hidden.push({
           index: i,
-          opacity: op,
+          opacity,
+          state,
+          reason,
+          group: group ? group.getAttribute('data-reveal') || 'view' : null,
           selector: el.tagName.toLowerCase() + (el.id ? `#${el.id}` : '')
         })
-      }
+      })
+      // No items is a SKIP: a page with nothing to reveal must never read as a passed reveal check.
+      return { verdict: items.length === 0 ? 'skip' : hidden.length === 0 ? 'pass' : 'fail', total: items.length, hidden }
     })
-    // No items is a SKIP: a page with nothing to reveal must never read as a passed reveal check.
-    return { verdict: items.length === 0 ? 'skip' : hidden.length === 0 ? 'pass' : 'fail', total: items.length, hidden }
-  })
+
+  // The last reveals land within the settle time; stop waiting once they have.
+  const started = Date.now()
+  let result = await read()
+  while (result.verdict === 'fail' && Date.now() - started < REVEAL_SETTLE_MS) {
+    await page.waitForTimeout(250)
+    result = await read()
+  }
+  await page.evaluate(() => window.__verifyReveal.observer.disconnect())
+  return result
 }
 
 // ── --scenes ────────────────────────────────────────────────────────────
@@ -220,11 +258,11 @@ async function checkReveal(page) {
 // of what's above it. Maths from references/verification.md §1 / §2 (the
 // three real bugs found this way).
 async function checkScenes(page, opts) {
-  const stages = await page.evaluate(() => document.querySelectorAll('[data-scene-root], [data-scrub-stage]').length)
+  const stages = await page.evaluate(() => document.querySelectorAll('[data-scene-root]').length)
   const scenes = []
   for (let i = 0; i < stages; i++) {
     const base = await page.evaluate((index) => {
-      const s = document.querySelectorAll('[data-scene-root], [data-scrub-stage]')[index]
+      const s = document.querySelectorAll('[data-scene-root]')[index]
       return { top: s.getBoundingClientRect().top + scrollY, range: s.offsetHeight - innerHeight }
     }, i)
 
@@ -237,13 +275,10 @@ async function checkScenes(page, opts) {
       // toward its target would otherwise be read mid-flight.
       await page.waitForTimeout(2500)
 
+      // The scene's mode (data-scene-state on its root), reported as `motionState`.
       const state = await page.evaluate((index) => {
-        const s = document.querySelectorAll('[data-scene-root], [data-scrub-stage]')[index]
-        const stateEl = s.hasAttribute('data-scene-state') ? s : (s.querySelector('[data-motion-state]') ?? s)
-        return {
-          motionState: stateEl.getAttribute('data-scene-state') ?? stateEl.getAttribute('data-motion-state'),
-          scrollY: window.scrollY
-        }
+        const s = document.querySelectorAll('[data-scene-root]')[index]
+        return { motionState: s.getAttribute('data-scene-state'), scrollY: window.scrollY }
       }, i)
 
       let screenshot
@@ -324,7 +359,9 @@ function printSummary(viewports) {
     if (viewportVerdict(v) !== 'fail') continue
     console.log(`FAIL at ${at}:`)
     if (v.checks.reveal?.verdict === 'fail') {
-      for (const h of v.checks.reveal.hidden) console.log(`  reveal[${h.index}] ${h.selector}: opacity ${h.opacity}`)
+      for (const h of v.checks.reveal.hidden) {
+        console.log(`  reveal[${h.index}] ${h.selector} (${h.group ? `data-reveal="${h.group}"` : 'no group'}): ${h.reason}`)
+      }
     }
     console.log('')
   }

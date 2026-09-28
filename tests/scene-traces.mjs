@@ -1,21 +1,22 @@
 #!/usr/bin/env node
-// scene-traces.mjs — the scene-trace parity baseline for the scrubbed video
-// scene, in both engines. It records what a reader can observe (the mode the
+// scene-traces.mjs — the scene-trace parity check for the scrubbed video
+// scene, in both engines. It traces what a reader can observe (the mode the
 // scene reports, where the playhead sits, whether the decoder runs) along a
-// fixed set of scroll paths, so a refactor of the scene can be proven to
-// preserve it.
+// fixed set of scroll paths and compares it with the v1 record, so a change
+// to the scene can be proven to preserve it.
 //
-//   node tests/scene-traces.mjs --record   write tests/baselines/v1-scene-traces.json
-//   node tests/scene-traces.mjs --check    trace afresh and compare with that file;
+//   node tests/scene-traces.mjs --check    trace afresh and compare with
+//                                          tests/baselines/v1-scene-traces.json;
 //                                          exit 1 on any unexplained difference
 //
 // Options: --engines gsap,react   --browsers chromium[,webkit]
-//          --out <file>           also write the fresh traces (with --check)
-//          --force                let --record replace an existing baseline
+//          --out <file>           also write the fresh traces
 //
-// The baseline holds Chromium and WebKit traces (recorded with --browsers
-// chromium,webkit on macOS). `npm run test:traces` checks Chromium only, the
-// one browser CI installs; add --browsers chromium,webkit to check both.
+// The baseline was recorded from v1's code, which is gone, so it can't be
+// recorded again: a reviewed change of behaviour goes in EXPECTED_DIFFS. It
+// holds Chromium and WebKit traces (recorded with --browsers chromium,webkit
+// on macOS). `npm run test:traces` checks Chromium only, the one browser CI
+// installs; add --browsers chromium,webkit to check both.
 //
 // Fixtures: the GSAP smoke page (tests/smoke-gsap) and its React mirror
 // (tests/fixtures/scenes/react), both built with Vite and served with
@@ -32,12 +33,12 @@
 //             run only), record the settled state
 //
 // Every scroll targets a PROGRESS of the range wrapper, never a raw pixel
-// offset, and is instant: animation.css sets `scroll-behavior: smooth`, which
-// would otherwise turn the one-call jump into a many-frame glide.
+// offset, and is instant, so a page's `scroll-behavior: smooth` can't turn
+// the one-call jump into a many-frame glide.
 //
-// The scene is found by the v1 attribute or its planned v2 rename, so the same
-// baseline checks the refactored scene: [data-scrub-stage] | [data-scene-root]
-// for the range, [data-motion-state] | [data-scene-state] for the mode.
+// The scene is the page's [data-scene-root]; its mode is the root's
+// data-scene-state (v1 wrote the same modes under its own names, which is what
+// the baseline holds).
 
 import { build, preview } from 'vite'
 import { spawnSync } from 'node:child_process'
@@ -105,15 +106,14 @@ function parseArgs(argv) {
   const out = { engines: Object.keys(FIXTURES), browsers: ['chromium'] }
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
-    if (a === '--record') out.mode = 'record'
-    else if (a === '--check') out.mode = 'check'
-    else if (a === '--force') out.force = true
+    if (a === '--check') out.check = true
+    else if (a === '--record') throw new Error('--record is gone: the baseline is the v1 record, and v1 is gone too; a reviewed change of behaviour goes in EXPECTED_DIFFS')
     else if (a === '--engines') out.engines = argv[++i].split(',')
     else if (a === '--browsers') out.browsers = argv[++i].split(',')
     else if (a === '--out') out.out = argv[++i]
     else throw new Error(`unknown argument: ${a}`)
   }
-  if (!out.mode) throw new Error('pass --record or --check')
+  if (!out.check) throw new Error('pass --check')
   for (const e of out.engines) if (!FIXTURES[e]) throw new Error(`unknown engine: ${e}`)
   for (const b of out.browsers) if (!['chromium', 'webkit'].includes(b)) throw new Error(`unknown browser: ${b}`)
   return out
@@ -148,7 +148,7 @@ function ensureClip() {
 // ── build + serve ──────────────────────────────────────────────────────
 
 function onwarn(warning, warn) {
-  // ScrubStage.tsx and Motion open with 'use client', meaningless outside a
+  // ScrubVideo.tsx and Motion open with 'use client', meaningless outside a
   // server-components bundler; Rollup also fails to map that warning through
   // esbuild's sourcemap and says so.
   if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return
@@ -197,25 +197,12 @@ async function serve(engine, publicDir) {
 
 // Installed before any page script runs, on every navigation (reload too).
 function installSceneTrace({ fps }) {
-  const STATE_ATTRS = ['data-scene-state', 'data-motion-state']
-  const STATE_SEL = STATE_ATTRS.map((a) => `[${a}]`).join(', ')
-  const ROOT_SEL = '[data-scene-root], [data-scrub-stage]'
   const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()))
   const round = (v, d) => Math.round(v * 10 ** d) / 10 ** d
 
   const t = {
-    root: () => document.querySelector(ROOT_SEL),
-    stateEl() {
-      const root = t.root()
-      if (!root) return null
-      return root.matches(STATE_SEL) ? root : root.querySelector(STATE_SEL)
-    },
-    mode() {
-      const el = t.stateEl()
-      if (!el) return null
-      for (const a of STATE_ATTRS) if (el.hasAttribute(a)) return el.getAttribute(a)
-      return null
-    },
+    root: () => document.querySelector('[data-scene-root]'),
+    mode: () => t.root()?.getAttribute('data-scene-state') ?? null,
     video: () => t.root()?.querySelector('video') ?? null,
     ready() {
       const v = t.video()
@@ -272,7 +259,7 @@ function installSceneTrace({ fps }) {
       let n = 0
       const changes = []
       const observer = new MutationObserver(() => changes.push([n, t.mode()]))
-      observer.observe(t.stateEl(), { attributes: true, attributeFilter: STATE_ATTRS })
+      observer.observe(t.root(), { attributes: true, attributeFilter: ['data-scene-state'] })
       const out = { before: t.mode() }
       t.scrollToProgress(to)
       for (let i = 1; i <= Math.max(...reads) + 1; i++) {
@@ -532,16 +519,12 @@ async function main() {
     args = parseArgs(process.argv.slice(2))
   } catch (err) {
     console.error(`[scene-traces] ${err.message}`)
-    console.error('usage: node tests/scene-traces.mjs --record|--check [--engines gsap,react] [--browsers chromium,webkit] [--out file] [--force]')
+    console.error('usage: node tests/scene-traces.mjs --check [--engines gsap,react] [--browsers chromium,webkit] [--out file]')
     process.exit(2)
   }
 
-  if (args.mode === 'record' && existsSync(BASELINE) && !args.force) {
-    console.error(`[scene-traces] ${relative(repoRoot, BASELINE)} exists. It is the v1 record; a change in behaviour belongs in EXPECTED_DIFFS, not a re-record. Pass --force to replace it anyway.`)
-    process.exit(2)
-  }
-  if (args.mode === 'check' && !existsSync(BASELINE)) {
-    console.error(`[scene-traces] no baseline at ${relative(repoRoot, BASELINE)}; record one with --record`)
+  if (!existsSync(BASELINE)) {
+    console.error(`[scene-traces] no baseline at ${relative(repoRoot, BASELINE)}: it is the v1 record, kept in the repository`)
     process.exit(2)
   }
 
@@ -549,13 +532,6 @@ async function main() {
   const result = await traceAll(args)
   summarise(result)
   console.log(`\n[scene-traces] traced in ${((Date.now() - started) / 1000).toFixed(0)}s`)
-
-  if (args.mode === 'record') {
-    mkdirSync(dirname(BASELINE), { recursive: true })
-    writeFileSync(BASELINE, `${format(result)}\n`)
-    console.log(`[scene-traces] wrote ${relative(repoRoot, BASELINE)}`)
-    return 0
-  }
 
   if (args.out) writeFileSync(args.out, `${format(result)}\n`)
   const baseline = JSON.parse(readFileSync(BASELINE, 'utf8'))

@@ -4,14 +4,17 @@
 <meta charset="utf-8">
 <title>scroll-animation smoke (gsap)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- tests/run-smoke.mjs replaces this with <script>GATE_SCRIPT</script>, taken from config.ts -->
+<!--gate-script-->
 <link rel="stylesheet" href="../../skills/scroll-animation/assets/css/animation.css">
-<link rel="stylesheet" href="../../skills/scroll-animation/assets/css/animation.gsap.css">
+<link rel="stylesheet" href="../../skills/scroll-animation/assets/css/reveal.css">
 <link rel="stylesheet" href="../../skills/scroll-animation/assets/css/scene.css">
 <style>
   html, body { margin: 0; padding: 0; background: #0b0b0c; color: #eee; font-family: system-ui, sans-serif; }
 
   /* The fluid scale at fluid-design's defaults, so the distance check below
-     has a unit to scale by (this skill does not ship the scale itself). */
+     has a unit to scale by (this skill does not ship the scale itself).
+     run-smoke.mjs builds the page with SCALE = FLUID_DESIGN_SCALE in config.ts. */
   :root { --fluid: 1px; }
   @media (width >= 1024px) {
     :root { --fluid: calc(max(580px, min(calc(100svh * 1000 / 900), calc(100vw * 1000 / 1440))) / 1000); }
@@ -25,16 +28,18 @@
 </head>
 <body>
 
-  <div data-stage="mount" style="padding: 40px;">
-    <p data-stage-item data-variant="liftFade">Triggered entrance smoke test</p>
+  <!-- Three reveal groups above the scene, in the geometry tests/fixtures/scenes/react mirrors: one on mount, two at
+       the trigger line. -->
+  <div data-reveal="mount" style="padding: 40px;">
+    <p data-reveal-item>Triggered entrance smoke test</p>
   </div>
 
-  <div style="padding: 40px; font-size: 32px;">
-    Count: <span data-count-up="42">42</span>
+  <div data-reveal style="padding: 40px; font-size: 32px;">
+    <div data-reveal-item data-reveal-effect="fade">Count: 42</div>
   </div>
 
-  <div data-fade-on-exit style="padding: 40px;">
-    <p>Fades out as it scrolls above the viewport.</p>
+  <div data-reveal style="padding: 40px;">
+    <p data-reveal-item data-reveal-effect="clip">Clipped in as it crosses the line.</p>
   </div>
 
   <div data-scene-root style="height: 300vh;">
@@ -64,10 +69,10 @@
   </section>
 
   <!-- Stand-in for a fluid-design limit's registered mirror (scenes.md
-       §12, `fluidPx`'s `el`): a real fluid-grow-until scope writes
+       §12, `scaledPx`'s `el`): a real fluid-grow-until scope writes
        --_fluid-m-ui as a calc() off --fluid-ui, but a literal length reads
        identically through getComputedStyle, so this needs no fluid-design
-       stylesheet. main.ts reads it with `el` and window.__fluidPxScoped. -->
+       stylesheet. main.ts reads it with `el` and window.__scaledPxScoped. -->
   <style>@property --_fluid-m-ui { syntax: '<length>'; inherits: false; initial-value: 0px; }</style>
   <div id="fluid-el-scope" style="--_fluid-m-ui: 500px; display: none;"><span id="fluid-el-child"></span></div>
 

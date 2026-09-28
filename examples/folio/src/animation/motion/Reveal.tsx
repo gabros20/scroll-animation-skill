@@ -119,6 +119,8 @@ const GROUP_TAGS = {
   nav: m.nav,
   ul: m.ul,
   ol: m.ol,
+  // Each card of a list as its own group, so each reveals as it arrives rather than with the list.
+  li: m.li,
   figure: m.figure,
 }
 // Headings are here because a heading that rises IS the item: without them every animated heading needs a span

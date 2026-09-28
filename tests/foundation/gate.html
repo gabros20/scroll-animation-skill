@@ -6,11 +6,12 @@
     <title>foundation: pre-JS gate and failsafe</title>
     <!-- tests/foundation.mjs replaces this with <script>GATE_SCRIPT</script>, taken from config.ts -->
     <!--gate-script-->
-    <!-- animation.css's documented <noscript> rule for Motion's server-rendered inline styles -->
+    <!-- A page's own <noscript> rule for an entrance state it server-renders inline (#inline below). Reveal renders
+         none, so it needs none: its resting state is CSS under the gate. -->
     <noscript>
       <style>
-        [data-stage-item], [data-reveal-item] { opacity: 1 !important; transform: none !important; }
-        [data-stage-veil], [data-reveal-veil] { display: none !important; }
+        [data-reveal-item] { opacity: 1 !important; transform: none !important; }
+        [data-reveal-veil] { display: none !important; }
       </style>
     </noscript>
     <link rel="stylesheet" href="../../skills/scroll-animation/assets/css/animation.css" />

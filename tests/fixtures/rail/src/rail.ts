@@ -209,7 +209,8 @@ function helpers(root: HTMLElement, track: HTMLElement, create: () => Horizontal
         `${el.tagName.toLowerCase()}${Array.from(el.attributes, (a) => (a.name.startsWith('data-') ? `[${a.name}]` : '')).join('')}`
       return {
         styled: all.filter((el) => el.style.length > 0).map((el) => `${name(el)} {${el.getAttribute('style')}}`),
-        // An emptied style attribute holds no declaration: listed, not failed.
+        // An emptied style attribute holds no declaration, but it is still a leftover: GSAP hands a pin its styles back as
+        // an empty cssText, and the scene removes what's left.
         emptyStyle: all.filter((el) => el.getAttribute('style') === '').map(name),
         state: root.getAttribute('data-scene-state'),
         pinAttr: pin.getAttribute('data-scene-pin'),
