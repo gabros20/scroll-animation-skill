@@ -5,7 +5,7 @@ import { Activity, Fragment, useEffect, useState } from 'react'
 
 import { MotionProvider } from '../../../../skills/scroll-animation/assets/motion/MotionProvider'
 import { Reveal, RevealItem, RevealVeil } from '../../../../skills/scroll-animation/assets/motion/Reveal'
-import { GROUPS } from './page'
+import { GROUPS, rowClass } from './page'
 
 let showRoute: (visible: boolean) => void = () => {}
 export const setRouteVisible = (visible: boolean) => showRoute(visible)
@@ -25,11 +25,12 @@ export function App() {
               <Reveal
                 as={group.tag}
                 id={group.id}
-                className={`row${i === 0 ? ' first' : ''}`}
+                className={rowClass(group, i)}
                 trigger={group.trigger}
                 replay={group.replay}
                 margin={group.margin}
               >
+                {group.card && <div className="cover" />}
                 {group.items.map((item) => (
                   <RevealItem key={item.id} as={item.tag} id={item.id} effect={item.effect}>
                     {item.id}

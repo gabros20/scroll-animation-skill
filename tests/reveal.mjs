@@ -25,6 +25,11 @@
 //   stagger   items that cross together start in document order, MOTION.lineStagger apart
 //   activity  hide and show the route (Next's Activity on Motion; teardown + display: none elsewhere): nothing
 //             replays, what was hidden stays hidden, and the engine picks up again
+//   card      a card whose cover (no item) leads its item: the item waits below the fold while the card's top is
+//             past the line, and reveals once it arrives (the journal cards on a phone)
+//   jump      the page jumps past a group once the engine is ready, and a reload mid-page restores the scroll
+//             position (iOS Safari does it after the scripts ran): nothing plays above the view, and it reveals on
+//             the way back up. In Chromium and WebKit with touch emulation (hasTouch, isMobile), Firefox without.
 // Plus, once: css/reveal.css's durations and curves match config.ts.
 
 import { readFileSync } from 'node:fs'
@@ -51,6 +56,7 @@ const ALL = GROUPS.flatMap((g) => g.items.map((item) => item.id))
 const MOUNT = idsOf('g-mount')
 const VIEW = idsOf('g-view')
 const REPLAY = idsOf('g-replay')
+const CARD = idsOf('g-card')
 const EDGE = idsOf('g-edge')
 const ONCE = ALL.filter((id) => !REPLAY.includes(id))
 // Where an item's layout top sits, as a fraction of the viewport height, relative to the 80% line (a rise item's
@@ -59,6 +65,8 @@ const BELOW_LINE = 0.88
 const ACROSS_LINE = 0.65
 // Inside the viewport but below the 80% line: only a margin-0 group (TRIGGERS.pageEnd) fires here.
 const NEAR_BOTTOM = 0.9
+// Below the fold: the card's item here puts the card's top (70vh and a gap higher) well past the line.
+const BELOW_FOLD = 1.2
 
 // ── args ────────────────────────────────────────────────────────────────
 
@@ -592,6 +600,71 @@ const CHECKS = {
       ],
     ]
   },
+
+  async card(t) {
+    const { page } = await t.open('', t.touch)
+    await untilReady(page)
+    await scrollItemTo(page, CARD[0], BELOW_FOLD)
+    await sleep(700)
+    const below = await read(page, CARD)
+    const top = await page.evaluate(() => document.getElementById('g-card').getBoundingClientRect().top / innerHeight)
+    await scrollItemTo(page, CARD[0], ACROSS_LINE)
+    const across = await untilLanded(page, CARD, 4000)
+    return [
+      [
+        "a card whose cover leads its item: the item waits below the fold while the card's top is past the line, then reveals as it arrives",
+        top < 0.8 && below.every(resting) && across,
+        `card top at ${Math.round(top * 100)}%, item at ${BELOW_FOLD * 100}%: ${show(below)} · item at ${ACROSS_LINE * 100}%: ` +
+          show(await read(page, CARD)),
+      ],
+    ]
+  },
+
+  async jump(t) {
+    const out = []
+    // VIEW ends up a screen and a half above the view: every trigger on it is passed in one step.
+    const past = async (page) => {
+      await scrollItemTo(page, REPLAY[0], 0.5)
+      await sleep(900)
+      const bottom = await page.evaluate((id) => document.getElementById(id).getBoundingClientRect().bottom, VIEW[0])
+      return { bottom, above: await read(page, VIEW) }
+    }
+    const backUp = async (page) => {
+      await scrollItemTo(page, VIEW[0], 0.3)
+      return untilLanded(page, VIEW, 4000)
+    }
+    {
+      const { page } = await t.open('', t.touch)
+      await untilReady(page)
+      await sleep(300)
+      const { bottom, above } = await past(page)
+      const back = await backUp(page)
+      out.push([
+        'the page jumps past a group once the engine is ready: nothing plays above the view, and it reveals on the way back up',
+        bottom < 0 && above.every(resting) && back,
+        `above the view (bottom ${Math.round(bottom)} px): ${show(above)} · back up: ${show(await read(page, VIEW))}`,
+      ])
+    }
+    {
+      // iOS Safari restores a reload's scroll position after the page's scripts ran, when every trigger exists.
+      const { page } = await t.open('', t.touch)
+      await untilReady(page)
+      await scrollItemTo(page, REPLAY[0], 0.5)
+      await sleep(300)
+      await page.reload({ waitUntil: 'load' })
+      await untilReady(page)
+      await sleep(900)
+      const y = await page.evaluate(() => window.__t.scrollY())
+      const above = await read(page, VIEW)
+      const back = await backUp(page)
+      out.push([
+        'reloaded mid-page (the scroll position restored): nothing plays above the view, and it reveals on the way back up',
+        y > 0 && above.every(resting) && back,
+        `restored to ${y} px: ${show(above)} · back up: ${show(await read(page, VIEW))}`,
+      ])
+    }
+    return out
+  },
 }
 
 /** css/reveal.css can't import config.ts, so its numbers are checked against it here. */
@@ -652,6 +725,8 @@ async function main() {
       for (const group of groups) {
         const contexts = []
         const t = {
+          // A phone's context: touch-only, like the iPhone (Playwright's Firefox has no isMobile).
+          touch: browserName === 'firefox' ? {} : { isMobile: true, hasTouch: true },
           async open(query = '', contextOptions = {}) {
             const context = await open.browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion: 'no-preference', ...contextOptions })
             contexts.push(context)

@@ -82,8 +82,13 @@ reveal.split   reveal.done   reveal.destroy()
 
 - When the element's top crosses the trigger line (`TRIGGERS.reveal`), the lines (the words, with `type: 'words'`)
   rise out of their masks on the entrance curve over 1.3 s, 0.067 s apart, with the short late fade. It plays once.
-  An element above the view at load plays when the reader scrolls back up to it, and a split that lands after the
-  element passed the line plays at once.
+  An element above the view at load, or jumped past, plays when the reader scrolls back up to it, and a split that
+  lands after the element passed the line plays at once.
+- **A jump is not an arrival.** iOS Safari restores a reload's scroll position after the page's scripts ran, so every
+  trigger above it is passed in one step, and ScrollTrigger fires `onEnter` for each trigger a jump passes
+  (`limitCallbacks` is off by default; GSAP's docs: "the onEnter for elements 1-60 would all fire"). `splitReveal`
+  leaves a trigger that is already past its end for `onEnterBack`; before that, every heading above a reload's
+  position played at load, off-screen, and nothing happened on the way back up (measured on the iOS 18.6 simulator).
 - Options: `type` (`'lines,words'`, `'lines'` or `'words'`), `revertAfter` (§5), `margin`, `stagger`, `delay` and
   `locale`. SplitText ships in the `gsap` package (free since 3.13), and `splitReveal` registers it.
 - **Reduced motion is live.** The split is built inside `gsap.matchMedia(MOTION_CONDITIONS)`: under `reduce` nothing is
@@ -189,6 +194,7 @@ Or let React render the pieces itself, as `SplitWords` does.
 - [ ] Above the fold, `SplitWords`, rendered on the server; nothing split there waits for a script or a font.
 - [ ] No render-blocking `<script src>` in `<head>` ahead of a `SplitWords` headline.
 - [ ] Below the fold, `split-reveal` splits after `document.fonts.load()`, never on `autoSplit` alone.
+- [ ] Reload a phone mid-page and scroll back up: the text above the restored position plays then, not at load (§3).
 - [ ] `aria: 'auto'` only on a heading with nothing focusable inside; `aria: 'hidden'` never on the element itself.
 - [ ] Split running text is reverted after its entrance: the original nodes, never an `innerHTML` copy.
 - [ ] React never updates split text: the component that owns it is keyed by its content.
