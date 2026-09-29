@@ -17,9 +17,9 @@
  *   written by hand. Bound through `style`, a scroll-linked transform goes to a native timeline whose keyframes stop at
  *   the input range, and the element drifts back outside it (spike S3). useScroll measures the layout box, so the
  *   drift never shifts its own progress.
- * - Smoothed once: a spring on native routes, the raw scroll under Lenis, which already smooths. It reads
- *   <html data-scroll-authority> after it mounts, when the route's SmoothScroll has stamped it. It is placed at once on
- *   mount, never glided in.
+ * - Smoothed once: a spring on native routes, the raw scroll under Lenis, which already smooths. It reads the page's
+ *   authority after it mounts (getScrollAuthority(): the route's SmoothScroll stamp, or a site's own Lenis). It is
+ *   placed at once on mount, never glided in.
  * - Reduced motion (live, useReducedMotionLive): no drift and nothing inline.
  * - One writer: the component owns its element's `transform`. Style the element through className, never with a
  *   transform of its own, and put Reveal, a scene or any other mover on a wrapper. Unmount and Next's Activity hide

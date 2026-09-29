@@ -12,8 +12,8 @@
  *   event a programmatic scroll fires: a frame late (spike S4a measured the same for Lenis; smooth/lenis.ts's
  *   gsapDriver makes the same call).
  * - Inside a pinned scene it clamps to the scene's [data-scene-root] by itself; `clamp: null` turns that off.
- * - Native scrolling only: under Lenis or ScrollSmoother it pulls nothing and warns (it reads
- *   <html data-scroll-authority> each time it engages).
+ * - Native scrolling only: under Lenis or ScrollSmoother it pulls nothing and warns (it reads the page's authority,
+ *   getScrollAuthority(), each time it engages: the stamp, or a site's own Lenis).
  * - Reduced motion (live) is the core's: no pull. It creates no ScrollTrigger and no tween, so a gsap.context or
  *   gsap.matchMedia around it has nothing to revert: destroy() is the cleanup.
  * - A programmatic smooth scroll of your own needs `well.suspend()` (or suspendScrollWells() from scroll-well.ts) just

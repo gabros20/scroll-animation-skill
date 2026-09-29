@@ -32,8 +32,8 @@
  *   <path> or <polyline>).
  * - Scrubbed and smoothed once: 0.5 s of catch-up under native scrolling (what `scrub: 0.5` gives, on the expo ease
  *   ScrollTrigger's scrub uses, through gsap.quickTo on the progress), none under Lenis or ScrollSmoother, which
- *   already smooth. It reads <html data-scroll-authority> as it builds, so create it after the route's scroll
- *   authority.
+ *   already smooth. It reads the page's authority as it builds (getScrollAuthority(): the stamp, or a site's own
+ *   Lenis), so create it after the route's scroll authority.
  * - Reduced motion (live, gsap.matchMedia(MOTION_CONDITIONS)): fully drawn, nothing inline. So is every shape without
  *   JavaScript and in print. The triggers live outside that build: GSAP 3.15 throws the reader to the top when a
  *   ScrollTrigger is created or killed during a matchMedia rebuild. For the same reason, call drawOnScroll() outside

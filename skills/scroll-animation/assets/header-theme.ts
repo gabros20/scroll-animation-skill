@@ -1,9 +1,9 @@
 /**
- * header-theme.ts: a fixed header's ink follows the section under it, with no animation library and no scroll
- * listener. An IntersectionObserver whose root is shrunk to a 1 px band at the header's probe line reports which themed
- * section is under the line, and the header takes that section's token. IntersectionObserver fires on what the reader
- * sees, so the same code is exact under native scrolling, Lenis and ScrollSmoother, whose window.scrollY runs ahead of
- * the page on screen. motion/useHeaderTheme.ts wraps it for React; GSAP pages mount it as it is.
+ * header-theme.ts: a fixed or sticky header's ink follows the section under it, with no animation library and no scroll
+ * listener. An IntersectionObserver whose root is shrunk to a 1 px strip at the header's probe line reports which
+ * themed section is under the line, and the header takes that section's token. IntersectionObserver fires on what the
+ * reader sees, so the same code is exact under native scrolling, Lenis and ScrollSmoother, whose window.scrollY runs
+ * ahead of the page on screen. motion/useHeaderTheme.ts wraps it for React; GSAP pages mount it as it is.
  *
  *   <header data-header data-header-ink-default="light">…</header>   fixed or sticky; under ScrollSmoother, fixed and
  *                                                                     outside the wrapper
@@ -20,7 +20,7 @@
  *   is its middle). It is read from layout (offsetTop, offsetHeight), so a transform on the header (an entrance,
  *   hide-on-scroll) doesn't move it. A sticky header is probed where it sticks, its `top`: its offsetTop is its place
  *   in the document, which runs with the scroll once it is stuck. A ResizeObserver on the header and a window resize
- *   listener rebuild the band when the line or the viewport moves. Nothing runs while the page scrolls except the
+ *   listener rebuild the strip when the line or the viewport moves. Nothing runs while the page scrolls except the
  *   observer's own callbacks, one per section edge crossing the line.
  * - Sections that overlap at the line: the last in document order wins, so a nested section beats its parent, and a
  *   later sibling pulled over an earlier one wins where it covers it.
@@ -36,7 +36,7 @@
 const THEME = 'data-header-theme'
 const INK = 'data-header-ink'
 const DEFAULT = 'data-header-ink-default'
-/** Callbacks in a row whose band isn't the 1 px it was built as, corrected before the band is left as it is. */
+/** Callbacks in a row whose strip isn't the 1 px it was built as, corrected before the strip is left as it is. */
 const MAX_CORRECTIONS = 2
 
 export interface HeaderThemeOptions {
@@ -53,7 +53,7 @@ export function mountHeaderTheme(header: HTMLElement, options: HeaderThemeOption
   const fraction = options.line ?? 1
   const doc = header.ownerDocument
   const view = doc.defaultView ?? window
-  /** Every section the band watches, and those of them in the band now. */
+  /** Every section the strip watches, and those of them in the strip now. */
   const watched = new Set<Element>()
   const under = new Set<Element>()
   let io: IntersectionObserver | null = null
@@ -66,7 +66,7 @@ export function mountHeaderTheme(header: HTMLElement, options: HeaderThemeOption
 
   const isSection = (el: Element) => el.matches(selector) && !header.contains(el)
 
-  /** The token of the last section in the band, in document order, else the header's default. */
+  /** The token of the last section in the strip, in document order, else the header's default. */
   function resolve() {
     let top: Element | null = null
     for (const el of under) if (!top || top.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) top = el
@@ -82,21 +82,22 @@ export function mountHeaderTheme(header: HTMLElement, options: HeaderThemeOption
   }
 
   function onEntries(entries: IntersectionObserverEntry[]) {
-    // The band must be the one pixel it was built as. The viewport height its margin came from can differ from the root
-    // the browser measures (iOS's toolbars), so correct it from rootBounds, which IS that root, and wait for the new
-    // band instead of trusting entries from a thick or inverted one. Chromium clamps an inverted band to zero height
-    // at the line, which still reports the section there (edge-adjacent), so it passes as it is.
+    // The strip must be the one pixel it was built as. The viewport height its margin came from can differ from the
+    // root the browser measures (iOS's toolbars), so correct it from rootBounds, which IS that root, and wait for the
+    // new strip instead of trusting entries from a thick or inverted one. Chromium clamps an inverted strip to zero
+    // height at the line, which still reports the section there (edge-adjacent), so it passes as it is.
     const bounds = entries[0]?.rootBounds
     if (bounds && !(Math.abs(bounds.top - line) < 0.1 && bounds.height < 1.5) && corrections < MAX_CORRECTIONS) {
       corrections++
-      // The root's real bottom edge: an inverted band reads as its mirror image (WebKit) or a negative height (Firefox).
+      // The root's real bottom edge: an inverted strip reads as its mirror image (WebKit) or a negative height
+      // (Firefox).
       const bottom = bounds.top < line ? bounds.top : bounds.top + bounds.height
       rootHeight += bottom - line - 1
       build()
       return
     }
     corrections = 0
-    // A new band's first callback reports every section: it replaces what the old band knew.
+    // A new strip's first callback reports every section: it replaces what the old strip knew.
     if (fresh) under.clear()
     fresh = false
     for (const entry of entries) {
@@ -110,12 +111,12 @@ export function mountHeaderTheme(header: HTMLElement, options: HeaderThemeOption
     const style = view.getComputedStyle(header)
     const top = style.position === 'sticky' ? parseFloat(style.top) || 0 : header.offsetTop
     line = top + header.offsetHeight * fraction
-    // The smaller reading: too short a root only makes the band thick, which rootBounds corrects in one step.
+    // The smaller reading: too short a root only makes the strip thick, which rootBounds corrects in one step.
     rootHeight = Math.min(view.innerHeight, doc.documentElement.clientHeight || view.innerHeight)
     corrections = 0
   }
 
-  /** The band [line, line + 1] as margins on the document's viewport; a new observer only when they change. */
+  /** The strip [line, line + 1] as margins on the document's viewport; a new observer only when they change. */
   function build() {
     const next = `${px(-line)} 0px ${px(line + 1 - rootHeight)} 0px`
     if (io && next === margin) return
@@ -148,7 +149,7 @@ export function mountHeaderTheme(header: HTMLElement, options: HeaderThemeOption
       io?.unobserve(el)
       return under.delete(el)
     }
-    // A section still in the band changed its token.
+    // A section still in the strip changed its token.
     return on && under.has(el)
   }
 
