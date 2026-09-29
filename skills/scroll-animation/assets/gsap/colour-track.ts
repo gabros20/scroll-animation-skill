@@ -28,8 +28,9 @@
  * - Cost: background-color is a paint, not a composite, so the target repaints on every frame of a handover. Budget it
  *   (references/performance.md) and keep the target to the element that needs the colour.
  * - Scrubbed and smoothed once: 0.5 s of catch-up under native scrolling, none under Lenis or ScrollSmoother, which
- *   already smooth. It reads <html data-scroll-authority> as it builds, so create it after the route's authority, and
- *   after the page's pinned scenes under ScrollSmoother, where they pin through ScrollTrigger.
+ *   already smooth. It reads the page's authority as it builds (getScrollAuthority(): the stamp, or a site's own
+ *   Lenis), so create it after the route's authority, and after the page's pinned scenes under ScrollSmoother, where
+ *   they pin through ScrollTrigger.
  * - Reduced motion (live, gsap.matchMedia(MOTION_CONDITIONS)): a colour change isn't movement, so the track stays,
  *   but it follows the scroll exactly, with no catch-up easing. The triggers live outside that build: GSAP 3.15 throws
  *   the reader to the top when a ScrollTrigger is created or killed during a matchMedia rebuild.

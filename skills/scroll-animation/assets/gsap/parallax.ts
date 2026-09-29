@@ -21,8 +21,8 @@
  *   trigger. `translate` composes with the element's own `transform`, which keeps applying.
  * - Scrubbed and smoothed once: 0.5 s of catch-up under native scrolling (what `scrub: 0.5` gives, on the expo ease
  *   ScrollTrigger's scrub uses, through gsap.quickTo on the progress), none under Lenis or ScrollSmoother, which
- *   already smooth. It reads <html data-scroll-authority> as it builds, so create it after the route's scroll
- *   authority. An element in view at load starts part-way through its pass, already drifted. It prints at its layout
+ *   already smooth. It reads the page's authority as it builds (getScrollAuthority(): the stamp, or a site's own
+ *   Lenis), so create it after the route's scroll authority. An element in view at load starts part-way through its pass, already drifted. It prints at its layout
  *   position.
  * - Reduced motion (live, gsap.matchMedia(MOTION_CONDITIONS)): no drift; every element sits at its layout position
  *   with nothing inline. The triggers live outside that build: GSAP 3.15 throws the reader to the top when a

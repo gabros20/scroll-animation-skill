@@ -404,7 +404,7 @@
       "reference": "references/video.md"
     },
     "header-theme": {
-      "summary": "A fixed or sticky header's ink follows the section under its probe line: a 1 px IntersectionObserver band, no scroll listener, the same under native scrolling, Lenis and ScrollSmoother; one ink transition and a blend variant",
+      "summary": "A fixed or sticky header's ink follows the section under its probe line: a 1 px IntersectionObserver strip, no scroll listener, the same under native scrolling, Lenis and ScrollSmoother; one ink transition and a blend variant",
       "clock": "scroll",
       "tier": "primitive",
       "profiles": [
