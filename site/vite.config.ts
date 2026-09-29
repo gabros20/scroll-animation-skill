@@ -1,15 +1,40 @@
+import { existsSync } from 'node:fs'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 import { fileURLToPath } from 'node:url'
 
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 
 import { animationHtml } from './plugins/animation-html.ts'
 
 const page = (path: string) => fileURLToPath(new URL(path, import.meta.url))
 
+/**
+ * `/guide` → 301 → `/guide/`, in dev and in `vite preview`, as a static host with directory indexes does. Without it
+ * a page folder typed without its slash is a 404 locally.
+ */
+function trailingSlash(): Plugin {
+  const redirect = (req: IncomingMessage, res: ServerResponse, next: () => void) => {
+    const [path, query] = (req.url ?? '/').split('?')
+    const folder = path !== '/' && !path.endsWith('/') && !path.split('/').pop()!.includes('.')
+    if (folder && existsSync(page(`.${path}/index.html`))) {
+      res.statusCode = 301
+      res.setHeader('Location', `${path}/${query ? `?${query}` : ''}`)
+      res.end()
+      return
+    }
+    next()
+  }
+  return {
+    name: 'trailing-slash',
+    configureServer: (server) => void server.middlewares.use(redirect),
+    configurePreviewServer: (server) => void server.middlewares.use(redirect),
+  }
+}
+
 export default defineConfig({
   // Two pages, two scroll authorities: / runs ScrollSmoother, /guide/ scrolls natively.
   appType: 'mpa',
-  plugins: [animationHtml()],
+  plugins: [animationHtml(), trailingSlash()],
   css: {
     postcss: {
       // Comments only: the rest ships as written (see build.cssMinify).

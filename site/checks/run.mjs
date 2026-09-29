@@ -226,6 +226,15 @@ const CHECKS = {
           content: content ? getComputedStyle(content).transform : null,
         }
       })
+      if (name === 'guide') {
+        const res = await fetch(new URL(path.replace(/\/$/, ''), t.base).href, { redirect: 'manual' })
+        out.push([
+          name,
+          'typed without its trailing slash, the page folder redirects to it',
+          res.status === 301 && res.headers.get('location') === path,
+          `${path.replace(/\/$/, '')} → ${res.status} ${res.headers.get('location')}`,
+        ])
+      }
       out.push([
         name,
         `loads with the gate on and stamps html[data-scroll-authority="${AUTHORITY[name]}"]`,
