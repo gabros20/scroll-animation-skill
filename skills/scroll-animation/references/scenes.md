@@ -317,9 +317,20 @@ const rail = horizontalRail(el)   // .travel() .rtl() .scrollToPanel(i) .refresh
   only once the rail measures, so create the rail in page order (§9).
 - **Every ScrollTrigger refresh re-measures it**, in the `revert` event: pins off, no trigger measured yet. A
   ResizeObserver on the track and panels asks for a refresh; after adding or removing panels, call `rail.refresh()`.
-- **One linear writer**: each progress event writes the track's `translate` from the band, floored to device pixels,
-  so the last panel ends flush or clipped by under a device pixel, never short. No tween means no
-  `containerAnimation`: a per-panel effect works from `band() × travel()` in `onProgress`.
+- **One linear band, two writers**: `translate` runs from 0 at band 0 to the whole travel (floored to device pixels)
+  at band 1, so the last panel ends flush or clipped by under a device pixel. Where CSS scroll timelines run
+  (Chromium; Safari 26, off the main thread from 26.4) the rail writes the band's scroll offsets and the signed travel
+  on the track (`--rail-from`, `--rail-to`, `--rail-x`, `data-rail-timeline`) and `css/rail.css` moves it on
+  `scroll(root)`, in the scroll's own frame. The script writes it instead without timelines, under ScrollSmoother and
+  while Lenis smooths (`html.lenis-smooth`, S4). Both give the same translate at every offset (±1 px);
+  `rail.debug().writer` says which runs.
+  - Why: Safari renders pages near 60 fps on a 120 Hz screen ("Prefer Page Rendering Updates near 60fps", on by
+    default) while native scrolling runs at 120 Hz, so a scripted rail stepped behind the finger on an iPhone.
+  - Offsets, never a `view()` range on the root: iOS resizes the visible height with the toolbar at every change of
+    direction, and `contain 100%` would move the track with it.
+  - `timeline: false` keeps the script: for motion tied to the track in `onProgress` (a per-panel effect from
+    `band() × travel()`: no tween, so no `containerAnimation`), or a page that scrolls through script
+    (`ScrollTrigger.normalizeScroll`).
 - **RTL** comes from the track's computed `direction`: it moves right.
 - **Focus follows the keyboard**: focus (`:focus-visible`) in a panel out of view jumps the page through the scroll
   authority, a frame later, by the least scroll that shows the panel whole (in a panel wider than the pin, the focused
@@ -348,5 +359,6 @@ const rail = horizontalRail(el)   // .travel() .rtl() .scrollToPanel(i) .refresh
 - [ ] GSAP scenes are created in page order, outside breakpoint `matchMedia` builds (§9).
 - [ ] Empty pacing acts carry `data-scene-spacer`; riding sections paint no background (§10, §11).
 - [ ] Scaled travel goes through `--scene-p` or `scale.ts` (§12).
-- [ ] A rail's root carries `data-rail`, its gutters pad the track, and `rail.refresh()` follows added panels (§14).
+- [ ] A rail's root carries `data-rail`, its gutters pad the track, `rail.refresh()` follows added panels, and a page
+  that scrolls through script (not Lenis) passes `timeline: false` (§14).
 - [ ] No `content-visibility: auto` in or around a runway: it zeroes the geometry the scene measures.

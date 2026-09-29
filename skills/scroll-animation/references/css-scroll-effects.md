@@ -66,10 +66,19 @@ without it.
   skill's own browser measurements, September 2026).
 - **The top edge is the header's bottom edge.** `view()` measures inside the `scroll-padding`, which
   `css/animation.css` sets from `--header-h`.
+- **The bottom edge is the small viewport's**: every `view()` here is `view(block auto max(0px, 100% - 100svh))`, and
+  the stack's cards take the same `view-timeline-inset`. Safari on iOS measures `view()` against the visible height,
+  which the toolbar changes at every change of scroll direction; from that edge an 80 px toolbar would move a fade-in
+  on a 200 px element by 40% of its opacity. The inset is 0 on a desktop and in a nested scroller. Write your own
+  `view()` the same way.
 - **`animation-timeline` and `animation-range` go after the `animation` shorthand**, which resets both (S7a).
-- **Compositor properties.** Any property can animate on a timeline, but on native scroll a timeline's `transform`
-  paints in the scroll's own frame in Chromium (at most a frame late in Safari 26), while `width` or `left` is always a
-  frame late (S1, S7f). So the progress bar scales.
+- **Compositor properties.** Only `opacity`, `transform`, `translate`, `scale`, `rotate`, `filter`, `backdrop-filter`
+  and motion path run off the main thread: on Chromium's compositor, and in Safari from 26.4 (26.0–26.3 run every
+  timeline on the main thread, near 60 fps). `width` or `left` is always a frame late (S1, S7f), so the progress bar
+  scales.
+- **One clock per property group on an element.** In Safari 26.4–26.6 a time-based animation (a transition, a Motion
+  reveal) beside a scroll-driven one on the same group (`opacity`; `transform`, `translate`, `scale`, `rotate`;
+  `filter`) puts both on the main thread while both run. Put the entrance on a wrapper.
 - **`timeline-scope`** lets a named `view-timeline` drive an element outside its own subtree. Declare it on a common
   ancestor, once per component instance. Chromium requires it: without it the animation has no timeline and holds its
   last keyframe. Safari 26 and Firefox bind an unscoped name to another instance's timeline, so a missing scope passes
@@ -79,7 +88,8 @@ without it.
 
 | Browser or reader | Sees |
 |---|---|
-| Chromium (Chrome, Edge) 115+, Safari 26+ | the effect, on the spec's range maths exactly (S7a); Safari a frame late under Lenis (§4) |
+| Chromium (Chrome, Edge) 115+, Safari 26.4+ | the effect, on the spec's range maths exactly (S7a), off the main thread (§2); Safari a frame late under Lenis (§4) |
+| Safari 26.0–26.3 | the same effect, run on the main thread: near 60 fps, a frame behind native scrolling |
 | Firefox (155 stable: timelines behind a preference) | the static state |
 | reduced motion, print | the static state |
 
@@ -207,6 +217,9 @@ has passed under the header, while most of it is still on screen. `--fx-range-st
 
 - [ ] Scroll-driven rules sit inside `@supports` and the no-preference query, after the `animation` shorthand; the
       static style is the finished state (§2, §3).
+- [ ] Your own `view()` ranges end at the small viewport, `view(block auto max(0px, 100% - 100svh))`, or an iPhone's
+      toolbar moves them at every change of direction (§2).
+- [ ] No time-based animation or transition shares a property group with a scroll effect on one element (§2).
 - [ ] Every named timeline has a `timeline-scope` per instance, checked in Chromium (§2).
 - [ ] No `overflow: hidden` or `overflow-x: hidden` between an effect and the scroller (§6).
 - [ ] Reduced motion resets with `animation: none` (§5).

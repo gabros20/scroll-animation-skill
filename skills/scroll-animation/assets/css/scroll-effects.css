@@ -36,14 +36,19 @@
  *   the page (S7c).
  * - A named timeline that drives another element is scoped with timeline-scope, once per instance. Chromium needs it,
  *   and without it Safari and Firefox bind the name to another instance's timeline (S7b). Only the stack uses names.
- * - Only transform (through the translate and scale properties, so `transform` stays free) and opacity. On native
- *   scroll a timeline's transform paints in the scroll's own frame in Chromium, and at most a frame late in Safari
- *   26; a layout property is always a frame late (S1, S7f).
+ * - Only transform (through the translate and scale properties, so `transform` stays free) and opacity: the
+ *   properties Chromium's compositor and Safari 26.4+ run off the main thread, in the scroll's own frame (Safari
+ *   26.0-26.3 runs every timeline on the main thread). A layout property is always a frame late (S1, S7f).
  * - Decoration only. Under Lenis, Safari reads the previous frame's scroll (S1), so anything that must stay
  *   registered to moving content is GSAP's job. Under ScrollSmoother, view() never progresses (S2), so the view()
  *   effects switch off on html[data-scroll-authority="smoother"] and show their static state.
  * - view() measures the viewport inside its scroll-padding. With animation.css's `scroll-padding-top: --header-h`,
  *   every range's top edge is the fixed header's bottom edge: the line that copy disappears under.
+ * - Every range's bottom edge is the small viewport's (an end inset of max(0px, 100% - 100svh)). Safari on iOS
+ *   measures view() against the visible height, which grows and shrinks with the toolbar, and the toolbar collapses
+ *   and comes back as the reader changes scroll direction: a range measured from that edge moves under the element,
+ *   so a parallax jumps and a fade skips at every turn. Where the scrollport is no taller than the small viewport
+ *   (a desktop, a phone with its toolbar out, a nested scroller) the inset is 0 and nothing changes.
  */
 
 /* ── 1. The tuning properties ──────────────────────────────────────────────────────────────────────
@@ -144,7 +149,9 @@
         var(--_fx-exit-fade) linear forwards,
         var(--_fx-scale-in) linear both;
       animation-composition: add, replace, replace, replace;
-      animation-timeline: view(), view(), view(), view();
+      animation-timeline:
+        view(block auto max(0px, 100% - 100svh)), view(block auto max(0px, 100% - 100svh)),
+        view(block auto max(0px, 100% - 100svh)), view(block auto max(0px, 100% - 100svh));
       animation-range-start:
         var(--fx-range-start, cover 0%), var(--fx-range-start, entry 0%), var(--fx-range-start, exit-crossing 10%),
         var(--fx-range-start, entry 0%);
@@ -270,6 +277,11 @@
     }
     [data-scroll-fx~='sticky-stack'] > :nth-child(12) {
       view-timeline: --fx-card-12 block;
+    }
+    /* The next card's entry range starts at the small viewport's bottom edge, like every view() range in this file (the
+       rules at the top). After the shorthands, which may reset the inset, and as specific. */
+    [data-scroll-fx~='sticky-stack'] > :nth-child(n) {
+      view-timeline-inset: auto max(0px, 100% - 100svh);
     }
     /* Cards take their tuning from the stack. The last card is never covered, and a card after the 11th has no next
        name. Either one, animated, would have no timeline and would hold its last keyframe, shrunk for good (S7b). */

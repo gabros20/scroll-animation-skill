@@ -26,6 +26,8 @@ declare global {
 export function mount(options: HorizontalRailOptions = {}) {
   const root = document.querySelector<HTMLElement>('[data-scene-root]')!
   const track = root.querySelector<HTMLElement>('[data-rail-track]')!
+  // ?timeline=off: the script writer everywhere, to compare the two writers at the same scroll offsets.
+  if (new URLSearchParams(location.search).get('timeline') === 'off') options = { ...options, timeline: false }
   PANELS.forEach((size, i) => {
     const panel = document.createElement('article')
     panel.dataset.railPanel = ''
@@ -69,6 +71,21 @@ function helpers(root: HTMLElement, track: HTMLElement, create: () => Horizontal
     const t = rail().trigger!
     return toScroll(t.start + p * (t.end - t.start))
   }
+  /**
+   * The translate the script writes at scroll offset `y`: the band there (from the trigger's offsets and the scene's
+   * holds) times the travel, in whole device pixels, signed.
+   */
+  const scriptAt = (y: number) => {
+    const r = rail()
+    const t = r.trigger!
+    const { headExit, tailEnter } = r.bounds()
+    const from = t.start + headExit * (t.end - t.start)
+    const to = t.start + tailEnter * (t.end - t.start)
+    const band = Math.min(1, Math.max(0, (y - from) / (to - from)))
+    const dpr = window.devicePixelRatio || 1
+    const px = Math.floor(r.travel() * band * dpr + 1e-3) / dpr
+    return r.rtl() ? px : -px
+  }
   const pOf = (band: number) => {
     const { headExit, tailEnter } = rail().bounds()
     return headExit + band * (tailEnter - headExit)
@@ -89,7 +106,9 @@ function helpers(root: HTMLElement, track: HTMLElement, create: () => Horizontal
       const first = all[0]!
       const last = all[all.length - 1]!
       const inline = track.style.translate
+      const computed = getComputedStyle(track).translate
       const { headExit, tailEnter } = r.bounds()
+      const t = r.trigger
       return {
         travel: round(r.travel()),
         rtl: r.rtl(),
@@ -99,12 +118,26 @@ function helpers(root: HTMLElement, track: HTMLElement, create: () => Horizontal
         rangePx: round(r.rangePx()),
         /** Scroll px the band spans: one of them moves the band by 1 / bandPx. */
         bandPx: round(r.rangePx() * (tailEnter - headExit)),
+        /** The band's scroll offsets, from the trigger: where the script's band runs from 0 to 1. */
+        bandFrom: t ? round(t.start + headExit * (t.end - t.start)) : null,
+        bandTo: t ? round(t.start + tailEnter * (t.end - t.start)) : null,
         p: round(r.progress() * 1000) / 1000,
         band: Math.round(r.band() * 10000) / 10000,
         mode: root.dataset.sceneState ?? null,
+        /** Who moves the track: 'timeline' (css/rail.css) or 'script'. */
+        writer: (r.debug().writer as string | null) ?? null,
         inline,
-        translate: inline ? parseFloat(inline) : null,
-        computed: getComputedStyle(track).translate,
+        /** The translate on screen, px, whoever writes it; null for none. */
+        translate: computed === 'none' ? null : parseFloat(computed),
+        computed,
+        /** The rail wrote its first value: an inline translate, or the timeline's marker. */
+        written: inline !== '' || track.hasAttribute('data-rail-timeline'),
+        /** The track's animations, as `name@timeline range-start range-end`. */
+        animations: track.getAnimations().map((a) => {
+          const cs = getComputedStyle(track)
+          const name = 'animationName' in a ? (a as CSSAnimation).animationName : '?'
+          return `${name}@${a.timeline?.constructor.name ?? 'none'} ${cs.animationRangeStart} ${cs.animationRangeEnd}`
+        }),
         // Where the track's box actually sits in the pin: its start edge against the pin's.
         drawn: round(r.rtl() ? track.getBoundingClientRect().right - view.right : track.getBoundingClientRect().left - view.left),
         // Each end's outer edge against the pin: 0 when flush.
@@ -116,6 +149,51 @@ function helpers(root: HTMLElement, track: HTMLElement, create: () => Horizontal
         /** The panel sized by the late image (its heading and link hold it open before the image loads). */
         lateWidth: track.querySelector<HTMLElement>('.late')!.offsetWidth,
       }
+    },
+    scriptAt,
+    /**
+     * A Lenis smooth scroll to `y` (through the page's authority), read at the end of every frame: after the rAF
+     * callbacks, the mutation callbacks they cause, style and layout, so each row is what that frame paints. It ends
+     * once the scroll has rested for 10 frames.
+     */
+    recordSmooth(y: number) {
+      type Row = { y: number; smooth: boolean; animations: number; inline: string; translate: number; want: number }
+      return new Promise<Row[]>((resolve) => {
+        const rows: Row[] = []
+        const probe = document.createElement('div')
+        probe.style.cssText = 'position:fixed;left:0;top:0;height:1px;width:1px;pointer-events:none;opacity:0'
+        document.body.append(probe)
+        let still = 0
+        let lastY = -1
+        let frame = 0
+        const ro = new ResizeObserver(() => {
+          const computed = getComputedStyle(track).translate
+          const row = {
+            y: Math.round(scrollY * 100) / 100,
+            smooth: document.documentElement.classList.contains('lenis-smooth'),
+            animations: track.getAnimations().length,
+            inline: track.style.translate,
+            translate: computed === 'none' ? 0 : parseFloat(computed),
+            want: scriptAt(scrollY),
+          }
+          rows.push(row)
+          still = row.y === lastY && !row.smooth ? still + 1 : 0
+          lastY = row.y
+          if (still >= 10 || rows.length > 600) {
+            ro.disconnect()
+            probe.remove()
+            cancelAnimationFrame(frame)
+            resolve(rows)
+          }
+        })
+        ro.observe(probe)
+        const tick = () => {
+          probe.style.width = probe.style.width === '1px' ? '2px' : '1px'
+          frame = requestAnimationFrame(tick)
+        }
+        frame = requestAnimationFrame(tick)
+        currentSmoothScroll()!.scrollTo(y)
+      })
     },
     /** Panel `i` lies whole inside the pin, and the pin fills the viewport. */
     inView(i: number) {
@@ -215,6 +293,8 @@ function helpers(root: HTMLElement, track: HTMLElement, create: () => Horizontal
         state: root.getAttribute('data-scene-state'),
         pinAttr: pin.getAttribute('data-scene-pin'),
         tabindex: track.getAttribute('tabindex'),
+        timeline: track.hasAttribute('data-rail-timeline'),
+        animations: track.getAnimations().length,
         pinSpacers: document.querySelectorAll('.pin-spacer').length,
         pinParent: pin.parentElement === root,
       }

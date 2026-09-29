@@ -79,6 +79,22 @@ body {
   background: #1a1a1a;
 }
 
+/* A nested scroller, 300 px tall (half the viewport), with a 100 px subject 400 px down its 900 px of content. */
+.nested {
+  position: relative;
+  width: 200px;
+  height: 300px;
+  margin-left: 20px;
+  overflow-y: auto;
+  background: #ddd;
+}
+.nested-pad {
+  height: 400px;
+}
+.nested .box {
+  height: 100px;
+}
+
 /* A pinned scene's riding copy (scene.css gives the geometry): a 600 px act holding the copy, then a pacing act. */
 .scene [data-scene-pin] {
   background: #c9c0ad;

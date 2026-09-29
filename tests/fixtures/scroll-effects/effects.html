@@ -66,6 +66,14 @@
       <div class="fill" data-scroll-fx="parallax fade-in" data-probe="hidden-child" style="--fx-parallax: 100px"></div>
     </div>
     <div class="spacer"></div>
+    <!-- a nested scroller, shorter than the viewport: view() binds to it, and the ranges' bottom edge is its own (the
+         small-viewport inset, max(0px, 100% - 100svh), is 0 in a scrollport no taller than the viewport) -->
+    <div class="nested" data-nested>
+      <div class="nested-pad"></div>
+      <div class="box" data-scroll-fx="fade-in" data-probe="nested-fade"></div>
+      <div class="nested-pad"></div>
+    </div>
+    <div class="spacer"></div>
     <!-- a pinned scene: the copy rides in the content layer, pulled back over the sticky pin -->
     <section class="scene" data-scene-root>
       <div data-scene-pin></div>

@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 // rail.mjs — the GSAP horizontal rail (assets/gsap/horizontal-rail.ts + css/rail.css) in Chromium, WebKit and
-// Firefox: measured travel and runway, the band-to-translate writer and its holds, RTL, re-measuring after a resize
-// and a late image, keyboard focus following into off-screen panels through each scroll authority, the reduced-motion
-// native scroller (at load and switched live), destroy() and re-creation, and no uncaught errors.
+// Firefox: measured travel and runway, the band-to-translate writers and their holds (the CSS scroll timeline where it
+// runs, the script elsewhere, and the two agreeing at every scroll offset), the handover to the script while Lenis
+// smooths, RTL, re-measuring after a resize and a late image, keyboard focus following into off-screen panels through
+// each scroll authority, the reduced-motion native scroller (at load and switched live), destroy() and re-creation,
+// and no uncaught errors.
 // Builds tests/fixtures/rail with Vite, serves the build with `vite preview`, prints one PASS/FAIL line per
 // check/page/browser, and exits 1 on any FAIL. Needs the Playwright browsers, so it is its own script, like
 // `test:scrub-video` — not part of `npm test`.
@@ -163,6 +165,122 @@ const CHECKS = {
           `${dir}the first panel starts flush at band 0 and the last ends flush at band 1`,
           near(start.firstGap, 0) && flush(end.lastGap) && near(end.translate, sign * end.travel),
           `first gap ${start.firstGap} px, last gap ${end.lastGap} px, end translate ${end.translate}`
+        ]
+      ]
+    }
+  },
+
+  writer: {
+    pages: PAGES,
+    async run(t) {
+      const { page } = await t.open()
+      const timelines = await page.evaluate(() => CSS.supports('animation-timeline: scroll()'))
+      await page.evaluate(() => window.__t.toBand(0.5))
+      const s = await state(page)
+      const want = timelines && t.page !== 'smoother' ? 'timeline' : 'script'
+      if (want === 'script') {
+        const why = timelines ? "under ScrollSmoother the content lags the native scroll" : 'no CSS scroll timelines here'
+        return [
+          [
+            `the script writes the track's translate (${why}), and no animation runs on it`,
+            s.writer === 'script' && s.animations.length === 0 && s.inline !== '',
+            `writer ${s.writer} · inline '${s.inline}' · animations ${s.animations.join(', ') || 'none'}`
+          ]
+        ]
+      }
+      // One animation, css/rail.css's, on the page's scroll timeline over the band's own scroll offsets.
+      const m = s.animations[0]?.match(/^rail-slide@ScrollTimeline (\S+) (\S+)$/)
+      return [
+        [
+          "a CSS scroll timeline moves the track (css/rail.css) over the band's scroll offsets, and the script writes nothing",
+          s.writer === 'timeline' &&
+            s.animations.length === 1 &&
+            !!m &&
+            near(parseFloat(m[1]), s.bandFrom, 0.5) &&
+            near(parseFloat(m[2]), s.bandTo, 0.5) &&
+            s.inline === '',
+          `writer ${s.writer} · animations ${s.animations.join(', ') || 'none'} · band ${s.bandFrom} → ${s.bandTo} · inline '${s.inline}'`
+        ]
+      ]
+    }
+  },
+
+  writers: {
+    pages: ['native', 'rtl', 'lenis'],
+    async run(t) {
+      const a = await t.open()
+      if (!(await a.page.evaluate(() => CSS.supports('animation-timeline: scroll()')))) return []
+      const b = await t.open({ query: '?timeline=off' })
+      // Before the scene, the head hold, across the band, the tail hold and past the scene.
+      const stops = [-0.1, 0, 0.02, 0.04, 0.06, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.94, 0.97, 1, 1.1]
+      let worst = 0
+      let miss = null
+      let writers = true
+      for (const p of stops) {
+        const [sa, sb] = await Promise.all(
+          [a.page, b.page].map(async (page) => {
+            await page.evaluate((v) => window.__t.toProgress(v), p)
+            return state(page)
+          })
+        )
+        writers &&= sa.writer === 'timeline' && sb.writer === 'script'
+        const d = Math.abs((sa.translate ?? 0) - (sb.translate ?? 0))
+        worst = Math.max(worst, d)
+        if ((d > 1 || sa.scrollY !== sb.scrollY) && !miss) {
+          miss = `p ${p}: timeline ${sa.translate} at ${sa.scrollY}, script ${sb.translate} at ${sb.scrollY}`
+        }
+      }
+      return [
+        [
+          'the timeline and the script put the track in the same place at every scroll offset: before, the holds, the band and after (±1 px)',
+          writers && !miss,
+          `${stops.length} offsets, worst ${Math.round(worst * 100) / 100} px${writers ? '' : ' · a page ran the wrong writer'}${miss ? ` · FIRST MISS ${miss}` : ''}`
+        ]
+      ]
+    }
+  },
+
+  handover: {
+    pages: ['lenis'],
+    async run(t) {
+      const { page } = await t.open()
+      if (!(await page.evaluate(() => CSS.supports('animation-timeline: scroll()')))) return []
+      await page.evaluate(() => window.__t.toBand(0.2))
+      const s = await state(page)
+      // A Lenis smooth scroll (lerped, from the main thread) from band 0.2 to 0.8, read at the end of every frame.
+      const rows = await page.evaluate((y) => window.__t.recordSmooth(y), s.bandFrom + 0.8 * (s.bandTo - s.bandFrom))
+      const smooth = rows.filter((r) => r.smooth)
+      const scripted = smooth.every((r) => r.animations === 0 && r.inline !== '' && Math.abs(parseFloat(r.inline) - r.translate) < 0.01)
+      const last = rows[rows.length - 1]
+      const worst = Math.max(...rows.map((r) => Math.abs(r.translate - r.want)))
+      const moved = Math.abs(last.translate - rows[0].translate)
+      // The timeline lets go while the scroll stands still, over a script value left from band 0.8: a native jump to
+      // band ½, then Lenis's class. The script's value for band ½ has to be there before that frame paints.
+      await page.evaluate((y) => window.__t.toScroll(y), s.bandFrom + 0.5 * (s.bandTo - s.bandFrom))
+      const flip = await page.evaluate(async () => {
+        const track = document.querySelector('[data-rail-track]')
+        const read = () => ({ translate: parseFloat(getComputedStyle(track).translate) || 0, inline: track.style.translate, animations: track.getAnimations().length })
+        const before = read()
+        document.documentElement.classList.add('lenis-smooth')
+        await window.__t.frames(2)
+        const during = read()
+        document.documentElement.classList.remove('lenis-smooth')
+        await window.__t.frames(2)
+        return { want: window.__t.scriptAt(scrollY), before, during, after: read() }
+      })
+      const held = [flip.before, flip.during, flip.after].every((r) => Math.abs(r.translate - flip.want) <= 1)
+      return [
+        [
+          'while Lenis smooths the script writes the track and the timeline lets go; at rest the timeline has it again, and no frame strays from the band (±1 px)',
+          s.writer === 'timeline' && smooth.length >= 5 && scripted && last.animations === 1 && worst <= 1 && moved > 100,
+          `${rows.length} frames, ${smooth.length} smoothing (script: ${scripted}) · moved ${Math.round(moved)} px · ` +
+            `worst |drawn − band| ${Math.round(worst * 100) / 100} px · at rest: ${last.animations} animation, inline '${last.inline}'`
+        ],
+        [
+          'the timeline letting go with the scroll at rest (over a stale script value) leaves the track where the band puts it',
+          held && flip.during.animations === 0 && flip.after.animations === 1,
+          `band ½ wants ${flip.want} · timeline ${flip.before.translate} (inline '${flip.before.inline}') → script ${flip.during.translate} ` +
+            `(inline '${flip.during.inline}') → timeline ${flip.after.translate}`
         ]
       ]
     }
@@ -533,7 +651,7 @@ const CHECKS = {
       // viewport, and WebKit's scroll anchoring moves the page by it to keep what the reader sees in place (not the
       // rail's doing: gone with `overflow-anchor: none`), so the check goes back to the same offset first.
       await page.evaluate(() => window.__t.remount())
-      await until(page, () => window.__t.state().inline !== '', null, 3000)
+      await until(page, () => window.__t.state().written, null, 3000)
       // A few frames for that scroll event to reach the authority (Lenis syncs its target from it).
       await page.evaluate(() => window.__t.frames(4))
       const shift = (await page.evaluate(() => Math.round(scrollY))) - before.scrollY
@@ -548,11 +666,13 @@ const CHECKS = {
         l.state === null &&
         l.pinAttr === '' &&
         l.tabindex === null &&
+        !l.timeline &&
+        l.animations === 0 &&
         l.pinSpacers === 0 &&
         l.pinParent
       return [
         [
-          'destroy() leaves no inline styles (not even an empty style attribute), state or pin-spacer, and a second destroy() is a no-op',
+          'destroy() leaves no inline styles (not even an empty style attribute), timeline, state or pin-spacer, and a second destroy() is a no-op',
           clean(left) && clean(left2) && twice === 'ok',
           `${JSON.stringify(left)} · second destroy: ${twice} · after re-create + destroy: ${JSON.stringify(left2)}`
         ],
@@ -612,16 +732,16 @@ async function main() {
           page: pageName,
           tab: browserName === 'webkit' ? 'Alt+Tab' : 'Tab',
           /** A fresh context on this page, the rail built and its first translate written (or none, reduced). */
-          async open({ reducedMotion = 'no-preference' } = {}) {
+          async open({ reducedMotion = 'no-preference', query = '' } = {}) {
             const context = await open.browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion })
             contexts.push(context)
             const page = await context.newPage()
             page.on('pageerror', (err) => errors.push(`${id}: ${err.message.split('\n')[0]}`))
             page.on('console', (msg) => msg.type() === 'error' && errors.push(`${id}: console: ${msg.text().split('\n')[0]}`))
-            await page.goto(`${base}/${pageName}.html`, { waitUntil: 'load' })
+            await page.goto(`${base}/${pageName}.html${query}`, { waitUntil: 'load' })
             await page.waitForFunction(() => !!window.__rail && !!document.querySelector('[data-scene-root]')?.dataset.sceneState)
             await page.evaluate(() => document.fonts.ready.then(() => window.__t.frames(3)))
-            if (reducedMotion !== 'reduce') await page.waitForFunction(() => window.__t.state().inline !== '')
+            if (reducedMotion !== 'reduce') await page.waitForFunction(() => window.__t.state().written)
             // Let the load-time refreshes (ScrollTrigger's own, ScrollSmoother's) finish before measuring.
             await page.waitForTimeout(400)
             return { page }
