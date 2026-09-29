@@ -56,11 +56,13 @@ First pick the lane, then the reference:
 
 | Clock | Job | Block (engine) |
 |---|---|---|
-| trigger | content entrance, load veil | `reveal` (motion: `Reveal`/`RevealItem`/`RevealVeil`; gsap: `reveal`; agnostic: `mountReveals`) |
+| trigger | content entrance; a load veil only as a recorded exception (it delays the LCP element) | `reveal` (motion: `Reveal`/`RevealItem`/`RevealVeil`; gsap: `reveal`; agnostic: `mountReveals`) |
 | trigger | an above-the-fold headline, its words in from the first frame | `split-words` (motion: `SplitWords`, a Server Component; agnostic: `splitWordsHTML`) |
 | trigger | a heading or paragraph revealed line by line below the fold | `split-reveal` (gsap: `splitReveal`, SplitText) |
 | trigger | a number counting up | `count-up` (motion: `CountUp`; agnostic: `mountCountUps`) |
-| scroll | parallax, fade and scale in, exit fade, reading progress, sticky stack, marquee | `scroll-effects` (css: `data-scroll-fx`; decoration, off under ScrollSmoother) |
+| scroll | parallax, fade and scale in, exit fade, reading progress, sticky stack, marquee | `scroll-effects` (css: `data-scroll-fx`; decoration; its `view()` effects are off under ScrollSmoother) |
+| scroll | JS layers: parallax where CSS can't run, a colour handed between sections, lines drawn on scroll | recipes `parallax` (gsap: `parallax`; motion: `Parallax`), `colour-track` (gsap: `colourTrack`), `draw-on-scroll` (gsap: `drawOnScroll`) |
+| render, trigger | a marquee that follows scroll speed, media that follows the pointer; one section per notch for a presentation | recipes `marquee-velocity` (gsap: `marqueeVelocity`), `cursor-media` (gsap: `cursorMedia`), `stepped-sections` (gsap: `steppedSections`) |
 | scroll | header ink per section | `header-theme` (motion: `useHeaderTheme`; agnostic: `mountHeaderTheme`) |
 | scroll | a horizontal rail of panels | `horizontal-rail` (gsap: `horizontalRail`, on `pinned-scene`) |
 | scroll | a section pulled to rest | `scroll-well` (motion: `ScrollWell`; gsap: `scrollWell`; agnostic: `createScrollWell`; native scrolling only) |
@@ -68,8 +70,8 @@ First pick the lane, then the reference:
 | media | a scrubbed video on a pinned scene | `scrub-video` (motion: `ScrubVideo`; gsap: `scrubVideo`) |
 | media | an image sequence scrubbed on a canvas | `frame-sequence` (motion: `FrameSequence`; gsap: `frameSequence`) |
 | media | an in-view background loop with a pause control | `loop-video` (motion: `LoopVideo`; gsap: `loopVideo`) |
-| — | scroll owner for a route | `smooth-lenis` + `smooth-react`, or `smooth-smoother` (GSAP-only pages) |
-| — | foundation | `config`, `base-css`, `gsap-setup` or `motion-provider` |
+| — | scroll owner for a route | `smooth-lenis` + `smooth-react`, or `smooth-smoother` (GSAP-only pages; start it with `createSmoother`) |
+| — | foundation | `config`, `base-css`, `gsap-setup` (plus `mount` on a vanilla GSAP page) or `motion-provider` |
 
 When a route already loads GSAP, its entrances use GSAP rather than adding Motion, and the reverse. One engine per
 element and per scene.

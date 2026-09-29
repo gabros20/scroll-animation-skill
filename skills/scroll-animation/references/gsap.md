@@ -56,7 +56,7 @@ setupGsap({ plugins: [SplitText] })         // once, client-side, before any blo
 'use client'
 const root = useRef<HTMLElement>(null)
 useGSAP(() => {
-  const scene = pinnedScene(root.current!, { onProgress: (p) => tl.progress(p) })
+  const scene = pinnedScene(root.current!)   // a timeline on it: onBuild and onProgress, §4
   return () => scene.destroy()
 }, { scope: root })
 ```
@@ -150,7 +150,7 @@ const scene = pinnedScene(root, {
 - **Refresh after late content** (mistake #7): fonts, images without dimensions, a late mount. The blocks keep
   themselves fresh (scenes share a ResizeObserver on `<body>`, a rail watches its track, `createSmoother` refreshes on
   a content resize), but your own triggers need `ScrollTrigger.refresh()`: a content shift above one left it 300 px
-  stale (spike S5).
+  stale (spike S5: S1–S7 are the skill's own browser measurements, September 2026).
 - **Read progress in the tick after `ScrollTrigger.update`**, never straight after a programmatic `scrollTo`, where it
   still held the pre-jump value, 825 px off (S5).
 - **A start before scroll 0 jumps on load** (mistake #8): `start: 'clamp(top bottom)'` (3.12+) keeps it on the page.
@@ -217,6 +217,7 @@ reader to the top.
 - **Sticky never sticks inside `#smooth-content`** (S2), so ScrollSmoother pages pin through ScrollTrigger.
 - **Never nest a scene in a GSAP `pin: true`**: the pin-spacer is fixed or transformed while pinned, and sticky
   resolves against it ([scenes.md](scenes.md) §5). **Never animate the pinned element itself**; animate its children.
+  ScrollTrigger measures the pin ahead of time, and GSAP's docs say animating it throws those measurements off.
 - `pinSpacing` defaults to `false` when the pin's container is `display: flex`. `pinReparent`, which moves the pin to
   `<body>` while pinned, is a last resort: keep scenes out of transformed ancestors instead (invariant 5).
 - **Observed on 3.15.0:** `smooth/smoother.ts` passes `autoResize: false`, which the types declare and the docs'
@@ -242,9 +243,9 @@ From gsap.com/resources/st-mistakes, with the rule this skill applies:
 | 10 | a longer `duration` to slow a scrub | a longer `end` (§4) |
 | 11 | triggers left behind by an SPA route | `useGSAP` or `mount()` kills them on leave and hide (§2, §3) |
 
-Two corrections. The page's #6 doesn't say which way `refreshPriority` runs, and GreenSock's own skill gets it
-backwards (§6). And #11 sometimes settles for `ScrollTrigger.refresh()`; a route shown again under `<Activity>`
-re-creates its triggers instead, through a fresh mount.
+Two notes. #6 says a higher `refreshPriority` calculates sooner, as the ScrollTrigger docs do; GreenSock's own
+`gsap-skills` gets it backwards (§6, §12). And #11 sometimes settles for `ScrollTrigger.refresh()`; a route shown
+again under `<Activity>` re-creates its triggers instead, through a fresh mount.
 
 ## 11. The plugins
 
@@ -257,10 +258,11 @@ All are in the `gsap` package and free: import from `gsap/<Plugin>` and pass to 
 | DrawSVG | strokes drawn as the reader scrolls | `draw-on-scroll` ([layered-visuals.md](layered-visuals.md) §9) |
 | MorphSVG | one path's `d` into another's; `convertToPath()` first for circles and rects | no block: log `shapeIndex` or `precompile` once, then hard-code the value |
 | Observer | gestures (wheel, touch, pointer), not scroll position | `stepped-sections`; `ScrollTrigger.observe()` is the same, with nothing more to register |
-| ScrollSmoother | the page's scroll authority, `data-speed` and `data-lag` | `smooth-smoother` ([scroll-authority.md](scroll-authority.md) §5) |
+| ScrollSmoother | the page's scroll authority, `data-speed` and `data-lag` | `smooth-smoother`: start it with `createSmoother`, never by hand ([scroll-authority.md](scroll-authority.md) §5) |
 
-SplitText runs after `document.fonts.load()`, because Safari 26 never fires the event `autoSplit` waits for (S6a), and
-keeps `aria: 'auto'` for headings (S6b). CustomEase comes registered by `setupGsap`.
+SplitText runs after `document.fonts.load()`: measured on 3.15.0, WebKit 26.6 (Playwright's build) never fired the
+`loadingdone` event that `autoSplit` waits for (S6a, [text.md](text.md) §4). It keeps `aria: 'auto'` for headings
+(S6b). CustomEase comes registered by `setupGsap`.
 
 ## 12. Working alongside `gsap-skills`
 

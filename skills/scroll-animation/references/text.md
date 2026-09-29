@@ -31,13 +31,15 @@ checked for layout shift.
 |---|---|---|
 | Above the fold: the hero headline, a lede | `split-words`: `SplitWords` (a Server Component) or `splitWordsHTML()` | words in the HTML, CSS keyframes from the first frame, no JavaScript |
 | Below the fold, on a GSAP route | `split-reveal`: `splitReveal(el, options)` | GSAP SplitText, at the trigger line, once the font is in |
-| Below the fold, on a Motion-only route | `reveal`: one `RevealItem` per authored line ([entrances.md](entrances.md) §3) | the group's trigger; or load GSAP for that one section |
+| Below the fold, on a Motion-only route | `reveal`: one `RevealItem` per authored line ([entrances.md](entrances.md) §3) | the group's trigger |
 
 - `SplitWords` has no trigger: its words start at first paint, so below the fold they finish before anyone scrolls
   there.
 - `split-reveal` never goes above the fold: it waits for its script and its font, and the headline there is usually
   the LCP element (the largest thing in the first screen), which must never wait.
-- A second engine for one section is a scoped island: one engine per element, and the rest of the page unchanged.
+- **Splitting at the browser's line breaks needs SplitText.** On a Motion-only route that means adding GSAP: about
+  49 kB gzipped for GSAP, ScrollTrigger and SplitText (3.15.0's minified files). A route uses the engine it already
+  loads, so this is an exception: record it in `ANIMATION.md` with its cost, and keep one engine per element.
 - `SplitWords` takes plain strings. A heading with a link or an `<em>` in it takes `split-reveal` below the fold, or
   stays unsplit above it.
 
@@ -60,8 +62,8 @@ It renders, byte for byte, what `splitWordsHTML(text, options)` from `split-word
 - Import `css/split.css` once. Each word rises `--split-distance` (0.4em) over 1.3 s on the entrance curve, with the
   short late fade, starting at `--split-delay` plus `--i` times `--split-stagger` (defaults 0 and 0.067 s).
 - **Nothing waits**: not the pre-JS gate, not a font, not hydration. Measured in Chromium, WebKit and Firefox (spike
-  S6d): with JavaScript off, or the bundle 2 s late, the words start in the first frame and finish before any script
-  runs.
+  S6d: S1–S7 are the skill's own browser measurements, September 2026): with JavaScript off, or the bundle 2 s late,
+  the words start in the first frame and finish before any script runs.
 - **Keep render-blocking scripts out of `<head>`.** A classic `<script src>` there, answered 2 s late, held the first
   paint and these animations to 2 s in every engine.
 - **No layout shift.** Only `transform` and `opacity` move, and the words are inline-block with or without the

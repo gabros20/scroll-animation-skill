@@ -74,8 +74,9 @@ const { scrollYProgress } = useScroll({ target: wrapperRef, offset: RANGE })
   input range, never with an ease ([craft.md](craft.md) §4).
 - **Smooth once.** On a native route, a `useSpring` on the visual consumer is the smoothing; keep it over-damped.
   Under Lenis, read raw `useScroll()`: Lenis already smooths, and a spring on top trailed the scroll by 16–18 frames,
-  about 0.3 s (spike S4). Under ScrollSmoother, `useScroll` reads the unsmoothed scroll, up to 244 px ahead of the
-  screen (S2), so scroll-linked values there come from ScrollTrigger.
+  about 0.3 s (spike S4: S1–S7 are the skill's own browser measurements, September 2026). Under ScrollSmoother,
+  `useScroll` reads the unsmoothed scroll, up to 244 px ahead of the screen (S2), so scroll-linked values there come
+  from ScrollTrigger.
 - **A spring never feeds a threshold.** It settles across the boundary and flips it back and forth. Modes, acts and
   `inert` read exact progress.
 - **Units by job.** Progress (0 to 1) drives visuals inside one scene's range; thresholds and tolerances are pixels,
@@ -85,13 +86,26 @@ const { scrollYProgress } = useScroll({ target: wrapperRef, offset: RANGE })
 
 ## 4. Never bind a scroll value to style
 
-Measured on Motion 13.4 (spike S3, Chromium and WebKit): bound through `style`, a scroll-linked `opacity`, `clipPath`,
-`filter`, `backgroundColor` or `transform` is handed to a native scroll timeline when `useScroll` has no target or uses
-one of its preset offsets. Motion passes `useTransform`'s input range through as keyframe offsets with nothing at 0 and
-1, so outside the range the element drifts back to its first-render value: an opacity that should hold at 1 fades back
-to 0, pinned or not. Padding the input to `[0, …, 1]` fixes the ends, but the preset ranges still match Motion's own
-maths for only one element size. `x`, `y` and `scale` are never handed over, but they run on the main thread every
-frame ([performance.md](performance.md) §4).
+Measured on Motion 13.4 (spike S3, Chromium and WebKit). Bound through `style`, a scroll-linked `opacity`, `clipPath`,
+`filter`, `backgroundColor` or `transform` is handed to a native scroll timeline when `useScroll` has no target, or
+uses one of Motion's four preset offsets:
+
+| `offset` | Native range |
+|---|---|
+| `['start end', 'end end']` | `entry` |
+| `['start start', 'end start']` | `exit` |
+| `['start start', 'end end']` | `contain` |
+| `['end start', 'start end']` | `cover` |
+
+The common `['start end', 'end start']` is not one of them.
+
+- **Outside the input range the element drifts back.** Motion passes `useTransform`'s input range through as keyframe
+  offsets, with nothing at 0 and 1, so past the range the element returns to its first-render value: an opacity that
+  should hold at 1 fades back to 0, pinned or not.
+- **Padding the input to `[0, …, 1]` fixes the ends, not the size.** `entry` and `exit` match Motion's own maths only
+  for an element shorter than the viewport, and `contain` only for one taller.
+- **`x`, `y` and `scale` are never handed over**, but they run on the main thread every frame
+  ([performance.md](performance.md) §4).
 
 So write every scroll-linked style by hand.
 

@@ -62,7 +62,8 @@ without it.
 - **`animation-range`** picks a part of the pass: `cover` (first pixel in to last pixel out), `entry`, `exit`,
   `contain`, and `exit-crossing` (measured against the element's own height). Defaults: parallax `cover` 0–100%, so it
   sits at its layout position when centred; fade-in and scale-in `entry` 0–100%; exit-fade `exit-crossing` 10–35%.
-  Ranges use the untransformed box, so the drift and the scale never move their own range (spike S7a).
+  Ranges use the untransformed box, so the drift and the scale never move their own range (spike S7a: S1–S7 are the
+  skill's own browser measurements, September 2026).
 - **The top edge is the header's bottom edge.** `view()` measures inside the `scroll-padding`, which
   `css/animation.css` sets from `--header-h`.
 - **`animation-timeline` and `animation-range` go after the `animation` shorthand**, which resets both (S7a).
@@ -105,8 +106,12 @@ without it.
   a line) is driven from Lenis's tick by GSAP or Motion.
 - **ScrollSmoother: off.** `view()` never progresses inside `#smooth-content` (S2), so on
   `html[data-scroll-authority="smoother"]` the block shows the static state, and the stack is a column, since sticky
-  never sticks there. A fixed progress bar outside the wrapper keeps running: the root still scrolls. Parallax there is
-  `data-speed` or the GSAP recipe ([layered-visuals.md](layered-visuals.md) §2).
+  never sticks there. A fixed progress bar outside the wrapper keeps running on the page's native scroll, a little
+  ahead of the smoothed content. Parallax there is `data-speed` or the GSAP recipe
+  ([layered-visuals.md](layered-visuals.md) §2).
+- **Start ScrollSmoother with `createSmoother`** ([scroll-authority.md](scroll-authority.md) §5). One started by hand
+  leaves no stamp, so the block treats the page as native, and `fade-in` content stays at opacity 0: `view()` is stuck
+  at 0 there.
 
 ## 5. Reduced motion
 
@@ -147,7 +152,8 @@ travel, and Firefox (with timelines on) freezes them (S7d). Each stack scopes it
 - **Cards at most `calc(100svh - var(--header-h))` tall** stay whole while stuck; a taller one is covered before its
   bottom edge shows.
 - **The last card leaves with the stack** as soon as it arrives: end padding doesn't hold it, a spacer does (above).
-- **12 cards have names.** Later cards stick but don't shrink; for more, add their rules and names to `timeline-scope`.
+- **12 cards have names.** In a longer stack the 12th card and every card after it stick but don't shrink; for more,
+  add their rules and names to `timeline-scope`.
 - **A tuned range ends before the next card sticks**, for the same reason.
 - **Dimming fades the whole card**, background included, so the card beneath shows through. Keep `--fx-fade-from` at
   1 on opaque cards.
@@ -204,6 +210,7 @@ has passed under the header, while most of it is still on screen. `--fx-range-st
 - [ ] Every named timeline has a `timeline-scope` per instance, checked in Chromium (§2).
 - [ ] No `overflow: hidden` or `overflow-x: hidden` between an effect and the scroller (§6).
 - [ ] Reduced motion resets with `animation: none` (§5).
-- [ ] Lenis: CSS timelines for decoration only. ScrollSmoother: none inside the content (§4).
+- [ ] Lenis: CSS timelines for decoration only. ScrollSmoother: started with `createSmoother`, and none inside the
+      content (§4).
 - [ ] Stack cards fit under the header, a spacer holds the last one, opaque cards don't dim (§7).
 - [ ] Every marquee has its pause button and no link that only it shows (§8).

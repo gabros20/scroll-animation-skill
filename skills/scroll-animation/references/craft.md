@@ -42,7 +42,8 @@ can't. That is no licence for chrome the reader sees on every page load.
 Every motion needs a purpose: where something came from, what changed, what to look at, or a first-time moment that
 sets the tone. "It looks cool" survives only in the last row.
 
-A brief's adjectives are not numbers. Convert them before choosing any:
+A brief's adjectives are not numbers. Convert them before choosing any. These pairings are the skill's taste
+defaults, not measurements:
 
 | The brief says | Build |
 |---|---|
@@ -113,8 +114,8 @@ A brief's adjectives are not numbers. Convert them before choosing any:
 
 ## 5. Staggers
 
-- **30–80 ms between items** (`MOTION.lineStagger` is 67 ms). Up to about 50 ms reads as one group; past about 150 ms
-  it reads as a wait, not a cascade.
+- **30–80 ms between items** (`MOTION.lineStagger` is 67 ms). As a taste default, not a measurement: up to about
+  50 ms reads as one group, and past about 150 ms it reads as a wait, not a cascade.
 - **Scale it to the count.** Twenty words at 67 ms spend 1.3 s just starting: give a lede 30–40 ms, or reveal it by
   line. A stagger is decoration, so nothing waits on it: a link is clickable while it plays.
 - **A scroll-driven stagger has no time.** Convert it before trusting it: stagger in ms ≈ (stagger ÷ total) × runway

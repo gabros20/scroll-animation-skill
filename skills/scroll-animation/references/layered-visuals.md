@@ -45,9 +45,11 @@ section's ink.
 The recipes are GSAP files to copy and adapt (`scroll-animation add parallax`); `<Parallax>` is the Motion twin. Four
 rules hold for all of them:
 
-- **Create them after the route's scroll authority.** The scroll-linked ones read `<html data-scroll-authority>` as
-  they build: 0.5 s of catch-up under native scrolling (what `scrub: 0.5` gives), none under Lenis or ScrollSmoother,
-  which already smooth.
+- **Create them after the route's scroll authority.** The scroll-linked ones ask `getScrollAuthority()` as they
+  build (the `<html data-scroll-authority>` stamp, or the `lenis` class a site's own Lenis sets): 0.5 s of catch-up
+  under native scrolling (what `scrub: 0.5` gives), none under Lenis or ScrollSmoother, which already smooth. A
+  ScrollSmoother started by hand leaves no stamp and reads as native: start it with `createSmoother`
+  ([scroll-authority.md](scroll-authority.md) §5).
 - **Call them outside your own `gsap.matchMedia()` callbacks.** GSAP 3.15 throws the reader to the top when a
   ScrollTrigger is created or killed during a rebuild, so their triggers live outside it ([gsap.md](gsap.md) §7).
 - **One writer per property.** Each owns the properties its header names, and `destroy()` puts back what the page
@@ -75,16 +77,18 @@ A layer that moves slower than the page reads as further away.
   ([accessibility.md](accessibility.md) §7).
 - **GSAP** re-measures at every refresh with the drift taken off: a translate on a trigger element shifts its own
   start and end (−96 px at centre, measured). Its `translate` composes with the element's `transform`.
-- **Motion** writes the transform by hand from `useScroll`, because a bound `style` stops at the input range and drifts
-  back (spike S3, [motion.md](motion.md) §4): a spring on native routes, the raw scroll under Lenis. **Never under
-  ScrollSmoother**, where `useScroll` reads the unsmoothed scroll (S2). It owns its element's `transform`, so style it
-  through `className` and put any other mover on a wrapper.
+- **Motion** writes the transform by hand from `useScroll`: a bound `style` stops at the input range and drifts back
+  (spike S3: S1–S7 are the skill's own browser measurements, September 2026; [motion.md](motion.md) §4). It
+  uses a spring on native routes and the raw scroll under Lenis. **Never under ScrollSmoother**, where `useScroll`
+  reads the unsmoothed scroll (S2). It owns its element's `transform`, so style it through `className` and put any
+  other mover on a wrapper.
 - **`data-speed`** is the element's own speed: `0.8` moves at 0.8 of the page's, like a recipe speed of 0.2. `"auto"`
   moves an image inside its frame, and `data-lag` is seconds of catch-up. Wrap above-the-fold speeds in `clamp()` (GSAP
   3.12+) so they start in place: `data-speed="clamp(0.75)"`. Effects must not nest. Reduced motion runs the smoother
   in native mode, with no effects. Observed on 3.15.0: switching it on live leaves an identity `transform` and
   `will-change: transform` inline on each effect (from ScrollSmoother's `kill()`): nothing moves, a known leftover.
-- **Reduced motion: no drift** and nothing inline, in every engine, followed live.
+- **Reduced motion: no drift** and nothing inline, in every engine, followed live, except the ScrollSmoother leftover
+  above.
 - **Never a drift on an element something else moves** (a reveal, a pin, a scene): put it on a wrapper or the media
   inside.
 
@@ -219,14 +223,14 @@ const stop = mountHeaderTheme(header)        // vanilla and GSAP pages: page chr
 const ink = useHeaderTheme(headerRef)        // React: the token, the default, or null on the server
 ```
 
-- **The probe is a 1 px IntersectionObserver band** at the header's probe line, with no scroll listener under any
+- **The probe is a 1 px IntersectionObserver strip** at the header's probe line, with no scroll listener under any
   authority. The header takes the token of the themed section under the line as `data-header-ink`, written only when
   it changes. IntersectionObserver fires on what the reader sees, so the same code is exact under native scrolling,
   Lenis and ScrollSmoother. Measured under ScrollSmoother, `window.scrollY` disagreed with the screen on 105–214
   frames per pass, and the ink never followed it; across the measured runs it stayed within a frame of the screen.
 - **The line** is `line` × the header's height from its top: 1 (the default) is its bottom edge. It is read from
   layout (`offsetHeight` and the top below), so a transform on the header (an entrance, hide-on-scroll) never moves it.
-  A resize rebuilds the band, and the observer's own bounds correct it when iOS's toolbars thicken it.
+  A resize rebuilds the strip, and the observer's own bounds correct it when iOS's toolbars thicken it.
 - **Fixed or sticky.** A fixed header's top is its `offsetTop`. A sticky one is probed where it sticks, at its CSS
   `top`: once stuck, its `offsetTop` runs with the scroll. Until it sticks (below a banner, say), the line waits where
   it will stick. Under ScrollSmoother the header is fixed and outside `#smooth-wrapper`, since sticky never sticks
@@ -267,7 +271,7 @@ moves a whole viewport, and trackpad momentum is swallowed), and it fights anyth
 only when the brief is explicitly a presentation: a deck, a tour, one screen per idea. The cheaper choice is CSS scroll
 snap, `scroll-snap-type: y proximity` on `html` and `scroll-snap-align: start` on each section: no JavaScript, and the
 reader keeps their pace. (`mandatory` can strand content in a section taller than the viewport.) Never snap and step
-together.
+together: a snap re-targets every scroll the recipe writes.
 
 ```ts
 const deck = steppedSections(main)      // [data-step] sections; .index .goTo(i) .next() .previous() .destroy()
@@ -281,7 +285,8 @@ const deck = steppedSections(main)      // [data-step] sections; .index .goTo(i)
   tween of the page's scroll that yields at once to any scroll it didn't write.
 - **Left alone:** keys in fields and widgets, Space on a button, a nested scroller that can still scroll, Ctrl+wheel,
   horizontal swipes, pinches, a zoomed-in page. Past the last stop a gesture scrolls on natively.
-- **Native scrolling only:** under Lenis or ScrollSmoother, which own the wheel, it steps nothing and warns.
+- **Native scrolling only:** under Lenis or ScrollSmoother, which own the wheel, it steps nothing and warns. It finds
+  the owner the way the recipes do (§1), so start a ScrollSmoother with `createSmoother`.
 - **Reduced motion and no JavaScript:** normal scrolling; the handle's methods jump.
 
 ## 12. Horizontal rails
@@ -293,7 +298,8 @@ on `pinned-scene`). Its markup, measured travel, RTL, focus-follow and reduced-m
 ## Traps
 
 - [ ] Each effect runs on the cheapest engine that does it right (§1).
-- [ ] Recipes start after the scroll authority, outside your `gsap.matchMedia()` callbacks (§1).
+- [ ] Recipes start after the scroll authority (a ScrollSmoother through `createSmoother`), outside your
+      `gsap.matchMedia()` callbacks (§1).
 - [ ] One writer per property: no drift on an element a reveal, pin or scene moves (§2).
 - [ ] Parallax speeds within ±0.2; `clamp()` on above-the-fold `data-speed`; no Motion `useScroll` under
       ScrollSmoother (§2).

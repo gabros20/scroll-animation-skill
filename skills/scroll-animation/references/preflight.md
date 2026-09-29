@@ -65,7 +65,8 @@ defaults; a route may differ from the site (the journal stays Reading on an Expr
 Exactly one owner per page: native, Lenis or ScrollSmoother. Default by profile; the table of trade-offs is in
 [scroll-authority.md](scroll-authority.md). Record it per route (or route group), because a reading route and a
 cinematic home page often want different answers. **If the project already runs a smoother, that is a keep, adapt or
-replace question (§3.5), not a default to override.**
+replace question (§3.5), not a default to override.** Start ScrollSmoother with `createSmoother`, never by hand: the
+blocks read the owner from the stamp it writes ([scroll-authority.md](scroll-authority.md) §5).
 
 ### 3.3 Engines
 
