@@ -36,7 +36,7 @@ positional movement that still tells the story:
 | Parallax, velocity effects | none |
 | Colour track | stays, exact, with no catch-up: a colour change isn't movement |
 | Draw on scroll | fully drawn |
-| Smooth scroll (Lenis, ScrollSmoother) | native scrolling, followed live: Lenis is torn down; ScrollSmoother runs in its native mode (`smooth: 0`, no `data-speed` / `data-lag`) |
+| Smooth scroll (Lenis, ScrollSmoother) | native scrolling, followed live: Lenis is torn down; ScrollSmoother, started by `createSmoother`, runs in its native mode (`smooth: 0`, no `data-speed` / `data-lag`) |
 | Page transition | an instant swap, or a crossfade without movement |
 | WebGL world | the poster image; the canvas is never mounted |
 | Loop video, marquee | stopped, poster or first frame; `marquee-velocity`'s toggle can still start it, since clipped items only show by moving |
@@ -52,8 +52,8 @@ Each engine covers only its own animations. Anything you write by hand checks th
 
 - **CSS.** Put decorative keyframes inside `@media (prefers-reduced-motion: no-preference)`, or reset them under
   `reduce` with `animation: none`. For scroll-driven animations that shorthand is a full reset, timeline and range
-  included (spike S7e). Never reset with a near-zero duration (the animation keeps scrubbing) or with
-  `animation-timeline: none` (it holds the last keyframe).
+  included (spike S7e: S1–S7 are the skill's own browser measurements, September 2026). Never reset with a near-zero
+  duration (the animation keeps scrubbing) or with `animation-timeline: none` (it holds the last keyframe).
   ```css
   @media (prefers-reduced-motion: reduce) {
     .parallax { animation: none; }

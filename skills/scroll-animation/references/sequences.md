@@ -56,11 +56,12 @@ scroll-animation media sequence turn.mov --out public/media/turn --frames 120 --
 <FrameSequence manifest="/media/turn/manifest.json" mobile progress={progress} label="The camera, turning" />
 ```
 
-`progress` is a MotionValue or a number, read by hand, never bound to a style (S3). The canvas is `role="img"` named by
-`label`, and fills its box (`display: block`, 100% × 100%): size the box. `ref` reaches the canvas, `sequenceRef` the
-handle. It builds in a layout effect and is destroyed on unmount and on an Activity hide; `manifest`, `mobile` and
-`position` compare by content, so an inline object doesn't rebuild it. The page provides any poster behind the canvas
-for no-JS and the time before `ready`: the block renders only the canvas.
+`progress` is a MotionValue or a number, read by hand, never bound to a style (spike S3: S1–S7 are the skill's own
+browser measurements, September 2026). The canvas is `role="img"` named by `label`, and fills its box
+(`display: block`, 100% × 100%): size the box. `ref` reaches the canvas, `sequenceRef` the handle. It builds in a
+layout effect and is destroyed on unmount and on an Activity hide; `manifest`, `mobile` and `position` compare by
+content, so an inline object doesn't rebuild it. The page provides any poster behind the canvas for no-JS and the time
+before `ready`: the block renders only the canvas.
 
 ```ts
 frameSequence(canvas, { manifest, mobile: true, trigger: '#turn' })   // its own ScrollTrigger: 'top top' to 'bottom bottom'

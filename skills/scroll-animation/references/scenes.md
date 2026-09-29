@@ -45,13 +45,14 @@ and reduced-motion collapse, checked in a browser.
 
 `css/scene.css` gives both engines this geometry (import it after `animation.css`). Motion renders it with
 `<PinnedScene pinned={…}>{acts}</PinnedScene>`, where `pinned` may also be a function of
-`{ band, progress, mode, reduced }` (the first two exact MotionValues). With `usePinnedScene()` you render the root,
-pin and content markup yourself (`rootRef`, `pinRef`), and the hook keeps `data-scene-state` current. GSAP takes the
-markup with `pinnedScene(root, options)`. The maths is `assets/scene.ts`.
+`{ band, progress, mode, reduced }` (the first two exact MotionValues; the band is the scrub between the holds, §3).
+With `usePinnedScene()` you render the root, pin and content markup yourself (`rootRef`, `pinRef`), and the hook
+keeps `data-scene-state` current. GSAP takes the markup with `pinnedScene(root, options)`. The maths is
+`assets/scene.ts`.
 
 - **Measure the wrapper, never the pin.** A sticky element stops moving, so its rect is no ruler. Progress is
   `-rect.top / (height − innerHeight)`, which a ScrollTrigger from `'top top'` to `'bottom bottom'` matches once
-  refreshed (S5).
+  refreshed (spike S5: S1–S7 are the skill's own browser measurements, September 2026).
 - **The pin is `100lvh`**: a scene is read while scrolling, when iOS collapses its toolbars. An `svh` pin falls short
   and shows the page along the bottom; `dvh` resizes the pin, and every framing read, on each toolbar animation.
 - **The content's `-100lvh` margin uses the pin's unit**, so the wrapper is exactly as tall as the content; mixing
@@ -113,8 +114,8 @@ p = 0   headExit                                  tailEnter       1
 `onProgress(p)` and `scene.progress()` are **exact**, and logic reads them: modes, acts, `inert`, URLs, analytics. A
 spring or lerp settles *across* a threshold and flips it back and forth, so it never feeds one.
 
-Smooth once per value path. Under Lenis or ScrollSmoother the scroll is already smooth: write the exact value. On a
-native route, smooth only visuals at the consumer (`useSpring` on a visual, a numeric `scrub` on a tween).
+Smooth once per value path: under Lenis or ScrollSmoother, which already smooth, write the exact value; on a native
+route, smooth only visuals, at the consumer (`useSpring`, a numeric `scrub`).
 
 In GSAP, `onProgress` runs inside ScrollTrigger's update, so with Lenis on `gsap.ticker` it lands in the scroll's frame
 (S4). The ScrubVideo backdrop follows the playhead instead (`onPlayhead`): what must match the picture reads the
@@ -141,22 +142,20 @@ Write scroll-linked styles by hand in `onProgress`, never bound through Motion's
 <PinnedScene onProgress={(p, scene) => { glow.current!.style.opacity = String(ramp(scene.band())) }}>
 ```
 
-Motion 13.4 hands a bound `opacity`, `clipPath`, `filter`, `backgroundColor` or `transform` to a native timeline whose
-keyframes stop at the input range; past it the element drifts back to its first-render value. The error measured up to
-1.00, pinned or not, in Chromium and WebKit, and the hand-written control was exact (S3). `useScroll` with no target or a
-preset offset (the scene's `['start start', 'end end']` is one) gets promoted.
-
-**The alternative** pads every input range to 0 and 1 (`[0, .2, .6, 1] → [0, 0, 1, 1]`). It fixes the ends but not a
-preset whose size class misses the subject (0.785 off inside the range), so it is the fallback.
+Motion 13.4 can hand a bound style to a native timeline that drifts back to its first-render value past the input
+range, pinned or not, and the scene's `['start start', 'end end']` is one of the offsets it hands over (S3,
+[motion.md](motion.md) §4). Padding the input range to 0 and 1 fixes the ends but not the size mismatch, so it is only
+the fallback.
 
 - Write the first value too: Motion's `onProgress` fires on change, and `onRehydrate` (with `p` and `band`) runs on
   mount.
 - Quantise a coarse write (a colour to 1/256) and skip repeats, so a still frame writes nothing.
 - A binding and a hand writer may share a node, never a property: the next render clobbers the hand write.
 - Reduced motion is the writer's job, because `MotionConfig` never reaches a hand write: read `scene.reduced()` or
-  `useReducedMotionLive()` (`motion/useReducedMotionLive.ts`). Motion 13.4's `useReducedMotion()` reads once per mount.
+  `useReducedMotionLive()`, never Motion's `useReducedMotion()`, which reads once per mount
+  ([motion.md](motion.md) §2).
 
-A paused GSAP timeline is the same pattern: `pinnedScene(root, { onProgress: (p) => tl.progress(p) })`.
+A paused GSAP timeline is the same pattern, built in `onBuild` ([gsap.md](gsap.md) §4).
 
 ## 7. Camera framing
 
@@ -187,8 +186,8 @@ pin. Reduced motion holds the head shot.
 
 The `scroll-well` recipe pulls the scroll toward a section's rest while the section holds most of the view. Each frame
 it adds one small step to the scroll as it stands, and scrolling away releases it for the visit: the reader always
-wins. A section that fits the viewport rests centred. A taller one rests anywhere it fills the view, and outside that
-band the well reaches for its nearer edge. Use it on a composition meant to be seen whole, never on running text.
+wins. A section that fits the viewport rests centred. A taller one rests anywhere it fills the view; short of that,
+the well reaches for its nearer edge. Use it on a composition meant to be seen whole, never on running text.
 
 ```tsx
 <section className="feature"><ScrollWell />…</section>               // Motion: the well pulls its parent
@@ -205,9 +204,9 @@ const well = createScrollWell(el)                                    // no engin
   frame at a time, so call the handle's `suspend()` just before a router jump, `scrollIntoView` or the authority's
   `scrollTo`. Where there is no handle (`<ScrollWell />`, `mount()`), call `suspendScrollWells()`.
 - **Native scrolling only.** Under Lenis or ScrollSmoother it pulls nothing and warns once: a second writer would fight
-  the smoother. It learns the owner from `<html data-scroll-authority>`, or, for a site's own Lenis, from the `lenis`
-  class Lenis puts on `<html>` ([brownfield-coexistence.md](brownfield-coexistence.md) §4). The audit's
-  `lenis-with-scroll-well` flags a well in a Lenis project.
+  the smoother. It reads the owner from `<html data-scroll-authority>`, or from the `lenis` class a site's own Lenis
+  sets ([brownfield-coexistence.md](brownfield-coexistence.md) §4). A ScrollSmoother started by hand leaves no stamp:
+  start it with `createSmoother` ([scroll-authority.md](scroll-authority.md) §5).
 - Under reduced motion (live) it doesn't pull.
 
 ## 9. Creation order and refresh
@@ -216,14 +215,11 @@ GSAP only (the page-wide rules are in [gsap.md](gsap.md) §5–§7):
 
 - **Create scenes in page order** (or set `refreshPriority`: higher refreshes earlier), so ScrollTrigger refreshes them
   top to bottom.
-- **Keep ScrollTrigger fresh.** A layout change above a range with no resize (a late image, a font, an accordion) left
-  it 300 px stale (S5). `pinnedScene` shares one ResizeObserver on `<body>` and refreshes 150 ms after the last change;
+- **Keep ScrollTrigger fresh**: a layout change above a range with no resize (a late image, a font, an accordion)
+  leaves it stale. `pinnedScene` shares one ResizeObserver on `<body>` and refreshes 150 ms after the last change;
   call `scene.refresh()` after changing a scene's own content. Resumes read the rect, never the trigger.
-- **Read progress in the tick after `ScrollTrigger.update`**, never straight after a programmatic `scrollTo` (825 px
-  stale).
-- **Build only on `MOTION_CONDITIONS`.** When a `gsap.matchMedia` condition changes, a trigger created in the rebuild
-  leaves the page at scroll 0 (GSAP 3.15), so a breakpoint condition throws a rotating iPad to the top. Create scenes
-  outside your own `matchMedia` callbacks, and branch on `isDesktop()` inside a build.
+- **Build only on `MOTION_CONDITIONS`**, outside your own `matchMedia` callbacks, and branch on `isDesktop()` inside a
+  build: a breakpoint condition throws a rotating iPad to the top (GSAP 3.15).
 
 ## 10. Reduced-motion collapse
 
@@ -253,7 +249,7 @@ Sections in `data-scene-content` ride over the render:
   inside it; clip with `overflow: clip`.
 - **Sized in `svh`** (or fluid heights) while the pin is `lvh`, so a one-screen section never resizes mid-scroll.
 - **Exits are an exit fade on the group**: `data-scroll-fx="exit-fade"` ([css-scroll-effects.md](css-scroll-effects.md)
-  §9), which stays gone past its range. Under ScrollSmoother, where CSS timelines don't run, write the fade in
+  §9), which stays gone past its range. Under ScrollSmoother, where `view()` doesn't run, write the fade in
   `onProgress` (§6). Entrances stay triggered reveals.
 
 ## 12. Travel on a scaled layout
@@ -271,8 +267,8 @@ scales**: a product crossing the hero, a parallax range, a ScrollTrigger `end`. 
 
 - **Measured distances need nothing**: `scrollWidth − innerWidth` is already scaled. Make it a function (GSAP) or
   re-measure in `onMeasure`; a rail measures its own (§14).
-- **An entrance distance isn't travel.** `--reveal-distance` on the item takes px or a scaled length, which every
-  engine reads when the reveal starts ([entrances.md](entrances.md) §4).
+- **An entrance distance isn't travel**: `--reveal-distance` takes px or a scaled length ([entrances.md](entrances.md)
+  §4).
 - **Pass `el` inside a limited subtree** (`fluid-grow-until-*`, `fluid-off`, `fluid-scope`), so
   `scaledPx(48, 'ui', headerEl)` reads the unit that applies there.
 - **Static offsets on an animated element go through `translate`**, never `transform`, which the engine owns.
@@ -287,13 +283,11 @@ With `SCALE = null` every helper returns its input.
 ## 13. Debugging a scene
 
 1. **Rule out a stale stylesheet** ([verification.md](verification.md) §4): "frame one, then a snap to the end" is
-   almost always a tab holding old CSS. The sections' height classes lose their rules, the runway collapses, and
-   progress runs 0 to 1 over almost no distance.
+   almost always a tab holding old CSS.
 2. **Read the DOM contract**: `data-scene-state` on the root, `inert` on acts. `verify-motion.mjs --scenes` drives every
    `[data-scene-root]` to 0, ¼, ½, ¾ and 1 and records the state.
-3. **Ask the scene.** With a ScrubVideo, load the page with `?motion-debug` (or `<html data-motion-debug>`) and call
-   `window.__scrub()`: a snapshot per live scene, its state plus the controller's counters (plays, rejections, wraps,
-   holds, snaps, …). The counter that stopped names the layer that died. GSAP's `scene.debug()` works on any scene.
+3. **Ask the scene**: `window.__scrub()` with `?motion-debug` for a ScrubVideo, `scene.debug()` for any GSAP scene
+   ([verification.md](verification.md) §1). The counter that stopped names the layer that died.
 
 ## 14. Horizontal rails
 
@@ -331,8 +325,7 @@ const rail = horizontalRail(el)   // .travel() .rtl() .scrollToPanel(i) .refresh
   authority, a frame later, by the least scroll that shows the panel whole (in a panel wider than the pin, the focused
   element). A click moves nothing; panels are never `inert`.
 - **`rail.scrollToPanel(i)`** makes the same move for previous and next buttons, smooth unless `{ immediate: true }`.
-  Observed on GSAP 3.15.0: a ScrollTrigger refresh stops a native smooth scroll where it is, so one mid-way leaves the
-  panel short; that is why focus jumps.
+  Focus jumps because a ScrollTrigger refresh stops a native smooth scroll part-way (observed on GSAP 3.15.0).
 - **Reduced motion** (live): no pin, runway or translate. The track is a native horizontal scroller with mandatory
   snap, focusable while it is one (the rail adds `tabindex="0"`: Safari never focuses a scroller itself), with a focus
   ring. `scrollToPanel()` then scrolls the track.

@@ -133,15 +133,13 @@ A trigger line is an IntersectionObserver `rootMargin`, never a fraction of the 
 | Name | Value | For |
 |---|---|---|
 | `TRIGGERS.reveal` | `0px 0px -20% 0px` | the default: the top crosses 80% of the viewport's height |
-| `TRIGGERS.pageEnd` | `0px` | the page's last group, such as the footer |
-| `TRIGGERS.atRest` | `0px` | a group that comes to rest below the 80% line (low in a section a scroll well holds) |
+| `TRIGGERS.pageEnd` | `0px` | the page's last group, such as the footer, and any group that comes to rest below the 80% line (low in a section a scroll well holds) |
 
 - **Why `pageEnd`:** a negative bottom margin draws the line inside the viewport, and the last screenful never scrolls
   across it: the page runs out first. Nine footer items once stayed hidden at 1440×900.
-- **Why `atRest`:** the same starvation mid-page. A stat grid resting under a scroll well had its top at 40% of the
-  viewport at 1440×900, but 90% at 375×667, past the default line.
-- Keep both names for the one value, so changing one never moves the other. Both trade "plays slightly early" for
-  "never plays": early is a preference, starved is a bug.
+- **A group at rest starves the same way** mid-page. A stat grid resting under a scroll well had its top at 40% of
+  the viewport at 1440×900, but 90% at 375×667, past the default line.
+- `pageEnd` trades "plays slightly early" for "never plays": early is a preference, starved is a bug.
 - **Setting a line:** `margin` on `Reveal`, `data-reveal-margin` on a group, or GSAP's `margin` option. Keep it a
   static string: a new value on each render rebuilds the observer.
 - **GSAP fires on the same line.** `lineFromMargin()` (`gsap/setup.ts`) turns `TRIGGERS.reveal` into
@@ -165,14 +163,15 @@ A trigger line is an IntersectionObserver `rootMargin`, never a fraction of the 
 `html[data-animation-ready]` is set (`MOTION.veil`: 0.13 s after 0.17 s), so the `mount` group under it is already
 moving when it clears.
 
+- **It always delays the LCP element** (the largest thing in the first screen, which load speed is judged by): it
+  holds back the whole first paint until the engine boots. That breaks invariant 8, so leave it out. A `SplitWords`
+  headline and a hero image paint at once, and the `mount` items join at hydration.
+- **The one exception** is an intro that must show nothing until it can play, such as an Immersive site's opening.
+  Record it in `ANIMATION.md` with its reason and its cost to load speed.
 - It paints nothing itself: give it the page's first surface as a background class. Mount it high in `<body>`,
   outside any stacking context, so it covers a fixed header.
 - It never covers without JavaScript or after a client-side navigation. If no engine boots within 4 s, the failsafe
   removes it.
-- **It holds back the whole first paint** until the engine boots, the LCP element (the largest thing in the first
-  screen, which load speed is judged by) included. Leave it out when the first screen has a `SplitWords` headline or a
-  hero image: they paint at once, and the `mount` items join at hydration. Keep it for an intro that should show nothing
-  until it can play.
 
 ## 8. Count-up
 
@@ -198,8 +197,9 @@ JavaScript and crawlers read the real number; the count rewinds it only as it st
 - `data-count-state` goes `waiting`, `counting`, `done`, and `done` never plays again, so hiding and showing is safe.
 - Screen readers hear the final value: while it counts, the number is `aria-hidden` and a visually hidden copy of the
   final text (`data-count-up-label`) follows it. Never `aria-label`: ARIA doesn't allow naming a plain span.
-- Reduced motion (read live), the failsafe, a hidden tab and printing show the final value at once, even mid-count.
-  It never marks the engine ready, so the failsafe keeps guarding the rest of the page.
+- Under reduced motion (read live), the failsafe or a hidden tab, a count never starts: the final value shows at once.
+  Reduced motion, a hidden tab and printing also land a running count. It never marks the engine ready, so the
+  failsafe keeps guarding the rest of the page.
 
 ## 9. The gate, the failsafe and the server
 
@@ -247,15 +247,17 @@ and its effects clean up on hide and run again on show.
 - [ ] No fractional `amount` (`viewport={{ amount: 0.6 }}`) or observer `threshold` as a trigger: a fraction of an
       element taller than the viewport is never visible, so it never fires, silently, mostly on phones. Use a line
       (§5); `audit-motion.mjs` flags `fractional-amount`.
-- [ ] No `display: contents` (or `lg:contents`) on a group or item: it has no box, so the observer never fires
-      (`contents-reveal`).
+- [ ] No `display: contents` (or `lg:contents`) on a group or item: it has no box to observe or move. The audit's
+      `contents-reveal` flags `display: contents` in a stylesheet and a `contents` class on a group in JSX, never on
+      an item: check items and HTML by hand.
 - [ ] Motion: one `Reveal` per arrival, and no item with a trigger of its own (§3).
-- [ ] The last group takes `TRIGGERS.pageEnd`; a group resting below the line takes `TRIGGERS.atRest` (§5).
+- [ ] The last group, and any group resting below the line, takes `TRIGGERS.pageEnd` (§5).
 - [ ] No `transform` of your own on an item: `translate`, or a wrapper (§4).
 - [ ] One `transition` declaration per element: two `transition-*` utilities both set `transition-property`, and
       stylesheet order picks the winner.
 - [ ] `GATE_SCRIPT` is in `<head>` with the CSP nonce; `<html>` has `suppressHydrationWarning` (§9).
-- [ ] Nothing hides the LCP element: no `Reveal` on it, no veil over it (§7, §9).
+- [ ] Nothing hides the LCP element: no `Reveal` on it, and no veil unless `ANIMATION.md` records the exception (§7,
+      §9).
 - [ ] GSAP: `reveal()` runs outside your own `gsap.matchMedia()` callbacks. Observed on 3.15.0: creating or killing a
       ScrollTrigger during a matchMedia rebuild leaves the reader at scroll 0, so the block keeps its triggers outside.
 - [ ] Your own GSAP entrance never ends in `revert()` once GSAP folded the element's `translate`: observed on 3.15.0,

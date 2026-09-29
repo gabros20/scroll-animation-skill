@@ -80,15 +80,20 @@ asset rather than separate clips.
 A declarative animation library's `x`/`y`/`scale` convenience props are frequently implemented as
 individually-interpolated values applied via the main thread on every frame, **not** as a single
 hardware-accelerated `transform`. On any full-screen or pinned path this is measurable frame loss
-under load. Write the full composed transform string instead:
+under load. Binding a composed `transform` to Motion's `style` is no fix on a scroll path: Motion
+can hand it to a native timeline that drifts back outside the input range ([motion.md](motion.md) §4).
+Write one composed transform string by hand, with the reduced-motion state as in
+[motion.md](motion.md) §5:
 
 ```tsx
-<AnimatedEl style={{ x }} />                                                    // main thread
-<AnimatedEl style={{ transform: template`translateX(${x}px)` }} />              // accelerated
+<m.div style={{ x, y }} />                                    // two values, main thread
+useMotionValueEvent(scrollYProgress, 'change', (p) => {       // one composed string per frame
+  if (ref.current) ref.current.style.transform = `translate3d(0, ${-40 * p}px, 0)`
+})
 ```
 
-A hand-written transform string (the direct write, `scenes.md` §6) gets this for free by
-construction, and should keep a `translateZ(0)`/`translate3d(...)` term inside that same string
+The direct write (`scenes.md` §6) works the same way. It still runs on the main thread, so it
+counts toward §2's budget. Keep a `translateZ(0)`/`translate3d(...)` term inside that same string
 rather than as a separate rule: that anchor is load-bearing for Safari's compositing specifically
 (`video.md` §6).
 
@@ -117,6 +122,9 @@ matter how large the multiplier.
 Colour is the middle cost: a `background-color` change skips layout but still repaints.
 `colour-track` repaints its target on every frame of a handover and nothing between handovers, so
 keep the target to the element that needs the colour ([layered-visuals.md](layered-visuals.md) §8).
+Drawn lines cost the same: `draw-on-scroll` writes `stroke-dasharray` and `stroke-dashoffset`, so
+each shape repaints on every frame of its svg's pass and not outside it. Count each shape as a
+written node in §1's budget ([layered-visuals.md](layered-visuals.md) §9).
 
 ## 6. IO-gate every rAF and video
 
@@ -173,11 +181,13 @@ promotes an element to its own compositing layer while actively animating it and
 afterward. A permanent `will-change` instead pins the promotion (and its memory cost) for the
 element's entire lifetime, for no benefit once the animation is idle.
 
-**The one standing, documented exception:** a video's `translateZ(0)`/`translate3d(...)` compositing
-anchor (`video.md` §6). This is a Safari-specific requirement to keep the video's own compositing
-layer from being demoted, and it is deliberately permanent: do not "clean it up" as part of an
-unrelated refactor. Every other `will-change`-shaped optimisation should be justified the same way:
-a specific, documented, measured requirement, not a defensive default.
+**Two standing, documented exceptions.** A video's `translateZ(0)`/`translate3d(...)` compositing
+anchor (`video.md` §6) is a Safari-specific requirement to keep the video's own compositing layer
+from being demoted, and it is deliberately permanent: do not "clean it up" as part of an unrelated
+refactor. The rail's track keeps `will-change: transform` (`css/rail.css`), because the rail writes
+its `translate` on every scroll frame; under reduced motion, where the track is a plain scroller, it
+drops it. Every other `will-change`-shaped optimisation should be justified the same way: a
+specific, documented, measured requirement, not a defensive default.
 
 ## 11. Filter blur limits
 
@@ -224,16 +234,17 @@ mount them per route; a page with just count-up numbers has no reason to pull in
 
 ## Traps
 
-- [ ] ★ No scroll-linked value bound through a declarative `x`/`y`/`scale` shorthand; write the full
-  `transform` string (§4).
+- [ ] ★ No scroll-linked value bound through `style`, shorthand or not; write one composed `transform`
+  string by hand (§4).
 - [ ] ★ No `content-visibility: auto` inside or around a scroll scene (§7).
 - [ ] ★ Every rAF loop and video is IO-gated with two margins (§6).
 - [ ] No `width`/`height`/`top`/`padding` on any scroll-linked path; accordion disclosure excepted
   (§5).
-- [ ] A colour track's target is only the element that needs the colour (§5).
+- [ ] A colour track's target is only the element that needs the colour; drawn shapes count toward the
+  node budget (§5).
 - [ ] Custom properties are set on the animated element, never a parent (§8).
-- [ ] No permanent `will-change`; the video `translateZ(0)` anchor is the only standing exception
-  (§10).
+- [ ] No permanent `will-change`; the video `translateZ(0)` anchor and the rail's track are the standing
+  exceptions (§10).
 - [ ] `filter: blur()` stays small and is measured on Safari (§11).
 - [ ] At most one pinned, scrubbed scene per page.
 - [ ] Across all scroll-linked effects, no more than 1–3 intersect the viewport at once (§3).

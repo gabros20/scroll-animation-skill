@@ -45,8 +45,8 @@ grep -rnE "scroll-behavior|overscroll-behavior|overflow-x: ?hidden" src
 
 Write down, per item: what it animates, which property it writes, on which element, and on which
 routes. That list is what the one-writer rule is checked against. `scripts/tools/audit-motion.mjs` flags
-the two combinations that are always wrong: `lenis-with-scroll-well` and
-`gsap-pin-with-sticky-scene`.
+two combinations: `gsap-pin-with-sticky-scene`, an error, since it is always wrong, and
+`lenis-with-scroll-well`, a warning, since a scroll well does nothing on a Lenis route (§4).
 
 ## 2. An existing header animation or colour switcher
 
@@ -63,7 +63,7 @@ owned by someone. Take over only what the new work needs, and only where it does
     (`mountHeaderTheme(header, { onChange: (ink) => header.classList.toggle('is-dark', ink === 'dark') })`),
     deleting their listener. Their CSS, transitions and markup stay; only the decision moves. Worth it
     when their script reads `scrollY` (which runs ahead of the screen under ScrollSmoother) or builds an
-    IntersectionObserver band from `innerHeight` that the iPhone toolbar breaks (`layered-visuals.md` §10).
+    IntersectionObserver strip from `innerHeight` that the iPhone toolbar breaks (`layered-visuals.md` §10).
 - **Hide-on-scroll or shrink-on-scroll.** These write `transform` (or `height`, `padding`) on the
   header. The ink probe reads layout (`offsetTop`/`offsetHeight`, or a sticky header's `top`) and is immune to the
   transform. Two rules: never put a `RevealItem`/`[data-reveal-item]` entrance on the same element their script
@@ -84,7 +84,7 @@ owned by someone. Take over only what the new work needs, and only where it does
 
 ## 3. Existing GSAP ScrollTrigger
 
-Keep existing timelines. Check four things.
+Keep existing timelines. Check five things.
 
 **Px `start`/`end` on a scaled or responsive layout.** Viewport-relative values (`start: 'top 80%'`)
 and element-relative ones (`end: 'bottom top'`) follow the layout. A hard-coded distance
@@ -136,6 +136,15 @@ fixed box, and a transformed ancestor becomes the containing block. The scene fr
 `RevealItem`/`data-reveal-item`. Existing GSAP breakpoint logic (`gsap.matchMedia()`) should switch
 at `DESKTOP_QUERY` from `config.ts`, like the blocks (`preflight.md` §3.6). A breakpoint build that
 creates ScrollTriggers throws the reader to the top when it rebuilds ([gsap.md](gsap.md) §7).
+
+**An existing ScrollSmoother: start it with `createSmoother`.** The blocks read the page's owner from
+the `<html data-scroll-authority>` stamp, and the site's own `ScrollSmoother.create()` leaves none.
+Every block then treats the page as native: `data-scroll-fx="fade-in"` content stays at opacity 0,
+the recipes add 0.5 s of catch-up on top of the smoother's own, and stepped sections and the scroll
+well run against it. So adapt: swap the site's `create()` call for
+`createSmoother(ScrollSmoother, { … })` (the `smooth-smoother` block, [scroll-authority.md](scroll-authority.md)
+§5). It takes the same wrapper and content, `smooth`, `effects` and `smoothTouch`; an option beyond
+those goes into the `create()` call in your copy of `smooth/smoother.ts`.
 
 ## 4. Existing Lenis
 
@@ -192,9 +201,7 @@ branching on scroll *velocity* reads Lenis's reshaped curve, not the reader's. T
 
 **Anchors.** A native anchor jump under Lenis (with smooth scroll off) is instant, and Lenis then
 syncs to it; Lenis's `anchors` option (recent versions) instead animates anchor clicks through
-`lenis.scrollTo`, which respects its easing and an `offset` you set to the header height. Either
-way, if a scroll well is still active, its automatic `suspend()` on anchor clicks and `hashchange`
-still applies; a programmatic `lenis.scrollTo(...)` needs an explicit `suspend(ms)` around it. Run
+`lenis.scrollTo`, which respects its easing and an `offset` you set to the header height. Run
 `anchor-check.mjs` after any change here.
 
 The same analysis applies to `locomotive-scroll` and GSAP's `ScrollTrigger.normalizeScroll()`: both
@@ -224,9 +231,9 @@ menu per item (`preflight.md` §5):
 > Your header already switches to dark ink with an IntersectionObserver, you have two ScrollTrigger
 > pins on `/work`, and Lenis runs site-wide. My plan: keep all three. The new hero uses triggered
 > entrances; I'll mark its dark band the way your header script expects; I'll leave the scroll well
-> off because it fights Lenis; and the new pinned video goes outside your GSAP pins, as a CSS sticky
-> scene. Want me to replace your header's observer with the header-ink block (it corrects its band
-> when the iPhone toolbar resizes), or leave it?
+> off because it does nothing under Lenis; and the new pinned video goes outside your GSAP pins, as a
+> CSS sticky scene. Want me to replace your header's observer with the header-ink block (it corrects
+> itself when the iPhone toolbar resizes), or leave it?
 
 Record the answer per item on the `Existing motion` line of `ANIMATION.md` (`preflight.md` §4).
 
@@ -238,6 +245,7 @@ Record the answer per item on the `Existing motion` line of `ANIMATION.md` (`pre
 - [ ] No hard-coded px `start`/`end` on a scaled layout; functions plus `invalidateOnRefresh` (§3).
 - [ ] `ScrollTrigger.refresh()` after fonts and late mounts (§3).
 - [ ] The scroll scene, its range wrapper and its ancestors are never inside a GSAP `pin: true` (§3).
+- [ ] An existing ScrollSmoother starts through `createSmoother` (§3).
 - [ ] Lenis drives `ScrollTrigger.update` and runs on the GSAP ticker, once (§4).
 - [ ] `scroll-behavior: smooth` is off while Lenis runs (§4).
 - [ ] No scroll well on a route that runs Lenis (§4).
