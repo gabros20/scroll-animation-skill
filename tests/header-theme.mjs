@@ -31,6 +31,8 @@ const { DEFAULT_INK, HEADER_H, headerMarkup, markup, tops } = await import(
 
 const BROWSERS = { chromium, webkit, firefox }
 const PAGES = ['native', 'lenis', 'smoother', 'motion']
+/** Pages with checks of their own only: image-ink.ts over images. */
+const EXTRA_PAGES = ['images']
 const VIEWPORT = { width: 1280, height: 800 }
 /** A smooth scroll (Lenis, ScrollSmoother's catch-up) settles well inside this. */
 const SETTLE_MS = 6000
@@ -72,7 +74,7 @@ const EDGES = [
 // ── args ────────────────────────────────────────────────────────────────
 
 function parseArgs(argv) {
-  const out = { browsers: Object.keys(BROWSERS), pages: PAGES, only: null }
+  const out = { browsers: Object.keys(BROWSERS), pages: [...PAGES, ...EXTRA_PAGES], only: null }
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
     if (a === '--browsers') out.browsers = argv[++i].split(',')
@@ -81,7 +83,8 @@ function parseArgs(argv) {
     else throw new Error(`unknown argument: ${a}`)
   }
   for (const b of out.browsers) if (!BROWSERS[b]) throw new Error(`unknown browser: ${b}`)
-  for (const p of out.pages) if (!PAGES.includes(p)) throw new Error(`unknown page: ${p} (${PAGES.join(', ')})`)
+  const known = [...PAGES, ...EXTRA_PAGES]
+  for (const p of out.pages) if (!known.includes(p)) throw new Error(`unknown page: ${p} (${known.join(', ')})`)
   for (const c of out.only ?? []) if (!CHECKS[c]) throw new Error(`unknown check: ${c} (${Object.keys(CHECKS).join(', ')})`)
   return out
 }
@@ -138,7 +141,12 @@ async function serve(ssrHtml) {
       outDir,
       emptyOutDir: true,
       minify: false,
-      rollupOptions: { input: Object.fromEntries(PAGES.map((p) => [p, join(fixtureRoot, `${p}.html`)])), onwarn },
+      // The images page loads a PNG from another origin: inlined as a data: URL it would never be cross-origin.
+      assetsInlineLimit: 0,
+      rollupOptions: {
+        input: Object.fromEntries([...PAGES, ...EXTRA_PAGES].map((p) => [p, join(fixtureRoot, `${p}.html`)])),
+        onwarn,
+      },
     },
   })
   return preview({
@@ -789,6 +797,75 @@ const CHECKS = {
           'a sticky header mounted mid-page, once stuck, takes the ink of the section under its bottom edge',
           rows.every((r) => r.ms !== null && r.seen === r.token),
           rows.map((r) => `${r.token}: ink ${r.ink}, on screen ${r.seen}${r.ms === null ? ' (never)' : ''}`).join(' · '),
+        ],
+      ]
+    },
+  },
+
+  // image-ink.ts: the header's ink from the images' own pixels (fixtures/header-theme/images.html). The page, 400 px
+  // gaps between: an 800 px full-width image dark over its top half, a 400 px full-width cover crop whose visible
+  // middle is light, a dark image a third of the page wide, a full-width image from another origin without CORS, a
+  // tail.
+  'image-ink': {
+    pages: ['images'],
+    async run(t) {
+      const { page } = await t.open()
+      await until(page, () => document.querySelectorAll('[data-image-ink-strips]').length >= 3, null, 5000)
+      const strips = await page.evaluate(() =>
+        Object.fromEntries(
+          ['half', 'crop', 'narrow', 'foreign'].map((id) => [
+            id,
+            [...document.querySelectorAll(`#${id} [data-image-ink-strips] [data-header-theme]`)].map(
+              (s) => `${s.getAttribute('data-header-theme')} ${s.style.top}+${s.style.height}`,
+            ),
+          ]),
+        ),
+      )
+      const narrowShown = await page.evaluate(() => getComputedStyle(document.querySelector('#narrow [data-image-ink-strips]')).display)
+      const stops = []
+      for (const [label, y, want] of [
+        ['dark half', 500, 'dark'],
+        ['light half', 1000, 'light'],
+        ['cover crop', 1800, 'light'],
+        ['narrow image', 2600, DEFAULT_INK],
+        ['foreign image', 3400, DEFAULT_INK],
+        ['past them', 4200, DEFAULT_INK],
+      ]) {
+        await jump(page, scrollFor(y))
+        const [ok, , ink] = await inkBecomes(page, want)
+        stops.push({ label, ok, ink, want })
+      }
+      const read = await page.evaluate(() => ({
+        draws: window.__ink.draws,
+        warnings: window.__ink.warnings.filter((w) => w.includes('image-ink')).length,
+      }))
+      await page.evaluate(() => window.__ink.stop())
+      const after = await page.evaluate(() => ({
+        strips: document.querySelectorAll('[data-image-ink-strips]').length,
+        position: document.getElementById('half').style.position,
+      }))
+      return [
+        [
+          'image-ink: a half-dark image gets a dark strip over its top half and a light one below; a cover crop reads only what shows; an image a third of the page wide sets nothing',
+          JSON.stringify(strips.half) === JSON.stringify(['dark 0%+50%', 'light 50%+50%']) &&
+            JSON.stringify(strips.crop) === JSON.stringify(['light 0%+100%']) &&
+            narrowShown === 'none',
+          `${JSON.stringify(strips)} · narrow strips ${narrowShown}`,
+        ],
+        [
+          "image-ink: the header takes the ink of the image under its line, and the page's default past it",
+          stops.every((s) => s.ok),
+          stops.map((s) => `${s.label}: ${s.ink} (want ${s.want})`).join(' · '),
+        ],
+        [
+          'image-ink: an image from another origin without CORS is never drawn: no strips, one warning; the others are read once',
+          strips.foreign.length === 0 && read.warnings === 1 && read.draws === 3,
+          `foreign strips ${strips.foreign.length} · warnings ${read.warnings} · draws ${read.draws}`,
+        ],
+        [
+          'image-ink: stop() removes the strips and restores the container',
+          after.strips === 0 && after.position === '',
+          JSON.stringify(after),
         ],
       ]
     },

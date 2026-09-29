@@ -42,6 +42,7 @@
     "css/header-theme.css": "2a3f8422c6b2dfc7",
     "gsap/horizontal-rail.ts": "cb387c1c2915a062",
     "css/rail.css": "8b42bee648cfbded",
-    "css/scroll-effects.css": "7366cc5cb00ac97f"
+    "css/scroll-effects.css": "7366cc5cb00ac97f",
+    "image-ink.ts": "4815e855ec0337cb"
   }
 }

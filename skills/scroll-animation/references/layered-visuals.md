@@ -241,6 +241,18 @@ const ink = useHeaderTheme(headerRef)        // React: the token, the default, o
   `display: contents` never matches.
 - **An ink that changes with the breakpoint is a token** mapped per breakpoint in CSS: a band mid-grey on phones and
   black from `lg` gets its own (white ink on that grey measured 2.2:1, black 5.6:1). v1's `--header-theme` is gone.
+- **Images:** a photograph has no theme, so a header over a dark image keeps its dark ink. Mark the image's container
+  with its token by hand (`data-header-theme="dark"`, free), or let its pixels decide: `mountImageInk(routeRoot)`
+  over `[data-image-ink]` containers, or `inkImage(container)` for one (image-ink.ts, in the header-theme block).
+  - It reads each image once, after it decodes, into a 16 × `rows` canvas (8 rows by default). Each row's mean
+    colour picks the token whose ink contrasts more with it (WCAG), and invisible strips over the image carry those
+    tokens. An image dark at the top and light below flips the header as it passes. Nothing runs while the page
+    scrolls.
+  - Under `object-fit: cover` it reads only the visible crop. An image from another origin without CORS can't be read
+    (the canvas would be tainted): it is skipped with one warning, and the section's token applies.
+  - Only an image about as wide as the header sets its ink (`cover`, default 0.75 of the viewport's width). A column
+    image on a wide screen leaves the header over the page around it, where the logo and links sit; the same image
+    full-bleed on a phone takes over. It is checked again on resize.
 - **Render the first ink on the server** (`data-header-ink`), so the first paint needs no write.
 - **Or skip the mapping:** `data-header-blend` inverts white ink over whatever passes under it (§7).
 - **Sections that come and go** (a client-side navigation, a theme switch) are picked up with one write and no flash

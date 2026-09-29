@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Reveal, RevealItem } from "@/animation/motion/Reveal";
 import { SplitWords } from "@/animation/motion/SplitWords";
+import { InkedFigure } from "@/components/inked-figure";
 import { MediaSlot } from "@/components/media-slot";
 import { getJournalArticle, journalArticles } from "@/content/journal";
 
@@ -73,15 +74,18 @@ export default async function JournalArticlePage(
         </p>
       </header>
 
-      <MediaSlot
-        kind="image"
-        src={article.cover.src}
-        alt={article.cover.alt}
-        width={article.cover.width}
-        height={article.cover.height}
-        priority
-        className="mx-auto mt-10 w-full max-w-3xl rounded-sm"
-      />
+      {/* The header's ink follows the cover's own pixels as it passes under it (image-ink, header-theme block). */}
+      <InkedFigure className="mx-auto mt-10 w-full max-w-3xl">
+        <MediaSlot
+          kind="image"
+          src={article.cover.src}
+          alt={article.cover.alt}
+          width={article.cover.width}
+          height={article.cover.height}
+          priority
+          className="w-full rounded-sm"
+        />
+      </InkedFigure>
 
       {/*
         The body arrives by trigger, one Reveal per arrival: each paragraph
