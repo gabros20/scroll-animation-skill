@@ -5,7 +5,8 @@
 //                 nothing moving, config's timing, the accessible name, reduced motion, ja/zh/th words (S6d, S6e)
 //   split-reveal  gsap/split-reveal.ts (GSAP SplitText) in a web font the preview server sends late: the split waits
 //                 for it and matches the unsplit lines, re-splits on a width change, heading and paragraph
-//                 accessibility, the trigger line and timing, revertAfter and destroy() restoring the DOM exactly,
+//                 accessibility, the trigger line and timing, a jump past it (a reload's restored scroll position:
+//                 nothing plays above the view), revertAfter and destroy() restoring the DOM exactly,
 //                 live reduced motion, ja/zh/th through prepareText, the keyed React pattern (S6a, S6b, S6c, S6e)
 // Builds tests/fixtures/text with Vite, serves the build with `vite preview`, prints one PASS/FAIL line per check and
 // browser, and exits 1 on any FAIL. Needs the Playwright browsers, so it is its own script: `npm run test:text`.
@@ -641,6 +642,36 @@ async function checkPlay(t) {
       y > 0 && played !== null && exact(loaded.dom) && loaded.y === y && !loaded.h.done && back !== null,
       `scrollY ${y} → ${loaded.y} · the paragraph back to its DOM ${played} ms after the split (${showDom(loaded.dom)}) · ` +
         `the heading done ${loaded.h.done} at load, then ${back === null ? 'never' : `${back} ms`} after scrolling up to it`
+    ])
+  }
+  {
+    // The page jumps past both once they are split and their triggers exist: iOS Safari restoring a reload's scroll
+    // position after the scripts ran, on a phone's touch-only context (Playwright's Firefox has no isMobile).
+    const touch = t.browser === 'firefox' ? {} : { isMobile: true, hasTouch: true }
+    const { page: jumped } = await t.open('reveal.html', { waitUntil: 'domcontentloaded', context: touch })
+    await splitReady(jumped)
+    await jumped.evaluate(() => {
+      const after = document.getElementById('after-p')
+      window.scrollTo({ top: after.getBoundingClientRect().top + window.scrollY + innerHeight / 2, behavior: 'instant' })
+    })
+    await frames(jumped, 3)
+    await sleep(600)
+    const above = await jumped.evaluate(() => ({
+      h: window.__t.now('h').done,
+      p: window.__t.now('p').done,
+      first: window.__t.first('h'),
+      entrance: window.__t.entrance('h'),
+      bottom: Math.round(document.getElementById('p').getBoundingClientRect().bottom),
+    }))
+    await jumped.evaluate(() => window.__t.scrollTo('h', 0.5))
+    const back = await until(jumped, () => window.__t.now('h').done, null, 6000)
+    out.push([
+      'jumped past once split (a reload mid-page, its scroll restored after the scripts ran): nothing plays above the view, ' +
+        'and the heading reveals on the way back up',
+      above.bottom < 0 && !above.h && !above.p && above.first?.yPercent === 100 && above.entrance?.paused === true && back !== null,
+      `above the view (the paragraph's bottom at ${above.bottom} px): heading done ${above.h}, first line yPercent ` +
+        `${above.first?.yPercent}, paused ${above.entrance?.paused}; paragraph done ${above.p} · heading done ` +
+        `${back === null ? 'never' : `${back} ms`} after scrolling up to it`
     ])
   }
   return out

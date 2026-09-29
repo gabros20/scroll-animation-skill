@@ -1,8 +1,9 @@
 // The fixture page, described once: gsap.html and agnostic.html get it as static attribute markup (tests/reveal.mjs
 // injects `markup()` at build time), motion-app.tsx renders it with Reveal/RevealItem, so the three engines are
 // checked on identical geometry. Each group is one row, so every item in it crosses the line at the same moment,
-// whether the engine triggers per group (Motion) or per item (GSAP's batch, the engine-free observer). Plain
-// TypeScript with no imports: Node loads it too.
+// whether the engine triggers per group (Motion) or per item (GSAP's batch, the engine-free observer). The card is
+// the exception on purpose: a cover that is no item leads its item by 70vh. Plain TypeScript with no imports: Node
+// loads it too.
 
 export type Effect = 'rise' | 'fade' | 'clip' | 'scale-in'
 
@@ -19,6 +20,8 @@ export interface GroupSpec {
   replay?: boolean
   /** A rootMargin other than TRIGGERS.reveal. */
   margin?: string
+  /** A card: a tall block that is no item (a cover) above the items, so the group's top leads them by 70vh. */
+  card?: boolean
   items: ItemSpec[]
 }
 
@@ -54,6 +57,14 @@ export const GROUPS: GroupSpec[] = [
     ],
   },
   {
+    // A journal card on a phone: its top crosses the line while its text is still below the fold.
+    id: 'g-card',
+    tag: 'section',
+    trigger: 'view',
+    card: true,
+    items: [{ id: 'card-rise', effect: 'rise', tag: 'div' }],
+  },
+  {
     // TRIGGERS.pageEnd: the last group fires as soon as it enters the viewport.
     id: 'g-edge',
     tag: 'section',
@@ -68,7 +79,7 @@ export function markup(): string {
   const groups = GROUPS.map((group, i) => {
     const attrs = [
       `id="${group.id}"`,
-      `class="row${i === 0 ? ' first' : ''}"`,
+      `class="${rowClass(group, i)}"`,
       `data-reveal="${group.trigger}"`,
       group.replay ? 'data-reveal-replay' : '',
       group.margin ? `data-reveal-margin="${group.margin}"` : '',
@@ -77,7 +88,13 @@ export function markup(): string {
       const effect = item.effect === 'rise' ? '' : ` data-reveal-effect="${item.effect}"`
       return `<${item.tag} id="${item.id}" data-reveal-item${effect}>${item.id}</${item.tag}>`
     })
+    if (group.card) items.unshift('<div class="cover"></div>')
     return `<${group.tag} ${attrs.join(' ')}>${items.join('')}</${group.tag}>`
   })
   return `<main id="page">${groups.join('<div class="spacer"></div>')}<div class="tail"></div></main>`
+}
+
+/** A group's classes: every group is a row; the first clears the top; a card stacks its cover over its items. */
+export function rowClass(group: GroupSpec, index: number): string {
+  return ['row', index === 0 ? 'first' : '', group.card ? 'card' : ''].filter(Boolean).join(' ')
 }

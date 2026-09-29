@@ -60,6 +60,7 @@ From the skill's own browser measurements (spikes S1–S7, September 2026; Chrom
 | Anchors, find-in-page | native | through `lenis.scrollTo` (our handler) | `smoother.scrollTo` |
 | Iframes | yes | wheel over an iframe doesn't scroll | yes |
 | Reduced motion (followed live) | native | Lenis torn down: native scrolling | native mode (`smooth: 0`): wrapper in flow, no effects |
+| Touch-only screens (phones) | native | native touch (`syncTouch: false`) | native mode without `smoothTouch`; effects still run (§5) |
 
 ## 3. Native
 
@@ -140,11 +141,19 @@ const scroll = createSmoother(ScrollSmoother, { smooth: 1, effects: true })
 - Focus: ScrollSmoother jumps a newly focused element to the viewport's centre on `focusin` (observed on 3.15). A
   block that brings focused content into view itself waits a frame for that jump to land, then corrects through the
   handle with `immediate`, as the horizontal rail does (scenes.md §14).
-- **Reduced motion** runs ScrollSmoother in its native mode (`smooth: 0`, the mode it already uses on touch screens
-  without `smoothTouch`): the wrapper is back in flow, nothing is transformed, no `data-speed` / `data-lag`, and the
-  handle's `scrollTo` jumps. `createSmoother` follows the setting live by re-creating the smoother on the same wrapper;
-  the stamp stays `smoother`. Never kill a ScrollSmoother alone: every ScrollTrigger made while it runs is bound to its
-  wrapper, and a kill strands them (they stop updating while the page scrolls on).
+- **Reduced motion** runs ScrollSmoother in its native mode (`smooth: 0`) with effects off: the wrapper is back in
+  flow, nothing is transformed, no `data-speed` / `data-lag`, and the handle's `scrollTo` jumps. `createSmoother`
+  follows the setting live by re-creating the smoother on the same wrapper; the stamp stays `smoother`. Never kill a
+  ScrollSmoother alone: every ScrollTrigger made while it runs is bound to its wrapper, and a kill strands them (they
+  stop updating while the page scrolls on).
+- **Touch-only screens** (`ScrollTrigger.isTouch` 1: a phone) get the same native mode unless `smoothTouch` is set
+  (GSAP: "by default, ScrollSmoother will NOT apply scroll smoothing on touch-only devices"): the wrapper in flow, the
+  content untransformed, the page scrolling natively. Every ScrollTrigger still reads the wrapper, a proxy the
+  smoother's own trigger sets to the window's scroll first in each update, and IntersectionObserver sees the native
+  scroll, so triggers fire as on a native page (measured on the iOS 18.6 simulator with touch pans). `data-speed` and
+  `data-lag` keep running there, written from the main thread as the page scrolls (measured in Playwright's WebKit
+  with touch emulation). A reload mid-page is a jump: iOS Safari restores the position after the scripts ran, past
+  every trigger above it (`entrances.md` §5).
 - **Resizes**: `createSmoother` turns off ScrollSmoother's `autoResize` and runs a full `ScrollTrigger.refresh()` when
   the content resizes. GSAP 3.15's own resize refresh covers only the smoother's trigger, so the page's other triggers
   keep stale positions, and one landing in the first 0.5 s after creation replays the scroll from the top on a page

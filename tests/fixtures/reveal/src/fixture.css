@@ -23,6 +23,17 @@ body {
 .first {
   margin-top: 40px;
 }
+/* A card: a cover that is no item, stacked over the card's item, as a journal card lays out on a phone. */
+.card {
+  flex-direction: column;
+}
+.card > .cover {
+  height: 70vh;
+  background: #333;
+}
+.card > [data-reveal-item] {
+  flex: none;
+}
 .spacer {
   height: 150vh;
 }

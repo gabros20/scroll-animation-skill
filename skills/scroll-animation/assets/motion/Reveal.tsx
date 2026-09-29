@@ -19,9 +19,11 @@
  * - `Reveal` is the only trigger. Its state reaches every `RevealItem` below it through Motion's variant context,
  *   across any plain markup in between, and items stagger by `stagger` (MOTION.lineStagger) in document order.
  *   Never give an item its own trigger, and never leave one outside a Reveal: nothing would ever reveal it. A group
- *   fires on its own top edge, so use one Reveal per arrival: a column that stacks tall on a phone is several.
- * - `trigger`: 'view' when the group's top crosses the line (`margin`, TRIGGERS.reveal: 80% of the viewport;
- *   TRIGGERS.pageEnd for the page's last group or one that comes to rest below the line), 'mount' right after
+ *   fires as one, its items further down with its first, so use one Reveal per arrival: a column that stacks tall on
+ *   a phone is several.
+ * - `trigger`: 'view' once the group's top has crossed the line (`margin`, TRIGGERS.reveal: 80% of the viewport;
+ *   TRIGGERS.pageEnd for the page's last group or one that comes to rest below the line) and one of its items is on
+ *   screen, so media above the items (a card's cover) never plays them below the fold. 'mount' right after
  *   hydration, for a group on screen at load. `margin` is a static string: a new value rebuilds the observer.
  * - The resting state is css/reveal.css under the pre-JS gate, not an inline SSR style: the server renders items
  *   with no style at all, so a reader with JavaScript off sees everything with no <noscript> rule, and Motion starts
@@ -172,7 +174,7 @@ export interface RevealProps {
   children?: ReactNode
   /** The element the layout already needs: a group should not add a wrapper. */
   as?: keyof typeof GROUP_TAGS
-  /** 'view' (default): when the group's top crosses the line. 'mount': right after hydration. */
+  /** 'view' (default): once the group's top crosses the line and an item is on screen. 'mount': after hydration. */
   trigger?: 'mount' | 'view'
   /** 'view' only: the trigger line as an IntersectionObserver rootMargin. Default TRIGGERS.reveal. */
   margin?: string
@@ -216,15 +218,34 @@ export function Reveal({
   useEffect(() => {
     const el = ref.current
     if (!watching || !el) return
+    // The group plays once its top has crossed the line and one of its items is on screen. By the line alone, a card
+    // whose text sits under its cover plays a cover's height early: on a phone, entirely below the fold, where nobody
+    // sees it. The items are the ones in the DOM now; with none (they mount later), the line alone decides.
+    const items = Array.from(el.querySelectorAll('[data-reveal-item]')).filter(
+      (item) => item.closest('[data-reveal]') === el,
+    )
+    const onScreen = new Map<Element, boolean>()
+    let crossed = false
+    const play = () => {
+      if (crossed && (!items.length || Array.from(onScreen.values()).some(Boolean))) {
+        setPhase((p) => (p === 'hidden' || p === 'reset' ? 'visible' : p))
+      }
+    }
     const line = new IntersectionObserver(
       (entries) => {
-        if (entries[entries.length - 1]?.isIntersecting) {
-          setPhase((p) => (p === 'hidden' || p === 'reset' ? 'visible' : p))
-        }
+        crossed = !!entries[entries.length - 1]?.isIntersecting
+        play()
       },
       { rootMargin: margin },
     )
     line.observe(el)
+    const seen = items.length
+      ? new IntersectionObserver((entries) => {
+          for (const entry of entries) onScreen.set(entry.target, entry.isIntersecting)
+          play()
+        })
+      : null
+    items.forEach((item) => seen?.observe(item))
     const gone = replay
       ? new IntersectionObserver((entries) => {
           if (entries[entries.length - 1]?.isIntersecting === false) {
@@ -235,6 +256,7 @@ export function Reveal({
     gone?.observe(el)
     return () => {
       line.disconnect()
+      seen?.disconnect()
       gone?.disconnect()
     }
   }, [ref, watching, margin, replay])

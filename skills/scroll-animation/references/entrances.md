@@ -89,10 +89,13 @@ All three versions render the same markup on one stylesheet, `css/reveal.css`, s
 
 A group (`Reveal`, `[data-reveal]`) is the trigger. Items (`RevealItem`, `[data-reveal-item]`) are what moves.
 
-- **Motion reveals per group.** When the group's top crosses the line, every item in it plays, one `stagger` apart in
-  document order. So use **one `Reveal` per arrival**. A tall layer with copy at the top and a mark at its foot is two
-  arrivals: in one group the mark plays while it is still a screen below the fold, and nobody sees it. A row that
-  stacks into a tall column on a phone becomes several arrivals.
+- **Motion reveals per group.** Once the group's top has crossed the line and one of its items is on screen, every item
+  in it plays, one `stagger` apart in document order. The second condition is for media above the items: a journal
+  card's text sits under its 4:5 cover, 472 px below the card's top on an iPhone 16, and by the line alone it played
+  145–310 px below the fold, where nobody saw it (measured on the iOS 18.6 simulator). Items further down
+  still play with the first, so use **one `Reveal` per arrival**. A tall layer with copy at the top and a mark at its
+  foot is two arrivals: in one group the mark plays while it is still a screen below the fold, and nobody sees it. A
+  row that stacks into a tall column on a phone becomes several arrivals.
 - **GSAP and the engine-free path reveal per item.** Each item waits for its own arrival, and items that cross the line
   together play as one staggered batch in document order (GSAP: one `ScrollTrigger.batch()` trigger per item). The
   group only carries options; an item outside any group takes the defaults.
@@ -144,7 +147,14 @@ A trigger line is an IntersectionObserver `rootMargin`, never a fraction of the 
   static string: a new value on each render rebuilds the observer.
 - **GSAP fires on the same line.** `lineFromMargin()` (`gsap/setup.ts`) turns `TRIGGERS.reveal` into
   `start: 'top 80%'`, `end: 'bottom top'`.
-- An item already above the view at load (a reload mid-page) reveals when the reader scrolls back up to it.
+- An item already above the view at load, or jumped past, reveals when the reader scrolls back up to it.
+- **A jump is not an arrival.** iOS Safari restores a reload's scroll position after the page's scripts ran, so every
+  trigger above it is passed in one step; so does an anchor or a `scrollTo`. ScrollTrigger fires `onEnter` for each
+  trigger a jump passes: `limitCallbacks` is off by default, and GSAP's docs spell it out ("the onEnter for elements
+  1-60 would all fire"). `gsap/reveal.ts` and `split-reveal` leave a trigger that is already past its end for
+  `onEnterBack`. Before they did, every entrance above a reload's position played at load, off-screen, and nothing
+  happened on the way back up (measured on the iOS simulator and in Playwright's WebKit and Chromium).
+  IntersectionObserver never reports an element a jump carried past, so Motion and the engine-free path never did.
 
 ## 6. Once, replay and exits
 
@@ -194,6 +204,9 @@ JavaScript and crawlers read the real number; the count rewinds it only as it st
 - It starts once about 60% of the number is visible (a fraction is safe here: one line always fits) and plays once,
   1.3 s on the entrance curve, rewriting the number's one text node: no re-render. Set
   `font-variant-numeric: tabular-nums` so the width holds. The last frame restores the text exactly.
+- On a phone that is the bottom edge: counts started with the number at 91–95% of the viewport's height (iOS
+  simulator), and the entrance curve front-loads the count, so 0 to 4 shows its last value 0.55 s in. A small number
+  has finished counting by the time the reader's eye reaches it.
 - `data-count-state` goes `waiting`, `counting`, `done`, and `done` never plays again, so hiding and showing is safe.
 - Screen readers hear the final value: while it counts, the number is `aria-hidden` and a visually hidden copy of the
   final text (`data-count-up-label`) follows it. Never `aria-label`: ARIA doesn't allow naming a plain span.
@@ -252,6 +265,8 @@ and its effects clean up on hide and run again on show.
       an item: check items and HTML by hand.
 - [ ] Motion: one `Reveal` per arrival, and no item with a trigger of its own (§3).
 - [ ] The last group, and any group resting below the line, takes `TRIGGERS.pageEnd` (§5).
+- [ ] On a phone-sized viewport, every entrance starts where it can be seen: scroll down through the page, then reload
+      mid-page and scroll back up (§3, §5).
 - [ ] No `transform` of your own on an item: `translate`, or a wrapper (§4).
 - [ ] One `transition` declaration per element: two `transition-*` utilities both set `transition-property`, and
       stylesheet order picks the winner.
