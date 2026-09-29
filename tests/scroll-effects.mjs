@@ -11,8 +11,8 @@
 //
 // Pages (tests/fixtures/scroll-effects, at a 1000 x 600 viewport):
 //   effects   parallax, fade-in, exit-fade and scale-in, alone and composed, tuned and on the defaults; a 900 px
-//             subject; a range tuned on a parent; an overflow: clip frame (and an overflow: hidden control); a pinned
-//             scene's riding copy; the progress bar
+//             subject; a range tuned on a parent; an overflow: clip frame (and an overflow: hidden control); a nested
+//             scroller shorter than the viewport; a pinned scene's riding copy; the progress bar
 //   stack     two sticky stacks under an 80 px header: 4 tuned cards whose last is held by an ::after spacer, and 13
 //             cards on the defaults with no spacer
 //   marquee   two marquees (one reversed) and the page's pause button
@@ -366,6 +366,42 @@ const CHECKS = {
       const control = rows.filter((row) => plan['hidden-child'].includes(row.y)).map((row) => parseTranslate(row.probes['hidden-child'].translate)[1])
       return [
         joined('an overflow: clip frame (a 500 px child in a 300 px frame) still tracks the page', [clip], ` · control, overflow: hidden: parallax y ${[...new Set(control.map(r4))].join(', ')} across the same pass (S7c)`),
+      ]
+    },
+  },
+
+  nested: {
+    pages: ['effects'],
+    async run(t) {
+      if (!t.supports.view) return []
+      const { page } = await t.open()
+      // The subject's own scroller, 300 px tall: its view() is measured there, with no small-viewport inset.
+      const box = await page.evaluate(() => {
+        const scroller = document.querySelector('[data-nested]')
+        const el = document.querySelector('[data-probe="nested-fade"]')
+        scroller.scrollIntoView({ block: 'center', behavior: 'instant' })
+        return { T: el.offsetTop, h: el.offsetHeight, H: scroller.clientHeight, max: scroller.scrollHeight - scroller.clientHeight }
+      })
+      const [a, b] = namedRanges(box, box.H).entry
+      const offsets = [a - 40, lerp(a, b, 0.25), lerp(a, b, 0.5), lerp(a, b, 0.75), b + 40].map((v) => Math.round(Math.min(box.max, Math.max(0, v))))
+      const rows = []
+      for (const y of offsets) {
+        rows.push(
+          await page.evaluate(async (v) => {
+            const scroller = document.querySelector('[data-nested]')
+            scroller.scrollTop = v
+            await window.__fx.frames(3)
+            return { S: scroller.scrollTop, opacity: Number(getComputedStyle(document.querySelector('[data-probe="nested-fade"]')).opacity) }
+          }, y)
+        )
+      }
+      const worst = Math.max(...rows.map((r) => Math.abs(r.opacity - clamp01((r.S - a) / (b - a)))))
+      return [
+        [
+          "in a nested scroller shorter than the viewport the ranges' bottom edge is the scroller's own (the small-viewport inset is 0): fade-in follows its entry exactly",
+          worst <= TOL.opacity,
+          `scroller ${box.H} px, subject at ${box.T} (${box.h} px) · entry ${a} → ${b} · ${rows.map((r) => `${r.S}: ${r4(r.opacity)}`).join(', ')} · worst ${r4(worst)}`,
+        ],
       ]
     },
   },
