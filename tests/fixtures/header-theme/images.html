@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>header-theme fixture (images)</title>
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/animation.css" />
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/header-theme.css" />
+    <link rel="stylesheet" href="./src/page.css" />
+    <style>
+      .gap { height: 400px; }
+      figure { margin: 0; }
+      #half img { display: block; width: 100%; height: 800px; }
+      #crop img { display: block; width: 100%; height: 400px; object-fit: cover; }
+      #narrow img { display: block; width: 400px; height: 400px; }
+      #foreign img { display: block; width: 100%; height: 400px; }
+      .tail { height: 1200px; }
+    </style>
+  </head>
+  <body>
+    <!-- tests/header-theme.mjs injects src/layout.ts's header here; the page's own figures follow -->
+    <!--header-->
+    <main id="page">
+      <div class="gap"></div>
+      <figure id="half" data-image-ink><img alt="dark over its top half, light below" /></figure>
+      <div class="gap"></div>
+      <figure id="crop" data-image-ink><img alt="dark at the top and bottom, light in the middle, shown as a cover crop" /></figure>
+      <div class="gap"></div>
+      <figure id="narrow" data-image-ink><img alt="dark, but a third of the page's width" /></figure>
+      <div class="gap"></div>
+      <figure id="foreign" data-image-ink><img alt="served from another origin without CORS" /></figure>
+      <div class="tail"></div>
+    </main>
+    <script type="module" src="./src/images.ts"></script>
+  </body>
+</html>
