@@ -1,0 +1,99 @@
+/*
+ * css/reveal.css: Reveal's resting states, shared by every engine (motion/Reveal.tsx, gsap/reveal.ts and the
+ * engine-free reveal.ts), plus the engine-free path's transition to shown and the load veil. Import it after
+ * css/animation.css.
+ *
+ *   <section data-reveal="view">                                a group: "view" (the default) or "mount"
+ *     <h2 data-reveal-item>…</h2>                                 rise, the default effect
+ *     <p data-reveal-item data-reveal-effect="fade">…</p>         rise | fade | clip | scale-in
+ *   </section>
+ *   <div data-reveal-veil class="bg-paper"></div>                optional load cover, high in <body>
+ *
+ * - The resting (hidden) state applies only under the pre-JS gate (html[data-animation="on"], GATE_SCRIPT in
+ *   config.ts), only until an engine marks the item data-reveal-state="shown", and never under reduced motion. So a
+ *   reader with JavaScript off, or one who asked for less motion, sees every item at rest, and no <noscript> rule is
+ *   needed. If no engine boots, animation.css's failsafe reveals the items at 4 s and its latch keeps them revealed.
+ * - Only transform, opacity and clip-path change, so a hidden item keeps its box and revealing it shifts nothing.
+ * - rise and scale-in write `transform`, so it is spoken for on an item. Offset or centre the item with `translate`
+ *   (it composes) or on a wrapper.
+ * - Distances are custom properties on the item itself: --reveal-distance (rise; signed, default 32px, a negative
+ *   value descends) and --reveal-scale (scale-in's start, default 0.95). A scaled length works: every engine reads
+ *   the computed value when the reveal starts.
+ * - The numbers mirror config.ts: the move is MOTION.entrance on CURVES.entrance, and the fade trails it
+ *   (MOTION.entranceFade). tests/reveal.mjs fails if they drift.
+ */
+
+/* ── 1. The resting state ──────────────────────────────────────────────────────────────────────────
+ * Each property is set by one rule per effect, so an effect never touches what it doesn't animate. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-animation='on'] [data-reveal-item]:not([data-reveal-state='shown'], [data-reveal-effect='clip']) {
+    opacity: 0;
+  }
+  html[data-animation='on']
+    [data-reveal-item]:not(
+      [data-reveal-state='shown'],
+      [data-reveal-effect='fade'],
+      [data-reveal-effect='clip'],
+      [data-reveal-effect='scale-in']
+    ) {
+    transform: translateY(var(--reveal-distance, 32px));
+  }
+  html[data-animation='on'] [data-reveal-item][data-reveal-effect='scale-in']:not([data-reveal-state='shown']) {
+    transform: scale(var(--reveal-scale, 0.95));
+  }
+  /* A wipe up from the bottom edge. */
+  html[data-animation='on'] [data-reveal-item][data-reveal-effect='clip']:not([data-reveal-state='shown']) {
+    clip-path: inset(100% 0 0 0);
+  }
+
+  /* ── 2. The engine-free transition to shown ──────────────────────────────────────────────────────
+   * Only on items reveal.ts marks with data-reveal-transition, for the length of the transition: GSAP and Motion
+   * write inline styles every frame, and a transition declared under those writes would drag each one out.
+   * --reveal-delay is the item's place in its batch's stagger. The fade runs short and late against the move: a
+   * line-by-line stagger is only visible because of it. The clip holds an inset(0) while it transitions (none can't
+   * interpolate); the item drops it when reveal.ts removes the marker. */
+  html[data-animation='on'] [data-reveal-transition][data-reveal-state='shown'] {
+    transition:
+      transform 1.3s cubic-bezier(0.15, 0.6, 0.2, 1) var(--reveal-delay, 0s),
+      opacity 0.17s linear calc(var(--reveal-delay, 0s) + 0.13s);
+  }
+  html[data-animation='on'] [data-reveal-transition][data-reveal-state='shown'][data-reveal-effect='fade'] {
+    transition: opacity 1.3s cubic-bezier(0.15, 0.6, 0.2, 1) var(--reveal-delay, 0s);
+  }
+  html[data-animation='on'] [data-reveal-transition][data-reveal-state='shown'][data-reveal-effect='clip'] {
+    clip-path: inset(0 0 0 0);
+    transition: clip-path 1.3s cubic-bezier(0.15, 0.6, 0.2, 1) var(--reveal-delay, 0s);
+  }
+}
+
+/* ── 3. The load veil ──────────────────────────────────────────────────────────────────────────────
+ * Covers a `mount` group's first beat while the engine boots (hydration, on a Motion page), then dissolves on
+ * MOTION.veil once html[data-animation-ready] is set. That is every engine's boot signal, so it works on every
+ * engine, and a veil that mounts after boot (a client-side navigation) never covers. Without JavaScript it never
+ * covers; with no engine by 4 s, animation.css's failsafe removes it. It paints nothing itself: give it the surface
+ * the page starts on (a background), and keep it outside any stacking context, so it out-ranks a fixed header. */
+[data-reveal-veil] {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+html[data-animation='on']:not([data-animation-ready]) [data-reveal-veil] {
+  opacity: 1;
+  visibility: visible;
+}
+html[data-animation-ready] [data-reveal-veil] {
+  transition:
+    opacity 0.13s linear 0.17s,
+    visibility 0s linear 0.3s;
+}
+
+/* ── 4. Print ──────────────────────────────────────────────────────────────────────────────────────
+ * animation.css prints items with opacity and transform reset; a clip item also needs its inset dropped. */
+@media print {
+  [data-reveal-item] {
+    clip-path: none !important;
+  }
+}

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>scroll-effects fixture: view() effects and progress</title>
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/animation.css" />
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/scene.css" />
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/scroll-effects.css" />
+    <link rel="stylesheet" href="./src/page.css" />
+  </head>
+  <body>
+    <!-- tests/scroll-effects.mjs knows each probe's effects and tuning (PROBES) and derives what it must show -->
+    <div class="bar" data-scroll-fx="progress" data-probe="progress" aria-hidden="true"></div>
+    <!-- a bar that starts after a 600 px hero: a scroll() range takes lengths -->
+    <div
+      class="bar bar-late"
+      data-scroll-fx="progress"
+      data-probe="progress-late"
+      style="--fx-range-start: 600px"
+      aria-hidden="true"
+    ></div>
+    <div class="spacer"></div>
+    <div class="row">
+      <div class="box" data-scroll-fx="parallax" data-probe="parallax" style="--fx-parallax: 100px"></div>
+      <div class="box" data-scroll-fx="parallax" data-probe="parallax-default"></div>
+      <div class="box own" data-scroll-fx="parallax" data-probe="parallax-own" style="--fx-parallax: -80px"></div>
+      <div class="box" data-scroll-fx="fade-in" data-probe="fade-in"></div>
+      <div
+        class="box"
+        data-scroll-fx="fade-in"
+        data-probe="fade-in-tuned"
+        style="--fx-fade-from: 0.25; --fx-range-start: cover 0%; --fx-range-end: cover 50%"
+      ></div>
+      <div class="box" data-scroll-fx="exit-fade" data-probe="exit-fade"></div>
+      <div class="box" data-scroll-fx="scale-in" data-probe="scale-in" style="--fx-scale-from: 0.5"></div>
+      <div class="box" data-scroll-fx="scale-in" data-probe="scale-in-default"></div>
+      <div
+        class="box"
+        data-scroll-fx="parallax fade-in exit-fade scale-in"
+        data-probe="composed"
+        style="--fx-parallax: 100px; --fx-scale-from: 0.5"
+      ></div>
+      <!-- a range and a fade tuned on a parent must not reach the effect nested in it -->
+      <div
+        class="box"
+        data-scroll-fx="exit-fade"
+        data-probe="leak-parent"
+        style="--fx-range-start: cover 0%; --fx-range-end: cover 100%; --fx-fade-from: 0.3"
+      >
+        <div class="chip" data-scroll-fx="fade-in" data-probe="leak-child"></div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <div class="row tall">
+      <div class="box" data-scroll-fx="fade-in exit-fade" data-probe="tall-fade"></div>
+      <div class="box" data-scroll-fx="parallax scale-in" data-probe="tall-parallax-scale"></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="frame frame-clip">
+      <div class="fill" data-scroll-fx="parallax fade-in" data-probe="clip-child" style="--fx-parallax: 100px"></div>
+    </div>
+    <div class="spacer"></div>
+    <!-- the control: overflow: hidden makes the frame the child's scroll container, which never scrolls (S7c) -->
+    <div class="frame frame-hidden">
+      <div class="fill" data-scroll-fx="parallax fade-in" data-probe="hidden-child" style="--fx-parallax: 100px"></div>
+    </div>
+    <div class="spacer"></div>
+    <!-- a nested scroller, shorter than the viewport: view() binds to it, and the ranges' bottom edge is its own (the
+         small-viewport inset, max(0px, 100% - 100svh), is 0 in a scrollport no taller than the viewport) -->
+    <div class="nested" data-nested>
+      <div class="nested-pad"></div>
+      <div class="box" data-scroll-fx="fade-in" data-probe="nested-fade"></div>
+      <div class="nested-pad"></div>
+    </div>
+    <div class="spacer"></div>
+    <!-- a pinned scene: the copy rides in the content layer, pulled back over the sticky pin -->
+    <section class="scene" data-scene-root>
+      <div data-scene-pin></div>
+      <div data-scene-content>
+        <div class="act"><div class="copy" data-scroll-fx="exit-fade" data-probe="riding-copy"></div></div>
+        <section data-scene-spacer></section>
+      </div>
+    </section>
+    <div class="spacer"></div>
+    <script type="module" src="./src/probe.ts"></script>
+  </body>
+</html>

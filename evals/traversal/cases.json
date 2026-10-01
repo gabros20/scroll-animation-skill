@@ -4,7 +4,7 @@
     "prompt": "Add entrance animations to the landing page sections (React + Motion, no existing motion).",
     "expected_references": [
       "references/preflight.md",
-      "references/motion-architecture.md"
+      "references/entrances.md"
     ],
     "forbidden_references": [
       "references/brownfield-coexistence.md",
@@ -20,14 +20,14 @@
       "references/video.md"
     ],
     "forbidden_references": [
-      "references/header-theme.md"
+      "references/layered-visuals.md"
     ]
   },
   {
     "id": "header-ink",
     "prompt": "The fixed header's text colour should follow the dark and light sections underneath.",
     "expected_references": [
-      "references/header-theme.md"
+      "references/layered-visuals.md"
     ],
     "forbidden_references": [
       "references/video.md",
@@ -38,13 +38,12 @@
     "id": "existing-gsap-lenis",
     "prompt": "The site already has GSAP ScrollTrigger and Lenis; add a pinned scene next to them.",
     "expected_references": [
-      "references/preflight.md",
       "references/scroll-authority.md",
       "references/brownfield-coexistence.md",
       "references/scenes.md"
     ],
     "forbidden_references": [
-      "references/header-theme.md"
+      "references/layered-visuals.md"
     ]
   },
   {
@@ -55,7 +54,7 @@
       "references/video.md"
     ],
     "forbidden_references": [
-      "references/header-theme.md",
+      "references/layered-visuals.md",
       "references/brownfield-coexistence.md"
     ]
   },
@@ -67,7 +66,7 @@
     ],
     "forbidden_references": [
       "references/video.md",
-      "references/header-theme.md"
+      "references/layered-visuals.md"
     ]
   },
   {
@@ -101,7 +100,97 @@
     ],
     "forbidden_references": [
       "references/video.md",
-      "references/header-theme.md"
+      "references/layered-visuals.md"
+    ]
+  },
+  {
+    "id": "split-hero",
+    "prompt": "Make the hero headline rise in word by word on page load without hurting LCP (Next.js App Router).",
+    "expected_references": [
+      "references/text.md"
+    ],
+    "forbidden_references": [
+      "references/video.md",
+      "references/brownfield-coexistence.md"
+    ]
+  },
+  {
+    "id": "count-up-stats",
+    "prompt": "The stats row should count up to its numbers when it scrolls into view.",
+    "expected_references": [
+      "references/entrances.md"
+    ],
+    "forbidden_references": [
+      "references/scenes.md",
+      "references/video.md"
+    ]
+  },
+  {
+    "id": "motion-under-lenis",
+    "prompt": "Our Motion useScroll parallax lags a frame behind Lenis, and a scroll-linked fade comes back after the section has passed.",
+    "expected_references": [
+      "references/motion.md",
+      "references/scroll-authority.md"
+    ],
+    "forbidden_references": [
+      "references/video.md",
+      "references/sequences.md"
+    ]
+  },
+  {
+    "id": "generic-motion-review",
+    "prompt": "The landing page's animations feel generic and busy. Review the choreography and timing.",
+    "expected_references": [
+      "references/craft.md"
+    ],
+    "forbidden_references": [
+      "references/video.md",
+      "references/ios-safari-motion.md"
+    ]
+  },
+  {
+    "id": "css-sticky-stack",
+    "prompt": "Stack the case-study cards so each one sticks under the header and shrinks as the next slides over it, without JavaScript.",
+    "expected_references": [
+      "references/css-scroll-effects.md"
+    ],
+    "forbidden_references": [
+      "references/video.md",
+      "references/gsap.md"
+    ]
+  },
+  {
+    "id": "smoother-depth-layers",
+    "prompt": "Our GSAP page runs ScrollSmoother. Make the hero's shapes drift at different depths without starting out of place above the fold.",
+    "expected_references": [
+      "references/layered-visuals.md"
+    ],
+    "forbidden_references": [
+      "references/motion.md",
+      "references/video.md"
+    ]
+  },
+  {
+    "id": "gsap-section-timeline",
+    "prompt": "On our vanilla Vite site with GSAP, build a pinned 'how it works' section whose four steps light up in turn as the reader scrolls through it.",
+    "expected_references": [
+      "references/gsap.md",
+      "references/scenes.md"
+    ],
+    "forbidden_references": [
+      "references/motion.md",
+      "references/video.md"
+    ]
+  },
+  {
+    "id": "gsap-triggers-after-navigation",
+    "prompt": "After navigating between pages in our Next.js app, GSAP ScrollTriggers fire twice and their start positions are off.",
+    "expected_references": [
+      "references/gsap.md"
+    ],
+    "forbidden_references": [
+      "references/video.md",
+      "references/css-scroll-effects.md"
     ]
   }
 ]

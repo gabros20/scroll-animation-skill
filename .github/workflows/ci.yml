@@ -36,7 +36,7 @@ jobs:
           version: 10
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: npm ci
-      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright install --with-deps chromium webkit firefox
       - run: npm run pretest
       - run: npm run test:foundation
       - run: npm run test:traces
@@ -53,7 +53,7 @@ jobs:
         working-directory: examples/folio
       - run: pnpm build
         working-directory: examples/folio
-      - run: pnpm exec playwright install chromium webkit
+      - run: pnpm exec playwright install chromium webkit firefox
         working-directory: examples/folio
       - run: pnpm check:authority
         working-directory: examples/folio
@@ -77,3 +77,48 @@ jobs:
       - run: npm run test:sequence
       - run: npm run test:loop-video
       - run: npm run test:scrub-video
+
+  # The entrance, text and layered blocks in Chromium, WebKit and Firefox. Firefox stable has no CSS scroll-driven
+  # timelines, so its runs prove every static fallback. Reveal in its three engines (Motion, GSAP, CSS + IO), the
+  # horizontal rail, the text blocks (their late web font is a system monospace served slowly: DejaVu Sans Mono), the
+  # CSS scroll effects, the header ink under each scroll authority, count-up, and the layered recipes (each destroy()
+  # checked for leftover listeners, observers, triggers and tweens).
+  blocks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: sudo apt-get update && sudo apt-get install -y fonts-dejavu-core
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit firefox
+      - run: npm run test:reveal
+      - run: npm run test:rail
+      - run: npm run test:text
+      - run: npm run test:scroll-effects
+      - run: npm run test:header-theme
+      - run: npm run test:count-up
+      - run: npm run test:recipes
+
+  # The storefront (site/), which is also the vanilla GSAP + ScrollSmoother example: a Vite build of both pages, then
+  # its checks against `vite preview` in Chromium, WebKit and Firefox: each page's scroll authority, the pinned
+  # timeline and the rail under ScrollSmoother, every entrance landing, reduced motion, JavaScript off, layout shift
+  # during load, and mount()'s creation order and cleanup.
+  site:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium webkit firefox
+      - run: pnpm check

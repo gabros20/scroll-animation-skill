@@ -49,8 +49,9 @@ export function installCommand(pm, packages) {
 
 // ── engine auto-pick ────────────────────────────────────────────────────
 
-// The only engines that have a signature npm package to detect. css/media/agnostic have none —
-// a block offering one of those alongside another engine is disambiguated by --engine only.
+// The only engines that have a signature npm package to detect. css/media/agnostic have none: a block
+// offering one of those alongside another engine is disambiguated by --engine, except that an agnostic
+// engine is the pick when none of the block's framework engines is installed (below).
 const ENGINE_DEP_HINTS = { gsap: 'gsap', motion: 'motion', three: 'three' }
 
 export function installedEngines(pkg) {
@@ -62,8 +63,9 @@ export function installedEngines(pkg) {
  * block offers it (or, being explicit about something a single-engine block doesn't have, just
  * that block's one engine — --engine only disambiguates, it can't add an engine that isn't
  * there); otherwise the block's only engine if it has just one; otherwise whichever of its
- * engines matches an installed dependency. Fails with the choices listed when that's zero or more
- * than one match. */
+ * engines matches an installed dependency; with none, its engine-free `agnostic` version when it has
+ * one (a GSAP page adding a block that has only agnostic + motion, or a page with neither engine).
+ * Fails with the choices listed when that's zero or more than one match. */
 export function pickEngine(blockId, block, requestedEngine, installed) {
   const available = Object.keys(block.engines ?? {})
   if (requestedEngine) {
@@ -74,6 +76,7 @@ export function pickEngine(blockId, block, requestedEngine, installed) {
   if (available.length === 1) return available[0]
   const matches = available.filter((e) => installed.has(e))
   if (matches.length === 1) return matches[0]
+  if (!matches.length && available.includes('agnostic')) return 'agnostic'
   const why = matches.length ? 'more than one matches an installed dependency' : 'none matches an installed dependency'
   fail(`${blockId} has ${available.length} engines (${available.join(', ')}) and ${why}; pass --engine <${available.join('|')}>`, 2)
 }

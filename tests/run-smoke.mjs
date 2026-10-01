@@ -4,14 +4,20 @@
 // indefinitely, which means Playwright's `waitUntil: 'networkidle'`
 // -- verify-motion.mjs's page.goto -- never resolves against it), serves
 // the build with `vite preview`, points verify-motion.mjs --reveal --scenes
-// at it, and shuts the server down again. This is the (b) step of the repo
-// root's `npm test`: a runnable check that the GSAP engine actually mounts
-// (stages, count-up, fade-on-exit, one scrub stage) against a real
-// all-intra clip, not just that it type-checks.
+// at it, then distance-check.mjs, and shuts the server down again. This is
+// the (b) step of the repo root's `npm test`: a runnable check that the v2
+// GSAP blocks actually mount (setupGsap, reveal groups behind the pre-JS
+// gate, one scrubbed video on pinnedScene, scaled travel through scale.ts)
+// against a real all-intra clip, not just that they type-check.
+//
+// The build does two things a project does by hand: it puts GATE_SCRIPT in
+// the page's <head>, and it sets config.ts's SCALE to FLUID_DESIGN_SCALE (the
+// page defines --fluid), the edit a project on a scaled layout makes to its
+// own copy.
 
 import { build, preview } from 'vite'
 import { spawn } from 'node:child_process'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { dirname, join } from 'node:path'
 
 const __dirname_ = dirname(fileURLToPath(import.meta.url))
@@ -19,12 +25,36 @@ const repoRoot = join(__dirname_, '..')
 const smokeRoot = join(__dirname_, 'smoke-gsap')
 const outDir = join(__dirname_, '.scratch', 'smoke-dist')
 const verifyMotion = join(repoRoot, 'skills', 'scroll-animation', 'scripts', 'tools', 'verify-motion.mjs')
+const configPath = join(repoRoot, 'skills', 'scroll-animation', 'assets', 'config.ts')
+const { GATE_SCRIPT } = await import(pathToFileURL(configPath).href)
+
+const UNSCALED = 'export const SCALE: ScaleConfig | null = null'
+const smokeBuild = [
+  {
+    name: 'gate-script',
+    transformIndexHtml: {
+      order: 'pre',
+      handler: (html) => html.replace('<!--gate-script-->', () => `<script>${GATE_SCRIPT}</script>`)
+    }
+  },
+  {
+    name: 'fluid-design-scale',
+    // Before esbuild strips the type annotation the replacement matches.
+    enforce: 'pre',
+    transform(code, id) {
+      if (id.split('?')[0] !== configPath) return null
+      if (!code.includes(UNSCALED)) throw new Error(`[run-smoke] config.ts no longer declares \`${UNSCALED}\``)
+      return code.replace(UNSCALED, 'export const SCALE: ScaleConfig | null = FLUID_DESIGN_SCALE')
+    }
+  }
+]
 
 async function main() {
   console.log(`[run-smoke] building ${smokeRoot} -> ${outDir}`)
   await build({
     root: smokeRoot,
     logLevel: 'warn',
+    plugins: smokeBuild,
     build: { outDir, emptyOutDir: true }
   })
 

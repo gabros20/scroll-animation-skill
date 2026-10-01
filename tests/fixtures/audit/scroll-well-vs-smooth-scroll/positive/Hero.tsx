@@ -1,9 +1,9 @@
-import { PullToCentre } from '../components/PullToCentre'
+import { ScrollWell } from '../animation/motion/ScrollWell'
 
 export function Hero() {
   return (
     <section>
-      <PullToCentre />
+      <ScrollWell />
     </section>
   )
 }

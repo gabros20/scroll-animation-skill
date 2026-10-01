@@ -5,7 +5,7 @@
  *   3. reduced motion's structural half (scenes collapse to normal flow),
  *   4. print,
  *   5. the typed custom properties motion writes.
- * GSAP's resting states for attribute-driven entrances live next door in animation.gsap.css.
+ * Each block's resting states ship with the block (css/reveal.css for entrances, css/scene.css for pinned scenes).
  */
 
 /* ── 1. The pre-JS gate and the failsafe ───────────────────────────────────────────────────────────
@@ -16,12 +16,13 @@
  * CSS animation outranks inline styles, so it also beats Motion's server-rendered `initial` opacity. When it fires,
  * GATE_SCRIPT latches html[data-animation-failsafe], which keeps the page revealed after a late boot (engines then
  * skip the entrances instead of hiding and replaying them). */
+/* The resets name `transform` only. Every entrance hides with it (never with translate or scale), and Lightning CSS,
+   the minifier in Vite 8 and Tailwind v4, merges `transform`, `translate` and `scale` in one block into a single
+   `transform: translate(0,0) scale(1)`: the two resets are lost and an identity transform is left in place. */
 @keyframes animation-failsafe {
   to {
     opacity: 1;
     transform: none;
-    translate: none;
-    scale: none;
     clip-path: none;
     filter: none;
     visibility: visible;
@@ -33,37 +34,22 @@
     visibility: hidden;
   }
 }
-html[data-animation='on']:not([data-animation-ready]) :is([data-stage-item], [data-reveal-item]) {
+html[data-animation='on']:not([data-animation-ready]) [data-reveal-item] {
   animation: animation-failsafe 0s 4s forwards;
 }
-html[data-animation='on']:not([data-animation-ready]) :is([data-stage-veil], [data-reveal-veil]) {
+html[data-animation='on']:not([data-animation-ready]) [data-reveal-veil] {
   animation: animation-failsafe-veil 0s 4s forwards;
 }
-html[data-animation-failsafe] :is([data-stage-item], [data-reveal-item]) {
+html[data-animation-failsafe] [data-reveal-item] {
   opacity: 1 !important;
   transform: none !important;
-  translate: none !important;
-  scale: none !important;
   clip-path: none !important;
   filter: none !important;
   visibility: visible !important;
 }
-html[data-animation-failsafe] :is([data-stage-veil], [data-reveal-veil]) {
+html[data-animation-failsafe] [data-reveal-veil] {
   display: none !important;
 }
-
-/*
-  <noscript> rule for Motion pages: put it in the document <head>, not in a stylesheet (it has to apply even when
-  this file never loads). Motion server-renders an entrance item's hidden `initial` state as an inline style, which
-  the gate above can't reach; with JavaScript off nothing would ever clear it.
-
-    <noscript>
-      <style>
-        [data-stage-item], [data-reveal-item] { opacity: 1 !important; transform: none !important; }
-        [data-stage-veil], [data-reveal-veil] { display: none !important; }
-      </style>
-    </noscript>
-*/
 
 /* ── 2. Smooth-scroll base ─────────────────────────────────────────────────────────────────────────
  * No global `scroll-behavior: smooth`: with ScrollTrigger or a smoother on the page it corrupts ScrollTrigger's
@@ -106,12 +92,14 @@ html.lenis body {
  * Entrance items print visible, and a ScrollSmoother wrapper stops clipping the page to one viewport. Scenes print
  * their acts in flow through css/scene.css. */
 @media print {
-  :is([data-stage-item], [data-reveal-item]) {
+  [data-reveal-item] {
     opacity: 1 !important;
     transform: none !important;
+    clip-path: none !important;
+    filter: none !important;
     visibility: visible !important;
   }
-  :is([data-stage-veil], [data-reveal-veil]) {
+  [data-reveal-veil] {
     display: none !important;
   }
   #smooth-wrapper {

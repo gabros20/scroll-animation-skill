@@ -10,14 +10,20 @@ React 19 and Motion 13 (`motion/react`). `scroll-animation add <block>` copies a
 2. Mount `MotionProvider` (`MotionProvider.tsx`, the `motion-provider` block) once near the root. It runs
    `LazyMotion strict`, so blocks render `m.*` and a stray `motion.*` throws instead of silently loading the full
    bundle; `MotionConfig reducedMotion="user"`; and it marks the engine ready, which switches off the CSS failsafe.
-3. Import `css/animation.css`, and `css/scene.css` for pinned scenes (`../css/README.md`). The `<noscript>` rule for
-   server-rendered hidden states is in `animation.css`'s comments; it belongs in `<head>`.
+   The block also ships `useReducedMotionLive()` (`useReducedMotionLive.ts`): `MotionConfig` never reaches a hand
+   write, and Motion 13.4's `useReducedMotion()` reads the setting once per mount.
+3. Import `css/animation.css`, plus `css/reveal.css` for entrances and `css/scene.css` for pinned scenes
+   (`../css/README.md`).
 
-## The v2 blocks
+## Blocks
 
 | File | Block | What it is | Reference |
 | --- | --- | --- | --- |
-| `usePinnedScene.ts`, `PinnedScene.tsx` | `pinned-scene` | the range wrapper, sticky pin and content layer: exact progress and band (MotionValues; `pinned` can be a render function of them), head/scrub/tail modes, acts made `inert`, rehydrate from scroll; also `useReducedMotionLive()` | `references/scenes.md` |
+| `Reveal.tsx` | `reveal` | triggered entrances: a `Reveal` group plays its `RevealItem`s (rise, fade, clip, scale-in) on the measured curves at the trigger line, or on mount; `RevealVeil` lifts a load veil. The hidden state is CSS under the pre-JS gate, so the server renders no inline style | `references/entrances.md` |
+| `SplitWords.tsx` | `split-words` | an above-the-fold heading or lede split into words on the server, animated by `css/split.css` from the first frame: no JavaScript, CLS 0, the sentence as its name. A Server Component; `splitWordsHTML()` in `split-words.ts` renders the same markup for static HTML | `references/text.md` |
+| `CountUp.tsx` | `count-up` | `<CountUp to from format>`: the server renders the final value, the count runs once ~60% in view, frames written to the text node in its locale, the final value at once under reduced motion. The core is `count-up.ts` | `references/entrances.md` |
+| `useHeaderTheme.ts` | `header-theme` | `useHeaderTheme(headerRef, { sections, line })`: mounts `header-theme.ts` on the header, which takes the ink of the section under its probe line; returns the ink (null on the server). Over images, `inkImage(container)` from `image-ink.ts` sets the ink from the image's own pixels | `references/layered-visuals.md` |
+| `usePinnedScene.ts`, `PinnedScene.tsx` | `pinned-scene` | the range wrapper, sticky pin and content layer: exact progress and band (MotionValues; `pinned` can be a render function of them), head/scrub/tail modes, acts made `inert`, rehydrate from scroll | `references/scenes.md` |
 | `ScrubVideo.tsx` | `scrub-video` | a scrubbed all-intra video on `PinnedScene`, with loops or holds, a camera and a backdrop | `references/video.md` |
 | `FrameSequence.tsx` | `frame-sequence` | an image sequence on a canvas, fed a MotionValue or a number | `references/sequences.md` |
 | `LoopVideo.tsx` | `loop-video` | an in-view background loop with a WCAG 2.2.2 pause control | `references/video.md` |
@@ -38,21 +44,17 @@ while awake. Everything else is a triggered entrance or a `LoopVideo`.
 The reference build's camera numbers are not shipped: `camera` defaults to identity (a plain covering video). Measure
 your own (`references/scenes.md` §7, `references/video.md` §15).
 
-## The v1 components
+## Recipes
 
-`components/` (with `lib/` and `hooks/`) holds the v1 blocks the pack still ships: `Stage`, `StageItem` and `StageVeil`
-(triggered entrances), `CountUp`, `FadeOnExit` (exit fades for copy riding over a pin), `PullToCentre` (the scroll
-well) and `useHeaderTheme`. Its `MotionProvider` and `InViewLoopVideo` are v1's, replaced by `MotionProvider.tsx` and
-`LoopVideo.tsx` above. The v1 blocks read their breakpoint from `lib/constants.ts` (`ENGAGE_QUERY`): point it at the
-same source as `config.ts` (`references/preflight.md` §3.6).
-
-`examples/ScrollStack.tsx` is a `ScrubVideo` with two one-viewport copy acts around a two-viewport spacer: N = 4, which
-puts the tops of its three acts at progress 0, ⅓ and 1, on thirds (`references/scenes.md` §2).
+| File | Block | What it is |
+| --- | --- | --- |
+| `Parallax.tsx` | `parallax` | `<Parallax speed>`: its children drift against the scroll by a fraction of their pass, written by hand from `useScroll` (never a bound `style`, spike S3); no drift under reduced motion. The GSAP version is `gsap/parallax.ts` |
+| `ScrollWell.tsx` | `scroll-well` | `<ScrollWell />`: a client leaf that pulls the scroll to rest on its parent while the parent holds most of the view, released by scrolling away; native scrolling only. The engine-free core is `../scroll-well.ts`: read its warnings first |
 
 ## Styling
 
 The blocks don't depend on Tailwind: `PinnedScene` takes `pinClassName` and `contentClassName` (and any div prop on
 the root), `ScrubVideo` takes `videoClassName`, `LoopVideo` takes `className` and `toggleClassName`. The scene geometry
 itself lives in `css/scene.css`, not in class names, so it ships whatever the host styles with. Distances that vary per
-breakpoint (`--hero-lift`, `--exit-from`, `--exit-to`) are read from computed style, so any way of landing a custom
-property on the element works. With fluid-design installed, its Tailwind `cn` can replace `lib/cx.ts`'s bare joiner.
+breakpoint (`--reveal-distance`, `--reveal-scale`) are read from computed style, so any way of landing a custom
+property on the element works.

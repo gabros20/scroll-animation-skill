@@ -4,8 +4,8 @@
 
 **Read when:** you're adding a scroll-driven effect, reviewing whether a page's motion budget still
 holds, or diagnosing dropped frames and jank on a real device.
-**Skip when:** the work is a single triggered reveal with no scroll binding (`motion-architecture.md`
-§3's triage already keeps that case cheap by construction). Render performance with no motion in it
+**Skip when:** the work is a single triggered reveal with no scroll binding (`entrances.md`
+§1's triage already keeps that case cheap by construction). Render performance with no motion in it
 (fonts, image `sizes`, Core Web Vitals budgets for layout) belongs to the `fluid-design` skill's
 `references/performance.md` when it is installed.
 **Depends on:** `scenes.md` for what makes a scene expensive in the first place;
@@ -61,7 +61,7 @@ simultaneously, not per component.
 > **Only 1–3 scroll-driven scenes should intersect the viewport at once.** In practice, one
 > `ScrubVideo` per page.
 
-This is `motion-architecture.md` §3's triage restated as a hard number: at dozens of animated
+This is `entrances.md` §1's triage restated as a hard number: at dozens of animated
 sections on one page, this ceiling *is* the performance budget. It's enforced by IO-gating (§6), so
 each scene's decoder and rAF loop only run while genuinely near the viewport, but the ceiling itself
 is a design constraint, not just an implementation detail. Stacking more than a handful of
@@ -80,15 +80,20 @@ asset rather than separate clips.
 A declarative animation library's `x`/`y`/`scale` convenience props are frequently implemented as
 individually-interpolated values applied via the main thread on every frame, **not** as a single
 hardware-accelerated `transform`. On any full-screen or pinned path this is measurable frame loss
-under load. Write the full composed transform string instead:
+under load. Binding a composed `transform` to Motion's `style` is no fix on a scroll path: Motion
+can hand it to a native timeline that drifts back outside the input range ([motion.md](motion.md) §4).
+Write one composed transform string by hand, with the reduced-motion state as in
+[motion.md](motion.md) §5:
 
 ```tsx
-<AnimatedEl style={{ x }} />                                                    // main thread
-<AnimatedEl style={{ transform: template`translateX(${x}px)` }} />              // accelerated
+<m.div style={{ x, y }} />                                    // two values, main thread
+useMotionValueEvent(scrollYProgress, 'change', (p) => {       // one composed string per frame
+  if (ref.current) ref.current.style.transform = `translate3d(0, ${-40 * p}px, 0)`
+})
 ```
 
-A hand-written transform string (the direct write, `scenes.md` §6) gets this for free by
-construction, and should keep a `translateZ(0)`/`translate3d(...)` term inside that same string
+The direct write (`scenes.md` §6) works the same way. It still runs on the main thread, so it
+counts toward §2's budget. Keep a `translateZ(0)`/`translate3d(...)` term inside that same string
 rather than as a separate rule: that anchor is load-bearing for Safari's compositing specifically
 (`video.md` §6).
 
@@ -113,6 +118,13 @@ Related: size media with CSS, transform it with JS. A responsive camera crop (`s
 should scale a video via a per-frame `transform` write while its box dimensions stay entirely CSS.
 Letting CSS own `width`/`height` means the scaling never triggers a layout-invalidating write, no
 matter how large the multiplier.
+
+Colour is the middle cost: a `background-color` change skips layout but still repaints.
+`colour-track` repaints its target on every frame of a handover and nothing between handovers, so
+keep the target to the element that needs the colour ([layered-visuals.md](layered-visuals.md) §8).
+Drawn lines cost the same: `draw-on-scroll` writes `stroke-dasharray` and `stroke-dashoffset`, so
+each shape repaints on every frame of its svg's pass and not outside it. Count each shape as a
+written node in §1's budget ([layered-visuals.md](layered-visuals.md) §9).
 
 ## 6. IO-gate every rAF and video
 
@@ -143,8 +155,8 @@ Setting a custom property on a **parent** element for descendants to read via `v
 recalculation of every descendant on every write, because the browser cannot know in advance which
 descendants consume the property; it has to re-evaluate the whole subtree. Set the property **on the
 element that's actually animated**, driven by a static class rather than a JS write to an ancestor.
-This is why entrance distances (`--hero-lift` and friends) live on the stage item itself, set by a
-breakpoint utility, never on a shared ancestor.
+This is why entrance distances (`--reveal-distance`, `--reveal-scale`) live on the item itself, set
+by a breakpoint utility, never on a shared ancestor.
 
 ## 9. CSS over JS for predetermined motion
 
@@ -169,11 +181,13 @@ promotes an element to its own compositing layer while actively animating it and
 afterward. A permanent `will-change` instead pins the promotion (and its memory cost) for the
 element's entire lifetime, for no benefit once the animation is idle.
 
-**The one standing, documented exception:** a video's `translateZ(0)`/`translate3d(...)` compositing
-anchor (`video.md` §6). This is a Safari-specific requirement to keep the video's own compositing
-layer from being demoted, and it is deliberately permanent: do not "clean it up" as part of an
-unrelated refactor. Every other `will-change`-shaped optimisation should be justified the same way:
-a specific, documented, measured requirement, not a defensive default.
+**Two standing, documented exceptions.** A video's `translateZ(0)`/`translate3d(...)` compositing
+anchor (`video.md` §6) is a Safari-specific requirement to keep the video's own compositing layer
+from being demoted, and it is deliberately permanent: do not "clean it up" as part of an unrelated
+refactor. The rail's track keeps `will-change: transform` (`css/rail.css`), because the rail writes
+its `translate` on every scroll frame; under reduced motion, where the track is a plain scroller, it
+drops it. Every other `will-change`-shaped optimisation should be justified the same way: a
+specific, documented, measured requirement, not a defensive default.
 
 ## 11. Filter blur limits
 
@@ -193,9 +207,8 @@ never `motion.div`: `strict` mode throws on the non-lazy `motion.*` component AP
 is a feature, not friction. It stops a future contributor from quietly reintroducing the full bundle
 one import at a time. `scripts/tools/audit-motion.mjs`'s `motion-strict` rule flags any `motion.*` left in a strict project.
 
-GSAP's equivalent: import only the modules a page uses (`initStages`, `initCountUps`, …) rather than
-`initFluidMotion` when a page needs one primitive; a page with just count-up numbers has no reason to
-pull in the scroll well's (`scrollPull.ts`) cost.
+GSAP's equivalent: import only the blocks a page uses (`reveal`, `mountCountUps`, …), each its own file, and
+mount them per route; a page with just count-up numbers has no reason to pull in the scroll well's cost.
 
 ## 13. Motion asset and JS budgets
 
@@ -213,7 +226,7 @@ pull in the scroll well's (`scrollPull.ts`) cost.
   someone "fixes" it later by re-encoding. Catch it before the commit, not after.
 - **INP ≤ 200ms at p75** is the Core Web Vital motion can break: a long main-thread task from a
   per-frame writer or a large hydration of animated leaves shows up there. Keep sections as server
-  components with only the animated leaves on the client (`motion-architecture.md` §4).
+  components with only the animated leaves on the client (`entrances.md` §2).
 - **Wire the budget into CI** (bundle-size deltas for the animation library and motion modules,
   asset sizes for video) rather than trusting review. `verification.md` covers the runtime-behaviour
   checks a budget cannot: a value that "looks right" in a Lighthouse score but is measurably wrong
@@ -221,15 +234,17 @@ pull in the scroll well's (`scrollPull.ts`) cost.
 
 ## Traps
 
-- [ ] ★ No scroll-linked value bound through a declarative `x`/`y`/`scale` shorthand; write the full
-  `transform` string (§4).
+- [ ] ★ No scroll-linked value bound through `style`, shorthand or not; write one composed `transform`
+  string by hand (§4).
 - [ ] ★ No `content-visibility: auto` inside or around a scroll scene (§7).
 - [ ] ★ Every rAF loop and video is IO-gated with two margins (§6).
 - [ ] No `width`/`height`/`top`/`padding` on any scroll-linked path; accordion disclosure excepted
   (§5).
+- [ ] A colour track's target is only the element that needs the colour; drawn shapes count toward the
+  node budget (§5).
 - [ ] Custom properties are set on the animated element, never a parent (§8).
-- [ ] No permanent `will-change`; the video `translateZ(0)` anchor is the only standing exception
-  (§10).
+- [ ] No permanent `will-change`; the video `translateZ(0)` anchor and the rail's track are the standing
+  exceptions (§10).
 - [ ] `filter: blur()` stays small and is measured on Safari (§11).
 - [ ] At most one pinned, scrubbed scene per page.
 - [ ] Across all scroll-linked effects, no more than 1–3 intersect the viewport at once (§3).

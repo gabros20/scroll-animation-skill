@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>S7c ancestors that clip</title>
+    <link rel="stylesheet" href="../src/clip.css" />
+  </head>
+  <body>
+    <div class="spacer"></div>
+    <div class="wrap w-none"><div class="subject" data-probe="none"></div></div>
+    <div class="spacer"></div>
+    <div class="wrap w-hidden"><div class="subject" data-probe="overflow-hidden"></div></div>
+    <div class="spacer"></div>
+    <div class="wrap w-xhidden"><div class="subject" data-probe="overflow-x-hidden"></div></div>
+    <div class="spacer"></div>
+    <div class="wrap w-clip"><div class="subject" data-probe="overflow-clip"></div></div>
+    <div class="spacer"></div>
+    <div class="wrap w-xclip"><div class="subject" data-probe="overflow-x-clip"></div></div>
+    <div class="spacer"></div>
+    <div class="frame frame-hidden"><div class="subject" data-probe="frame-hidden-view"></div></div>
+    <div class="spacer"></div>
+    <div class="frame frame-hidden frame-named" data-subject="frame-named"><div class="subject" data-probe="frame-hidden-named" data-subject-of="frame-named"></div></div>
+    <div class="spacer"></div>
+    <div class="frame frame-clip"><div class="subject" data-probe="frame-clip-view"></div></div>
+    <div class="spacer"></div>
+    <script type="module" src="../src/probe.js"></script>
+  </body>
+</html>

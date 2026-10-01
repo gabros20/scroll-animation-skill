@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>recipes fixture: scroll-well (gsap)</title>
+    <link rel="stylesheet" href="./src/page.css" />
+  </head>
+  <body>
+    <!-- Three wells between spacers: one that fits the viewport, one taller than it, and one inside a pinned scene's
+         range wrapper, which clamps it; then an anchor target. ?core runs the engine-free core, ?lenis runs the GSAP
+         well under Lenis. -->
+    <main>
+      <div class="spacer"></div>
+      <section class="well fits" id="fits" data-scroll-well>
+        <h2>Fits the viewport</h2>
+        <p><a href="#end" id="to-end">Down to the end</a></p>
+      </section>
+      <div class="spacer"></div>
+      <section class="well tall" id="tall" data-scroll-well><h2>Taller than the viewport</h2></section>
+      <div class="spacer"></div>
+      <div class="scene" id="scene" data-scene-root>
+        <section class="well clamped" id="clamped" data-scroll-well><h2>Inside a pinned scene</h2></section>
+      </div>
+      <div class="spacer"></div>
+      <section class="end" id="end"><h2>The end</h2></section>
+      <div class="spacer short"></div>
+    </main>
+    <script type="module" src="./src/scroll-well.ts"></script>
+  </body>
+</html>

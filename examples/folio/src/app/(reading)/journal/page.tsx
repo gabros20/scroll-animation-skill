@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Reveal, RevealItem } from "@/animation/motion/Reveal";
 import { MediaSlot } from "@/components/media-slot";
 import { journalArticles } from "@/content/journal";
 
@@ -23,13 +24,15 @@ export default function JournalIndexPage() {
       </p>
 
       {/*
-        scroll-animation: Reveal (Phase 3) staggers these cards in; the
-        cover image is the shared-element source for the article hero
+        Each card is its own Reveal group, so its text comes in when that card
+        arrives (on a phone, one under the next), never its cover. The covers are in view at load, and the first one is
+        the page's LCP element, which never waits for hydration. The cover
+        is also the shared-element source for the article hero
         (view-transitions, Phase 4).
       */}
       <ol className="mt-16 grid gap-12 sm:grid-cols-2 lg:gap-16">
         {journalArticles.map((article) => (
-          <li key={article.slug}>
+          <Reveal as="li" key={article.slug}>
             <Link href={`/journal/${article.slug}`} className="group block">
               <MediaSlot
                 kind="image"
@@ -39,19 +42,21 @@ export default function JournalIndexPage() {
                 height={article.cover.height}
                 className="w-full rounded-sm"
               />
-              <p className="mt-5 font-sans text-sm tracking-[0.2em] text-muted uppercase">
-                {article.category}
-              </p>
-              <h2 className="mt-2 font-display text-2xl leading-snug group-hover:text-accent lg:text-3xl">
-                {article.title}
-              </h2>
-              <p className="mt-2 font-sans text-ink-soft">{article.dek}</p>
-              <p className="mt-3 font-sans text-sm text-muted">
-                {dateFormatter.format(new Date(article.publishedOn))} ·{" "}
-                {article.readMinutes} min read
-              </p>
+              <RevealItem>
+                <p className="mt-5 font-sans text-sm tracking-[0.2em] text-muted uppercase">
+                  {article.category}
+                </p>
+                <h2 className="mt-2 font-display text-2xl leading-snug group-hover:text-accent lg:text-3xl">
+                  {article.title}
+                </h2>
+                <p className="mt-2 font-sans text-ink-soft">{article.dek}</p>
+                <p className="mt-3 font-sans text-sm text-muted">
+                  {dateFormatter.format(new Date(article.publishedOn))} ·{" "}
+                  {article.readMinutes} min read
+                </p>
+              </RevealItem>
             </Link>
-          </li>
+          </Reveal>
         ))}
       </ol>
     </div>

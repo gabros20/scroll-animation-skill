@@ -1,12 +1,10 @@
 /**
  * `[data-loop-video]` — a background render that starts when it is ~20% on
- * screen and pauses when it leaves. v2 of `inViewLoopVideo.ts`
- * (`assets/gsap/inViewLoopVideo.ts`, kept in place — the controller removes
- * v1's files with the v1 barrels later). Carries v1's playback core forward
- * unchanged and adds the pieces v1 didn't have: a WCAG 2.2.2 pause control,
- * live reduced-motion and Save-Data gating, rejected-`play()` handling, and
- * a play watchdog + tab-sleep rehydrate ported from the sibling `ScrubStage`
- * controller's pattern.
+ * screen and pauses when it leaves. Carries v1's in-view loop playback core
+ * forward unchanged and adds the pieces v1 didn't have: a WCAG 2.2.2 pause
+ * control, live reduced-motion and Save-Data gating, rejected-`play()`
+ * handling, and a play watchdog + tab-sleep rehydrate ported from the
+ * scrubbed video's controller (`media/video-controller.ts`).
  *
  * ```html
  * <div style="position: relative">
@@ -96,8 +94,8 @@
  * - **Reduced motion.** No autoplay; the poster (or wherever the last frame
  *   left off) holds; the control can still start it — reduced motion is a
  *   motion-sensitivity preference, not a refusal of the content. Read live
- *   via a `change` listener, not once at mount the way `fadeOnExit.ts` and
- *   `countUp.ts` read it (the v1 gap the plan calls out generally).
+ *   via a `change` listener, not once at mount (the v1 gap the plan calls
+ *   out generally).
  * - **`navigator.connection?.saveData`.** Poster only, and — unlike reduced
  *   motion — the warm preload tier is skipped too: Save-Data is a
  *   data-cost signal, so nothing fetches until the user explicitly asks via
@@ -107,9 +105,9 @@
  *   showing and does not retry on its own — no timer, and the IO/watchdog
  *   paths stop attempting `play()` until a fresh user click tries again.
  * - **A play watchdog and a tab-sleep rehydrate**, ported from
- *   `videoController.ts`'s pattern (`references/video.md` §14, §12:
- *   `ensurePlaying()` / `rehydrate()`), which v1's `inViewLoopVideo.ts`
- *   didn't have. A 2s interval re-issues `play()` if the browser silently
+ *   `media/video-controller.ts`'s pattern (`references/video.md` §14, §12:
+ *   `ensurePlaying()` / `rehydrate()`), which v1's in-view loop didn't
+ *   have. A 2s interval re-issues `play()` if the browser silently
  *   paused a should-be-playing element (a demoted GPU layer, a background/
  *   foreground race) — gated by the same rejected-play flag, so a genuine
  *   refusal is never retried in a loop. `visibilitychange`, `pageshow` and

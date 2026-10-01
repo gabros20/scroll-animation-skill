@@ -1,0 +1,156 @@
+/* The recipe pages: plain blocks in known sizes, so tests/recipes.mjs can compute where everything must be. */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  color: #1a1a1a;
+  font: 16px/1.4 system-ui, sans-serif;
+}
+body {
+  background: #f4f1ea;
+}
+* {
+  box-sizing: border-box;
+}
+
+.spacer {
+  height: 150vh;
+  padding: 40px;
+}
+.spacer.short {
+  height: 60vh;
+}
+
+/* parallax */
+.layer {
+  height: 400px;
+  margin: 0 auto;
+  width: 60%;
+  background: #c9c0ad;
+}
+.layer.small {
+  height: 240px;
+  background: #a58a64;
+}
+
+/* colour-track */
+[data-colour-track] {
+  min-height: 120vh;
+  padding: 40px;
+}
+
+/* marquee: two 900 px copies in a 600 px frame */
+.marquee {
+  width: 600px;
+  margin: 40px;
+}
+[data-marquee] {
+  overflow: clip;
+}
+[data-marquee-track] {
+  display: flex;
+  width: max-content;
+}
+.copy {
+  display: flex;
+  width: 900px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.copy li {
+  flex: 1;
+  padding: 16px;
+}
+
+/* cursor-media */
+[data-cursor-media] {
+  position: relative;
+  margin: 40px;
+  padding: 20px;
+  border: 4px solid #ccc;
+}
+[data-cursor-media] ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+[data-cursor-media] li {
+  padding: 12px 0;
+}
+[data-cursor-media-item] {
+  display: inline-block;
+  font-size: 32px;
+}
+[data-cursor-media-preview] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 240px;
+  height: 160px;
+  translate: 24px -50%;
+  pointer-events: none;
+  opacity: 0;
+}
+[data-cursor-media-preview][data-cursor-media-state='shown'] {
+  opacity: 1;
+}
+[data-cursor-media-for] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+[data-cursor-media-for][data-cursor-media-active] {
+  opacity: 1;
+}
+
+/* draw-on-scroll */
+.drawing {
+  display: block;
+  width: 600px;
+  height: 200px;
+  margin: 0 40px;
+  overflow: visible;
+}
+
+/* stepped-sections */
+[data-step] {
+  height: 100vh;
+  padding: 40px;
+  border-bottom: 1px solid #999;
+}
+[data-step].tall {
+  height: 250vh;
+}
+.after {
+  height: 80vh;
+  padding: 40px;
+}
+
+/* scroll-well: at 1280x800, a well that fits (rests centred at 160), one taller than the viewport and one at the top
+   of a pinned scene's range wrapper; the wells are 1200 px apart, so only one is ever engaged. */
+html.smooth {
+  scroll-behavior: smooth;
+}
+.well {
+  width: 70%;
+  margin: 0 auto;
+  padding: 24px;
+  background: #c9c0ad;
+}
+.well.fits {
+  height: 480px;
+}
+.well.tall {
+  height: 1400px;
+}
+.well.clamped {
+  height: 400px;
+}
+.scene {
+  height: 2400px;
+}
+.end {
+  height: 400px;
+  padding: 24px;
+}

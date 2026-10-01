@@ -1,6 +1,6 @@
 ---
 name: scroll-animation
-description: Build, fix and review scroll-driven animation for editorial and creative websites: entrance reveals, a pinned scene with scrubbed video, looping video, header ink that follows the section underneath, and smooth scroll with Lenis or ScrollSmoother, in Motion (React) and GSAP, with the iOS Safari, video, accessibility and performance fixes they need. Use for "fade in on scroll", "pin this section", "scrub the video", "add smooth scroll", GSAP, ScrollTrigger, Lenis or Motion questions, a scrub stuck on frame one, reveals that never fire, or scroll jank. Not for UI micro-interactions.
+description: Build, fix and review scroll-driven animation for editorial and creative sites: reveals, split text, CSS scroll effects, pinned scenes, horizontal rails, scrubbed and looping video, header ink that follows each section, and smooth scroll with Lenis or ScrollSmoother, in CSS, Motion (React) and GSAP, with their iOS Safari, accessibility and performance fixes. Use for "fade in on scroll", "pin this section", "scrub the video", "add smooth scroll", GSAP, ScrollTrigger, Lenis or Motion questions, a scrub stuck on frame one, reveals that never fire, or scroll jank. Not for UI micro-interactions.
 ---
 
 # Scroll animation
@@ -35,34 +35,43 @@ First pick the lane, then the reference:
 |---|---|---|
 | Any new page, site or motion system | [preflight.md](references/preflight.md) | profile, scroll authority per route, engines, budgets, layout scale, `ANIMATION.md` |
 | Smooth or inertial scroll; Lenis or ScrollSmoother already present; anchors or modals under a smoother | [scroll-authority.md](references/scroll-authority.md) | the owner per route, one clock, what each owner breaks |
-| Content that animates in (sections, cards, headlines, stats) | [motion-architecture.md](references/motion-architecture.md) | triage by clock, entrance wiring, trigger lines, measured curves, SSR |
-| A pinned or scrubbed section, stacked acts, a scroll well, copy riding over a pin | [scenes.md](references/scenes.md) | range wrapper, sticky or GSAP pin, acts, latches, manual writes, camera, scaled travel |
+| Content that animates in (sections, cards, images, stats, a number counting up) | [entrances.md](references/entrances.md) | triage by clock, `Reveal` per engine, trigger lines, once or replay, the load veil, count-up, the gate and SSR |
+| A headline or paragraph revealed by word or line | [text.md](references/text.md) | `SplitWords` on the server or SplitText below the fold, fonts first, aria, React keys, CJK and Thai |
+| Motion (React) code: `useScroll`, springs, `LazyMotion`, Motion under Lenis | [motion.md](references/motion.md) | `m` under strict, live reduced motion, hand-written scroll styles, the `frame` driver |
+| GSAP code: `useGSAP`, a vanilla page's `mount`, section timelines, triggers that fire early or stack up, plugins | [gsap.md](references/gsap.md) | setup, cleanup per route, page order and `refreshPriority`, the matchMedia trap, `quickTo`, the 11 mistakes |
+| Choreography, timing and taste; motion that feels generic or busy | [craft.md](references/craft.md) | order, durations, eases, staggers, pacing, replay, one idea per viewport, anti-slop checks |
+| A pinned or scrubbed section, stacked acts, a horizontal rail, a scroll well, copy riding over a pin | [scenes.md](references/scenes.md) | range wrapper, sticky or GSAP pin, acts, latches, manual writes, camera, scaled travel, rails |
+| CSS decoration on scroll: parallax, fades, a sticky card stack, a marquee, a progress bar; `view()` or `timeline-scope` trouble | [css-scroll-effects.md](references/css-scroll-effects.md) | `data-scroll-fx`, ranges, the Firefox fallback, each authority, reduced motion, `overflow: clip` |
+| Layers: parallax in JS, colour tracks, a velocity marquee, cursor media, drawn lines, blend text, header ink per section, stepped sections | [layered-visuals.md](references/layered-visuals.md) | the cheapest engine per effect, the recipes, the header's IntersectionObserver probe |
 | Any `<video>`: scrub, loop, conditional autoplay | [video.md](references/video.md) | encoding, loop seams, seeks, preload tiers, posters, serving, pause controls, tab-sleep recovery |
 | An image sequence on scroll (Apple-style), or Lottie or Rive driven by scroll | [sequences.md](references/sequences.md) | sequence or video, the frame manifest, decode window, byte budgets |
 | Reduced motion, auto-moving content, keyboard, split text, no-JS, print | [accessibility.md](references/accessibility.md) | the alternate scene per engine, pause controls, focus, screen readers |
-| A transparent fixed header over light and dark sections | [header-theme.md](references/header-theme.md) | the probe, the marks, one shared transition |
 | A site that already animates (header scripts, GSAP, Lenis, AOS) | [brownfield-coexistence.md](references/brownfield-coexistence.md) | keep, adapt or replace; one writer per property |
 | A scene or video misbehaving on iPhone or Safari | [ios-safari-motion.md](references/ios-safari-motion.md) | toolbar, pin units, play watchdog, mask sweeps |
 | Jank, budgets, before shipping | [performance.md](references/performance.md) | cost order, per-frame budgets, gating |
 | Proving it works; any "it doesn't fire / holds / snaps" | [verification.md](references/verification.md) | the harness, the scripts, device checks |
-| An exact attribute, CSS variable or constant name | [attribute-contract.md](references/attribute-contract.md) | the names both engines share |
 | A viewport-scaled layout (fluid-design or similar) | [preflight.md](references/preflight.md) §3.6 | breakpoint, header and unit sources; scaled travel is `scenes.md` §12 |
 
 ## Engine map
 
 | Clock | Job | Block (engine) |
 |---|---|---|
-| trigger | content entrance, load veil | `stage` (motion: `Stage`/`StageItem`; gsap: `data-stage`) |
-| trigger | a number counting up | `count-up` (motion, gsap) |
-| scroll | copy fading as it leaves over a pin | `fade-on-exit` (motion, gsap) |
-| scroll | header ink per section | `header-theme` (motion, gsap) |
-| scroll | a section pulled to rest | `scroll-well` (motion, gsap; not under a smoother) |
+| trigger | content entrance; a load veil only as a recorded exception (it delays the LCP element) | `reveal` (motion: `Reveal`/`RevealItem`/`RevealVeil`; gsap: `reveal`; agnostic: `mountReveals`) |
+| trigger | an above-the-fold headline, its words in from the first frame | `split-words` (motion: `SplitWords`, a Server Component; agnostic: `splitWordsHTML`) |
+| trigger | a heading or paragraph revealed line by line below the fold | `split-reveal` (gsap: `splitReveal`, SplitText) |
+| trigger | a number counting up | `count-up` (motion: `CountUp`; agnostic: `mountCountUps`) |
+| scroll | parallax, fade and scale in, exit fade, reading progress, sticky stack, marquee | `scroll-effects` (css: `data-scroll-fx`; decoration; its `view()` effects are off under ScrollSmoother) |
+| scroll | JS layers: parallax where CSS can't run, a colour handed between sections, lines drawn on scroll | recipes `parallax` (gsap: `parallax`; motion: `Parallax`), `colour-track` (gsap: `colourTrack`), `draw-on-scroll` (gsap: `drawOnScroll`) |
+| render, trigger | a marquee that follows scroll speed, media that follows the pointer; one section per notch for a presentation | recipes `marquee-velocity` (gsap: `marqueeVelocity`), `cursor-media` (gsap: `cursorMedia`), `stepped-sections` (gsap: `steppedSections`) |
+| scroll | header ink per section | `header-theme` (motion: `useHeaderTheme`; agnostic: `mountHeaderTheme`) |
+| scroll | a horizontal rail of panels | `horizontal-rail` (gsap: `horizontalRail`, on `pinned-scene`) |
+| scroll | a section pulled to rest | `scroll-well` (motion: `ScrollWell`; gsap: `scrollWell`; agnostic: `createScrollWell`; native scrolling only) |
 | scroll | a pinned scene: stacked acts, a scroll-driven timeline | `pinned-scene` (motion: `PinnedScene`; gsap: `pinnedScene`) |
 | media | a scrubbed video on a pinned scene | `scrub-video` (motion: `ScrubVideo`; gsap: `scrubVideo`) |
 | media | an image sequence scrubbed on a canvas | `frame-sequence` (motion: `FrameSequence`; gsap: `frameSequence`) |
 | media | an in-view background loop with a pause control | `loop-video` (motion: `LoopVideo`; gsap: `loopVideo`) |
-| — | scroll owner for a route | `smooth-lenis` + `smooth-react`, or `smooth-smoother` (GSAP-only pages) |
-| — | foundation | `config`, `base-css`, `gsap-setup` or `motion-provider` |
+| — | scroll owner for a route | `smooth-lenis` + `smooth-react`, or `smooth-smoother` (GSAP-only pages; start it with `createSmoother`) |
+| — | foundation | `config`, `base-css`, `gsap-setup` (plus `mount` on a vanilla GSAP page) or `motion-provider` |
 
 When a route already loads GSAP, its entrances use GSAP rather than adding Motion, and the reverse. One engine per
 element and per scene.
@@ -107,9 +116,11 @@ Break one and the motion breaks:
 |---|---|---|
 | Decisions and the scene ledger | `ANIMATION.md` at the project root | preflight; updated when a decision changes |
 | Blocks | `src/animation/` (same layout as `assets/`), recorded in `.scroll-animation.lock.json` | `scroll-animation add`; hand edits are yours, and `add` refuses to overwrite them without `--force` |
+| A block's markup and names | its file header: the HTML or JSX it expects, its `data-*` attributes, CSS variables, options and handle | the block; read it before wiring, never guess a name |
 | Names and numbers | `src/animation/config.ts` | edit values there, never inside a block |
+| The header's height | `--header-h` on `:root` (`var(--fluid-header-h)` on fluid-design) | the page sets it; anchors, `view()` ranges and sticky tops read it |
 | Base CSS | `src/animation/css/animation.css`, imported once after the reset | shared by every engine |
-| The pre-JS gate | `GATE_SCRIPT` inline in `<head>` (with the CSP nonce; `suppressHydrationWarning` on `<html>` in React) | required for hidden entrance states |
+| The pre-JS gate | `GATE_SCRIPT` inline in `<head>` (with the CSP nonce; `suppressHydrationWarning` on `<html>` in React): `html[data-animation="on"]`, then `data-animation-ready` once an engine boots | required for hidden entrance states |
 | Scroll owner at runtime | `<html data-scroll-authority>` | stamped by the smooth blocks, never authored |
 
 Agents run the CLI as `node <skill>/bin/scroll-animation <command>`; people run `npx scroll-animation-cli <command>`

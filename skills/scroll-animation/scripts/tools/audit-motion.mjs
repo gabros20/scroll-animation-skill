@@ -226,6 +226,13 @@ function extractTags(content) {
 // ── rules ───────────────────────────────────────────────────────────────
 // Each rule: { id, ext: (extname)=>bool, run(content, file, ctx, acc, opts) }
 
+// A scroll well in use: v2's <ScrollWell />, data-scroll-well (the mount attribute) and the GSAP adapter's
+// scrollWell(), and, so a brownfield project is still caught, v1's <PullToCentre />, data-pull-to-centre,
+// createScrollPull() and initPullToCentre(). Not the core's createScrollWell(): the Motion adapter calls it, and a
+// copied block that no route renders is no finding. A function's own definition is not a use either.
+const scrollWellUses = () =>
+  /<ScrollWell\b|\bdata-scroll-well\b|(?<!\bfunction\s+)\bscrollWell\s*\(|<PullToCentre\b|\bdata-pull-to-centre\b|\b(?:createScrollPull|initPullToCentre)\s*\(/g
+
 const rules = [
   {
     id: 'motion-strict',
@@ -245,57 +252,51 @@ const rules = [
   },
 
   {
-    // A page-wide `scroll-behavior: smooth` (animation.css sets this on
-    // `html` by default) means the scroll well's own per-frame
-    // `behavior: 'instant'` writes cancel any smooth scroll passing through
-    // its target one rAF at a time -- an anchor click that should land 900px
-    // further away instead stalls at the well (references/scenes.md
-    // §8; `verify-motion.mjs --reveal` failed in every cell this way on a
-    // real build). Both engines' scrollPull now suspend automatically on a
-    // same-page hash click/hashchange, and expose `suspend(ms)` for a
-    // caller driving its own programmatic scroll -- this rule is
-    // informational, not an error, as a reminder to call it for any OTHER
-    // kind of scroll (a router push, an imperative scrollIntoView outside a
-    // click handler) that would not be caught by those two listeners.
+    // A page-wide `scroll-behavior: smooth` makes every programmatic scroll
+    // smooth, and the scroll well's per-frame `behavior: 'instant'` writes
+    // cancel any smooth scroll passing through its target one frame at a
+    // time: an anchor click that should land 900px further away stalls at
+    // the well instead (references/scenes.md, the scroll well). The well
+    // suspends itself for a same-page hash click and hashchange, and its
+    // handle's suspend(ms) and suspendScrollWells() cover a caller's own
+    // scroll -- this rule is informational, a reminder to call them around
+    // any OTHER kind of scroll (a router push, scrollIntoView outside a click
+    // handler) that those two listeners can't see.
     id: 'scroll-well-vs-smooth-scroll',
     ext: (e) => ['.tsx', '.jsx', '.vue', '.astro', '.html'].includes(e),
     run(content, file, ctx, acc) {
       if (!ctx.hasSmoothScrollBehavior) return
-      const re = /<PullToCentre\b|\bdata-pull-to-centre\b|\bcreateScrollPull\s*\(|\binitPullToCentre\s*\(/g
+      const re = scrollWellUses()
       let m
       while ((m = re.exec(content))) {
         pushFinding(acc, {
           rule: this.id, file, content, index: m.index, matchLen: m[0].length, severity: 'info',
-          why: 'This project sets scroll-behavior: smooth somewhere and also uses a scroll well (PullToCentre/scrollPull). The well auto-suspends for a same-page hash click and hashchange, but any OTHER programmatic/smooth scroll (a router navigation, an imperative scrollIntoView outside a click handler) that passes through the well\'s target will still be cancelled one rAF at a time unless you call suspend() around it (references/scenes.md §8).',
-          fix: 'Call the returned controller\'s suspend(ms) immediately before driving any scroll of your own through this target, or confirm the only programmatic scrolls in this tree are same-page hash clicks/hashchange, which are already covered automatically.'
+          why: 'This project sets scroll-behavior: smooth somewhere and also uses a scroll well (ScrollWell, scrollWell(); v1: PullToCentre, data-pull-to-centre). The well suspends itself for a same-page anchor click and hashchange, but any OTHER smooth scroll that passes through its target (a router navigation, scrollIntoView outside a click handler, the scroll authority\'s scrollTo) is cancelled a frame at a time unless the well is suspended first (references/scenes.md, the scroll well).',
+          fix: 'Call suspendScrollWells() (scroll-well.ts) or the well\'s suspend(ms) just before any smooth scroll of your own, or confirm the only programmatic scrolls in this tree are same-page anchor clicks and hashchange, which are covered already. Replace a v1 well with the v2 block.'
         })
       }
     }
   },
 
   {
-    // Lenis and the scroll well (PullToCentre/scrollPull) are both scroll-
-    // position writers. Lenis intercepts the wheel/touch input and drives
-    // its own smoothed scroll; the well reads scroll position every rAF and
-    // writes `window.scrollTo(..., { behavior: 'instant' })` toward its
-    // target. Running both unmodified means two systems fighting for the
-    // same property -- the well's writes fight Lenis's interpolation, and
-    // Lenis's own smoothing means the well's distance/velocity reads (tuned
-    // against native scroll) are off. See brownfield-coexistence.md: keep
-    // Lenis if wanted, but either disable it for the well's range or route
-    // the well's writes through `lenis.scrollTo` instead of raw
-    // `window.scrollTo`.
+    // Lenis and the scroll well both write the scroll position. Lenis drives
+    // its own smoothed scroll from the wheel and touch input; the well reads
+    // the position every frame and writes a step toward rest. The v2 well
+    // stands down while Lenis (or ScrollSmoother) owns the page, so on a
+    // Lenis route it does nothing; a v1 well (PullToCentre, scrollPull) fights
+    // Lenis's interpolation every frame. Either way the well and Lenis don't
+    // belong on one route (references/brownfield-coexistence.md).
     id: 'lenis-with-scroll-well',
     ext: (e) => ['.tsx', '.jsx', '.vue', '.astro', '.html'].includes(e),
     run(content, file, ctx, acc) {
       if (!ctx.hasLenis) return
-      const re = /<PullToCentre\b|\bdata-pull-to-centre\b|\bcreateScrollPull\s*\(|\binitPullToCentre\s*\(/g
+      const re = scrollWellUses()
       let m
       while ((m = re.exec(content))) {
         pushFinding(acc, {
           rule: this.id, file, content, index: m.index, matchLen: m[0].length, severity: 'warn',
-          why: 'This project depends on Lenis somewhere and also uses the scroll well (PullToCentre/scrollPull). Both are scroll-position writers; left unmodified they fight each other for the same property (references/brownfield-coexistence.md).',
-          fix: 'Disable Lenis over the well\'s range, or route the well through lenis.scrollTo instead of the native scrollTo it uses by default -- never run both unmodified over the same target.'
+          why: 'This project depends on Lenis somewhere and also uses a scroll well (ScrollWell, scrollWell(); v1: PullToCentre, data-pull-to-centre, createScrollPull). Both write the scroll position. The v2 well pulls nothing while Lenis owns the page, so it is dead on a Lenis route; a v1 well fights Lenis every frame and the page stutters around the rest (references/brownfield-coexistence.md).',
+          fix: 'Keep the well to routes that scroll natively, or drop it from the Lenis routes. Replace a v1 well with the v2 block; never run one under Lenis.'
         })
       }
     }
@@ -374,7 +375,7 @@ const rules = [
           const index = bm.index + bm[0].indexOf(am[0], bm[1].length)
           pushFinding(acc, {
             rule: this.id, file, content, index, matchLen: am[0].length, severity: 'warn',
-            why: 'A fractional viewport.amount is unsatisfiable once the element is taller than the viewport — the trigger can never see that fraction of the element at once, so it never fires on tall content (motion-architecture.md §8).',
+            why: 'A fractional viewport.amount is unsatisfiable once the element is taller than the viewport — the trigger can never see that fraction of the element at once, so it never fires on tall content (references/entrances.md §5).',
             fix: 'Use amount: "some" for a coarse trigger, or drive the reveal from a margin-based rootMargin instead of a fraction.'
           })
         }
@@ -393,7 +394,7 @@ const rules = [
         while ((m = re.exec(content))) {
           pushFinding(acc, {
             rule: this.id, file, content, index: m.index, matchLen: m[0].length, severity: 'error',
-            why: 'display: contents generates no box, so IntersectionObserver has nothing to observe. If the element carrying this rule also has whileInView, data-stage or is a Stage, its reveal never fires (motion-architecture.md §8).',
+            why: 'display: contents generates no box, so IntersectionObserver has nothing to observe. If the element carrying this rule also has whileInView or data-reveal, or is a Reveal (v1: data-stage, Stage), its reveal never fires (references/entrances.md, Traps).',
             fix: 'Give the element a real box (e.g. display: flex/block) or move the reveal trigger to an ancestor that does generate one.'
           })
         }
@@ -402,12 +403,12 @@ const rules = [
       for (const tag of extractTags(content)) {
         const hasContents = /\bcontents\b/.test(tag.text) && /className\s*=/.test(tag.text)
         if (!hasContents) continue
-        const hasTrigger = /whileInView|data-stage\b|<Stage\b/.test(tag.text)
+        const hasTrigger = /whileInView|data-stage\b|<Stage\b|data-reveal(?![\w-])|<Reveal\b/.test(tag.text)
         if (!hasTrigger) continue
         pushFinding(acc, {
           rule: this.id, file, content, index: tag.index, matchLen: tag.text.length, severity: 'error',
-          why: 'This element carries a contents class alongside a reveal trigger (whileInView/data-stage/Stage). display: contents generates no box, so the trigger never fires — a whole stat grid has shipped stuck at opacity 0 this way.',
-          fix: 'Drop contents from this element, or move whileInView/data-stage to a wrapping element that keeps a real box.'
+          why: 'This element carries a contents class alongside a reveal trigger (whileInView, data-reveal, Reveal; v1: data-stage, Stage). display: contents generates no box, so the trigger never fires — a whole stat grid has shipped stuck at opacity 0 this way.',
+          fix: 'Drop contents from this element, or move the trigger (whileInView, data-reveal, Reveal) to a wrapping element that keeps a real box.'
         })
       }
     }
@@ -453,7 +454,7 @@ const rules = [
 // a legitimate, common place `scroll-behavior: smooth` gets set. Filtering
 // generated files out before buildContext ran would mean `scroll-well-vs-
 // smooth-scroll` could never fire on that skill's recommended setup
-// (generated base layer + <PullToCentre>/data-pull-to-centre elsewhere).
+// (generated base layer + <ScrollWell />/data-scroll-well elsewhere).
 // Generated files are excluded from the PER-FILE loop only; buildContext
 // always sees every file.
 const GENERATED_HEADER_RE = /generated/i

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>recipes fixture: stepped-sections (gsap)</title>
+    <link rel="stylesheet" href="./src/page.css" />
+  </head>
+  <body>
+    <!-- Four sections, the third 2.5 viewports tall, then content after the deck. -->
+    <main id="deck">
+      <section data-step id="s1"><h2>One</h2><p><a href="#one" id="first-link">A link</a></p></section>
+      <section data-step id="s2"><h2>Two</h2></section>
+      <section data-step class="tall" id="s3">
+        <h2>Three, taller than the viewport</h2>
+        <p style="margin-top: 180vh"><a href="#deep" id="deep-link">A link far down</a></p>
+      </section>
+      <section data-step id="s4"><h2>Four</h2><button type="button">A button</button></section>
+    </main>
+    <div class="after">After the deck</div>
+    <script type="module" src="./src/stepped.ts"></script>
+  </body>
+</html>

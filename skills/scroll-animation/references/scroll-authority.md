@@ -44,13 +44,13 @@ when the route goes away or is hidden.
 
 ## 2. What each owner breaks (measured)
 
-From `docs/research/spikes-2026-09.md` (Chromium 153, WebKit 26.6):
+From the skill's own browser measurements (spikes S1–S7, September 2026; Chromium 153, WebKit 26.6):
 
 | | Native | Lenis | ScrollSmoother |
 |---|---|---|---|
 | `position: sticky` in content | yes | yes | **no**: pin with ScrollTrigger |
 | `position: fixed` in content | yes | yes | **no**: keep fixed UI outside the wrapper |
-| CSS `scroll()` / `view()` timelines | yes (Chromium 115+, Safari 26+; not Firefox stable) | frame-exact in Chromium; **Safari reads the previous frame** | **no**: `view()` stays at 0 |
+| CSS `scroll()` / `view()` timelines | yes (Chromium 115+, Safari 26+; not Firefox stable) | frame-exact in Chromium; **Safari reads the previous frame** | **`view()` no**: it stays at 0; `scroll(root)` runs on the unsmoothed scroll |
 | CSS scroll-snap | yes | **no**: use `lenis/snap` | no |
 | Motion `useScroll` | yes | yes, with the Motion driver (§6) | **no while moving**: it reads the unsmoothed scroll (up to 244 px off) |
 | IntersectionObserver, `whileInView` | yes | yes | yes (fires on visual entry) |
@@ -60,6 +60,7 @@ From `docs/research/spikes-2026-09.md` (Chromium 153, WebKit 26.6):
 | Anchors, find-in-page | native | through `lenis.scrollTo` (our handler) | `smoother.scrollTo` |
 | Iframes | yes | wheel over an iframe doesn't scroll | yes |
 | Reduced motion (followed live) | native | Lenis torn down: native scrolling | native mode (`smooth: 0`): wrapper in flow, no effects |
+| Touch-only screens (phones) | native | native touch (`syncTouch: false`) | native mode without `smoothTouch`; effects still run (§5) |
 
 ## 3. Native
 
@@ -71,7 +72,9 @@ The default. Wheel scrolling on a mouse arrives in steps, so smooth the **consum
 
 Anchors: `html { scroll-padding-top: var(--header-h) }` keeps targets below a fixed header. Add
 `scroll-behavior: smooth` only when no ScrollTrigger runs on the page; Next.js also needs
-`<html data-scroll-behavior="smooth">` for its router to respect it.
+`<html data-scroll-behavior="smooth">` for its router to respect it. A ScrollTrigger refresh stops a native smooth
+`scrollTo` part-way (observed on GSAP 3.15), so a jump that must land goes through the authority's handle with
+`immediate`.
 
 ## 4. Lenis
 
@@ -94,7 +97,7 @@ React: `<SmoothScroll authority="lenis" driver={gsapDriver(gsap, ScrollTrigger)}
   `useSpring` on top of Lenis trails the scroll by 16–18 frames (about 0.3 s).
 - **CSS scroll timelines**: fine for decoration (progress bars, fades, gentle parallax). In Safari they read the
   previous frame's scroll under Lenis, so anything that must stay registered to moving content is driven from Lenis's
-  tick (GSAP or Motion), not a CSS timeline.
+  tick (GSAP or Motion), not a CSS timeline (`css-scroll-effects.md` §4).
 - **Anchors**: `createSmoothScroll` handles same-page `#hash` links itself, offset by the fixed header
   (`HEADER_HEIGHT_VAR`), and pushes the hash.
 - **Modals and menus**: `currentSmoothScroll()?.stop()` on open, `.start()` on close. Never `position: fixed` on the
@@ -121,24 +124,42 @@ gsap.registerPlugin(ScrollTrigger, ScrollSmoother)
 const scroll = createSmoother(ScrollSmoother, { smooth: 1, effects: true })
 ```
 
+- **Start it with `createSmoother`**, never `ScrollSmoother.create()` by hand. The blocks read the owner from the
+  `<html data-scroll-authority>` stamp, and a smoother started by hand leaves none, so every block treats the page as
+  native: `data-scroll-fx="fade-in"` content stays at opacity 0, the recipes add 0.5 s of catch-up on top of the
+  smoother's own, and stepped sections and the scroll well run against it.
 - Every scroll-linked value comes from ScrollTrigger, pins included (`pin: true`, since sticky is off). Entrances may
-  use IntersectionObserver or Motion's `whileInView`; Motion `useScroll` and CSS scroll timelines are out.
+  use IntersectionObserver or Motion's `whileInView`; Motion `useScroll` and `view()` are out. A `scroll(root)`
+  progress bar outside the wrapper runs, a little ahead of the smoothed page (`css-scroll-effects.md` §4).
 - `data-speed` (with `"auto"` for an image moving inside its frame) and `data-lag` need `effects: true`. Use
-  `clamp(…)` on above-the-fold speeds so elements don't start displaced.
-- Header ink that follows sections must read `smoother.scrollTop()`, not `window.scrollY`, which runs ahead of what the
-  reader sees.
+  `clamp(…)` on above-the-fold speeds so elements don't start displaced (`layered-visuals.md` §2).
+- A header ink probe reads no scroll position, `smoother.scrollTop()` included. The `header-theme` block watches a 1 px
+  IntersectionObserver strip, which fires on what the reader sees under every authority. Measured under
+  ScrollSmoother, `window.scrollY` disagreed with the screen on 105–214 frames per pass; the ink never followed it and
+  stayed within a frame of the screen in 18 runs (`layered-visuals.md` §10).
 - Print: the wrapper prints one viewport unless print CSS unwraps it (`accessibility.md` §6).
-- **Reduced motion** runs ScrollSmoother in its native mode (`smooth: 0`, the mode it already uses on touch screens
-  without `smoothTouch`): the wrapper is back in flow, nothing is transformed, no `data-speed` / `data-lag`, and the
-  handle's `scrollTo` jumps. `createSmoother` follows the setting live by re-creating the smoother on the same wrapper;
-  the stamp stays `smoother`. Never kill a ScrollSmoother alone: every ScrollTrigger made while it runs is bound to its
-  wrapper, and a kill strands them (they stop updating while the page scrolls on).
+- Focus: ScrollSmoother jumps a newly focused element to the viewport's centre on `focusin` (observed on 3.15). A
+  block that brings focused content into view itself waits a frame for that jump to land, then corrects through the
+  handle with `immediate`, as the horizontal rail does (scenes.md §14).
+- **Reduced motion** runs ScrollSmoother in its native mode (`smooth: 0`) with effects off: the wrapper is back in
+  flow, nothing is transformed, no `data-speed` / `data-lag`, and the handle's `scrollTo` jumps. `createSmoother`
+  follows the setting live by re-creating the smoother on the same wrapper; the stamp stays `smoother`. Never kill a
+  ScrollSmoother alone: every ScrollTrigger made while it runs is bound to its wrapper, and a kill strands them (they
+  stop updating while the page scrolls on).
+- **Touch-only screens** (`ScrollTrigger.isTouch` 1: a phone) get the same native mode unless `smoothTouch` is set
+  (GSAP: "by default, ScrollSmoother will NOT apply scroll smoothing on touch-only devices"): the wrapper in flow, the
+  content untransformed, the page scrolling natively. Every ScrollTrigger still reads the wrapper, a proxy the
+  smoother's own trigger sets to the window's scroll first in each update, and IntersectionObserver sees the native
+  scroll, so triggers fire as on a native page (measured on the iOS 18.6 simulator with touch pans). `data-speed` and
+  `data-lag` keep running there, written from the main thread as the page scrolls (measured in Playwright's WebKit
+  with touch emulation). A reload mid-page is a jump: iOS Safari restores the position after the scripts ran, past
+  every trigger above it (`entrances.md` §5).
 - **Resizes**: `createSmoother` turns off ScrollSmoother's `autoResize` and runs a full `ScrollTrigger.refresh()` when
   the content resizes. GSAP 3.15's own resize refresh covers only the smoother's trigger, so the page's other triggers
   keep stale positions, and one landing in the first 0.5 s after creation replays the scroll from the top on a page
   that is already scrolled (a reload mid-page).
-- ScrollSmoother is free (GSAP 3.13+). It still costs sticky, fixed and CSS timelines inside the content, which is why
-  Lenis is the choice whenever the page mixes engines.
+- ScrollSmoother is free (GSAP 3.13+). It still costs sticky, fixed and `view()` timelines inside the content, which is
+  why Lenis is the choice whenever the page mixes engines.
 
 ## 6. One tick
 
@@ -174,6 +195,9 @@ elements. Independent effects may keep their own IntersectionObserver-gated loop
 - GSAP work on a route lives in `useGSAP(() => …, { scope })`, which reverts it on unmount and on hide.
 - After a transition settles (fonts loaded, images sized), call `ScrollTrigger.refresh()` once. Reading a
   ScrollTrigger's progress before that returns stale numbers (up to 300 px off after content above it moves).
+- A scene re-created above the viewport (a route shown again) brings its runway back there. WebKit's scroll anchoring
+  then moves the page by the runway's height to keep what the reader sees in place (measured 1708 → 3645 px on a
+  rail's re-create); Chromium and Firefox keep the offset. Restore the reader's place after the re-create.
 
 ## Traps
 
@@ -182,7 +206,8 @@ elements. Independent effects may keep their own IntersectionObserver-gated loop
 - [ ] Lenis runs on the page's engine clock (`gsapDriver` / `motionDriver`), never `autoRaf`; `ReactLenis` in a GSAP
       project has `autoRaf: false`.
 - [ ] Smoothing happens once: `scrub: true` and raw `useScroll` under a smoother.
-- [ ] Under ScrollSmoother: no sticky, no CSS timelines, no Motion `useScroll` inside the content; fixed UI outside.
+- [ ] ScrollSmoother starts through `createSmoother`; no sticky, no `view()`, no Motion `useScroll` inside the content;
+      fixed UI outside.
 - [ ] Under Lenis in Safari: CSS timelines only for decoration.
 - [ ] Modals call `stop()` / `start()`; nested scrollers carry `data-lenis-prevent`.
 - [ ] Nothing kills a ScrollSmoother without re-creating it: its triggers are bound to the wrapper.

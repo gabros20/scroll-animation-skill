@@ -1,0 +1,32 @@
+{
+  "skillVersion": "1.0.0",
+  "dir": "src/animation",
+  "engines": [
+    "agnostic",
+    "css",
+    "gsap"
+  ],
+  "files": {
+    "config.ts": "91fe04cc98fc0675",
+    "scale.ts": "322b05138c6a47d1",
+    "gsap/setup.ts": "fb9601866eb05ace",
+    "css/animation.css": "7aa944c76accd5b7",
+    "smooth/authority.ts": "7187dc8a86d1a25c",
+    "smooth/smoother.ts": "726d72d4c6f7b7b2",
+    "scene.ts": "681c45e78fd3add5",
+    "css/scene.css": "2862e3dd2903c50f",
+    "gsap/pinned-scene.ts": "66bd7063f88e5ba6",
+    "gsap/horizontal-rail.ts": "23395aed00b898eb",
+    "css/rail.css": "00485ea92eebb879",
+    "gsap/reveal.ts": "9316b84e53babcff",
+    "css/reveal.css": "2d31e05119550d32",
+    "gsap/split-reveal.ts": "4901377a672037df",
+    "split-words.ts": "d76af3671f7a3f06",
+    "css/split.css": "ec0c0f651018e84a",
+    "count-up.ts": "fc01d059966850e7",
+    "header-theme.ts": "a2aca41e57b93801",
+    "css/header-theme.css": "2a3f8422c6b2dfc7",
+    "css/scroll-effects.css": "9f635e4de26088a6",
+    "gsap/mount.ts": "8a0cb6d2005a13b2"
+  }
+}

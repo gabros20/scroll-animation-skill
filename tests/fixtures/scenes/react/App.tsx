@@ -3,8 +3,8 @@ import { ScrubVideo } from '../../../../skills/scroll-animation/assets/motion/Sc
 // The same all-intra test clip and the same explicit config as the GSAP smoke
 // page (tests/smoke-gsap/main.ts): 2 s at 30 fps, a five-frame head loop and a
 // tail loop over the last five frames. The blocks above and below the scene are
-// static stand-ins for the smoke page's stage, count-up, fade-on-exit and
-// travel section, sized the same so the scene sits on the same geometry.
+// static stand-ins for the smoke page's three reveal groups and its travel
+// section, sized the same so the scene sits on the same geometry.
 // loopSeconds={Infinity} for the same reason as the smoke page: the v1
 // recording's loops never stopped (tests/scrub-video.mjs checks the 5 s cap).
 export function App() {
@@ -15,11 +15,11 @@ export function App() {
       </div>
 
       <div style={{ padding: 40, fontSize: 32 }}>
-        Count: <span>42</span>
+        <div>Count: 42</div>
       </div>
 
       <div style={{ padding: 40 }}>
-        <p>Fades out as it scrolls above the viewport.</p>
+        <p>Clipped in as it crosses the line.</p>
       </div>
 
       <ScrubVideo

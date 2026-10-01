@@ -2,7 +2,7 @@
   {
     "id": "trigger-before-scroll",
     "prompt": "Make the stats section animate as you scroll through it.",
-    "load_bearing_instruction": "Triage by clock first: a stats section is content arriving, so it is a triggered entrance (Stage/StageItem or a count-up), not a scroll-linked scene.",
+    "load_bearing_instruction": "Triage by clock first: a stats section is content arriving, so it is a triggered entrance (Reveal/RevealItem or a count-up), not a scroll-linked scene.",
     "variants": [
       "no-skill",
       "current",

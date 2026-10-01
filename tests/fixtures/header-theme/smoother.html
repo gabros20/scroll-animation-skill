@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>header-theme fixture (ScrollSmoother)</title>
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/animation.css" />
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/header-theme.css" />
+    <link rel="stylesheet" href="./src/page.css" />
+  </head>
+  <body>
+    <!-- tests/header-theme.mjs injects src/layout.ts's header and sections here; the header stays outside the wrapper -->
+    <!--header-->
+    <div id="smooth-wrapper">
+      <div id="smooth-content">
+        <main id="page"><!--page--></main>
+      </div>
+    </div>
+    <script type="module" src="./src/smoother.ts"></script>
+  </body>
+</html>

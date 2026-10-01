@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>S7a view() ranges</title>
+    <!--
+      S7a. Two rows of subjects at known document offsets: a short one (200px,
+      under the 600px viewport) at top 1500 and a tall one (900px) at top 3200.
+      Every box is its own view() subject and animates opacity (compositor) and
+      margin-left (layout) linearly, so each value reads back as progress.
+
+      Guarded boxes (inside @supports) keep the finished state as their static
+      style, which is what a browser without scroll-driven animations shows.
+      .snip1 and .snip2 are the research reports' recipes, copied verbatim and
+      deliberately NOT guarded; .snip3 is .snip1 with a time-based duration:
+        .snip1  1-local-skills.md  animation: fadeUp linear both; ... entry 0% cover 40%
+        .snip2  6-motion-css.md    animation: fade-up linear;     ... entry 0% cover 40%
+        .snip3                     animation: fadeUp 1s linear both; ... entry 0% cover 40%
+    -->
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        font: 16px/1.4 system-ui, sans-serif;
+      }
+      .spacer {
+        height: 1500px;
+      }
+      .row {
+        position: relative;
+      }
+      .row.short {
+        height: 200px;
+      }
+      .row.tall {
+        height: 900px;
+      }
+      .box {
+        position: absolute;
+        top: 0;
+        width: 40px;
+        height: 100%;
+        background: #000;
+        /* static fallback: the finished state */
+        opacity: 1;
+        margin-left: 40px;
+      }
+      .box:nth-child(1) { left: 0; }
+      .box:nth-child(2) { left: 90px; }
+      .box:nth-child(3) { left: 180px; }
+      .box:nth-child(4) { left: 270px; }
+      .box:nth-child(5) { left: 360px; }
+      .box:nth-child(6) { left: 450px; }
+      .box:nth-child(7) { left: 540px; }
+      .box:nth-child(8) { left: 630px; }
+      .box:nth-child(9) { left: 720px; }
+      .box:nth-child(10) { left: 810px; }
+      .box:nth-child(11) { left: 900px; }
+
+      @keyframes reveal {
+        from { opacity: 0; margin-left: 0px; }
+        to { opacity: 1; margin-left: 40px; }
+      }
+      @keyframes reveal-self {
+        from { opacity: 0; margin-left: 0px; translate: 0 0; }
+        to { opacity: 1; margin-left: 40px; translate: 0 300px; }
+      }
+      @keyframes reveal-o {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes reveal-m {
+        from { margin-left: 0px; }
+        to { margin-left: 40px; }
+      }
+
+      @supports (animation-timeline: view()) {
+        .entry, .cover50, .exit, .cover {
+          animation: reveal linear both;
+          animation-timeline: view();
+        }
+        .entry { animation-range: entry 0% entry 100%; }
+        .cover50 { animation-range: cover 0% cover 50%; }
+        .exit { animation-range: exit 0% exit 100%; }
+        .cover { animation-range: cover 0% cover 100%; }
+        /* ranges are said to use the untransformed box: this one moves itself 300px */
+        .self {
+          animation: reveal-self linear both;
+          animation-timeline: view();
+          animation-range: cover 0% cover 100%;
+        }
+        /* two animations, two timelines, one element */
+        .multi {
+          animation: reveal-o linear both, reveal-m linear both;
+          animation-timeline: view(), scroll(root);
+        }
+        /* a time-based duration on a scroll-driven animation */
+        .dur1s {
+          animation: reveal 1s linear both;
+          animation-timeline: view();
+          animation-range: cover 0% cover 100%;
+        }
+        /* animation-timeline BEFORE the shorthand, which resets it */
+        .order {
+          animation-timeline: view();
+          animation: reveal linear both;
+        }
+      }
+
+      /* unguarded recipes from the reports */
+      @keyframes fadeUp {
+        from { opacity: 0; translate: 0 24px; }
+        to { opacity: 1; translate: 0 0; }
+      }
+      @keyframes fade-up {
+        from { opacity: 0; translate: 0 24px; }
+        to { opacity: 1; translate: 0 0; }
+      }
+      .snip1 { animation: fadeUp linear both; animation-timeline: view(); animation-range: entry 0% cover 40%; }
+      .snip2 { animation: fade-up linear; animation-timeline: view(); animation-range: entry 0% cover 40%; }
+      .snip3 { animation: fadeUp 1s linear both; animation-timeline: view(); animation-range: entry 0% cover 40%; }
+    </style>
+  </head>
+  <body>
+    <div class="spacer"></div>
+    <div class="row short">
+      <div class="box entry" data-probe="short-entry"></div>
+      <div class="box cover50" data-probe="short-cover50"></div>
+      <div class="box exit" data-probe="short-exit"></div>
+      <div class="box cover" data-probe="short-cover"></div>
+      <div class="box self" data-probe="short-self"></div>
+      <div class="box multi" data-probe="short-multi"></div>
+      <div class="box dur1s" data-probe="short-dur1s"></div>
+      <div class="box order" data-probe="short-order"></div>
+      <div class="box snip1" data-probe="short-snip1"></div>
+      <div class="box snip2" data-probe="short-snip2"></div>
+      <div class="box snip3" data-probe="short-snip3"></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="row tall">
+      <div class="box entry" data-probe="tall-entry"></div>
+      <div class="box cover50" data-probe="tall-cover50"></div>
+      <div class="box exit" data-probe="tall-exit"></div>
+      <div class="box cover" data-probe="tall-cover"></div>
+      <div class="box self" data-probe="tall-self"></div>
+      <div class="box multi" data-probe="tall-multi"></div>
+      <div class="box dur1s" data-probe="tall-dur1s"></div>
+      <div class="box order" data-probe="tall-order"></div>
+      <div class="box snip1" data-probe="tall-snip1"></div>
+      <div class="box snip2" data-probe="tall-snip2"></div>
+      <div class="box snip3" data-probe="tall-snip3"></div>
+    </div>
+    <div class="spacer"></div>
+    <script type="module" src="../src/probe.js"></script>
+  </body>
+</html>

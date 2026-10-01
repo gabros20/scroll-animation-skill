@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>S7d sticky stack</title>
+    <!--
+      S7d. Three viewport-tall cards, each position: sticky; top: 0, in one
+      1800px section starting at 1200. Card 1 is stuck for scrollTop 1200..2400,
+      card 2 for 1800..2400, card 3 never (it sits in the last slot).
+
+      Readouts (each animates opacity + margin-left linearly, so value = progress):
+        c1-own, c2-own, c3-own   the card's own view(), range cover 0%..100%; cards 1
+                                 and 2 also run two more view() animations (contain,
+                                 exit) that only the timing progress reads
+        c1-inner                 a non-sticky child of card 1, its own view()
+        c1-next                  a child of card 1 on card 2's named timeline, entry 0%..100%
+        c2-next                  a child of card 2 on card 3's named timeline, entry 0%..100%
+    -->
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      .spacer {
+        height: 1200px;
+      }
+      .card {
+        position: sticky;
+        top: 0;
+        box-sizing: border-box;
+        height: 600px;
+      }
+      .c1 { background: #f3d9d9; padding-top: 100px; }
+      .c2 { background: #d9e8f3; }
+      .c3 { background: #dff3d9; }
+      .inner {
+        width: 60px;
+        height: 400px;
+        background: #999;
+      }
+      .face {
+        width: 60px;
+        height: 60px;
+        background: #000;
+      }
+      [data-probe] {
+        /* static fallback: the finished state */
+        opacity: 1;
+        margin-left: 40px;
+      }
+      @keyframes p {
+        from { opacity: 0; margin-left: 0px; }
+        to { opacity: 1; margin-left: 40px; }
+      }
+      @keyframes q {
+        from { outline-offset: 0px; }
+        to { outline-offset: 10px; }
+      }
+      @keyframes r {
+        from { word-spacing: 0px; }
+        to { word-spacing: 10px; }
+      }
+      @supports (animation-timeline: view()) {
+        .stack { timeline-scope: --c2, --c3; }
+        .c2 { view-timeline: --c2 block; }
+        .c3 { view-timeline: --c3 block; }
+        .card, .inner {
+          animation: p linear both;
+          animation-timeline: view();
+          animation-range: cover 0% cover 100%;
+        }
+        .c1, .c2 {
+          animation: p linear both, q linear both, r linear both;
+          animation-timeline: view(), view(), view();
+          animation-range: cover 0% cover 100%, contain 0% contain 100%, exit 0% exit 100%;
+        }
+        .c1 .face {
+          animation: p linear both;
+          animation-timeline: --c2;
+          animation-range: entry 0% entry 100%;
+        }
+        .c2 .face {
+          animation: p linear both;
+          animation-timeline: --c3;
+          animation-range: entry 0% entry 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="spacer"></div>
+    <section class="stack">
+      <div class="card c1" data-probe="c1-own">
+        <div class="inner" data-probe="c1-inner"></div>
+        <div class="face" data-probe="c1-next" data-subject-of="c2"></div>
+      </div>
+      <div class="card c2" data-probe="c2-own" data-subject="c2">
+        <div class="face" data-probe="c2-next" data-subject-of="c3"></div>
+      </div>
+      <div class="card c3" data-probe="c3-own" data-subject="c3"></div>
+    </section>
+    <div class="spacer"></div>
+    <script type="module" src="../src/probe.js"></script>
+  </body>
+</html>

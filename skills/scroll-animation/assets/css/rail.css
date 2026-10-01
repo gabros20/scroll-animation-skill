@@ -1,0 +1,101 @@
+/*
+ * css/rail.css — the horizontal rail's track (gsap/horizontal-rail.ts), its scroll timeline, its native scroller
+ * (reduced motion, no JavaScript) and print rules.
+ * Import it after scene.css, which gives the root, pin and spacer their geometry.
+ *
+ *   <section data-scene-root data-rail>
+ *     <div data-scene-pin>                                         sticky, 100lvh; clips the track
+ *       <div data-rail-track role="region" aria-label="…">         one row that fills the pin; its panels overflow it
+ *         <article data-rail-panel>…</article>                     sized in vw, % of the track, or fluid units
+ *       </div>
+ *     </div>
+ *     <div data-scene-spacer aria-hidden="true"></div>             the runway: the rail sets its height to the travel
+ *   </section>
+ *
+ * The rail measures the overflow (the track's scroll width, end padding included, minus the pin's width). Gutters go on
+ * the track as padding, never on the pin: the track moves through the pin's padding box, so a padded pin would cut the
+ * last panel short by its padding. The pin passes clicks through (scene.css); the track takes them back, so links in
+ * the panels work, and under reduced motion so do wheel and touch scrolling.
+ */
+
+[data-rail-track] {
+  display: flex;
+  height: 100%;
+  pointer-events: auto;
+  /* The track's `translate` changes on every scroll frame: keep it on its own layer. */
+  will-change: transform;
+}
+
+[data-rail-panel] {
+  flex: none;
+}
+
+/* The timeline writer. Where CSS scroll timelines run, the rail marks the track data-rail-timeline and writes the
+   band's scroll offsets (--rail-from, --rail-to) and the signed travel (--rail-x): the track then moves on the page's
+   own scroll, which the compositor runs in the scroll's frame (Safari from 26.4, Chromium). Only translate animates,
+   so it stays eligible for that. The rail's script writes the translate instead while Lenis is smoothing
+   (html.lenis-smooth, from the main thread) and under ScrollSmoother, whose content lags the native scroll; the rule
+   lets go of the track then. Keyframes name both ends, so nothing underneath leaks into them. */
+@keyframes rail-slide {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: var(--rail-x, 0px) 0;
+  }
+}
+@supports (animation-timeline: scroll()) {
+  @media screen and (prefers-reduced-motion: no-preference) {
+    :root:not(.lenis-smooth, [data-scroll-authority='smoother']) [data-rail-track][data-rail-timeline] {
+      animation: rail-slide linear both;
+      animation-timeline: scroll(root block);
+      animation-range: var(--rail-from) var(--rail-to);
+    }
+  }
+}
+
+/* Reduced motion: scene.css releases the pin and collapses the runway, the rail writes no translate, and the track is
+   a native horizontal scroller that snaps panel by panel. It is focusable while it is one (the rail adds
+   tabindex="0": Safari never makes a scroller focusable by itself), so the ring shows where the arrow keys go.
+   overscroll-behavior stops a swipe past the last panel from turning into the browser's back gesture. */
+@media (prefers-reduced-motion: reduce) {
+  [data-rail-track] {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    translate: none !important;
+    will-change: auto;
+  }
+  [data-rail-panel] {
+    scroll-snap-align: start;
+  }
+  [data-rail-track]:focus-visible {
+    outline: 2px solid;
+    outline-offset: -2px;
+  }
+}
+
+/* No JavaScript: no rail measures a runway or slides the track, so the same native scroller keeps every panel in
+   reach (invariant 8). It applies while the pre-JS gate is missing and no rail has mounted (a mounted rail stamps
+   data-scene-state on its root). On a page with GATE_SCRIPT and JavaScript it never applies, so the track doesn't turn
+   into a scroller while the bundle loads; on a page without the gate it stops the moment the rail mounts. */
+html:not([data-animation='on']) [data-rail]:not([data-scene-state]) [data-rail-track] {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+}
+html:not([data-animation='on']) [data-rail]:not([data-scene-state]) [data-rail-panel] {
+  scroll-snap-align: start;
+}
+
+/* Print: every panel in flow, one under the next, none left translated off the page. */
+@media print {
+  [data-rail-track] {
+    display: block;
+    height: auto;
+    translate: none !important;
+  }
+  [data-rail-panel] {
+    break-inside: avoid;
+  }
+}

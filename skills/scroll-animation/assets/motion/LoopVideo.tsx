@@ -4,10 +4,8 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type 
 
 /**
  * A background render that starts when it is ~20% on screen and pauses when
- * it leaves. v2 of `InViewLoopVideo` (`assets/motion/components/InViewLoopVideo.tsx`,
- * kept in place — the controller removes v1's files with the v1 barrels
- * later). Carries v1's playback core forward unchanged and adds the pieces
- * v1 didn't have: a WCAG 2.2.2 pause control, live reduced-motion and
+ * it leaves. Carries v1's in-view loop playback core forward unchanged and
+ * adds the pieces v1 didn't have: a WCAG 2.2.2 pause control, live reduced-motion and
  * Save-Data gating, rejected-`play()` handling, and Next Activity hide/show
  * safety.
  *
@@ -88,9 +86,9 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type 
  *   "it was playing and the visitor didn't pause it," without a separate
  *   flag to keep in sync.
  * - **A play watchdog and a tab-sleep rehydrate**, ported from the pattern
- *   the sibling `ScrubStage` controller uses (`references/video.md` §14,
- *   §12: `ensurePlaying()` / `rehydrate()`), which v1's `InViewLoopVideo`
- *   didn't have. A 2s interval re-issues `play()` if the browser silently
+ *   the scrubbed video's controller uses (`media/video-controller.ts`;
+ *   `references/video.md` §14, §12: `ensurePlaying()` / `rehydrate()`),
+ *   which v1's in-view loop didn't have. A 2s interval re-issues `play()` if the browser silently
  *   paused a should-be-playing element (a demoted GPU layer, a background/
  *   foreground race) — gated by the same rejected-play flag, so a genuine
  *   refusal is never retried in a loop. `visibilitychange`, `pageshow` and
@@ -102,8 +100,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type 
  * ## What this deliberately does not do
  *
  * `motion/react`'s own `useReducedMotion()` looks like the obvious tool for
- * the reduced-motion gate and is used that way elsewhere in this pack
- * (`FadeOnExit.tsx`). It is NOT live: it seeds a `useState` from
+ * the reduced-motion gate. It is NOT live: it seeds a `useState` from
  * `prefersReducedMotion.current` once and never updates it (confirmed
  * against the installed `framer-motion` — the hook's own source leaves a
  * to-do comment next to the call about not updating automatically, and

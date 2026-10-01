@@ -1,0 +1,50 @@
+/*
+ * css/header-theme.css: the motion half of a header whose ink follows the section under it (header-theme.ts,
+ * motion/useHeaderTheme.ts). Import it once; it needs nothing else. The ink's colours are the page's own CSS:
+ *
+ *   <header data-header data-header-ink-default="light">…</header>
+ *   [data-header][data-header-ink='light'] { color: #111 }
+ *   [data-header][data-header-ink='dark'] { color: #fff }
+ *
+ * Paint the header's parts in currentColor (text, SVG fill and stroke, borders, an icon's bars) and the header's one
+ * colour change carries the whole bar.
+ */
+
+/* ── 1. One transition for the whole bar ───────────────────────────────────────────────────────────
+ * The ink flips the moment a section edge crosses the line, so without a transition the bar hard-cuts mid-scroll.
+ * 200 ms ease-out is v1's compromise with hover: `color` usually carries a link's hover too, and a longer dissolve makes
+ * every hover lag the pointer. The colours that inherit (color, fill, stroke) transition on the header alone, and its
+ * parts take the moving value as it goes. A part that transitioned an inherited colour itself would restart on every
+ * frame of the header's transition and trail it (measured: 420–600 ms instead of 200), so parts transition only what
+ * doesn't inherit: backgrounds, borders, outlines, underlines. The same trail comes back with a page's own `color`
+ * transition on an inheriting link (Tailwind's transition-colors, say): keep those off the header's links. A part that
+ * sets its own colour per ink transitions it itself. :where() keeps all of this at zero specificity, so a transition
+ * the page sets on a part replaces it. None under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  :where([data-header]) {
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-out;
+  }
+  :where([data-header] *) {
+    transition-property: background-color, border-color, outline-color, text-decoration-color;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-out;
+  }
+}
+
+/* ── 2. Blend text (opt-in) ────────────────────────────────────────────────────────────────────────
+ * data-header-blend on the header element itself: white ink with mix-blend-mode: difference paints the inverse of
+ * whatever passes under it, so it needs no ink mapping at all. Only the header itself can blend with the page: a fixed
+ * element is its own stacking context, so a part inside it would blend with the header's empty backdrop. Forced colors
+ * (Windows High Contrast) replace the colours with the reader's own, and a difference blend would then invert those,
+ * so the blend is reset there. */
+[data-header-blend] {
+  mix-blend-mode: difference;
+  color: #fff;
+}
+@media (forced-colors: active) {
+  [data-header-blend] {
+    mix-blend-mode: normal;
+  }
+}

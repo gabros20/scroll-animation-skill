@@ -65,7 +65,8 @@ defaults; a route may differ from the site (the journal stays Reading on an Expr
 Exactly one owner per page: native, Lenis or ScrollSmoother. Default by profile; the table of trade-offs is in
 [scroll-authority.md](scroll-authority.md). Record it per route (or route group), because a reading route and a
 cinematic home page often want different answers. **If the project already runs a smoother, that is a keep, adapt or
-replace question (§3.5), not a default to override.**
+replace question (§3.5), not a default to override.** Start ScrollSmoother with `createSmoother`, never by hand: the
+blocks read the owner from the stamp it writes ([scroll-authority.md](scroll-authority.md) §5).
 
 ### 3.3 Engines
 
@@ -108,9 +109,8 @@ plain px layout.
 - **Another scaled unit** (a custom property holding one design px as a length): describe it in `SCALE.units`.
 - **Plain px**: leave `SCALE = null`; `scaledPx(n)` returns `n`. Keep the breakpoint in `config.ts` alone and import it
   everywhere: copies of one number drift.
-- **v1 blocks still in the pack** (the stage, the scroll well) read `ENGAGE_QUERY` from their own constants: point it
-  at the same source. The scroll well multiplies `--fluid` itself (a unit of 1 without it), and `anchor-check.mjs`
-  reads `--fluid-header-h`, then `--header-h`.
+- **No block keeps its own copy:** each reads what it needs from `config.ts`, the scroll well included.
+  `anchor-check.mjs` reads the header from `--fluid-header-h`, then `--header-h`.
 
 Scaled travel (`--scene-p`, `scaledValue`, GSAP's `translate` trap) is in [scenes.md](scenes.md) §12.
 
