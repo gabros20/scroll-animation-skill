@@ -1,6 +1,6 @@
 /*
- * css/rail.css — the horizontal rail's track (gsap/horizontal-rail.ts), its native scroller (reduced motion, no
- * JavaScript) and print rules.
+ * css/rail.css — the horizontal rail's track (gsap/horizontal-rail.ts), its scroll timeline, its native scroller
+ * (reduced motion, no JavaScript) and print rules.
  * Import it after scene.css, which gives the root, pin and spacer their geometry.
  *
  *   <section data-scene-root data-rail>
@@ -22,12 +22,36 @@
   display: flex;
   height: 100%;
   pointer-events: auto;
-  /* The rail writes `translate` on every scroll frame: keep the track on its own layer. */
+  /* The track's `translate` changes on every scroll frame: keep it on its own layer. */
   will-change: transform;
 }
 
 [data-rail-panel] {
   flex: none;
+}
+
+/* The timeline writer. Where CSS scroll timelines run, the rail marks the track data-rail-timeline and writes the
+   band's scroll offsets (--rail-from, --rail-to) and the signed travel (--rail-x): the track then moves on the page's
+   own scroll, which the compositor runs in the scroll's frame (Safari from 26.4, Chromium). Only translate animates,
+   so it stays eligible for that. The rail's script writes the translate instead while Lenis is smoothing
+   (html.lenis-smooth, from the main thread) and under ScrollSmoother, whose content lags the native scroll; the rule
+   lets go of the track then. Keyframes name both ends, so nothing underneath leaks into them. */
+@keyframes rail-slide {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: var(--rail-x, 0px) 0;
+  }
+}
+@supports (animation-timeline: scroll()) {
+  @media screen and (prefers-reduced-motion: no-preference) {
+    :root:not(.lenis-smooth, [data-scroll-authority='smoother']) [data-rail-track][data-rail-timeline] {
+      animation: rail-slide linear both;
+      animation-timeline: scroll(root block);
+      animation-range: var(--rail-from) var(--rail-to);
+    }
+  }
 }
 
 /* Reduced motion: scene.css releases the pin and collapses the runway, the rail writes no translate, and the track is
