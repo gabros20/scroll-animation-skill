@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// scrub-video.mjs — ScrubVideo's Save-Data tier, its WCAG 2.2.2 loop cap and its reduced-motion byte budget (none),
-// in both engines (the logic lives in assets/media/video-controller.ts; the adapters size the frame from the tier).
+// scrub-video.mjs — ScrubVideo's Save-Data tier, its WCAG 2.2.2 loop cap, its reduced-motion byte budget (none) and,
+// on a scene of holds (the fixture's `?holds`, Folio's orbit), how the band follows the scroll, in both engines (the
+// logic lives in assets/media/video-controller.ts; the adapters size the frame from the tier).
 // Builds tests/fixtures/scrub-video with Vite, serves the build with `vite preview`, prints one PASS/FAIL line per
 // check/engine/browser, and exits 1 on any FAIL. Needs the Playwright browsers and (for a first run with no cached
 // clip) ffmpeg, so it is its own script, like `test:loop-video` — not part of `npm test`.
@@ -9,7 +10,7 @@
 // unevenly through browser APIs. Every page carries its own run id in the video URLs, so one page's bytes never mix
 // with another's.
 //
-//   node tests/scrub-video.mjs [--browsers chromium,webkit] [--engines motion,gsap] [--only saveData,reducedMotion,…]
+//   node tests/scrub-video.mjs [--browsers chromium,webkit] [--engines motion,gsap] [--only saveData,holds,tracking,…]
 //
 // Save-Data is stubbed with an init script (an EventTarget as navigator.connection): WebKit has no Network
 // Information API, and Chromium's real `connection` is a getter-only accessor.
@@ -177,6 +178,7 @@ function mediaCallsInit() {
 }
 
 function helpersInit(fps) {
+  const holds = new URLSearchParams(location.search).has('holds')
   const root = () => document.querySelector('[data-scene-root]')
   const video = () => root()?.querySelector('video')
   // Media events don't bubble, but they do pass through the capture phase: every start of playback, from page start.
@@ -196,17 +198,21 @@ function helpersInit(fps) {
       const v = video()
       return { mode: root().getAttribute('data-scene-state'), src: v.getAttribute('src'), readyState: v.readyState, paused: v.paused }
     },
-    /** What the scene should show at the current scroll: the fixture's holds (12 / 320 px), band frames 5 to 55. */
+    /** What the scene should show at the current scroll: with loops, the default holds (12 / 320 px) and band frames
+     * 5 to 55; with `?holds`, 400 px holds and band frames 0 to 59. The mode is the absolute one (no hysteresis). */
     expected() {
       const r = root().getBoundingClientRect()
       const range = Math.max(1, r.height - innerHeight)
       const p = Math.min(1, Math.max(0, -r.top / range))
-      const headExit = Math.min(12, range / 4) / range
-      const tailEnter = 1 - Math.min(320, range / 4) / range
+      const [headPx, tailPx, from, to] = holds ? [400, 400, 0, 59] : [12, 320, 5, 55]
+      const headExit = Math.min(headPx, range / 4) / range
+      const tailEnter = 1 - Math.min(tailPx, range / 4) / range
       const mode = p <= headExit ? 'head' : p >= tailEnter ? 'tail' : 'scrub'
       const band = Math.min(1, Math.max(0, (p - headExit) / (tailEnter - headExit)))
-      return { p: Math.round(p * 1000) / 1000, mode, frame: Math.round((5 + band * 50) * 10) / 10 }
+      return { p: Math.round(p * 1000) / 1000, mode, frame: Math.round((from + band * (to - from)) * 10) / 10 }
     },
+    /** The frame on screen: the one whose span holds the playhead (a band seek lands a quarter frame into it). */
+    shown: () => Math.floor(video().currentTime * fps + 1e-6),
     read() {
       const v = video()
       return {
@@ -222,6 +228,21 @@ function helpersInit(fps) {
       window.scrollTo({ top: r.top + scrollY + p * (r.height - innerHeight), behavior: 'instant' })
     },
     frames,
+    /** Scrolls to `p` in one step and counts the frames until the band's frame is on screen (null past 60). */
+    framesTo(p) {
+      return new Promise((resolve) => {
+        const v = video()
+        window.__t.to(p)
+        let n = 0
+        const step = () => {
+          n++
+          if (!v.seeking && Math.abs(window.__t.shown() - window.__t.expected().frame) <= 1) return resolve(n)
+          if (n > 60) return resolve(null)
+          requestAnimationFrame(step)
+        }
+        requestAnimationFrame(step)
+      })
+    },
     /**
      * From the first start of playback at or after `since` to a hold: resolves once the video has stayed paused for
      * 20 frames after playing, with how long it ran and where it held (or with `timeout`).
@@ -410,6 +431,45 @@ const CHECKS = {
     ]
   },
 
+  // Found on the device pass 2 (iPhone, Folio's orbit, holds): scrolling back up, the rotation started 280 px late and
+  // then spun to catch up; the glide rested half a frame short of the last frame.
+  async holds(t) {
+    const { page } = await t.open([], { holds: true })
+    await page.evaluate(() => window.__t.to(1))
+    await page.waitForTimeout(800)
+    const rest = await page.evaluate(() => ({ ...window.__t.read(), shown: window.__t.shown() }))
+    // Back up into the tail's hysteresis gap: the band has left its end, and the scene still reads `tail`.
+    await page.evaluate(() => window.__t.to(0.7))
+    await page.waitForTimeout(500)
+    const want = await page.evaluate(() => window.__t.expected())
+    const back = await page.evaluate(() => ({ ...window.__t.read(), shown: window.__t.shown() }))
+    return [
+      ['holds: the tail rests on the clip last frame', rest.mode === 'tail' && rest.shown === 59, JSON.stringify(rest)],
+      [
+        "holds: on the way back the playhead leaves the tail with the band, not after the mode's hysteresis",
+        back.mode === 'tail' && back.paused && Math.abs(back.shown - want.frame) <= 1,
+        `want ${JSON.stringify(want)} · got ${JSON.stringify(back)}`
+      ]
+    ]
+  },
+
+  // The band tracks the scroll frame for frame: the smoothing is the scroll's (Lenis, native momentum). The glide it
+  // replaced took about 16 frames to bring this step within a frame, and trailed a fast skim by an eighth of the clip.
+  async tracking(t) {
+    const { page } = await t.open([], { holds: true })
+    await page.evaluate(() => window.__t.to(0.35))
+    await page.waitForTimeout(800)
+    const frames = await page.evaluate(() => window.__t.framesTo(0.6))
+    const got = await page.evaluate(() => ({ ...window.__t.read(), shown: window.__t.shown(), want: window.__t.expected() }))
+    return [
+      [
+        'a step in the band is on screen within 6 frames (one seek), and on its frame',
+        frames !== null && frames <= 6 && got.mode === 'scrub',
+        `${frames} frame(s) · ${JSON.stringify(got)}`
+      ]
+    ]
+  },
+
   async bytesWithMotion(t) {
     const { page, bytes, requests } = await t.open()
     for (const p of [0, 0.5, 1]) {
@@ -483,9 +543,10 @@ async function main() {
           browser: browserName,
           /**
            * A fresh context on this engine's page with its own run id, ready: video data in, or under reduced motion
-           * the scene painted (state written, poster set). Returns the tiers requested and the video bytes served.
+           * the scene painted (state written, poster set); `holds` opens the scene of holds. Returns the tiers
+           * requested and the video bytes served.
            */
-          async open(initScripts = [], { reducedMotion = 'no-preference' } = {}) {
+          async open(initScripts = [], { reducedMotion = 'no-preference', holds = false } = {}) {
             const context = await open.browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion })
             contexts.push(context)
             for (const [script, arg] of initScripts) await context.addInitScript(script, arg)
@@ -498,7 +559,7 @@ async function main() {
               const url = new URL(request.url())
               if (url.pathname.endsWith('/clip.mp4')) tiers.add(url.searchParams.get('tier'))
             })
-            await page.goto(`${base}/${engine}.html?run=${runId}`, { waitUntil: 'load' })
+            await page.goto(`${base}/${engine}.html?run=${runId}${holds ? '&holds' : ''}`, { waitUntil: 'load' })
             const ready = reducedMotion === 'reduce' ? () => window.__t.painted() : () => window.__t.ready()
             await page.waitForFunction(ready, null, { timeout: 20000 })
             const bytes = () => {
