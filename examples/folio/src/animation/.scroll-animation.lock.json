@@ -20,7 +20,7 @@
     "scene.ts": "681c45e78fd3add5",
     "css/scene.css": "2862e3dd2903c50f",
     "gsap/pinned-scene.ts": "66bd7063f88e5ba6",
-    "media/video-controller.ts": "363424cd3bf6a2ef",
+    "media/video-controller.ts": "d6ac3a01e25de8c4",
     "media/camera.ts": "aac8e28e75cb8011",
     "gsap/scrub-video.ts": "45718d491829b1ea",
     "motion/usePinnedScene.ts": "0db204262309604e",
@@ -30,7 +30,7 @@
     "motion/ScrubVideo.tsx": "3c48158b20a506f1",
     "motion/LoopVideo.tsx": "e371fc0a8488d76b",
     "motion/useReducedMotionLive.ts": "f16b298eb3d9321e",
-    "motion/Reveal.tsx": "bf26724f0b0bee78",
+    "motion/Reveal.tsx": "6a8c19a436b7c8a3",
     "css/reveal.css": "2d31e05119550d32",
     "motion/SplitWords.tsx": "5e49833fc89d4d73",
     "split-words.ts": "d76af3671f7a3f06",
@@ -40,9 +40,9 @@
     "header-theme.ts": "a2aca41e57b93801",
     "motion/useHeaderTheme.ts": "0a479438b2642f4e",
     "css/header-theme.css": "2a3f8422c6b2dfc7",
-    "gsap/horizontal-rail.ts": "cb387c1c2915a062",
-    "css/rail.css": "8b42bee648cfbded",
-    "css/scroll-effects.css": "7366cc5cb00ac97f",
+    "gsap/horizontal-rail.ts": "23395aed00b898eb",
+    "css/rail.css": "00485ea92eebb879",
+    "css/scroll-effects.css": "9f635e4de26088a6",
     "image-ink.ts": "4815e855ec0337cb"
   }
 }

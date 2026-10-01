@@ -20,10 +20,18 @@
  *   (resize, load, `ScrollTrigger.refresh()`), once GSAP has unpinned everything and before any trigger reads the page,
  *   and a ResizeObserver on the track and its panels (a late font, an image without dimensions) asks for that refresh.
  *   After adding or removing panels, call `rail.refresh()`.
- * - One writer: every progress event writes the track's `translate` from the band, 0 at its start and the whole travel
- *   at its end, so the scene's holds keep the first panel still in the head and the last one flush in the tail. Linear,
- *   never eased: the reader's scroll is the easing. The sign follows the track's computed `direction`, so an RTL rail
- *   moves right and reads right to left.
+ * - The band moves the track: `translate` 0 at its start and the whole travel at its end, so the scene's holds keep the
+ *   first panel still in the head and the last one flush in the tail. Linear, never eased: the reader's scroll is the
+ *   easing. The sign follows the track's computed `direction`, so an RTL rail moves right and reads right to left.
+ * - Two writers, one band. Where CSS scroll timelines run (Chromium; Safari 26, off the main thread from 26.4), the
+ *   rail writes the band's scroll offsets and the travel to the track (`--rail-from`, `--rail-to`, `--rail-x`) and
+ *   css/rail.css animates it on `scroll(root)`: the compositor moves it in the scroll's own frame. A script writer is
+ *   held to the page's rendering rate, which Safari keeps near 60 fps on a 120 Hz screen while the scroll runs at
+ *   120 Hz, and it lands a frame behind: a rail that stutters under the finger. The script writes the translate (in
+ *   whole device pixels) everywhere else: without timelines, under ScrollSmoother (`pin: 'gsap'`, where the content
+ *   lags the native scroll) and while Lenis is smoothing (`html.lenis-smooth`: it moves the scroll from the main
+ *   thread, so the script's value lands in its tick and a timeline's would land a frame late in Safari). Both map the
+ *   same scroll offset to the same translate. `timeline: false` keeps the script writer for good.
  * - Focus follows: a panel focused from the keyboard (`:focus-visible`) out of view jumps the page, through the scroll
  *   authority (Lenis, ScrollSmoother or native), by the least progress that shows it whole; in a panel wider than the
  *   pin, the focused element. `rail.scrollToPanel(i)` is the same move, smooth unless `{ immediate: true }`, for
@@ -36,11 +44,17 @@
  */
 import { prefersReducedMotion } from '../config'
 import { clamp01 } from '../scene'
-import { currentSmoothScroll } from '../smooth/authority'
+import { currentSmoothScroll, getScrollAuthority } from '../smooth/authority'
 import { pinnedScene, type PinnedSceneHandle, type PinnedSceneOptions } from './pinned-scene'
 import { ScrollTrigger } from './setup'
 
-export type HorizontalRailOptions = PinnedSceneOptions
+export interface HorizontalRailOptions extends PinnedSceneOptions {
+  /**
+   * Move the track on a CSS scroll timeline where the browser runs them (default true). false keeps the script writer
+   * everywhere: for a page that moves something else with the track from onProgress and needs the two in one frame.
+   */
+  timeline?: boolean
+}
 
 export interface HorizontalRailHandle extends PinnedSceneHandle {
   readonly track: HTMLElement
@@ -57,6 +71,16 @@ export interface HorizontalRailHandle extends PinnedSceneHandle {
 /** A content resize (a late font or image) asks for one ScrollTrigger refresh, this long after the last. */
 const REFRESH_DELAY_MS = 150
 
+/** What the rail writes for css/rail.css's timeline: the band's scroll offsets and the signed travel. */
+const TIMELINE_PROPERTIES = ['--rail-from', '--rail-to', '--rail-x'] as const
+
+/** CSS scroll timelines with a length range: Chromium 115+, Safari 26+; Firefox ships them behind a flag. */
+function scrollTimelines(): boolean {
+  return (
+    typeof CSS !== 'undefined' && CSS.supports('animation-timeline: scroll()') && CSS.supports('animation-range: 0px 1px')
+  )
+}
+
 export function horizontalRail(root: HTMLElement, options: HorizontalRailOptions = {}): HorizontalRailHandle | null {
   const own = (el: Element) => el.closest('[data-scene-root]') === root
   const pin = Array.from(root.querySelectorAll<HTMLElement>('[data-scene-pin]')).find(own)
@@ -66,16 +90,31 @@ export function horizontalRail(root: HTMLElement, options: HorizontalRailOptions
     Array.from(root.querySelectorAll<HTMLElement>('[data-scene-spacer]')).find((el) => own(el) && !pin.contains(el)) ??
     null
   const panels = () => Array.from(track.querySelectorAll<HTMLElement>('[data-rail-panel]'))
+  const html = root.ownerDocument.documentElement
   // What the page wrote itself, put back instead of cleared.
   const authored = { translate: track.style.translate, height: spacer?.style.height ?? '' }
 
   let travel = 0
   let rtl = false
-  /** The translate written, px; null while none is. */
+  /** The translate the script wrote, px; null while none is. */
   let x: number | null = null
   /** A full-motion build is running: the rail measures, writes and follows focus. */
   let live = false
+  /** This build hands the track to css/rail.css's scroll timeline. */
+  let timeline = false
   let observePanels = () => {}
+
+  /**
+   * The script writes the track: no timeline, or Lenis is smoothing the scroll right now. Lenis moves the scroll from
+   * the main thread, and the script's value lands in its tick (S4); css/rail.css lets go of the track meanwhile.
+   */
+  const scripted = () => !timeline || html.classList.contains('lenis-smooth')
+
+  /** The translate on screen now, whoever writes it: the timeline's is only in the computed style. */
+  const translateNow = () => {
+    const value = getComputedStyle(track).translate
+    return value === 'none' ? 0 : parseFloat(value) || 0
+  }
 
   /**
    * The track's scroll width, exact: from its start edge to the farthest child's end margin, plus its end padding.
@@ -107,22 +146,62 @@ export function horizontalRail(root: HTMLElement, options: HorizontalRailOptions
     if (spacer) spacer.style.height = `${travel}px`
   }
 
+  /** A distance in whole device pixels, rounded toward zero: never past the exact travel. */
+  const snap = (px: number) => {
+    const dpr = window.devicePixelRatio || 1
+    return Math.floor(px * dpr + 1e-3) / dpr
+  }
+
   /**
-   * The one writer: the band as a translate, in whole device pixels (a crisp layer) and never past the exact travel, so
-   * the end lands flush or clipped by under a pixel, never short of the edge with a hairline of page showing.
+   * The script writer: the band as a translate, in whole device pixels (a crisp layer) and never past the exact travel,
+   * so the end lands flush or clipped by under a pixel, never short of the edge with a hairline of page showing. While
+   * the timeline has the track it writes nothing: its last value stays underneath, and a Lenis smooth scroll takes over
+   * from the value it writes as the scroll starts (see buildMotion).
    */
   const write = (s: PinnedSceneHandle) => {
-    if (!live) return
-    const dpr = window.devicePixelRatio || 1
-    const px = Math.floor(travel * s.band() * dpr + 1e-3) / dpr
+    if (!live || !scripted()) return
+    const px = snap(travel * s.band())
     const next = rtl ? px : -px
     if (next === x) return
     x = next
     track.style.translate = `${next}px 0`
   }
 
+  /**
+   * The timeline's range and target: the band's own scroll offsets, from the scene's trigger, so the timeline and the
+   * script map every scroll offset to the same translate; the travel as the script's end value. Offsets, not a view()
+   * range: on iOS the viewport grows and shrinks with the toolbar as the scroll changes direction, and a range measured
+   * from it would move the track with it.
+   */
+  const writeTimeline = (s: PinnedSceneHandle) => {
+    const t = s.trigger
+    if (!live || !timeline || !t) return
+    const { headExit, tailEnter } = s.bounds()
+    const span = t.end - t.start
+    const end = snap(travel)
+    const values = [`${t.start + headExit * span}px`, `${t.start + tailEnter * span}px`, `${rtl ? end : -end}px`]
+    TIMELINE_PROPERTIES.forEach((property, i) => {
+      if (track.style.getPropertyValue(property) !== values[i]) track.style.setProperty(property, values[i]!)
+    })
+    if (track.hasAttribute('data-rail-timeline')) return
+    track.setAttribute('data-rail-timeline', '')
+    // css/rail.css's rule has to be live on the track: with an older copy of the stylesheet, or a build that dropped
+    // the rule, the script keeps writing instead of leaving the track still.
+    if (!html.classList.contains('lenis-smooth') && !getComputedStyle(track).animationName.split(', ').includes('rail-slide')) {
+      timeline = false
+      dropTimeline()
+      write(s)
+    }
+  }
+
+  const dropTimeline = () => {
+    track.removeAttribute('data-rail-timeline')
+    TIMELINE_PROPERTIES.forEach((property) => put(track, property, ''))
+  }
+
   const clear = () => {
     x = null
+    dropTimeline()
     put(track, 'translate', authored.translate)
     if (spacer) put(spacer, 'height', authored.height)
   }
@@ -133,8 +212,8 @@ export function horizontalRail(root: HTMLElement, options: HorizontalRailOptions
     if (!live || !t || travel < 1) return
     const view = pin.getBoundingClientRect()
     const box = el.getBoundingClientRect()
-    // The box's left edge in the pin with the track at rest: its rect less the translate written now.
-    const left = box.left - view.left - pin.clientLeft - (x ?? 0)
+    // The box's left edge in the pin with the track at rest: its rect less the translate on screen now.
+    const left = box.left - view.left - pin.clientLeft - translateNow()
     // The translates that put the box whole in the pin; one wider than the pin shows its start edge.
     let lo = -left
     let hi = pin.clientWidth - box.width - left
@@ -161,7 +240,16 @@ export function horizontalRail(root: HTMLElement, options: HorizontalRailOptions
 
   const buildMotion = (s: PinnedSceneHandle) => {
     live = true
+    // Under ScrollSmoother the content lags the native scroll a timeline reads, so the script writes there.
+    timeline =
+      options.timeline !== false && options.pin !== 'gsap' && getScrollAuthority() !== 'smoother' && scrollTimelines()
     measure()
+    writeTimeline(s)
+
+    // Lenis starts smoothing: css/rail.css lets go of the track at the next style update, so the script's value goes on
+    // now. A mutation callback runs before that frame renders, whichever of Lenis and ScrollTrigger ticks first.
+    const lenisWatch = timeline ? new MutationObserver(() => write(s)) : null
+    lenisWatch?.observe(html, { attributes: true, attributeFilter: ['class'] })
 
     // Every refresh re-measures inside the refresh: by 'revert' GSAP has unpinned everything (a pinned 'gsap' pin
     // carries its old inline width), and no trigger has read the page yet, so the new runway is in their numbers.
@@ -203,6 +291,8 @@ export function horizontalRail(root: HTMLElement, options: HorizontalRailOptions
 
     return () => {
       live = false
+      timeline = false
+      lenisWatch?.disconnect()
       ScrollTrigger.removeEventListener('revert', onRevert)
       window.clearTimeout(refreshTimer)
       resizeObserver.disconnect()
@@ -236,7 +326,13 @@ export function horizontalRail(root: HTMLElement, options: HorizontalRailOptions
       write(s)
       options.onProgress?.(p, s)
     },
+    // A refresh re-measures the range (the trigger's offsets are new by then), and so does every resize and wake.
+    onMeasure(s) {
+      writeTimeline(s)
+      options.onMeasure?.(s)
+    },
     onRehydrate(state, s) {
+      writeTimeline(s)
       write(s)
       options.onRehydrate?.(state, s)
     },
@@ -261,7 +357,13 @@ export function horizontalRail(root: HTMLElement, options: HorizontalRailOptions
       ScrollTrigger.refresh()
       scene.rehydrate('refresh')
     },
-    debug: () => ({ ...sceneDebug(), travel, rtl, translate: x }),
+    debug: () => ({
+      ...sceneDebug(),
+      travel,
+      rtl,
+      writer: live ? (scripted() ? 'script' : 'timeline') : null,
+      translate: live ? translateNow() : null,
+    }),
     destroy() {
       sceneDestroy()
       live = false

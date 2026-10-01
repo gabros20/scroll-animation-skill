@@ -16,10 +16,14 @@
  *   gsap.registerPlugin(ScrollTrigger, ScrollSmoother)
  *   const scroll = createSmoother(ScrollSmoother, { smooth: 1, effects: true })
  *
- * Reduced motion (followed live): ScrollSmoother's native mode, `smooth: 0`, the mode it also uses on touch screens
- * without smoothTouch: the wrapper is a plain block, nothing is transformed, no data-speed / data-lag effects, and the
- * handle's scrollTo jumps. The smoother itself stays, because the page's ScrollTriggers are bound to its wrapper.
- * Smooth once: ScrollTrigger scrubs under ScrollSmoother use `scrub: true`.
+ * Reduced motion (followed live): ScrollSmoother's native mode, `smooth: 0`, with effects off: the wrapper is a plain
+ * block, nothing is transformed, no data-speed / data-lag, and the handle's scrollTo jumps. The smoother itself stays,
+ * because the page's ScrollTriggers are bound to its wrapper. Smooth once: ScrollTrigger scrubs under ScrollSmoother
+ * use `scrub: true`.
+ *
+ * Touch-only screens (ScrollTrigger.isTouch 1) get the same native mode without smoothTouch, but effects still run,
+ * written from the main thread as the page scrolls natively. Every ScrollTrigger reads the wrapper, a proxy the
+ * smoother's own trigger sets to the window's scroll first in each update, so triggers fire as on a native page.
  */
 import { REDUCED_MOTION_QUERY } from '../config'
 import {

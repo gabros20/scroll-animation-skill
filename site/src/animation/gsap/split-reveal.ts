@@ -25,8 +25,9 @@
  *   without lines). Characters would break running text for screen readers and Arabic and Indic shaping.
  * - The reveal. When the element's top crosses the trigger line (TRIGGERS.reveal, 80% of the viewport), the lines
  *   rise out of their masks on EASES.entrance over MOTION.entrance.duration, MOTION.lineStagger apart, with the short
- *   late fade (MOTION.entranceFade). It plays once. An element above the view at load reveals on the way back up.
- *   A split that lands with the element already past the line plays at once.
+ *   late fade (MOTION.entranceFade). It plays once. An element above the view at load, or jumped past (a reload's
+ *   restored scroll position, an anchor), reveals on the way back up. A split that lands with the element already
+ *   past the line plays at once.
  * - Reduced motion is live. The split is built inside gsap.matchMedia(MOTION_CONDITIONS), and under `reduce` nothing
  *   is split. If reduce turns on after a split, the split reverts, and the text counts as shown, so turning reduce
  *   off again splits nothing (as Reveal). The trigger lives outside that build, because GSAP 3.15 throws the reader to
@@ -259,6 +260,9 @@ export function splitReveal(el: HTMLElement, options: SplitRevealOptions = {}): 
         onEnterBack: arrive,
       })
   function arrive(self: ScrollTrigger) {
+    // Jumped past (a reload's restored scroll position, an anchor): the text is above the view, and ScrollTrigger
+    // fires onEnter for every trigger a jump passes. It stays split and waits for onEnterBack.
+    if (self.progress >= 1) return
     self.kill()
     arrived = true
     timeline?.play()

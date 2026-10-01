@@ -17,7 +17,8 @@
  *   return, reset only once the item is entirely out of view). `options` sets the defaults for groups that don't say.
  * - ScrollTrigger.batch, one trigger per item: items that cross together play as one staggered batch in document
  *   order, and an item further down (a column stacked on a phone) waits for its own arrival. Items above the view at
- *   load reveal when the reader scrolls back up to them.
+ *   load, or jumped past (a reload's restored scroll position, an anchor), reveal when the reader scrolls back up to
+ *   them.
  * - Each item tweens from its computed resting state (css/reveal.css) to rest: the move on EASES.entrance, the fade
  *   short and late against it (MOTION.entranceFade). When it lands the item is marked data-reveal-state="shown" and
  *   GSAP's inline writes are cleared, so nothing is left behind but the item's own styles.
@@ -159,10 +160,14 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
     if (group.trigger === 'mount') continue
     const watched = group.replay ? els : els.filter((el) => !isShown(el))
     if (!watched.length) continue
-    // Entering from either side reveals: an item above the view at load reveals on the way back up.
-    const enter = (batch: Element[], batchTriggers: ScrollTrigger[]) => {
-      if (!settled) play(batch as HTMLElement[])
-      if (!group.replay) batchTriggers.forEach((trigger) => trigger.kill())
+    // Entering from either side reveals. A jump past an item (iOS Safari restoring a reload's scroll position after
+    // the triggers exist, an anchor, a scrollTo) fires its onEnter with the item already above the view: ScrollTrigger
+    // fires the callbacks of every trigger a jump passes (limitCallbacks is off by default). Its trigger stays, and
+    // the item reveals on the way back up (onEnterBack) instead of off-screen at load.
+    const enter = (_batch: Element[], batchTriggers: ScrollTrigger[]) => {
+      const arrived = batchTriggers.filter((trigger) => trigger.progress < 1)
+      if (!settled) play(arrived.map((trigger) => trigger.trigger as HTMLElement))
+      if (!group.replay) arrived.forEach((trigger) => trigger.kill())
     }
     triggers.push(...ScrollTrigger.batch(watched, { ...lineFromMargin(group.margin), onEnter: enter, onEnterBack: enter }))
     if (group.replay) {
