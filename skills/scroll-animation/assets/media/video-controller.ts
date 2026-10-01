@@ -19,12 +19,19 @@
  *
  * - The asset must be ALL-INTRA (`scroll-animation media scrub`): a scrub seeks nearly every frame, and a long-GOP
  *   file decodes from the previous keyframe on each one.
- * - Two drivers, never at once: the band glides the playhead from rAF with the decoder paused; a loop plays and
- *   wraps on `requestVideoFrameCallback`, whose `mediaTime` is the presented frame's exact index. A glide is an
- *   exponential approach from wherever the playhead is, so a loop resolves into the scrub by playing the frames in
- *   between, not by cutting. It is `dt`-based: `glide` is the rate per 60 Hz frame.
- * - Seeks coalesce: one issued while another is in flight is dropped by the browser, so only the newest waits. A
- *   loop wrap and a snap bypass the queue: queued behind a stale seek they would land a frame late.
+ * - Two drivers, never at once: the band seeks the playhead with the decoder paused; a loop plays and wraps on
+ *   `requestVideoFrameCallback`, whose `mediaTime` is the presented frame's exact index.
+ * - The band TRACKS the scroll frame for frame: the frame it wants is the band's, rounded, in every mode that doesn't
+ *   loop (a hold too, clamped to its end, so the playhead leaves the tail as soon as the band does, not after the
+ *   mode's hysteresis). Smoothing belongs to the scroll (Lenis, native momentum); a second stage here trailed a fast
+ *   skim by an eighth of the clip and leapt after every long frame. The one glide left is the handover out of a loop:
+ *   the playhead's distance from the band decays at `glide` per 60 Hz frame (`dt`-based) while the band moves on, so
+ *   a loop resolves into the scrub by playing the frames in between, not by cutting.
+ * - One seek in flight, and only for a new frame: Gecko aborts a seek that a newer one replaces (nothing paints while
+ *   they keep coming), where WebKit and Chromium hold the newest behind the running one. The moment one lands
+ *   (`seeked`) the frame the band wants THEN is sent, so a slow decoder shows fewer frames, never older ones. Each
+ *   seek lands a quarter frame into its frame, so float rounding can't show the frame before. A loop wrap and a snap
+ *   skip the queue: behind a stale seek they would land a frame late.
  * - The tail's wrap sits one frame before the clip's end, and WebKit runs frame callbacks about 0.8 of a frame after
  *   presentation: a busy main thread let the tail run out, stop (`ended`) and sit paused until the watchdog. So a
  *   late callback wraps as soon as the loop's last frame is DUE (`wrapDue`), a rAF backstop wraps once it is half
@@ -82,7 +89,8 @@ export interface VideoControllerOptions extends VideoSources {
   headLoop?: HeadLoop | null
   /** Omit to hold the clip's last frame in the tail. */
   tailLoop?: TailLoop | null
-  /** Exponential approach per 60 Hz frame for the scrub glide. Default 0.18 (about 150 ms to settle). */
+  /** The handover out of a loop: the playhead's distance from the band decays by this per 60 Hz frame. Default 0.18
+   * (about 150 ms). In the band the playhead tracks the scroll frame for frame. */
   glide?: number
   /** Seconds a head or tail loop may run per visit to its region. Default 5 (WCAG 2.2.2); `Infinity` only on a page
    * that gives the reader a pause control of its own. */
@@ -168,6 +176,25 @@ export function timeBand(time: number, tl: VideoTimeline): number {
 /** Where a snap puts the playhead for a mode: the head's start, the band position, or the tail's start. */
 export function targetTime(mode: SceneMode, band: number, tl: VideoTimeline): number {
   return mode === 'head' ? tl.headFrom : mode === 'tail' ? tl.tailFrom : bandTime(band, tl)
+}
+
+/** How far into its frame a band seek lands: a quarter frame, so float rounding can't show the frame before. */
+export const FRAME_BIAS = 0.25
+
+/** The frame showing at `time`: the one whose span contains it. */
+export function frameOf(time: number, fps: number): number {
+  return Math.floor(time * fps + 1e-6)
+}
+
+/** The time a seek to `frame` asks for. */
+export function frameTime(frame: number, fps: number): number {
+  return (frame + FRAME_BIAS) / fps
+}
+
+/** The frame the band wants for a playhead target: the nearest, within the clip (`last` is NaN until it is known). */
+export function wantedFrame(time: number, fps: number, last: number): number {
+  const frame = Math.max(0, Math.round(time * fps))
+  return Number.isFinite(last) ? Math.min(frame, last) : frame
 }
 
 /**
@@ -269,6 +296,10 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   let frameHandle = 0
   let seeking = false
   let pending: number | null = null
+  // A handover out of a loop: where the loop left the playhead (both adapters step the mode before they hand over the
+  // event's band, so it is measured at the next drive), then its distance from the band in seconds, decaying to 0.
+  let handoverFrom: number | null = null
+  let handover = 0
   let playToken = 0
   let pausedTicks = 0
   let badTicks = 0
@@ -307,8 +338,11 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   const loops = (m: SceneMode) => (m === 'head' && tl.headMatch !== null) || (m === 'tail' && tl.tailLoop)
   const wrapFrom = (m: SceneMode) => (m === 'head' ? tl.headFrom : tl.tailFrom)
   const matchFrame = (m: SceneMode) => (m === 'head' ? (tl.headMatch ?? 0) : lastFrame(video.duration, fps))
-  /** A hold's resting time; the band's target in the scrub. */
-  const glideTarget = () => (mode === 'scrub' ? bandTime(band, tl) : mode === 'head' ? tl.scrubFrom : tl.tailFrom)
+  /** Where the band puts the playhead in every mode that doesn't loop. A hold follows it too (the band is clamped at
+   * its ends), so on the way back the tail lets go where the band does, not after the mode's hysteresis. */
+  const bandTarget = () => bandTime(band, tl)
+  /** The frame to show now: the band's, plus what is left of a handover. */
+  const wanted = () => wantedFrame(bandTarget() + handover, fps, lastFrame(video.duration, fps))
 
   // ── playback ────────────────────────────────────────────────────────
 
@@ -355,9 +389,12 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       video.currentTime = next
     } else {
       seeking = false
+      // The decoder is free: the frame the band wants now, not one worked out a frame ago.
+      drive()
     }
   }
 
+  /** A loop's seek without frame callbacks (the rAF fallback): the newest one waits for the one in flight. */
   function seek(time: number) {
     if (!hasFrame()) return
     if (seeking) {
@@ -368,7 +405,21 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     video.currentTime = time
   }
 
-  /** Straight to `time`, past the queue: a wrap or a snap must not land behind a stale glide target. */
+  /** The band's frame to the decoder: a seek only for a new frame, and none while one is in flight. */
+  function drive() {
+    if (!running || loops(mode)) return
+    if (handoverFrom !== null) {
+      handover = handoverFrom - bandTarget()
+      handoverFrom = null
+    }
+    if (seeking || !hasFrame()) return
+    const frame = wanted()
+    if (frame === frameOf(video.currentTime, fps)) return
+    seeking = true
+    video.currentTime = frameTime(frame, fps)
+  }
+
+  /** Straight to `time`, past the queue: a wrap or a snap must not land behind a stale seek. */
   function jump(time: number) {
     seeking = false
     pending = null
@@ -430,8 +481,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   /**
    * iOS loads only metadata for a video that has never played, then idles (preload is a hint it ignores), so a scene
    * of holds would never get a frame: seeks go nowhere and the poster is all there is. A muted, inline play() is
-   * allowed and starts the data; it pauses again at once unless a loop owns the mode, and the glide takes the playhead
-   * where the scroll wants it. Once per source. Refused (Low Power Mode), the poster simply stays.
+   * allowed and starts the data; it pauses again at once unless a loop owns the mode, and the band's first seek takes
+   * the playhead where the scroll wants it. Once per source. Refused (Low Power Mode), the poster simply stays.
    */
   function prime() {
     primed = true
@@ -511,9 +562,11 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
         }
       }
     } else if (!loops(mode)) {
-      const target = glideTarget()
-      const delta = target - time
-      if (Number.isFinite(delta) && Math.abs(delta) >= tl.glideRest) seek(time + delta * glideAlpha(glide, dt))
+      if (handover !== 0) {
+        handover *= 1 - glideAlpha(glide, dt)
+        if (Math.abs(handover) < tl.glideRest) handover = 0
+      }
+      drive()
     }
 
     options.onPlayhead?.(timeBand(video.currentTime, tl))
@@ -523,6 +576,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     running = true
     seeking = false
     pending = null
+    handoverFrom = null
+    handover = 0
     pausedTicks = 0
     badTicks = 0
     lastTick = 0
@@ -649,12 +704,18 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     }
     if (reduced) holdHead()
     else if (!running) pause()
-    else snap(capped ? loopHoldTime(mode, tl) : targetTime(mode, band, tl))
+    else {
+      // A resume snaps: no frame between a stale playhead and the right one is worth showing, not even a handover's.
+      handoverFrom = null
+      handover = 0
+      snap(capped ? loopHoldTime(mode, tl) : loops(mode) ? targetTime(mode, band, tl) : frameTime(wanted(), fps))
+    }
   }
 
   return {
     setMode(next) {
       if (destroyed || next === mode) return
+      const looped = loops(mode)
       mode = next
       freshLoop()
       if (!running) return
@@ -662,14 +723,20 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
         // Play from wherever the band left the playhead: the frames in between play, and the frame callback wraps
         // into the loop. (v1 left it paused for the watchdog, about 31 frames.)
         pending = null
+        handoverFrom = null
+        handover = 0
         playWhenSeeked()
       } else {
-        // The band (or a hold) owns the playhead from here: the decoder must not free-run under the glide.
+        // The band (or a hold) owns the playhead from here: the decoder must not free-run under it.
         pause()
+        // Out of a loop, the playhead glides to the band from wherever the loop left it.
+        if (looped && validDuration()) handoverFrom = video.currentTime
       }
     },
     setBand(next) {
       band = next
+      // Straight to the decoder: the frame follows the progress event that moved it, whatever the rAF order.
+      drive()
     },
     setAwake(next) {
       if (destroyed) return
@@ -705,7 +772,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
         capped,
         loopMs: loopStartedAt === null ? null : Math.round(performance.now() - loopStartedAt),
         tier,
-        target: +glideTarget().toFixed(3),
+        target: +bandTarget().toFixed(3),
+        handover: +handover.toFixed(3),
         time: +video.currentTime.toFixed(3),
         paused: video.paused,
         ready: video.readyState,

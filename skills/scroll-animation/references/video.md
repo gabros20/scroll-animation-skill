@@ -17,7 +17,7 @@ seam and serving checks.
 1. [All-intra is for scrub, not for playback](#1-all-intra-is-for-scrub-not-for-playback)
 2. [Loop seams, measured on the encoded file](#2-loop-seams-measured-on-the-encoded-file)
 3. [The rVFC wrap](#3-the-rvfc-wrap)
-4. [Seeks: coalescing and the glide](#4-seeks-coalescing-and-the-glide)
+4. [Seeks: tracking the band, one in flight](#4-seeks-tracking-the-band-one-in-flight)
 5. [Preload tiers](#5-preload-tiers)
 6. [The compositing anchor and the reset's `max-width`](#6-the-compositing-anchor-and-the-resets-max-width)
 7. [Desktop and mobile sources](#7-desktop-and-mobile-sources)
@@ -42,6 +42,10 @@ to a whole GOP per seek, which is what "mud" and "holds frame one, then jumps" l
 keyframe) makes each seek one decode; `media scrub` encodes it and `media probe` calls it `scrub-ready` (§13).
 
 A clip that only plays forward or loops gains nothing from all-intra and pays for it in bitrate.
+
+All-intra, a seek is still a round trip through the media player (on iOS, another process), and iOS decides when a
+video may load. An image sequence (sequences.md) has neither, at the cost of bytes and memory: take it when a phone's
+decoder can't keep up with a skim. Apple has shipped both (a canvas JPEG sequence in 2019, `<video>` scrubs now).
 
 ## 2. Loop seams, measured on the encoded file
 
@@ -89,15 +93,21 @@ one run in three. Firing up to a frame early skips the last frame, so seam clips
   frame early is the visible fault.
 - Verify by logging presented frame indices: a clean sawtooth (`… 78 79 32 33 …`), nothing outside the loop.
 
-## 4. Seeks: coalescing and the glide
+## 4. Seeks: tracking the band, one in flight
 
-A seek issued while another is in flight is dropped, not queued, so the controller keeps one in flight and only the
-newest target waits. Wraps and snaps skip that queue: behind a stale seek they land a frame late.
+In the band the playhead **tracks** the scroll frame for frame, decoder paused: it wants the band's frame, rounded,
+and seeks only when that changes. Smoothing belongs to the scroll (Lenis, native momentum); a second stage on the
+playhead is lag. The old 0.18 glide trailed the page by 50–67 ms at every speed on the iOS simulator, kept turning
+200–370 ms after the scroll stopped and leapt after every long frame.
 
-In the band the playhead **glides** with the decoder paused: an exponential approach whose `glide` (0.18) is the rate
-per 60 Hz frame, `dt`-based so 120 Hz isn't twice as fast; it settles in about 150 ms. Entering a loop plays at once
-from where the band left the playhead; leaving one pauses, and the glide takes over. Safari drops a `play()` issued
-mid-seek, so play waits for `seeked` (150 ms fallback).
+- **One seek in flight, the newest frame next.** Gecko aborts a seek that a newer one replaces (nothing paints while
+  they keep coming); WebKit and Chromium queue the newest. The controller keeps one in flight and on `seeked` sends the
+  frame the band wants then: a slow decoder shows fewer frames, never stale ones. A seek lands a quarter frame into its
+  frame. Wraps and snaps skip the queue: behind a stale seek they land a frame late.
+- **The glide is only the handover out of a loop:** the playhead's distance from the band decays at `glide` (0.18) per
+  60 Hz frame (`dt`-based) while the band moves on. Safari drops a `play()` issued mid-seek, so play waits for
+  `seeked` (150 ms fallback).
+- **No `fastSeek()`:** Chromium lacks it, and WebKit's may land anywhere between the playhead and the target.
 
 ## 5. Preload tiers
 
@@ -191,7 +201,8 @@ spare (`tpad=stop_mode=clone:stop=1`) and keyframe; `media probe` lists keyframe
 **iOS loads only metadata for a video that has never played** (`preload` is a hint it ignores), so a scene of holds
 never gets a frame, and its first seek clears the poster, leaving nothing (measured on the device pass). The controller
 primes each source once (a muted `play()`, paused at once) and seeks only once a frame exists; refused in Low Power
-Mode, the poster stays.
+Mode, the poster stays. Primed, the simulator fetched the whole clip in one request, paused; the prime runs in the
+awake tick, so on iOS data starts at the wake margin, not the warm one.
 
 ## 12. Tab-sleep rehydrate
 
@@ -201,7 +212,8 @@ the triggers) re-derives everything, coalesced to one frame:
 
 1. re-measure the range and read the wrapper's rect;
 2. derive mode, band and act **absolutely** (`sceneAt`), not through the live stepper;
-3. snap the playhead, no glide, if awake (no frame between a stale time and the right one is worth playing), or pause;
+3. snap the playhead, no glide, if awake (no frame between a stale time and the right one is worth playing), or pause.
+   iOS fires `resize` on each step of its toolbar animation, and each rehydrates: a tracked playhead is already there;
 4. if `duration` is invalid (an evicted decoder), issue **one** soft `load()`; metadata rehydrates the scene again.
 
 A hidden tab stops the controller and pauses the video. LoopVideo re-checks on `visibilitychange`, `pageshow` and
@@ -244,8 +256,10 @@ video.setReduced(r) · video.rehydrate({ mode, band, awake, reason }) · video.w
 
 - **Holds by default**: no `headLoop` holds frame 0 and no `tailLoop` holds the last frame, so a plain scrub needs no
   seams. `fps` must be the clip's exact rate.
+- **A hold follows the band**, clamped, in every mode: the scene leaves `tail` 0.7 × `tailLeadPx` past the band's end,
+  and a hold parked on the last frame until then lagged that far on the way back (Folio: 280 px, 54 frames).
 - **It runs only while awake, visible and not reduced**; `destroy()` stops and pauses, so a hidden route never decodes.
-- **Two drivers, never at once**: the glide (rAF, decoder paused) in the band, playback with rVFC wraps in a loop.
+- **Two drivers, never at once**: seeks in the band (decoder paused), playback with rVFC wraps in a loop.
 - **A loop runs `loopSeconds` (5) per visit to its region**, because WCAG 2.2.2 allows 5 s of self-moving content
   without a pause control. Then it finishes the cycle and holds the frame beside the band, so the scrub takes over
   without a jump; a new visit, or a restart after sleep, starts a new budget. `Infinity` needs a pause control of yours.
@@ -320,6 +334,7 @@ Scrubbing a video texture is still a `<video>` seek, with the same all-intra enc
 - [ ] A scrub asset is all-intra (`scrub-ready`); a forward-only or looping clip is not (§1).
 - [ ] Seams are measured against the floor and verified on the encoded file; loops and scrubs use `qcomp=1` (§2, §13).
 - [ ] Loops wrap on rVFC, never by polling `currentTime` in rAF; wraps skip the seek queue (§3, §4).
+- [ ] The band tracks the scroll: no smoothing on the playhead, one seek in flight, holds follow the band (§4, §14).
 - [ ] No `load()` on the warm tier (§5).
 - [ ] The compositing anchor stays; an oversized video has a scoped `max-width: none` (§6).
 - [ ] The server answers `Range` with `206`, and media is cached immutable under hashed names (§8).
