@@ -15,11 +15,22 @@
  *   <SmoothScroll authority="native">{children}</SmoothScroll>
  *
  * The driver is read once, when the authority starts: pass a stable value (module scope or useMemo).
+ *
+ * <RouteChange> runs smooth/route.ts once per client navigation. Wrap the ROOT layout's children in it (a client
+ * component, since it reads the route), so it outlives every route and its layout effect runs after theirs:
+ *
+ *   'use client'   // components/route-scroll.tsx, rendered by app/layout.tsx around {children}
+ *   import { usePathname } from 'next/navigation'
+ *   const refresh = () => ScrollTrigger.refresh()
+ *   export function RouteScroll({ children }) {
+ *     return <RouteChange route={usePathname()} refresh={refresh}>{children}</RouteChange>
+ *   }
  */
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
 
 import { nativeHandle, registerHandle, unregisterHandle } from './authority'
 import { createSmoothScroll, rafDriver, type Driver, type SmoothScrollOptions } from './lenis'
+import { routeChanged } from './route'
 
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect
 
@@ -52,6 +63,30 @@ export function SmoothScroll({ authority, driver, lenis, anchors, children }: Sm
     const handle = createSmoothScroll({ driver: d ?? rafDriver(), lenis: l, anchors: a })
     return () => handle.destroy()
   }, [authority])
+
+  return <>{children}</>
+}
+
+export interface RouteChangeProps {
+  /** The route's identity, usePathname() in Next. Each change runs routeChanged() once; the first render doesn't. */
+  route: string
+  /** `() => ScrollTrigger.refresh()` on GSAP pages. Read when the route changes, so it needn't be stable. */
+  refresh?: () => void
+  children?: ReactNode
+}
+
+export function RouteChange({ route, refresh, children }: RouteChangeProps) {
+  const latest = useRef(refresh)
+  useIsomorphicLayoutEffect(() => {
+    latest.current = refresh
+  })
+  // The route last handled: a fresh load is ScrollTrigger's own refresh, and StrictMode's second effect isn't a change.
+  const handled = useRef(route)
+  useIsomorphicLayoutEffect(() => {
+    if (handled.current === route) return
+    handled.current = route
+    routeChanged({ refresh: latest.current })
+  }, [route])
 
   return <>{children}</>
 }

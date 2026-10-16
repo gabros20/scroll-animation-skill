@@ -1,0 +1,56 @@
+/* Fixed geometry, so a client navigation and a fresh load measure the same page. */
+:root {
+  --header-h: 64px;
+}
+html {
+  scroll-padding-top: var(--header-h);
+}
+body {
+  margin: 0;
+  padding-top: var(--header-h);
+  font: 16px/1.4 system-ui, sans-serif;
+}
+.bar {
+  position: fixed;
+  inset: 0 0 auto;
+  height: var(--header-h);
+  z-index: 10;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 0 16px;
+  background: #111;
+  color: #fff;
+}
+.nav {
+  position: fixed;
+  top: 0;
+  right: 16px;
+  height: var(--header-h);
+  z-index: 11;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.nav a {
+  color: #fff;
+}
+section {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 16px;
+  border-bottom: 1px solid #ccc;
+}
+.screen {
+  height: 100vh;
+}
+.block {
+  height: 600px;
+}
+.pin {
+  height: 100vh;
+  background: #def;
+}
+.tail {
+  height: 400px;
+}

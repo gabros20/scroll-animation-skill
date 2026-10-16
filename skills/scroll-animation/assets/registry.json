@@ -116,7 +116,7 @@
       "reference": "references/motion.md"
     },
     "scroll-authority": {
-      "summary": "One scroll owner per page: the handle, the <html data-scroll-authority> stamp, native scrolling as a handle",
+      "summary": "One scroll owner per page: the handle (sync() takes up a route change at once), the <html data-scroll-authority> stamp, native scrolling as a handle, and routeChanged() for client navigations",
       "clock": "none",
       "tier": "primitive",
       "profiles": [
@@ -127,7 +127,8 @@
       "engines": {
         "agnostic": {
           "files": [
-            "smooth/authority.ts"
+            "smooth/authority.ts",
+            "smooth/route.ts"
           ],
           "requires": [
             "config"
@@ -184,7 +185,7 @@
       "reference": "references/scroll-authority.md"
     },
     "smooth-react": {
-      "summary": "SmoothScroll: the scroll authority for one React route (native or Lenis), cleaned up on unmount and under Next's Activity",
+      "summary": "SmoothScroll: the scroll authority for one React route (native or Lenis), cleaned up on unmount and under Next's Activity; RouteChange runs routeChanged() once per navigation from the root layout",
       "clock": "none",
       "tier": "primitive",
       "profiles": [

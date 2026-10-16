@@ -42,6 +42,9 @@ jobs:
       - run: npm run test:traces
       - run: pnpm install --frozen-lockfile
         working-directory: examples/folio
+      # Route changes under Next 16 (Folio's install): Lenis, ScrollTrigger and scroll position across navigations,
+      # Activity and <ViewTransition> (S9). The no-contract control runs locally; CI checks the contract only.
+      - run: npm run test:route-hygiene -- --contract on
       # The media-v1 release, SHA-256-checked by the fetch; cached on the manifest that pins it.
       - id: media-cache
         uses: actions/cache@v4

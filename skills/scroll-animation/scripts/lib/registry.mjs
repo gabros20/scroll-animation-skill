@@ -14,7 +14,7 @@ export const ASSETS_DIR = join(SKILL_DIR, 'assets')
 export const REGISTRY_PATH = join(ASSETS_DIR, 'registry.json')
 
 export const ENGINES = ['css', 'motion', 'gsap', 'three', 'media', 'agnostic']
-export const CLOCKS = ['trigger', 'scroll', 'media', 'render', 'none']
+export const CLOCKS = ['trigger', 'scroll', 'media', 'render', 'route', 'none']
 export const TIERS = ['primitive', 'recipe']
 export const PROFILES = ['reading', 'expressive', 'immersive']
 
