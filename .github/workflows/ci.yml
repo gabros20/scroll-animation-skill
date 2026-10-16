@@ -103,6 +103,7 @@ jobs:
       - run: npm run test:header-theme
       - run: npm run test:count-up
       - run: npm run test:recipes
+      - run: npm run test:view-transitions
 
   # The storefront (site/), which is also the vanilla GSAP + ScrollSmoother example: a Vite build of both pages, then
   # its checks against `vite preview` in Chromium, WebKit and Firefox: each page's scroll authority, the pinned
