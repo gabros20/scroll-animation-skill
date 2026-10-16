@@ -118,6 +118,11 @@ export function createSmoother(ScrollSmoother: ScrollSmootherStatic, options: Sm
       paused = false
       smoother.paused(false)
     },
+    sync() {
+      // The content eases toward the native scroll over `smooth` seconds; after a route change it jumps there instead
+      // (GSAP docs: `scrollTo(y, false)` jumps, and works while paused). S9 measured Lenis and native, not this.
+      smoother.scrollTo(window.scrollY, false)
+    },
     destroy() {
       reduced.removeEventListener('change', followReducedMotion)
       window.clearTimeout(resizeTimer)
