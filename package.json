@@ -26,6 +26,7 @@
     "test:text": "node tests/text.mjs",
     "test:scroll-effects": "node tests/scroll-effects.mjs",
     "test:recipes": "node tests/recipes.mjs",
+    "test:view-transitions": "node tests/view-transitions.mjs",
     "test:route-hygiene": "node tests/route-hygiene.mjs",
     "test:smoke": "node tests/run-smoke.mjs",
     "test:audit": "node skills/scroll-animation/scripts/tools/audit-motion.mjs --selftest",

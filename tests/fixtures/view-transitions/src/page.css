@@ -1,0 +1,55 @@
+/* The view-transitions fixture's page: a fixed 64 px header over two views. The header's ink colours are the page's. */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #f4f1ea;
+  color: #111;
+  font: 16px/1.4 system-ui, sans-serif;
+}
+:root {
+  --header-h: 64px;
+}
+[data-header] {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  box-sizing: border-box;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: #f4f1ea;
+}
+[data-header][data-header-ink='night'] {
+  color: #fff;
+  background: #111;
+}
+#page {
+  padding-top: 64px;
+}
+.cover {
+  display: block;
+  background: linear-gradient(135deg, #c63 0%, #369 100%);
+}
+.index .cover {
+  width: 240px;
+  height: 180px;
+  margin: 40px 24px;
+}
+.article .cover {
+  width: 960px;
+  height: 540px;
+  margin: 0 auto;
+}
+h1 {
+  margin: 24px;
+}
+.filler p {
+  height: 100px;
+  margin: 0 24px;
+  border-bottom: 1px solid #ccc;
+}

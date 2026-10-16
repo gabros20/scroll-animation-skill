@@ -209,6 +209,39 @@
       },
       "reference": "references/scroll-authority.md"
     },
+    "view-transitions": {
+      "summary": "Page changes through the View Transitions API: a guarded transition() (no API, reduced motion, hidden tab, one at a time, the scroll authority synced), cross-document direction types, and the CSS every caller shares (root crossfade, vt-morph, vt-forward/vt-back, vt-none, the anchored header)",
+      "clock": "route",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "agnostic": {
+          "files": [
+            "view-transitions.ts",
+            "css/view-transitions.css",
+            "css/view-transitions-mpa.css"
+          ],
+          "requires": [
+            "config",
+            "scroll-authority"
+          ],
+          "packages": []
+        },
+        "css": {
+          "files": [
+            "css/view-transitions.css",
+            "css/view-transitions-mpa.css"
+          ],
+          "requires": [],
+          "packages": []
+        }
+      },
+      "reference": "references/motion.md"
+    },
     "reveal": {
       "summary": "Triggered entrances (rise, fade, clip, scale-in) on the measured curves, at the trigger line or on mount: a CSS resting state under the pre-JS gate, failsafe-safe, live reduced motion, a load veil, Activity-safe",
       "clock": "trigger",
