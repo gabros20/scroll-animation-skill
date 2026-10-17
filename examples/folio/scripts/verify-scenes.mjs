@@ -27,7 +27,17 @@
 //                  the tier the viewport picks (window.__scrub() under ?motion-debug).
 //   firefox        the article in Firefox, which has no scroll-driven animations: verify-motion --reveal, then the
 //                  static fallback: every entrance shown, the parallax image in place with nothing attached, the
-//                  progress bar not drawn, and no text or image left hidden.
+//                  progress bar not drawn, and no text or image left hidden (but the scrolly states not shown); and
+//                  the scrolly section as below.
+//   scrolly        the article's scrolly-steps section: sticky at 1440, each step activating its own state, the two
+//                  detail steps panning to their own frames, back up to the first, a reload on a step landing on its
+//                  frame without a pan, no picture the page doesn't already load; stacked at 390 with each step's
+//                  figure in flow; under reduced motion still sticky, the swap and the pan instant.
+//   transition     at 1440, client-side: / -> /journal -> the rust card (a "forward" view transition with the
+//                  cover's ::view-transition-group, the header's group named and never animated, the article at the
+//                  top) -> the browser's back (no transition, the index where it was left) -> /, the live
+//                  ScrollTriggers back to their first count (window.__triggers under ?motion-debug), one authority
+//                  at every step.
 //
 // Pages are prerendered, so a build made before `pnpm media` holds placeholders: missing media is fetched first,
 // and the build is made when there is none or the media just arrived. Starts `next start` on a free port and always
@@ -686,7 +696,15 @@ async function checkStaticFallback(browser, base, vp, line) {
       const parallax = document.querySelector('[data-scroll-fx~="parallax"]');
       const bar = document.querySelector('[data-scroll-fx~="progress"]');
       // Effective opacity up the tree, and visibility, for every piece of content in the article.
-      const hidden = [...document.querySelectorAll("article :is(h1, p, figcaption, img, video)")].filter((el) => {
+      // The scrolly section hides on purpose: the states not shown (inert, aria-hidden) beside the steps, or the
+      // graphic itself when stacked, and the steps' own figures when sticky. checkScrolly covers it.
+      const mode = document.querySelector("[data-scrolly]")?.dataset.scrollyMode;
+      const meant = (el) =>
+        el.closest('[data-scrolly-state][aria-hidden="true"]') ||
+        (mode === "sticky" && el.closest("[data-scrolly-inline]")) ||
+        (mode !== "sticky" && el.closest("[data-scrolly-graphic]"));
+      const content = [...document.querySelectorAll("article :is(h1, p, figcaption, img, video)")].filter((el) => !meant(el));
+      const hidden = content.filter((el) => {
         let opacity = 1;
         for (let node = el; node && node !== document.documentElement; node = node.parentElement) {
           opacity *= Number(getComputedStyle(node).opacity);
@@ -698,7 +716,7 @@ async function checkStaticFallback(browser, base, vp, line) {
         parallax: { animations: parallax.getAnimations().length, translate: getComputedStyle(parallax).translate },
         bar: { animations: bar.getAnimations().length, scale: getComputedStyle(bar).scale },
         hidden: hidden.map((el) => `${el.tagName.toLowerCase()} "${(el.textContent || el.getAttribute("alt") || "").trim().slice(0, 24)}"`),
-        content: document.querySelectorAll("article :is(h1, p, figcaption, img, video)").length,
+        content: content.length,
       };
     });
     line(
@@ -713,6 +731,260 @@ async function checkStaticFallback(browser, base, vp, line) {
         errors.length === 0,
       `${ARTICLE} ${size(vp)} Firefox, the static fallback: content visible, nothing stuck hidden`,
       `view() supported: ${r.supports} · ${reveals.total - reveals.bad.length}/${reveals.total} reveals shown · parallax ${r.parallax.animations} animations, translate ${r.parallax.translate} · progress bar ${r.bar.animations} animations, scale ${r.bar.scale} (not drawn) · ${r.content - r.hidden.length}/${r.content} content elements visible${r.hidden.length ? `: hidden ${r.hidden.join(", ")}` : ""}${reveals.bad.length ? ` · ${reveals.bad.join(" | ")}` : ""}`,
+    );
+  } finally {
+    await context.close();
+  }
+}
+
+// ── Phase 4: scrollytelling, the cover transition, the route contract ───
+
+/** Jumps the scrolly section's step `i` 20 px past the trigger line (the middle of the viewport under the header). */
+const toStep = (page, i) =>
+  page.evaluate(async (i) => {
+    const root = document.querySelector("[data-scrolly]");
+    const step = root.querySelectorAll("[data-scrolly-step]")[i];
+    const header = parseFloat(getComputedStyle(root.querySelector("[data-scrolly-graphic]")).scrollMarginTop) || 0;
+    scrollTo(0, step.getBoundingClientRect().top + scrollY - (header + (innerHeight - header) / 2) + 20);
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  }, i);
+
+/** The section as the reader sees it: mode, active step, the shown state and its opacity, the pan's transform. */
+const readScrolly = (page) =>
+  page.evaluate(() => {
+    const root = document.querySelector("[data-scrolly]");
+    const shown = root.querySelector("[data-scrolly-state][data-state-active]");
+    const pan = root.querySelector('[data-scrolly-state="detail"] > div');
+    const states = [...root.querySelectorAll("[data-scrolly-state]")];
+    return {
+      mode: root.dataset.scrollyMode,
+      active: Number(root.dataset.scrollyActive),
+      shows: [...root.querySelectorAll("[data-scrolly-step]")].map((s) => s.dataset.scrollyShow),
+      shown: shown?.dataset.scrollyState ?? null,
+      opacities: states.map((s) => `${s.dataset.scrollyState}=${getComputedStyle(s).opacity}`).join(" "),
+      opacity: shown ? getComputedStyle(shown).opacity : null,
+      pan: pan ? getComputedStyle(pan).transform : null,
+      running: root.getAnimations({ subtree: true }).filter((a) => a.playState === "running").length,
+    };
+  });
+
+/** The scale in a matrix() transform, or 1. */
+const scaleOf = (t) => (t && t.startsWith("matrix(") ? Number(t.slice(7).split(",")[0]) : 1);
+
+/**
+ * The article's scrolly section. Desktop: sticky; each step, jumped to, activates its own state (the two detail
+ * steps pan across one still, to their own frames); scrolling back up returns to the first; a reload on the second
+ * step lands on its frame without panning; every picture it shows is one the page already loads. Phones: stacked,
+ * no graphic, the steps' own figures in flow and no step states.
+ */
+async function checkScrolly(browser, base, vp, line) {
+  const { context, page, errors } = await openPage(browser, vp);
+  try {
+    await page.goto(`${base}${ARTICLE}`, { waitUntil: "networkidle" });
+    await page.waitForFunction(() => document.querySelector("[data-scrolly]")?.dataset.scrollyMode, null, { timeout: 10000 });
+    if (vp.width < 1024) {
+      const r = await page.evaluate(() => {
+        const root = document.querySelector("[data-scrolly]");
+        const steps = [...root.querySelectorAll("[data-scrolly-step]")];
+        const inline = [...root.querySelectorAll("[data-scrolly-inline]")];
+        return {
+          mode: root.dataset.scrollyMode,
+          graphic: getComputedStyle(root.querySelector("[data-scrolly-graphic]")).display,
+          inline: inline.filter((f) => f.getBoundingClientRect().width > 0 && f.querySelector("img")).length,
+          wanted: inline.length,
+          lefts: new Set(steps.map((s) => Math.round(s.getBoundingClientRect().left))).size,
+          states: steps.filter((s) => s.hasAttribute("data-step-state")).length,
+        };
+      });
+      line(
+        r.mode === "stacked" && r.graphic === "none" && r.wanted > 0 && r.inline === r.wanted && r.lefts === 1 && r.states === 0 && errors.length === 0,
+        `${ARTICLE} ${size(vp)} scrolly: stacked, each step's picture in flow`,
+        `mode ${r.mode}, graphic display ${r.graphic}, ${r.inline}/${r.wanted} inline figures shown, steps in ${r.lefts} column(s), ${r.states} step states${errors.length ? ` · errors: ${errors.join(" | ")}` : ""}`,
+      );
+      return;
+    }
+    const seen = [];
+    for (let i = 0; i < 4; i++) {
+      await toStep(page, i);
+      await sleep(1600); // the pan's MOTION.entrance (1.3 s) and the crossfade land
+      seen.push(await readScrolly(page));
+    }
+    await toStep(page, 0);
+    await sleep(1600);
+    const up = await readScrolly(page);
+    const steps = seen.map((s, i) => s.active === i && s.shown === s.shows[i] && s.opacity === "1");
+    const pans = [scaleOf(seen[0].pan), scaleOf(seen[1].pan)];
+    // Every picture in the section is one the page already requests: the same srcset as an image outside it, or the
+    // loop's poster URL.
+    const reuse = await page.evaluate(() => {
+      const root = document.querySelector("[data-scrolly]");
+      const outside = [...document.querySelectorAll("img, video")].filter((el) => !root.contains(el));
+      const known = new Set(outside.flatMap((el) => [el.getAttribute("srcset"), el.getAttribute("poster") && new URL(el.getAttribute("poster"), location.href).href]).filter(Boolean));
+      return [...root.querySelectorAll("img")].filter((img) => !known.has(img.getAttribute("srcset") ?? img.src)).map((img) => img.getAttribute("src"));
+    });
+    // A reload on the second step: the core's first report has direction null, so the pan jumps to its frame.
+    await toStep(page, 1);
+    await sleep(1600);
+    await page.reload({ waitUntil: "networkidle" });
+    await page.waitForFunction(() => document.querySelector("[data-scrolly]")?.dataset.scrollyActive === "1", null, { timeout: 10000 }).catch(() => {});
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    const reloaded = await readScrolly(page);
+    line(
+      seen.every((s) => s.mode === "sticky") && steps.every(Boolean) && up.active === 0 && up.shown === up.shows[0] && errors.length === 0,
+      `${ARTICLE} ${size(vp)} scrolly: sticky, each step shows its own state, and back up to the first`,
+      `${seen.map((s, i) => `step ${i}: active ${s.active}, shows ${s.shown} (${s.opacities})`).join(" · ")} · back up: active ${up.active}, ${up.shown}${errors.length ? ` · errors: ${errors.join(" | ")}` : ""}`,
+    );
+    line(
+      Math.abs(pans[0] - 1.5) < 0.01 && Math.abs(pans[1] - 1.6) < 0.01 && seen[0].pan !== seen[1].pan,
+      `${ARTICLE} ${size(vp)} scrolly: the two detail steps pan to their own frames`,
+      `step 0 ${seen[0].pan} · step 1 ${seen[1].pan}`,
+    );
+    line(
+      reloaded.active === 1 && reloaded.pan === seen[1].pan && reloaded.running === 0,
+      `${ARTICLE} ${size(vp)} scrolly: a reload on a step lands on its frame without panning`,
+      `active ${reloaded.active}, pan ${reloaded.pan}, ${reloaded.running} animation(s) running`,
+    );
+    line(reuse.length === 0, `${ARTICLE} ${size(vp)} scrolly: every picture is one the page already loads`, reuse.length ? `new: ${reuse.join(", ")}` : "");
+  } finally {
+    await context.close();
+  }
+}
+
+/** Under reduced motion the section stays sticky and every change is instant: the swap and the pan. */
+async function checkScrollyReduced(browser, base, vp, line) {
+  const { context, page, errors } = await openPage(browser, vp, { motion: "reduce" });
+  try {
+    await page.goto(`${base}${ARTICLE}`, { waitUntil: "networkidle" });
+    await page.waitForFunction(() => document.querySelector("[data-scrolly]")?.dataset.scrollyMode, null, { timeout: 10000 });
+    await toStep(page, 1);
+    await sleep(300);
+    const pan1 = await readScrolly(page);
+    await toStep(page, 2);
+    const swap = await readScrolly(page); // two frames after the jump
+    await toStep(page, 0);
+    const pan0 = await readScrolly(page);
+    line(
+      pan1.mode === "sticky" &&
+        swap.active === 2 &&
+        swap.opacity === "1" &&
+        swap.running === 0 &&
+        pan0.active === 0 &&
+        Math.abs(scaleOf(pan0.pan) - 1.5) < 0.01 &&
+        Math.abs(scaleOf(pan1.pan) - 1.6) < 0.01 &&
+        pan0.running === 0 &&
+        errors.length === 0,
+      `${ARTICLE} ${size(vp)} scrolly, reduced motion: sticky, the swap and the pan are instant`,
+      `mode ${pan1.mode} · two frames after step 1 -> 2: ${swap.shown} (${swap.opacities}), ${swap.running} running · two frames after 2 -> 0: pan ${pan0.pan}, ${pan0.running} running`,
+    );
+  } finally {
+    await context.close();
+  }
+}
+
+// Installed before any page script: each live Lenis adds one non-passive window `wheel` listener (check-authority.mjs).
+function countLenis() {
+  const live = new Set();
+  const add = EventTarget.prototype.addEventListener;
+  const remove = EventTarget.prototype.removeEventListener;
+  EventTarget.prototype.addEventListener = function (type, listener, options) {
+    if (this === window && type === "wheel" && options?.passive === false) live.add(listener);
+    return add.call(this, type, listener, options);
+  };
+  EventTarget.prototype.removeEventListener = function (type, listener, options) {
+    if (this === window && type === "wheel") live.delete(listener);
+    return remove.call(this, type, listener, options);
+  };
+  Object.defineProperty(window, "__liveLenis", { get: () => live.size });
+  // Every view transition, with its types and the pseudo-elements animating once it is ready.
+  window.__vt = [];
+  const start = Document.prototype.startViewTransition;
+  if (start) {
+    Document.prototype.startViewTransition = function (arg) {
+      const t = start.call(this, arg);
+      const record = { types: [], animating: [], header: null };
+      window.__vt.push(record);
+      t.ready
+        .then(() => {
+          record.types = [...(t.types ?? [])];
+          record.animating = document.getAnimations().map((a) => a.effect?.pseudoElement).filter(Boolean);
+          record.header = getComputedStyle(document.querySelector("[data-header]")).viewTransitionName;
+        })
+        .catch((e) => (record.error = String(e)));
+      return t;
+    };
+  }
+}
+
+/**
+ * The journal's shared element and the route contract, client-side all the way: / -> /journal (header link) -> the
+ * rust card (a "forward" transition: the cover's group morphs, the header's group never animates, the article lands
+ * at the top) -> the browser's back (no transition: the index comes back where it was) -> / again, where the live
+ * triggers are as many as on the first load. At every step one authority: the route's stamp, one Lenis on /, none on
+ * the journal.
+ */
+async function checkCoverTransition(browser, base, vp, line) {
+  const { context, page, errors } = await openPage(browser, vp, { init: countLenis });
+  const state = () =>
+    page.evaluate(() => ({
+      path: location.pathname,
+      stamp: document.documentElement.dataset.scrollAuthority ?? null,
+      stamps: document.querySelectorAll("[data-scroll-authority]").length,
+      lenis: window.__liveLenis,
+      y: Math.round(scrollY),
+      vts: window.__vt.length,
+      triggers: window.__triggers?.() ?? null,
+    }));
+  const settle = async (path, stamp) => {
+    await page.waitForFunction(
+      ([p, a]) => location.pathname === p && document.documentElement.dataset.scrollAuthority === a && !document.activeViewTransition,
+      [path, stamp],
+      { timeout: 10000 },
+    ).catch(() => {});
+    await sleep(600);
+    return state();
+  };
+  const authority = (s, stamp, lenis) => s.stamp === stamp && s.stamps === 1 && s.lenis === lenis;
+  try {
+    await page.goto(`${base}/?motion-debug`, { waitUntil: "networkidle" });
+    await page.evaluate(() => (window.__sameDocument = true));
+    const home = await settle("/", "lenis");
+    await page.click('header nav a[href="/journal"]');
+    const index = await settle("/journal", "native");
+    await page.evaluate(() => scrollTo(0, 280));
+    await sleep(300);
+    const card = page.locator('a[href="/journal/what-rust-is-for"]').first();
+    await card.scrollIntoViewIfNeeded();
+    const left = (await state()).y;
+    await card.click();
+    const article = await settle(ARTICLE, "native");
+    const vt = await page.evaluate(() => window.__vt.at(-1) ?? null);
+    await page.goBack();
+    const back = await settle("/journal", "native");
+    await page.click('header a[href="/"]');
+    const again = await settle("/", "lenis");
+    const same = await page.evaluate(() => window.__sameDocument === true);
+
+    const cover = "::view-transition-group(cover-what-rust-is-for)";
+    line(
+      vt !== null && vt.types.join() === "forward" && vt.animating.includes(cover) && vt.header === "site-header" && !vt.animating.some((p) => p.includes("site-header")),
+      `/journal -> ${ARTICLE} ${size(vp)} the cover morphs (a forward transition) under an anchored header`,
+      vt ? `types [${vt.types}] · ${vt.animating.includes(cover) ? "cover group animating" : "no cover group"} · header named ${vt.header}, ${vt.animating.filter((p) => p.includes("site-header")).length} header animations${vt.error ? ` · ${vt.error}` : ""}` : "no view transition ran",
+    );
+    line(article.y === 0, `${ARTICLE} ${size(vp)} the article lands at the top`, `scrollY ${article.y}`);
+    line(
+      Math.abs(back.y - left) <= 2 && back.vts === article.vts,
+      `/journal ${size(vp)} the browser's back restores the index where it was left, with no transition`,
+      `left at ${left}, back at ${back.y} · view transitions ${article.vts} -> ${back.vts}`,
+    );
+    line(
+      same && home.triggers !== null && again.triggers === home.triggers,
+      `/ -> /journal -> ${ARTICLE} -> back -> / ${size(vp)} the live ScrollTriggers come back to the same count`,
+      `${home.triggers} on the first load, ${again.triggers} after the round trip${same ? "" : " · a full page load happened"}`,
+    );
+    line(
+      authority(home, "lenis", 1) && authority(index, "native", 0) && authority(article, "native", 0) && authority(back, "native", 0) && authority(again, "lenis", 1) && errors.length === 0,
+      `${size(vp)} one scroll authority at every step: lenis on /, native on the journal`,
+      [home, index, article, back, again].map((s) => `${s.path} ${s.stamp}×${s.stamps} Lenis ${s.lenis}`).join(" · ") + (errors.length ? ` · errors: ${errors.join(" | ")}` : ""),
     );
   } finally {
     await context.close();
@@ -756,7 +1028,10 @@ async function main() {
       if (!FULL.has(name)) {
         runVerifyMotion(name, ARTICLE, server.base + ARTICLE, line);
         browser = await ENGINES[name].launch();
-        for (const vp of VIEWPORTS) await checkStaticFallback(browser, server.base, vp, line);
+        for (const vp of VIEWPORTS) {
+          await checkStaticFallback(browser, server.base, vp, line);
+          await checkScrolly(browser, server.base, vp, line);
+        }
         await browser.close();
         browser = null;
         continue;
@@ -777,7 +1052,10 @@ async function main() {
         await checkProgress(browser, server.base, vp, line);
         await checkReduced(browser, server.base, vp, line);
         await checkPlayhead(browser, server.base, vp, line);
+        await checkScrolly(browser, server.base, vp, line);
       }
+      await checkScrollyReduced(browser, server.base, VIEWPORTS[0], line);
+      await checkCoverTransition(browser, server.base, VIEWPORTS[0], line);
       await browser.close();
       browser = null;
     }

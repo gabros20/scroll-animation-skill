@@ -16,6 +16,8 @@ type MediaSlotProps = {
   priority?: boolean;
   /** Image only: scroll-effects.css effects for the element (data-scroll-fx). */
   fx?: string;
+  /** Image only: serve the file as it is, at the URL a <video poster> already loaded. */
+  unoptimized?: boolean;
 };
 
 /**
@@ -35,6 +37,7 @@ export function MediaSlot({
   className = "",
   priority = false,
   fx,
+  unoptimized,
 }: MediaSlotProps) {
   if (!mediaExists(src)) {
     return (
@@ -59,6 +62,7 @@ export function MediaSlot({
         width={width}
         height={height}
         priority={priority}
+        unoptimized={unoptimized}
         data-scroll-fx={fx}
         className={className}
       />

@@ -1,6 +1,6 @@
 {
   "skillVersion": "1.0.0",
-  "dir": "src/animation",
+  "dir": "examples/folio/src/animation",
   "engines": [
     "agnostic",
     "css",
@@ -9,20 +9,20 @@
     "motion"
   ],
   "files": {
-    "config.ts": "91fe04cc98fc0675",
+    "config.ts": "e65dc072b75ec324",
     "scale.ts": "322b05138c6a47d1",
     "css/animation.css": "7aa944c76accd5b7",
     "gsap/setup.ts": "fb9601866eb05ace",
-    "motion/MotionProvider.tsx": "68e3d30eb593279e",
-    "smooth/authority.ts": "7187dc8a86d1a25c",
-    "smooth/lenis.ts": "3388063654afd797",
-    "smooth/SmoothScroll.tsx": "746d41cf23e5307b",
+    "motion/MotionProvider.tsx": "b3e3b8a7fe746942",
+    "smooth/authority.ts": "48a641d3e6f88b8a",
+    "smooth/lenis.ts": "791e0d652aa1621e",
+    "smooth/SmoothScroll.tsx": "e585a6639aa0c196",
     "scene.ts": "681c45e78fd3add5",
     "css/scene.css": "2862e3dd2903c50f",
     "gsap/pinned-scene.ts": "66bd7063f88e5ba6",
     "media/video-controller.ts": "d6ac3a01e25de8c4",
     "media/camera.ts": "aac8e28e75cb8011",
-    "gsap/scrub-video.ts": "45718d491829b1ea",
+    "gsap/scrub-video.ts": "399c4104ebde7582",
     "motion/usePinnedScene.ts": "0db204262309604e",
     "motion/PinnedScene.tsx": "a2aa87d7431ac1cd",
     "media/frame-sequence.ts": "70fb5f080360b1a0",
@@ -43,6 +43,12 @@
     "gsap/horizontal-rail.ts": "23395aed00b898eb",
     "css/rail.css": "00485ea92eebb879",
     "css/scroll-effects.css": "9f635e4de26088a6",
-    "image-ink.ts": "4815e855ec0337cb"
+    "image-ink.ts": "4815e855ec0337cb",
+    "smooth/route.ts": "7700dd3b48ce28be",
+    "css/view-transitions.css": "bfaa79267e7363c8",
+    "css/view-transitions-mpa.css": "f7adb42f3faa4699",
+    "scrolly-steps.ts": "5180874bc55236f5",
+    "motion/ScrollySteps.tsx": "dbd529acbaccd19b",
+    "css/scrolly.css": "2e1961ebc50b05cb"
   }
 }
