@@ -23,6 +23,11 @@ export interface SmoothScrollHandle {
   /** Freeze page scrolling (a modal is open) and give it back. */
   stop(): void
   start(): void
+  /**
+   * The router moved the page itself (a link to the top or its hash target, a back/forward restore): take up that
+   * position at once and drop any smoothing still in flight. smooth/route.ts calls it after a route change.
+   */
+  sync(): void
   destroy(): void
 }
 
@@ -87,6 +92,8 @@ export function nativeHandle(): SmoothScrollHandle {
       stopped = false
       document.documentElement.style.overflow = ''
     },
+    // The native position is the position.
+    sync() {},
     destroy() {
       // A handle that goes away never leaves the page locked.
       if (stopped) handle.start()

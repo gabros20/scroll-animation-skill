@@ -1,0 +1,19 @@
+/*
+ * css/view-transitions-mpa.css: cross-document view transitions for a multi-page site (every navigation loads a new
+ * document: a static site, Astro without its router, a server-rendered site). Import it on EVERY page, next to
+ * css/view-transitions.css, which holds what the transition looks like. Both documents must opt in, or the
+ * navigation just loads.
+ *
+ * Its own file because @view-transition is an at-rule: no selector can scope it to some pages, so a project opts
+ * in by importing the file. A single-page app (Next, React Router) never imports it: its navigations stay in one
+ * document, and React's <ViewTransition> or transition() animates them.
+ *
+ * Under reduced motion the browser doesn't transition at all: the new page replaces the old one, as transition()
+ * does for a same-document change. Direction (forward on a link, back on the back button) comes from
+ * mountCrossDocumentTransitions() in view-transitions.ts, run in a render-blocking script.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+}

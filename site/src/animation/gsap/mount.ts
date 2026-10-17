@@ -25,6 +25,9 @@
  *   leaves nothing behind: what was created is destroyed, and the error is thrown on.
  * - Mounting a root that is mounted already creates nothing and returns the live mount's cleanup. After the cleanup
  *   the root can be mounted again: a route shown again.
+ * - A client-side route change: unmount the old route, swap, let the router scroll, call routeChanged() from
+ *   smooth/route.ts (the authority takes up the router's position at once, no refresh passed), then mount() the new
+ *   route, whose one refresh covers the page.
  * - `root` is a route's root element, never `document` (nor <html>): Next's Activity keeps a hidden route's DOM in
  *   the document, and an MPA swap replaces the route, not the page. Page chrome outside the root, such as the fixed
  *   header's ink (mountHeaderTheme), is the page's own. Start the scroll authority (createSmoother,

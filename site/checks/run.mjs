@@ -2,7 +2,7 @@
 // checks/run.mjs — the site's checks in Chromium, WebKit and Firefox, against `vite preview` of the production build
 // (run `pnpm build` first). One PASS/FAIL line per check, page and browser; exits 1 on any FAIL.
 //
-//   node checks/run.mjs [--browsers chromium,webkit,firefox] [--only load,split,scene,rail,entrances,reduced,nojs,mount]
+//   node checks/run.mjs [--browsers chromium,webkit,firefox] [--only load,split,…,mount,transition,scrolly]
 //
 //   load       each page loads without errors and stamps its scroll authority: smoother on /, native on /guide/
 //   split      the hero headline is split in the served HTML, and the load shifts no layout (CLS < 0.01)
@@ -16,6 +16,12 @@
 //   mount      mount() on a scratch root (document order across two block types, one refresh, double mount, the
 //              context and reverse-order cleanup, never the document), then each page's own cleanup: no
 //              ScrollTriggers and no inline styles left in the route's root
+//   transition cross-document view transitions between the pages: / -> /guide/ and back carry "forward" and "back",
+//              the root crossfades and the header's group never animates (Chromium, WebKit); ScrollSmoother on /
+//              takes up the new page at rest, with no glide; Firefox has none, and the navigations just load
+//   scrolly    /guide/'s four-clocks section: sticky at 1280, each step marking its own clock (the colour at once, the
+//              marker sliding a row per step), back up to the first, a reload on a step seeking the marker there;
+//              under reduced motion the colour alone, instant, no marker and no transform; stacked at 390
 
 import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -31,7 +37,7 @@ const AUTHORITY = { home: 'smoother', guide: 'native' }
 const VIEWPORT = { width: 1280, height: 800 }
 const CLOCKS = ['trigger', 'scroll', 'media', 'render']
 const HEADLINE = 'Every animation runs on one of four clocks'
-const CHECK_IDS = ['load', 'split', 'scene', 'rail', 'entrances', 'reduced', 'nojs', 'mount']
+const CHECK_IDS = ['load', 'split', 'scene', 'rail', 'entrances', 'reduced', 'nojs', 'mount', 'transition', 'scrolly']
 
 // ── args ────────────────────────────────────────────────────────────────
 
@@ -113,14 +119,24 @@ function pageHelpers() {
       const attrs = Array.from(el.attributes, (a) => (a.name === 'class' ? `.${a.value.split(' ')[0]}` : a.name.startsWith('data-') ? `[${a.name}]` : ''))
       return `${el.tagName.toLowerCase()}${attrs.join('')}`
     },
-    /** Every text run on the page that a reader can't see: transparent, hidden, or inside something that is. */
-    invisibleText() {
+    /**
+     * What a scrolly-steps section hides on purpose: the panel while it reads stacked (no JavaScript, phones), the
+     * states not shown beside the steps (inert, aria-hidden), and the steps' own figures while the panel shows.
+     */
+    scrollyHides(el) {
+      const root = el.closest('[data-scrolly]')
+      if (!root) return false
+      const sticky = root.dataset.scrollyMode === 'sticky'
+      return (!sticky && !!el.closest('[data-scrolly-graphic]')) || !!el.closest('[data-scrolly-state][aria-hidden="true"]') || (sticky && !!el.closest('[data-scrolly-inline]'))
+    },
+    /** Every text run on the page (or in `root`) that a reader can't see: transparent, hidden, or inside something that is. */
+    invisibleText(root = document.body) {
       const out = []
-      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
       for (let node = walker.nextNode(); node; node = walker.nextNode()) {
         const text = node.data.trim()
         const el = node.parentElement
-        if (!text || !el || el.closest('script, style, noscript, [data-split-copy]')) continue
+        if (!text || !el || el.closest('script, style, noscript, [data-split-copy]') || window.__c.scrollyHides(el)) continue
         let opacity = 1
         let why = ''
         for (let e = el; e; e = e.parentElement) {
@@ -138,6 +154,25 @@ function pageHelpers() {
       return out
     },
   }
+
+  // Each cross-document view transition into this page: its types and the pseudo-elements animating once it is ready.
+  window.__reveal = null
+  window.addEventListener('pagereveal', (e) => {
+    const vt = e.viewTransition
+    window.__reveal = { vt: !!vt }
+    if (!vt) return
+    // After pages/transitions.ts's listener (registered later, so it runs later): the types are in by `ready`.
+    vt.ready.then(
+      () =>
+        (window.__reveal = {
+          vt: true,
+          types: [...vt.types],
+          animating: document.getAnimations().map((a) => a.effect?.pseudoElement).filter(Boolean),
+          header: getComputedStyle(document.querySelector('[data-header]')).viewTransitionName,
+        }),
+      (err) => (window.__reveal = { vt: true, aborted: err?.name ?? String(err) }),
+    )
+  })
 
   window.__authored = new WeakMap()
   document.addEventListener('readystatechange', () => {
@@ -550,7 +585,7 @@ const CHECKS = {
         for (let node = walker.nextNode(); node; node = walker.nextNode()) {
           const text = node.data.trim()
           const el = node.parentElement
-          if (!text || !el || el.closest('script, style, noscript, [data-split-copy]')) continue
+          if (!text || !el || el.closest('script, style, noscript, [data-split-copy]') || window.__c.scrollyHides(el)) continue
           let opacity = 1
           for (let e = el; e; e = e.parentElement) opacity *= Number(getComputedStyle(e).opacity)
           const cs = getComputedStyle(el)
@@ -721,6 +756,9 @@ const CHECKS = {
           inFlight: Array.from(main.querySelectorAll('[data-reveal-item]')).filter((el) => el.style.length > 0).length,
           styled: [main, ...main.querySelectorAll('*')]
             .filter((el) => !el.closest('[data-speed], [data-lag]'))
+            // scrolly-steps' destroy() leaves its last state in place, the sticky layout's --scrolly-line with it (the
+            // tail's height), so a route shown again doesn't jump: that one property isn't a leftover.
+            .filter((el) => !(el.matches('[data-scrolly]') && el.style.length === 1 && el.style.getPropertyValue('--scrolly-line') !== '' && !window.__authored.get(el)))
             .filter((el) => (el.style.length ? el.getAttribute('style') : null) !== (window.__authored.get(el) ?? null))
             .map((el) => `${window.__c.name(el)} {${el.getAttribute('style')}}`),
         }
@@ -736,6 +774,166 @@ const CHECKS = {
         `before: ${before.route} route triggers, ${before.spacers} pin-spacers, ${before.inFlight} entrances in flight, ${before.styled.length} styled · ` +
           `after: ${after.route} route triggers (${after.total} in all${name === 'home' ? ', the smoother and its effects' : ''}), ${after.spacers} pin-spacers, ` +
           `inline styles: ${after.styled.length ? after.styled.slice(0, 4).join('; ') : 'none'}`,
+      ])
+    }
+    return out
+  },
+
+  async transition(t) {
+    const out = []
+    const { page } = await t.open('/guide/')
+    const supported = await page.evaluate(() => 'onpagereveal' in window && typeof CSSViewTransitionRule !== 'undefined')
+    const left = await page.evaluate(() => Math.round(window.__c.maxScroll() / 3))
+    await page.evaluate((y) => window.__c.scrollTo(y), left)
+    // Chromium skipped an inbound transition on a navigation 200 ms after load (task 52); a reader takes longer.
+    await page.waitForTimeout(1000)
+    const arrive = async (go, path) => {
+      await Promise.all([page.waitForURL(new URL(path, t.base).href), go()])
+      await page.waitForFunction(() => document.readyState === 'complete' && !!window.__site)
+      if (supported) await until(page, () => window.__reveal && (!window.__reveal.vt || 'types' in window.__reveal || window.__reveal.aborted), null, 5000)
+      // Where the authority holds the page for 30 frames after the transition: a glide shows as more than one value.
+      const rest = await page.evaluate(async () => {
+        await document.activeViewTransition?.finished.catch(() => {})
+        const seen = new Set()
+        for (let i = 0; i < 30; i++) {
+          const content = document.getElementById('smooth-content')
+          seen.add(`${Math.round(window.scrollY)}:${content ? getComputedStyle(content).transform : '-'}`)
+          await window.__c.frames(1)
+        }
+        return [...seen]
+      })
+      return { reveal: await page.evaluate(() => window.__reveal), rest, y: await page.evaluate(() => Math.round(window.scrollY)), authority: await page.evaluate(() => document.documentElement.dataset.scrollAuthority) }
+    }
+    const home = await arrive(() => page.click('header a[href="/"]'), '/')
+    const back = await arrive(() => page.goBack(), '/guide/')
+    const shape = (r, type) =>
+      !!r.reveal?.vt &&
+      JSON.stringify(r.reveal.types) === JSON.stringify([type]) &&
+      r.reveal.animating.some((p) => p.endsWith('(root)')) &&
+      r.reveal.header === 'site-header' &&
+      !r.reveal.animating.some((p) => p.includes('site-header'))
+    const show = (r) =>
+      r.reveal?.vt
+        ? `types ${JSON.stringify(r.reveal.types ?? [])}${r.reveal.aborted ? ` aborted ${r.reveal.aborted}` : ''}, ${(r.reveal.animating ?? []).filter((p) => p.endsWith('(root)')).length} root animations, header named ${r.reveal.header}, ${(r.reveal.animating ?? []).filter((p) => p.includes('site-header')).length} header animations`
+        : `no transition${r.reveal ? '' : ' (no pagereveal)'}`
+    if (!supported) {
+      out.push([
+        'guide',
+        'no cross-document view transitions (Firefox): / and back just load, each with its own authority',
+        !home.reveal?.vt && !back.reveal?.vt && home.authority === 'smoother' && back.authority === 'native',
+        `to /: ${show(home)}, ${home.authority} · back: ${show(back)}, ${back.authority}`,
+      ])
+      return out
+    }
+    out.push([
+      'home',
+      '/guide/ -> /: a "forward" transition, the root crossfading under an anchored header',
+      shape(home, 'forward'),
+      show(home),
+    ])
+    out.push([
+      'home',
+      'ScrollSmoother takes up the new page at rest: at the top, nothing glides on arrival',
+      home.authority === 'smoother' && home.y === 0 && home.rest.length === 1,
+      `authority ${home.authority} · scrollY:content transform over 30 frames: ${home.rest.join(' | ')}`,
+    ])
+    out.push([
+      'guide',
+      'the back button to /guide/: a "back" transition, the header anchored, the page where it was left',
+      shape(back, 'back') && back.authority === 'native' && near(back.y, left, 2) && back.rest.length === 1,
+      `${show(back)} · scrollY ${back.y} (left at ${left}), ${back.rest.length} position(s) over 30 frames`,
+    ])
+    return out
+  },
+
+  async scrolly(t) {
+    const out = []
+    const ACCENT = 'rgb(240, 138, 93)'
+    const ROW = 72 // .clock-panel__list li: 4.5rem
+    // Jumps step `i` 20 px past the line (the middle of the viewport below the header), then reads the section.
+    const at = (page, i, wait) =>
+      page.evaluate(
+        async ({ i, wait }) => {
+          const root = document.querySelector('[data-scrolly]')
+          const step = root.querySelectorAll('[data-scrolly-step]')[i]
+          const header = parseFloat(getComputedStyle(root.querySelector('[data-scrolly-graphic]')).scrollMarginTop) || 0
+          window.scrollTo({ top: step.getBoundingClientRect().top + window.scrollY - (header + (innerHeight - header) / 2) + 20, behavior: 'instant' })
+          await window.__c.frames(2)
+          if (wait) await new Promise((resolve) => setTimeout(resolve, wait))
+          return window.__c.scrolly()
+        },
+        { i, wait },
+      )
+    const read = () => {
+      const root = document.querySelector('[data-scrolly]')
+      const marker = root.querySelector('.clock-panel__marker')
+      const m = getComputedStyle(marker).transform
+      return {
+        mode: root.dataset.scrollyMode,
+        active: Number(root.dataset.scrollyActive),
+        lit: Array.from(root.querySelectorAll('[data-clock]'), (li) => getComputedStyle(li).color),
+        marker: m === 'none' ? 0 : Math.round(new DOMMatrixReadOnly(m).m42),
+        markerShown: getComputedStyle(marker).display !== 'none',
+        transformed: window.__c.transformed(root).displaced.length + window.__c.transformed(root).identity.length,
+        running: root.getAnimations({ subtree: true }).filter((a) => a.playState === 'running').length,
+      }
+    }
+    const lit = (s, i) => s.lit.every((c, k) => (k === i) === (c === 'rgb(240, 138, 93)'))
+    {
+      const { page } = await t.open('/guide/')
+      await page.evaluate(`window.__c.scrolly = ${read.toString()}`)
+      const seen = []
+      for (let i = 0; i < 4; i++) seen.push(await at(page, i, 700))
+      const up = await at(page, 0, 700)
+      out.push([
+        'guide',
+        'scrolly: sticky at 1280, each step marks its own clock (colour and marker), and back up to the first',
+        seen.every((s, i) => s.mode === 'sticky' && s.active === i && lit(s, i) && s.marker === i * ROW) && up.active === 0 && lit(up, 0) && up.marker === 0,
+        `${seen.map((s, i) => `step ${i}: active ${s.active}, marker ${s.marker}px, lit ${s.lit.indexOf(ACCENT)}`).join(' · ')} · back up: active ${up.active}, marker ${up.marker}px`,
+      ])
+      // A reload on step 2: the core's first report has previous null, so the timeline seeks there instead of tweening.
+      await at(page, 2, 700)
+      await page.reload({ waitUntil: 'load' })
+      await page.evaluate(`window.__c.scrolly = ${read.toString()}`)
+      await until(page, () => document.querySelector('[data-scrolly]')?.dataset.scrollyActive === '2', null, 5000)
+      const landed = await page.evaluate(() => window.__c.scrolly())
+      out.push([
+        'guide',
+        'scrolly: a reload on a step lands the marker on its clock at once (seek, not tween)',
+        landed.active === 2 && landed.marker === 2 * ROW && lit(landed, 2),
+        `active ${landed.active}, marker ${landed.marker}px as the step is reported`,
+      ])
+    }
+    {
+      const { page } = await t.open('/guide/', { reducedMotion: 'reduce' })
+      await page.evaluate(`window.__c.scrolly = ${read.toString()}`)
+      const one = await at(page, 1, 0)
+      const three = await at(page, 3, 0)
+      out.push([
+        'guide',
+        'scrolly, reduced motion: sticky, the clock lit at once, no marker, nothing transformed or running',
+        [one, three].every((s) => s.mode === 'sticky' && !s.markerShown && s.transformed === 0 && s.running === 0) && one.active === 1 && lit(one, 1) && three.active === 3 && lit(three, 3),
+        [one, three].map((s) => `two frames after the jump: active ${s.active}, lit ${s.lit.indexOf(ACCENT)}, marker ${s.markerShown ? 'shown' : 'hidden'}, ${s.transformed} transformed, ${s.running} running`).join(' · '),
+      ])
+    }
+    {
+      const { page } = await t.open('/guide/', { viewport: { width: 390, height: 844 } })
+      const s = await page.evaluate(() => {
+        const root = document.querySelector('[data-scrolly]')
+        const steps = Array.from(root.querySelectorAll('[data-scrolly-step]'))
+        return {
+          mode: root.dataset.scrollyMode,
+          panel: getComputedStyle(root.querySelector('[data-scrolly-graphic]')).display,
+          columns: new Set(steps.map((el) => Math.round(el.getBoundingClientRect().left))).size,
+          states: steps.filter((el) => el.hasAttribute('data-step-state')).length,
+          invisible: window.__c.invisibleText(root),
+        }
+      })
+      out.push([
+        'guide',
+        'scrolly: stacked at 390, the steps in one column with no panel, every word in it visible',
+        s.mode === 'stacked' && s.panel === 'none' && s.columns === 1 && s.states === 0 && s.invisible.length === 0,
+        `mode ${s.mode}, panel ${s.panel}, steps in ${s.columns} column(s), ${s.states} step states, invisible text: ${s.invisible.length ? s.invisible.slice(0, 3).join('; ') : 'none'}`,
       ])
     }
     return out
@@ -793,8 +991,8 @@ async function main() {
         browser: browserName,
         base,
         /** A fresh context on `path`: the blocks mounted and the load's refreshes settled (`settle: false` returns at once). */
-        async open(path, { reducedMotion = 'no-preference', javaScriptEnabled = true, settle = true } = {}) {
-          const context = await open.browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion, javaScriptEnabled })
+        async open(path, { reducedMotion = 'no-preference', javaScriptEnabled = true, settle = true, viewport = VIEWPORT } = {}) {
+          const context = await open.browser.newContext({ viewport, deviceScaleFactor: 1, reducedMotion, javaScriptEnabled })
           contexts.push(context)
           await context.addInitScript(pageHelpers)
           await context.addInitScript(`window.__checkEntrances = ${entranceState.toString()}`)

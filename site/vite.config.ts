@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { defineConfig, type Plugin } from 'vite'
 
 import { animationHtml } from './plugins/animation-html.ts'
+import { renderBlocking } from './plugins/render-blocking.ts'
 
 const page = (path: string) => fileURLToPath(new URL(path, import.meta.url))
 
@@ -34,7 +35,7 @@ function trailingSlash(): Plugin {
 export default defineConfig({
   // Two pages, two scroll authorities: / runs ScrollSmoother, /guide/ scrolls natively.
   appType: 'mpa',
-  plugins: [animationHtml(), trailingSlash()],
+  plugins: [animationHtml(), ...renderBlocking(), trailingSlash()],
   css: {
     postcss: {
       // Comments only: the rest ships as written (see build.cssMinify).
@@ -56,11 +57,19 @@ export default defineConfig({
     // and `scale` in one block into a single transform (animation.css now resets `transform` alone for that reason).
     cssMinify: false,
     rolldownOptions: {
-      input: { home: page('./index.html'), guide: page('./guide/index.html') },
+      // transitions.ts: both pages' render-blocking script (plugins/render-blocking.ts), an entry of its own.
+      input: { home: page('./index.html'), guide: page('./guide/index.html'), transitions: page('./src/pages/transitions.ts') },
       output: {
         codeSplitting: {
           groups: [
             { name: 'gsap', test: /[\\/]node_modules[\\/]gsap[\\/]/ },
+            // What the render-blocking transitions.ts imports, in a chunk of its own: the `animation` chunk imports
+            // GSAP, and a blocking script waits for everything it imports.
+            {
+              name: 'view-transitions',
+              test: /[\\/]src[\\/]animation[\\/](view-transitions|config|smooth[\\/]authority)\.ts$/,
+              priority: 1,
+            },
             { name: 'animation', test: /[\\/]src[\\/]animation[\\/]/ },
           ],
         },

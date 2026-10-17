@@ -4,12 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!--animation-gate-->
+    <!--view-transitions-opt-in-->
     <title>Guide · scroll-animation</title>
     <meta
       name="description"
       content="How the scroll-animation storefront moves: one scroll authority per page, four clocks, reduced motion as an alternate scene, content that reads without JavaScript."
     />
     <link rel="stylesheet" href="/src/styles/guide.css" />
+    <script type="module" blocking="render" src="/src/pages/transitions.ts"></script>
     <script type="module" src="/src/pages/guide.ts"></script>
   </head>
   <body>
@@ -76,8 +78,57 @@
           </p>
           <p data-reveal-item>
             The paragraphs on this page run on the trigger clock. The bar under the header runs on the scroll clock,
-            with no JavaScript at all.
+            with no JavaScript at all. So do the four steps below: each one changes the panel beside it once, as it
+            reaches the middle of the screen.
           </p>
+        </section>
+
+        <!-- scrolly-steps: the panel sticks beside the steps from 1024 px up, and the step at the middle of the
+             viewport marks its clock (css/scrolly.css, pages/clock-steps.ts). Phones, no JavaScript and print read the
+             steps alone: the panel only repeats their names. -->
+        <section class="clock-steps" data-scrolly aria-label="The four clocks, one at a time" data-header-theme="light">
+          <div class="clock-steps__panel" data-scrolly-graphic>
+            <figure class="clock-panel" data-scrolly-state="clocks">
+              <span class="clock-panel__marker" aria-hidden="true"></span>
+              <ol class="clock-panel__list" aria-hidden="true">
+                <li data-clock="0"><strong>Trigger</strong> plays once</li>
+                <li data-clock="1"><strong>Scroll</strong> follows the position</li>
+                <li data-clock="2"><strong>Media</strong> follows the decoder</li>
+                <li data-clock="3"><strong>Render</strong> runs every frame</li>
+              </ol>
+            </figure>
+          </div>
+          <ol class="clock-steps__list" data-scrolly-steps>
+            <li class="clock-step" data-scrolly-step data-scrolly-show="clocks">
+              <p class="eyebrow">Trigger</p>
+              <p>
+                It plays once, when content arrives: an entrance, a count-up, a heading revealed line by line. It
+                fires as an element crosses a line in the viewport, and then it is done; scrolling back never replays
+                it.
+              </p>
+            </li>
+            <li class="clock-step" data-scrolly-step data-scrolly-show="clocks">
+              <p class="eyebrow">Scroll</p>
+              <p>
+                It is a function of where the reader is in a range: a pinned scene, a rail, the bar under this
+                page's header. It never runs on a timer, so stopping the scroll stops the motion.
+              </p>
+            </li>
+            <li class="clock-step" data-scrolly-step data-scrolly-show="clocks">
+              <p class="eyebrow">Media</p>
+              <p>
+                It follows what a video decoder presents: a scrubbed film, an image sequence on a canvas. The scroll
+                asks for a time; the frame on screen is whatever the decoder had ready.
+              </p>
+            </li>
+            <li class="clock-step" data-scrolly-step data-scrolly-show="clocks">
+              <p class="eyebrow">Render</p>
+              <p>
+                A loop that draws every frame while it is on screen: a WebGL scene, a cursor follower, a marquee that
+                speeds up with the scroll. It costs the most, so it stops when it leaves the screen.
+              </p>
+            </li>
+          </ol>
         </section>
 
         <section class="guide__section" id="reduced-motion" data-header-theme="light" data-reveal>
