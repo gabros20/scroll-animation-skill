@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>scrolly-steps fixture (ScrollSmoother)</title>
+    <script><!--gate--></script>
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/animation.css" />
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/scrolly.css" />
+    <link rel="stylesheet" href="./src/page.css" />
+  </head>
+  <body>
+    <!-- tests/scrolly-steps.mjs injects src/layout.ts's header and page here; the header stays outside the wrapper, the
+         graphic is inside it -->
+    <!--header-->
+    <div id="smooth-wrapper">
+      <div id="smooth-content">
+        <main id="page"><!--page--></main>
+      </div>
+    </div>
+    <script type="module" src="./src/smoother.ts"></script>
+  </body>
+</html>

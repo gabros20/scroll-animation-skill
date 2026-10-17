@@ -1,0 +1,63 @@
+/* The scrolly-steps fixture's page: a fixed 64 px header (--header-h), plain blocks. The steps' and states' look is the
+   page's job, not the block's: this sets only what the checks measure against. */
+:root {
+  --header-h: 64px;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #eee;
+  color: #111;
+  font: 16px/1.4 system-ui, sans-serif;
+}
+[data-header] {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 10;
+  box-sizing: border-box;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: #fff;
+}
+/* Steps 200 px apart, so the next step's link is on screen below the line (the focus check). */
+[data-scrolly] {
+  --scrolly-gap: 200px;
+}
+.intro {
+  box-sizing: border-box;
+  height: 1200px;
+  margin: 0;
+  padding: 96px 24px;
+}
+[data-scrolly-steps] {
+  margin: 0;
+  padding-inline: 24px;
+  list-style: none;
+}
+[data-scrolly-step] {
+  box-sizing: border-box;
+  min-height: 360px;
+  padding: 16px;
+  background: #fff;
+}
+[data-scrolly-step] h3 {
+  margin: 0;
+}
+[data-scrolly-state] {
+  margin: 0;
+  display: grid;
+  place-items: center;
+  background: #cde;
+}
+[data-scrolly-inline] {
+  margin: 16px 0 0;
+  height: 200px;
+  background: #cde;
+}
+.art {
+  font-size: 32px;
+}
