@@ -21,6 +21,29 @@ export type JournalArticle = {
   parallaxFigure: MediaRef & { caption: string };
   /** The one loop video with pause control the Reading page plan asks for. */
   loop: MediaRef & { poster: string; caption: string };
+  /** A scrollytelling section (scrolly-steps), drawn from the article's own pictures. */
+  scrolly?: ArticleScrolly;
+};
+
+/** One of the article's own pictures: the parallax figure's still, the loop's poster, or the cover. */
+export type ScrollyPicture = "detail" | "poster" | "cover";
+
+/** A framing of a still inside the graphic: a translate (percent of the frame) and a scale. */
+export type ScrollyFrame = { x: string; y: string; scale: number };
+
+export type ArticleScrolly = {
+  title: string;
+  steps: {
+    /** A short kicker: where in the story this step is. */
+    label: string;
+    text: string;
+    /** The picture the graphic shows beside this step. */
+    show: ScrollyPicture;
+    /** Where the camera rests on the picture; steps that share a picture pan between their frames. */
+    frame?: ScrollyFrame;
+    /** Phones, no JavaScript and print read the steps stacked: true puts the picture in this step's flow. */
+    inline?: boolean;
+  }[];
 };
 
 // Two fictional stories. "Folio" is a placeholder editorial brand built to
@@ -97,6 +120,35 @@ export const journalArticles: JournalArticle[] = [
       width: 1280,
       height: 720,
       caption: "Rain moving down the steel face during a spring storm.",
+    },
+    scrolly: {
+      title: "One wall, ten years",
+      steps: [
+        {
+          label: "Day one",
+          text: "Every plate went up the grey of the corner post. The post is the same alloy, set back under the soffit where rain never reaches it, so it has kept the mill finish the whole wall arrived with.",
+          show: "detail",
+          frame: { x: "22%", y: "0%", scale: 1.5 },
+          inline: true,
+        },
+        {
+          label: "Years one and two",
+          text: "Water finds the bolt heads first. Loose oxide ran down the face in streaks like this one, and the gravel drip line below took the rest, as the drawings said it would.",
+          show: "detail",
+          frame: { x: "-20%", y: "12%", scale: 1.6 },
+        },
+        {
+          label: "Year three",
+          text: "Then the skin closed. Rain still darkens the plates to almost black, but it runs off clean now and carries nothing down with it.",
+          show: "poster",
+          inline: true,
+        },
+        {
+          label: "Year ten",
+          text: "No paint, no sealant, no maintenance visit. The wall the readers sit beside is the one the weather finished.",
+          show: "cover",
+        },
+      ],
     },
   },
 ];

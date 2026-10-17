@@ -8,7 +8,14 @@ import { SmoothScroll } from "@/animation/smooth/SmoothScroll";
 
 // Once per page load, in the browser, before any GSAP block runs (setupGsap
 // is idempotent, so both route groups sharing this module is fine).
-if (typeof window !== "undefined") setupGsap({ plugins: [useGSAP] });
+if (typeof window !== "undefined") {
+  setupGsap({ plugins: [useGSAP] });
+  // ?motion-debug (or <html data-motion-debug>): verify-scenes counts the live
+  // triggers across client navigations, which must come back to the same number.
+  if ("motionDebug" in document.documentElement.dataset || new URLSearchParams(location.search).has("motion-debug")) {
+    (window as Window & { __triggers?: () => number }).__triggers = () => ScrollTrigger.getAll().length;
+  }
+}
 
 // Module scope: SmoothScroll reads its driver once, when Lenis starts.
 const driver = gsapDriver(gsap, ScrollTrigger);

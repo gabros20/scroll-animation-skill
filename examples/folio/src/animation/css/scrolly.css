@@ -1,0 +1,169 @@
+/*
+ * css/scrolly.css: the scrolly-steps block's layout and state machinery (scrolly-steps.ts, motion/ScrollySteps.tsx).
+ * Import it after css/animation.css. Structure only: type, colour, step cards and the graphic's own look are the page's.
+ *
+ *   <section data-scrolly>                                   data-scrolly-side="start" puts the graphic first
+ *     <div data-scrolly-graphic>                             the sticky column
+ *       <figure data-scrolly-state="0">…</figure>            stacked in one cell, crossfaded
+ *     </div>
+ *     <ol data-scrolly-steps>
+ *       <li data-scrolly-step>…<figure data-scrolly-inline>…</figure></li>
+ *     </ol>
+ *   </section>
+ *
+ * 1. Stacked is the default: no JavaScript, phones, print, a failed boot. The graphic column is hidden and the inline
+ *    figures read in flow between the steps.
+ * 2. Sticky, side by side, when the core writes data-scrolly-mode="sticky", and before it mounts at 1024 px and up
+ *    under the pre-JS gate (DESKTOP_QUERY in config.ts: change both together), so mounting shifts nothing. A root with
+ *    its own data-scrolly-query waits for the core.
+ *    - The graphic sticks under the header (--header-h, HEADER_HEIGHT_VAR in config.ts) and is 100svh tall less the
+ *      header: it is a column read whole, axes and captions included, so it fits the smallest viewport. lvh would put
+ *      its bottom edge under an expanded iOS toolbar; svh only leaves page background beside the steps below it when
+ *      the toolbar collapses. (A full-bleed pin is the opposite case: scenes.md §1.)
+ *    - A sticky child stops at the end of its containing block, so the graphic never runs past the section.
+ *    - The root clips with overflow: clip, never hidden: hidden makes it a scroll container and the graphic stops
+ *      sticking.
+ *    - Under ScrollSmoother (html[data-scroll-authority="smoother"], createSmoother's stamp) sticky can't stick inside
+ *      #smooth-content, so the graphic is left unpositioned for the page's ScrollTrigger pin (pinSpacing: false).
+ *      A `top` on it would be copied onto GSAP's pin spacer and offset the graphic by the header's height.
+ *    - The steps column ends in a tail of (1 - line) × the viewport below the header, in lvh (the tallest the viewport
+ *      gets), so the last step can reach the line at the end of a page. --scrolly-gap spaces the steps (default 50svh).
+ *    - Logical properties and grid columns: a right-to-left page mirrors the columns.
+ * 3. States crossfade, opacity only, MOTION.disclosure from config.ts (0.24 s on CURVES.disclosure; tests/scrolly-
+ *    steps.mjs fails if they drift). Under reduced motion the swap is instant. Anything richer (an animated
+ *    transition, a pan and zoom) runs in the page's engine from onStep, the scrolly:step event or --step-p.
+ */
+
+/* --step-p (progress: true): the active step's progress, 0..1, written on the root. It inherits, so the graphic's
+ * states can read it: calc(var(--step-p) * …). */
+@property --step-p {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+[data-scrolly] {
+  --scrolly-fade-duration: 0.24s;
+  --scrolly-fade-curve: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* The core reads the header height from the graphic's computed scroll-margin-top in either mode (and anything that
+ * scrolls the graphic into view lands it below the header). */
+[data-scrolly-graphic] {
+  scroll-margin-top: var(--header-h, 0px);
+}
+
+/* ── 1. Stacked ────────────────────────────────────────────────────────────────────────────────────── */
+[data-scrolly] [data-scrolly-graphic] {
+  display: none;
+}
+
+[data-scrolly-live-region] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── 2. Sticky ─────────────────────────────────────────────────────────────────────────────────────── */
+@media screen {
+  [data-scrolly][data-scrolly-mode='sticky'] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    overflow: clip;
+  }
+  [data-scrolly][data-scrolly-mode='sticky'] [data-scrolly-steps] {
+    grid-row: 1;
+    grid-column: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--scrolly-gap, 50svh);
+    padding-block-end: calc((1 - var(--scrolly-line, 0.5)) * (100lvh - var(--header-h, 0px)));
+  }
+  [data-scrolly][data-scrolly-mode='sticky'] [data-scrolly-graphic] {
+    grid-row: 1;
+    grid-column: 2;
+    align-self: start;
+    display: grid;
+    height: calc(100svh - var(--header-h, 0px));
+  }
+  html:not([data-scroll-authority='smoother']) [data-scrolly][data-scrolly-mode='sticky'] [data-scrolly-graphic] {
+    position: sticky;
+    top: var(--header-h, 0px);
+  }
+  [data-scrolly][data-scrolly-mode='sticky'][data-scrolly-side='start'] [data-scrolly-graphic] {
+    grid-column: 1;
+  }
+  [data-scrolly][data-scrolly-mode='sticky'][data-scrolly-side='start'] [data-scrolly-steps] {
+    grid-column: 2;
+  }
+  [data-scrolly][data-scrolly-mode='sticky'] [data-scrolly-inline] {
+    display: none;
+  }
+  [data-scrolly][data-scrolly-mode='sticky'] [data-scrolly-state] {
+    grid-area: 1 / 1;
+    min-width: 0;
+    min-height: 0;
+    opacity: 0;
+  }
+  [data-scrolly][data-scrolly-mode='sticky'] [data-scrolly-state][data-state-active] {
+    opacity: 1;
+  }
+}
+
+/* Before the core mounts: the same layout where it will choose sticky (DESKTOP_QUERY, the gate on, no failsafe, no
+ * query of the root's own), showing the server's data-state-active state or else the first. */
+@media screen and (min-width: 1024px) {
+  html[data-animation='on']:not([data-animation-failsafe]) [data-scrolly]:not([data-scrolly-mode], [data-scrolly-query]) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    overflow: clip;
+  }
+  html[data-animation='on']:not([data-animation-failsafe]) [data-scrolly]:not([data-scrolly-mode], [data-scrolly-query]) [data-scrolly-steps] {
+    grid-row: 1;
+    grid-column: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--scrolly-gap, 50svh);
+    padding-block-end: calc((1 - var(--scrolly-line, 0.5)) * (100lvh - var(--header-h, 0px)));
+  }
+  html[data-animation='on']:not([data-animation-failsafe]) [data-scrolly]:not([data-scrolly-mode], [data-scrolly-query]) [data-scrolly-graphic] {
+    grid-row: 1;
+    grid-column: 2;
+    align-self: start;
+    display: grid;
+    height: calc(100svh - var(--header-h, 0px));
+  }
+  html[data-animation='on']:not([data-animation-failsafe], [data-scroll-authority='smoother']) [data-scrolly]:not([data-scrolly-mode], [data-scrolly-query]) [data-scrolly-graphic] {
+    position: sticky;
+    top: var(--header-h, 0px);
+  }
+  html[data-animation='on']:not([data-animation-failsafe]) [data-scrolly]:not([data-scrolly-mode], [data-scrolly-query])[data-scrolly-side='start'] [data-scrolly-graphic] {
+    grid-column: 1;
+  }
+  html[data-animation='on']:not([data-animation-failsafe]) [data-scrolly]:not([data-scrolly-mode], [data-scrolly-query])[data-scrolly-side='start'] [data-scrolly-steps] {
+    grid-column: 2;
+  }
+  html[data-animation='on']:not([data-animation-failsafe]) [data-scrolly]:not([data-scrolly-mode], [data-scrolly-query]) [data-scrolly-inline] {
+    display: none;
+  }
+  html[data-animation='on']:not([data-animation-failsafe]) [data-scrolly]:not([data-scrolly-mode], [data-scrolly-query]) [data-scrolly-state] {
+    grid-area: 1 / 1;
+    min-width: 0;
+    min-height: 0;
+    opacity: 0;
+  }
+  html[data-animation='on']:not([data-animation-failsafe]) [data-scrolly]:not([data-scrolly-mode], [data-scrolly-query]) [data-scrolly-state][data-state-active],
+  html[data-animation='on']:not([data-animation-failsafe]) [data-scrolly]:not([data-scrolly-mode], [data-scrolly-query]) [data-scrolly-graphic]:not(:has(> [data-state-active])) > [data-scrolly-state]:first-child {
+    opacity: 1;
+  }
+}
+
+/* ── 3. The crossfade; under reduced motion, an instant swap ──────────────────────────────────────── */
+@media screen and (prefers-reduced-motion: no-preference) {
+  [data-scrolly][data-scrolly-mode='sticky'] [data-scrolly-state] {
+    transition: opacity var(--scrolly-fade-duration) var(--scrolly-fade-curve);
+  }
+}

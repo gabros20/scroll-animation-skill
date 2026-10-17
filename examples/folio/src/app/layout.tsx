@@ -3,6 +3,7 @@ import { Archivo, Fraunces } from "next/font/google";
 import { GATE_SCRIPT } from "@/animation/config";
 import { MotionProvider } from "@/animation/motion/MotionProvider";
 import { SiteFooter } from "@/components/site-footer";
+import { RouteScroll } from "@/components/route-scroll";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 import "@/animation/css/animation.css";
@@ -12,6 +13,8 @@ import "@/animation/css/scroll-effects.css";
 import "@/animation/css/header-theme.css";
 import "@/animation/css/scene.css";
 import "@/animation/css/rail.css";
+import "@/animation/css/scrolly.css";
+import "@/animation/css/view-transitions.css";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -34,7 +37,9 @@ export const metadata: Metadata = {
 };
 
 // The scroll authority is per route, so it lives in the route-group layouts,
-// not here. <html> carries attributes React doesn't render (GATE_SCRIPT's
+// not here; RouteScroll runs the route contract for whichever one is live.
+// Page changes are React <ViewTransition>s (the journal's cover morph);
+// view-transitions.css is their look, and anchors the [data-header]. <html> carries attributes React doesn't render (GATE_SCRIPT's
 // data-animation, the engines' data-animation-ready, SmoothScroll's
 // data-scroll-authority, Lenis's classes), hence suppressHydrationWarning.
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -54,7 +59,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-screen flex-col pt-(--header-h) font-sans antialiased">
         <MotionProvider>
           <SiteHeader />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1">
+            <RouteScroll>{children}</RouteScroll>
+          </main>
           <SiteFooter />
         </MotionProvider>
       </body>

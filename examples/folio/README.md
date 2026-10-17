@@ -64,8 +64,22 @@ foundation (`config`, `base-css`, `gsap-setup`, `motion-provider`, `smooth-lenis
   Motion: fixtures on `/blocks` (`src/app/blocks/`), on their defaults, and the loop videos with
   their pause control in the journal (`src/components/media-slot.tsx`).
 
+- `scrolly-steps` for Motion: "One wall, ten years" in `/journal/what-rust-is-for`
+  (`src/components/article-scrolly.tsx`, the steps in `src/content/journal.ts`). A sticky graphic
+  from 1024 px up, built from the article's own pictures; the two steps on one photograph pan
+  across it (`src/components/scrolly-pan.tsx`, one Motion `animate` per step) instead of
+  crossfading it into itself. Phones, no JavaScript and print read it stacked.
+- `view-transitions` (React): each journal card's cover morphs into its article's hero (one
+  `<ViewTransition name="cover-<slug>" share="vt-morph">` on each side), and the index and the
+  article slide with the link's `transitionTypes` (`forward` into an article, `back` from the
+  article's "Journal" link; `src/lib/view-transitions.ts`). The browser's own back and forward
+  carry no type, and Next runs no transition on them: the index comes back where it was left. The
+  header is anchored (`data-header`, `css/view-transitions.css`).
+
 The scroll authority is set per route group. `/` and `/lab` run Lenis on GSAP's ticker
-(`src/components/lenis-scroll.tsx`); `/journal` and `/blocks` keep native scrolling.
+(`src/components/lenis-scroll.tsx`); `/journal` and `/blocks` keep native scrolling. The root
+layout wraps every route in `RouteScroll` (`src/components/route-scroll.tsx`): after each client
+navigation the live authority takes up the router's position, then ScrollTrigger refreshes once.
 `pnpm check:authority` starts `next start` and checks that each route stamps the right authority,
 that client navigation swaps it without leaving a second Lenis, and that a reload keeps the
 scroll position.
@@ -86,7 +100,15 @@ it, in Chromium and WebKit:
   progress bar tracks the scroll;
 - under reduced motion `/` shows the poster and no pin and fetches no video, and with motion its
   video lands on the frame its band asks for.
+- the article's scrolly section is sticky at 1440 with each step on its own state and frame (a
+  reload lands on its frame without panning, and it requests no picture the page doesn't already
+  load), stacked at 390, and instant under reduced motion;
+- client-side, `/` → `/journal` → the rust card is a `forward` transition with the cover's
+  `::view-transition-group` and an anchored header, the article lands at the top, the browser's
+  back restores the index with no transition, and back on `/` the live ScrollTriggers are as many
+  as on the first load, with one scroll authority at every step.
 
 Firefox, which has no scroll-driven animations, runs the article: `verify-motion --reveal`, then
-the static fallback (everything shown, nothing left hidden, nothing attached to the parallax).
+the static fallback (everything shown, nothing left hidden, nothing attached to the parallax), and
+the scrolly section.
 Screenshots and reports go to `test-results/`.

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { Reveal, RevealItem } from "@/animation/motion/Reveal";
 import { MediaSlot } from "@/components/media-slot";
 import { journalArticles } from "@/content/journal";
+import { coverName, PAGE_SLIDE } from "@/lib/view-transitions";
 
 export const metadata: Metadata = {
   title: "Journal",
@@ -17,48 +19,64 @@ const dateFormatter = new Intl.DateTimeFormat("en", {
 
 export default function JournalIndexPage() {
   return (
-    <div className="px-6 py-20 sm:px-10 lg:py-28">
-      <h1 className="font-display text-5xl tracking-tight lg:text-6xl">Journal</h1>
-      <p className="mt-4 max-w-md font-sans text-lg text-ink-soft">
-        Long stories about objects and the places that made them.
-      </p>
+    // The page slides with the navigation's direction (forward into an
+    // article, back from one); a navigation with no type (the header's
+    // links, the browser's back) leaves it to the root's crossfade.
+    <ViewTransition {...PAGE_SLIDE}>
+      <div className="px-6 py-20 sm:px-10 lg:py-28">
+        <h1 className="font-display text-5xl tracking-tight lg:text-6xl">Journal</h1>
+        <p className="mt-4 max-w-md font-sans text-lg text-ink-soft">
+          Long stories about objects and the places that made them.
+        </p>
 
-      {/*
-        Each card is its own Reveal group, so its text comes in when that card
-        arrives (on a phone, one under the next), never its cover. The covers are in view at load, and the first one is
-        the page's LCP element, which never waits for hydration. The cover
-        is also the shared-element source for the article hero
-        (view-transitions, Phase 4).
-      */}
-      <ol className="mt-16 grid gap-12 sm:grid-cols-2 lg:gap-16">
-        {journalArticles.map((article) => (
-          <Reveal as="li" key={article.slug}>
-            <Link href={`/journal/${article.slug}`} className="group block">
-              <MediaSlot
-                kind="image"
-                src={article.cover.src}
-                alt={article.cover.alt}
-                width={article.cover.width}
-                height={article.cover.height}
-                className="w-full rounded-sm"
-              />
-              <RevealItem>
-                <p className="mt-5 font-sans text-sm tracking-[0.2em] text-muted uppercase">
-                  {article.category}
-                </p>
-                <h2 className="mt-2 font-display text-2xl leading-snug group-hover:text-accent lg:text-3xl">
-                  {article.title}
-                </h2>
-                <p className="mt-2 font-sans text-ink-soft">{article.dek}</p>
-                <p className="mt-3 font-sans text-sm text-muted">
-                  {dateFormatter.format(new Date(article.publishedOn))} ·{" "}
-                  {article.readMinutes} min read
-                </p>
-              </RevealItem>
-            </Link>
-          </Reveal>
-        ))}
-      </ol>
-    </div>
+        {/*
+          Each card is its own Reveal group, so its text comes in when that card
+          arrives (on a phone, one under the next), never its cover. The covers
+          are in view at load, and the first one is the page's LCP element,
+          which never waits for hydration: <ViewTransition> is a boundary React
+          names at transition time, not a client component, so the <img> is in
+          the server's HTML.
+          Each cover is a shared element: its <ViewTransition> has its article
+          hero's name, so the forward link morphs one into the other
+          (view-transitions.css, vt-morph). default="none" keeps the covers out
+          of every other transition, where each would crossfade on its own.
+        */}
+        <ol className="mt-16 grid gap-12 sm:grid-cols-2 lg:gap-16">
+          {journalArticles.map((article) => (
+            <Reveal as="li" key={article.slug}>
+              <Link
+                href={`/journal/${article.slug}`}
+                transitionTypes={["forward"]}
+                className="group block"
+              >
+                <ViewTransition name={coverName(article.slug)} share="vt-morph" default="none">
+                  <MediaSlot
+                    kind="image"
+                    src={article.cover.src}
+                    alt={article.cover.alt}
+                    width={article.cover.width}
+                    height={article.cover.height}
+                    className="w-full rounded-sm"
+                  />
+                </ViewTransition>
+                <RevealItem>
+                  <p className="mt-5 font-sans text-sm tracking-[0.2em] text-muted uppercase">
+                    {article.category}
+                  </p>
+                  <h2 className="mt-2 font-display text-2xl leading-snug group-hover:text-accent lg:text-3xl">
+                    {article.title}
+                  </h2>
+                  <p className="mt-2 font-sans text-ink-soft">{article.dek}</p>
+                  <p className="mt-3 font-sans text-sm text-muted">
+                    {dateFormatter.format(new Date(article.publishedOn))} ·{" "}
+                    {article.readMinutes} min read
+                  </p>
+                </RevealItem>
+              </Link>
+            </Reveal>
+          ))}
+        </ol>
+      </div>
+    </ViewTransition>
   );
 }

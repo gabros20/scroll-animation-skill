@@ -85,6 +85,9 @@ export const MOTION = {
   veil: { duration: 0.13, delay: 0.17 },
   roll: { duration: 0.3, curve: 'roll' },
   disclosure: { duration: 0.24, curve: 'disclosure' },
+  /** A route change: the shared-element morph and the directional slide (view-transitions.css). The root crossfade
+   *  stays on `disclosure`; a morph travels further than a disclosure opens, so it gets longer on the same curve. */
+  route: { duration: 0.4, curve: 'disclosure' },
   lineStagger: 0.067,
 } as const
 

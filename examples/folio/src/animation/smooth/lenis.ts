@@ -187,6 +187,18 @@ export function createSmoothScroll(options: SmoothScrollOptions): SmoothScrollHa
       if (lenis) lenis.start()
       else native?.start()
     },
+    sync() {
+      if (!lenis) return
+      // resize() takes the new route's height and the native position as Lenis's own. A glide still heading for the
+      // old route's target ignores the native scroll, so it would carry on and override the router (S9: a link
+      // clicked mid-glide lands at the bottom of the next page); stop() and start() end it (both reset Lenis,
+      // measured on 1.3.26). A modal's stop() already ended any glide and stays in force.
+      lenis.resize()
+      if (!stopped) {
+        lenis.stop()
+        lenis.start()
+      }
+    },
     destroy() {
       reduced.removeEventListener('change', onReducedChange)
       if (lenis) {
