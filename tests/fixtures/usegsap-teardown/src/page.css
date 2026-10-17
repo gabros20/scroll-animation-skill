@@ -1,0 +1,176 @@
+/* The useGSAP teardown pages: plain blocks in known sizes. */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  color: #1a1a1a;
+  font: 16px/1.4 system-ui, sans-serif;
+}
+body {
+  background: #f4f1ea;
+}
+* {
+  box-sizing: border-box;
+}
+.spacer {
+  height: 120vh;
+}
+.spacer.short {
+  height: 50vh;
+}
+.text {
+  max-width: 28rem;
+  margin: 40px;
+}
+.act {
+  height: 100vh;
+}
+.pin {
+  background: #d9d2c3;
+}
+[data-rail-track] {
+  gap: 24px;
+}
+.panel {
+  padding: 40px;
+  background: #d9d2c3;
+}
+/* scrub video and frame sequence */
+#range {
+  position: relative;
+  height: calc(100vh + 2360px);
+}
+#pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: clip;
+  background: #222;
+}
+#seq {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.video-wrap {
+  position: relative;
+  width: 480px;
+  height: 270px;
+  margin: 40px auto;
+}
+.video-wrap video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.layer {
+  height: 400px;
+  width: 60%;
+  margin: 0 auto;
+  background: #c9c0ad;
+}
+.layer.small {
+  height: 240px;
+}
+.band {
+  min-height: 120vh;
+  padding: 40px;
+}
+.drawing {
+  display: block;
+  width: 600px;
+  height: 200px;
+  margin: 0 auto;
+}
+.marquee {
+  width: 600px;
+  margin: 40px;
+}
+[data-marquee] {
+  overflow: clip;
+}
+[data-marquee-track] {
+  display: flex;
+  width: max-content;
+}
+.copy {
+  display: flex;
+  width: 900px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.copy li {
+  flex: 1;
+  padding: 16px;
+}
+[data-cursor-media] {
+  position: relative;
+  margin: 40px;
+  padding: 20px;
+}
+[data-cursor-media] ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+[data-cursor-media] li {
+  padding: 12px 0;
+}
+[data-cursor-media-item] {
+  display: block;
+  width: fit-content;
+}
+[data-cursor-media-preview] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 240px;
+  height: 160px;
+  translate: 24px -50%;
+  pointer-events: none;
+  opacity: 0;
+}
+[data-cursor-media-preview][data-cursor-media-state='shown'] {
+  opacity: 1;
+}
+.media {
+  position: absolute;
+  inset: 0;
+  background: #8a7;
+  opacity: 0;
+}
+.media[data-cursor-media-active] {
+  opacity: 1;
+}
+.step {
+  min-height: 100vh;
+  padding: 40px;
+  border-top: 1px solid #ccc;
+}
+.after {
+  height: 100vh;
+}
+.well {
+  height: 70vh;
+  margin: 0 40px;
+  background: #d9d2c3;
+}
+#gallery {
+  display: grid;
+  grid-template-columns: repeat(4, 120px);
+  gap: 12px;
+  margin: 40px;
+  padding: 0;
+  list-style: none;
+}
+#gallery li {
+  height: 120px;
+  background: #c9c0ad;
+}
+#gallery[data-view='detail'] {
+  grid-template-columns: 500px;
+}
+#gallery[data-view='detail'] li:first-child {
+  height: 300px;
+}

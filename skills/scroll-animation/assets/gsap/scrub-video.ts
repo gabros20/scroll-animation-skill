@@ -79,6 +79,11 @@ export function scrubVideo(root: HTMLElement, options: ScrubVideoOptions = {}): 
   const gutter = root.querySelector<HTMLElement>('[data-scene-gutter]')
   const { camera, backdrop } = options
 
+  // What the page wrote itself on the video and the gutter, put back by destroy().
+  const authored = [
+    ...['transform', '--scene-frame-w', '--scene-frame-h'].map((property) => [video, property] as const),
+    ...(gutter ? ['--scene-g-top', '--scene-g-bottom'].map((property) => [gutter, property] as const) : []),
+  ].map(([el, property]) => ({ el, property, value: el.style.getPropertyValue(property), styled: el.hasAttribute('style') }))
   const cameraWriter = camera ? createCameraWriter(video) : null
   const backdropWriter = gutter && backdrop?.length ? createBackdropWriter(gutter, backdrop) : null
   let geometry: FrameGeometry = { pw: 0, ph: 0, bw: 0, bh: 0 }
@@ -175,6 +180,12 @@ export function scrubVideo(root: HTMLElement, options: ScrubVideoOptions = {}): 
       destroyScene()
       controller.destroy()
       cameraWriter?.reset()
+      // The camera's transform, the frame size and the backdrop: nothing the scene wrote stays inline.
+      for (const { el, property, value, styled } of authored) {
+        if (value) el.style.setProperty(property, value)
+        else el.style.removeProperty(property)
+        if (!styled && el.getAttribute('style') === '') el.removeAttribute('style')
+      }
     },
   })
 }

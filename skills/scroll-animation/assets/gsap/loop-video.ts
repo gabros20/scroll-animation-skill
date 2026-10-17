@@ -184,6 +184,8 @@ export function loopVideo(video: HTMLVideoElement, opts: LoopVideoOptions = {}):
   const frameDur = opts.fps != null && opts.fps > 0 ? 1 / opts.fps : 0
   const showControls = opts.controls ?? true
 
+  // What the page wrote itself, put back by destroy().
+  const authored = { loop: video.loop, styled: video.hasAttribute('style'), transform: video.style.transform }
   video.loop = seamTime == null
   // The repo's standing compositing anchor for a video island — load-bearing
   // on WebKit. Only set if nothing already positioned it.
@@ -200,6 +202,7 @@ export function loopVideo(video: HTMLVideoElement, opts: LoopVideoOptions = {}):
     video.insertAdjacentElement('afterend', toggle)
     toggleCreated = true
   }
+  const authoredLabel = toggleCreated ? null : (toggle?.getAttribute('aria-label') ?? null)
 
   // Inserted 'afterend' the video AFTER the toggle above, so it lands
   // between the two: video, then the text alternative, then the control.
@@ -478,7 +481,14 @@ export function loopVideo(video: HTMLVideoElement, opts: LoopVideoOptions = {}):
       connection?.removeEventListener?.('change', onConnectionChange)
       toggle?.removeEventListener('click', onToggleClick)
       if (toggleCreated) toggle?.remove()
+      else if (authoredLabel === null) toggle?.removeAttribute('aria-label')
+      else toggle?.setAttribute('aria-label', authoredLabel)
       altEl?.remove()
+      // The element as the page wrote it: its loop attribute and its own transform (or no style attribute at all).
+      video.loop = authored.loop
+      if (authored.transform) video.style.transform = authored.transform
+      else video.style.removeProperty('transform')
+      if (!authored.styled && video.getAttribute('style') === '') video.removeAttribute('style')
       // Hide/show safety: "videos pause on hide" holds even without Activity
       // forcing the question — see the file docblock.
       video.pause()

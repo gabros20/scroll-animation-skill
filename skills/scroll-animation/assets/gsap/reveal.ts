@@ -86,7 +86,7 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
   }
   // Reveals in flight, with the item's own inline values from before GSAP touched it. Tracked here, not left to the
   // matchMedia context: a batch plays them from a callback, after the build has returned.
-  const running = new Map<HTMLElement, { timeline: gsap.core.Timeline; inline: string[] }>()
+  const running = new Map<HTMLElement, { timeline: gsap.core.Timeline; inline: string[]; styled: boolean }>()
 
   function play(batch: HTMLElement[]) {
     const indices = new Map<Group, number>()
@@ -96,7 +96,8 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
       const index = indices.get(group) ?? 0
       indices.set(group, index + 1)
       const inline = WRITTEN.map((property) => el.style.getPropertyValue(property))
-      running.set(el, { timeline: entrance(el, index * group.stagger, () => land(el)), inline })
+      const styled = el.hasAttribute('style')
+      running.set(el, { timeline: entrance(el, index * group.stagger, () => land(el)), inline, styled })
     }
   }
 
@@ -116,6 +117,8 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
       if (entry.inline[i]) el.style.setProperty(property, entry.inline[i])
       else el.style.removeProperty(property)
     })
+    // Emptied, the style attribute stays: dropped where there was none.
+    if (!entry.styled && el.getAttribute('style') === '') el.removeAttribute('style')
   }
 
   /** css/reveal.css's shown state is the entrance's end values, with nothing inline. */

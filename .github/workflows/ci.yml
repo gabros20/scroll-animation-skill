@@ -105,6 +105,8 @@ jobs:
       - run: npm run test:recipes
       - run: npm run test:view-transitions
       - run: npm run test:scrolly-steps
+      # Every GSAP block under useGSAP's teardown (unmount, Activity, remount, StrictMode); WebKit and Firefox locally.
+      - run: npm run test:usegsap-teardown -- --browsers chromium
 
   # The storefront (site/), which is also the vanilla GSAP + ScrollSmoother example: a Vite build of both pages, then
   # its checks against `vite preview` in Chromium, WebKit and Firefox: each page's scroll authority, the pinned
