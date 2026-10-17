@@ -12,8 +12,10 @@
 //   node tests/recipes.mjs [--browsers chromium,webkit,firefox] [--pages parallax,…] [--only responds,reduced,…]
 //
 // Pages: parallax (GSAP; ?lenis runs it under Lenis), parallax-motion (React), colour-track, marquee, cursor-media,
-// draw, stepped, scroll-well (GSAP; ?core runs the engine-free core, ?lenis runs it under Lenis) and
-// scroll-well-motion (React). WebKit tabs to links only with Option held, as Safari does by default, so its keyboard
+// draw, stepped, scroll-well (GSAP; ?core runs the engine-free core, ?lenis runs it under Lenis),
+// scroll-well-motion (React), and the page-level recipes: flip (gsap/flip-transition.ts), layout-morph
+// (motion/LayoutMorph.tsx; ?lazy mounts it late, to see when domMax is fetched) and preloader (preloader.ts; ?fast,
+// ?hang, ?max=…, ?failsafe). WebKit tabs to links only with Option held, as Safari does by default, so its keyboard
 // checks press Alt+Tab.
 
 import { dirname, join } from 'node:path'
@@ -37,6 +39,9 @@ const PAGES = [
   'stepped',
   'scroll-well',
   'scroll-well-motion',
+  'flip',
+  'layout-morph',
+  'preloader',
 ]
 const VIEWPORT = { width: 1280, height: 800 }
 /** A scrub (0.5 s of expo catch-up), a spring or a step settles well inside this. */
@@ -443,6 +448,307 @@ async function wellDestroy(t) {
   return [
     ['destroy() mid-pull stops the pull, and the page stays where it was', near(after.top, at, 1) && at > 162, `top ${at} at destroy → ${after.top}`],
     await destroyCheck(page),
+  ]
+}
+
+// ── flip ─────────────────────────────────────────────────────────────────
+// Grid: #a..#d are 200x150 tiles in a row. Detail: #a spans the row at 640x400, #e enters. Boxes are viewport px.
+
+const boxNear = (a, b, tol = 1) => ['x', 'y', 'w', 'h'].every((k) => near(a[k], b[k], tol))
+const boxText = (b) => `${b.x},${b.y} ${b.w}x${b.h}`
+const TILES = ['a', 'b', 'c', 'd']
+
+/** Every tile in `got` is at its box in `want` (±1 px). */
+const allAt = (got, want) => TILES.every((id) => boxNear(got[id], want[id]))
+
+async function flipResponds(t) {
+  const { page } = await t.open()
+  const from = await call(page, 'boxes')
+  const to = await call(page, 'layout', 'detail')
+  const start = await call(page, 'flip', 'detail')
+  const end = await call(page, 'landed')
+  const a = end.samples.map((s) => s.boxes.a)
+  const lo = (k) => Math.min(from.a[k], to.a[k]) - 1
+  const hi = (k) => Math.max(from.a[k], to.a[k]) + 1
+  const inside = a.every((b) => ['x', 'y', 'w', 'h'].every((k) => b[k] >= lo(k) && b[k] <= hi(k)))
+  const between = a.some((b) => b.w > from.a.w + 20 && b.w < to.a.w - 20 && b.h > from.a.h + 20 && b.h < to.a.h - 20)
+  const sized = end.samples.filter((s) => s.width || s.height)
+  return [
+    [
+      'a flipped element starts at its old box and lands on its new one, the others with it (±1 px)',
+      allAt(start.boxes, from) && end.ok && allAt(end.boxes, to),
+      `#a ${boxText(start.boxes.a)} (was ${boxText(from.a)}) → ${boxText(end.boxes.a)} (layout ${boxText(to.a)}) · #d ${boxText(start.boxes.d)} → ${boxText(end.boxes.d)} (layout ${boxText(to.d)})`,
+    ],
+    [
+      'between, it interpolates, inside the two boxes, by transform: no width or height written',
+      a.length > 3 && inside && between && sized.length === 0,
+      `${a.length} ticks · #a mid ${a.length ? boxText(a[Math.floor(a.length / 3)]) : '-'} · width/height inline in ${sized.length}`,
+    ],
+    [
+      'landed: no style attribute left, and the entering element faded in to full opacity',
+      Object.values(end.inline).every((v) => v === null) && end.opacityE === '1',
+      `inline ${JSON.stringify(end.inline)} · #e opacity ${end.opacityE}`,
+    ],
+  ]
+}
+
+async function flipReorder(t) {
+  const { page } = await t.open()
+  const from = await call(page, 'boxes')
+  const to = await call(page, 'layout', 'grid', true)
+  const start = await call(page, 'flip', 'grid', true)
+  const end = await call(page, 'landed')
+  return [
+    [
+      'a reorder: each tile starts where it was and lands in its new slot',
+      allAt(start.boxes, from) && end.ok && allAt(end.boxes, to) && !near(from.a.x, to.a.x, 100),
+      `#a ${boxText(start.boxes.a)} → ${boxText(end.boxes.a)} (slot ${boxText(to.a)}) · #d ${boxText(start.boxes.d)} → ${boxText(end.boxes.d)} (slot ${boxText(to.d)})`,
+    ],
+  ]
+}
+
+async function flipInterrupt(t) {
+  const { page } = await t.open()
+  const grid = await call(page, 'boxes')
+  const detail = await call(page, 'layout', 'detail')
+  await call(page, 'flip', 'detail')
+  await wait(150)
+  const second = await call(page, 'flip', 'grid')
+  const end = await call(page, 'landed')
+  const history = await call(page, 'history')
+  return [
+    [
+      'a flip started mid-flight lands the running one first (its promise resolves), then flips from there',
+      history[0] === true && allAt(second.boxes, detail),
+      `first resolved: ${history[0]} · second starts at #a ${boxText(second.boxes.a)} (detail ${boxText(detail.a)})`,
+    ],
+    [
+      'and lands exactly, with no offsets stacked and nothing inline',
+      end.ok && allAt(end.boxes, grid) && Object.values(end.inline).every((v) => v === null),
+      `#a ${boxText(end.boxes.a)} (grid ${boxText(grid.a)}) · inline ${JSON.stringify(end.inline)}`,
+    ],
+  ]
+}
+
+async function flipReduced(t) {
+  const { page } = await t.open({ reducedMotion: 'reduce' })
+  const to = await call(page, 'layout', 'detail')
+  const before = await page.evaluate(() => window.__t.history().length)
+  const start = await call(page, 'flip', 'detail')
+  const end = await call(page, 'landed')
+  return [
+    [
+      'reduced motion: the change only: everything is at its new box at once, no tween, nothing inline',
+      before === 0 && allAt(start.boxes, to) && start.tweens === start.tweensBefore && end.ok && Object.values(start.inline).every((v) => v === null),
+      `#a ${boxText(start.boxes.a)} (layout ${boxText(to.a)}) · tweens ${start.tweensBefore} → ${start.tweens} · inline ${JSON.stringify(start.inline)}`,
+    ],
+  ]
+}
+
+// ── layout-morph ──────────────────────────────────────────────────────────
+// A 200x150 card at (40, 40) opens into an 800x500 panel at (300, 100).
+
+const CARD = { x: 40, y: 40, w: 200, h: 150 }
+const PANEL = { x: 300, y: 100, w: 800, h: 500 }
+
+/** Toggles the morph and waits until it has been at `want`, with no transform, for a few frames; returns every sample. */
+async function morphTo(page, open, want) {
+  await call(page, 'toggle', open)
+  const landed = await until(async () => {
+    const s = await call(page, 'samples')
+    const last = s.slice(-4)
+    return { s, ok: last.length === 4 && last.every((b) => boxNear(b, want) && ['', 'none'].includes(b.transform)) }
+  })
+  await call(page, 'stop')
+  return { samples: landed.s ?? [], ms: landed.ms }
+}
+
+/** How far box `b` is along the way from `a` to `c`, by width (0 at `a`, 1 at `c`). */
+const along = (b, a, c) => (b ? Math.round(((b.w - a.w) / (c.w - a.w)) * 1000) / 1000 : NaN)
+/** Motion starts a layout animation on the frame after the commit, so its first painted frame is one frame in. */
+const FIRST_FRAME = 0.2
+
+async function morphResponds(t) {
+  const { page } = await t.open()
+  const card = await call(page, 'box')
+  const opened = await morphTo(page, true, PANEL)
+  const closed = await morphTo(page, false, CARD)
+  const mid = (s, a, b) => s.some((x) => x.w > a.w + 20 && x.w < b.w - 20 && x.x > a.x + 10 && x.x < b.x - 10)
+  const end = await call(page, 'box')
+  const o = opened.samples
+  const c = closed.samples
+  return [
+    [
+      'opening: the panel starts from the card’s box (its first frame a frame in), interpolates, and lands on its own (±1 px)',
+      boxNear(card, CARD) && o.length > 3 && along(o[0], CARD, PANEL) <= FIRST_FRAME && mid(o, CARD, PANEL) && opened.ms !== null,
+      `first frame ${o[0] ? boxText(o[0]) : '-'}, ${along(o[0], CARD, PANEL)} of the way (card ${boxText(CARD)}) · ${o.length} frames · landed ${o.length ? boxText(o.at(-1)) : '-'}`,
+    ],
+    [
+      'closing morphs back the same way, and leaves no transform',
+      c.length > 3 && along(c[0], PANEL, CARD) <= FIRST_FRAME && mid(c, CARD, PANEL) && closed.ms !== null && ['', 'none'].includes(end.transform),
+      `first frame ${c[0] ? boxText(c[0]) : '-'}, ${along(c[0], PANEL, CARD)} of the way · landed ${boxText(end)} · transform '${end.transform}'`,
+    ],
+  ]
+}
+
+async function morphReduced(t) {
+  const { page } = await t.open({ reducedMotion: 'reduce' })
+  const opened = await morphTo(page, true, PANEL)
+  const o = opened.samples
+  return [
+    [
+      'reduced motion: the swap is instant: the first frame is already the panel, and no frame in between',
+      o.length > 0 && o.every((b) => boxNear(b, PANEL)),
+      `${o.length} frames: ${o.slice(0, 3).map((b) => `${boxText(b)} '${b.transform}'`).join(' · ')}${opened.ms === null ? ' · never landed' : ''}`,
+    ],
+  ]
+}
+
+async function morphLive(t) {
+  const { page } = await t.open()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await call(page, 'frames', 2)
+  const instant = await morphTo(page, true, PANEL)
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await call(page, 'frames', 2)
+  // The panel mounted under reduced motion has no layoutId, so the close is a plain swap; the next open morphs.
+  await morphTo(page, false, CARD)
+  const again = await morphTo(page, true, PANEL)
+  const a = again.samples
+  return [
+    [
+      'reduced motion switched on mid-visit: the next swap is instant; switched off, the morph comes back',
+      instant.samples.every((b) => boxNear(b, PANEL)) && a.length > 3 && along(a[0], CARD, PANEL) <= FIRST_FRAME && again.ms !== null,
+      `on: ${instant.samples.length} frames, first ${instant.samples[0] ? boxText(instant.samples[0]) : '-'} · off: first ${a[0] ? boxText(a[0]) : '-'}, ${a.length} frames`,
+    ],
+  ]
+}
+
+async function morphLazy(t) {
+  const { page } = await t.open({ query: '?lazy' })
+  const exposedAt = await call(page, 'exposedAt')
+  const chunks = await call(page, 'layoutChunks')
+  return [
+    [
+      'domMax is fetched only when a morph first mounts, in a chunk of its own',
+      chunks.length >= 1 && chunks.every((ms) => ms >= exposedAt),
+      `layout-features fetched at ${chunks.join(', ') || 'never'} ms · first mount at ${exposedAt} ms`,
+    ],
+  ]
+}
+
+// ── preloader ─────────────────────────────────────────────────────────────
+// Six assets by default: three promises the checks settle, an image, the font set and a fetched URL.
+
+/** Settles promise `i` and reads the state once the settle has been handled. */
+const settleAndRead = (page, i) =>
+  page.evaluate(async (n) => {
+    window.__t.settle(n)
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    return window.__t.state()
+  }, i)
+const monotonic = (log) => log.every((e, i) => i === 0 || Number(e.p) >= Number(log[i - 1].p))
+
+async function preloaderResponds(t) {
+  const { page } = await t.open()
+  const half = await until(async () => {
+    const s = await call(page, 'state')
+    return { ...s, ok: s.p === '0.5' }
+  })
+  const one = await settleAndRead(page, 0)
+  const two = await settleAndRead(page, 1)
+  const last = await settleAndRead(page, 2)
+  const gone = await until(async () => {
+    const s = await call(page, 'state')
+    return { ...s, ok: s.state === 'done' }
+  })
+  const log = await call(page, 'log')
+  const early = log.filter((e) => e.t < last.t && e.p === '1')
+  return [
+    [
+      'progress is the assets settling: the image, fonts and fetch give ½, each promise a sixth, written only upwards',
+      half.ms !== null && one.p === '0.667' && two.p === '0.833' && monotonic(log) && two.valuenow === '83',
+      `${half.p} → ${one.p} → ${two.p} → ${last.p} · aria-valuenow ${two.valuenow} · log ${log.map((e) => e.p).join(' ')}`,
+    ],
+    [
+      '--load-p reaches 1 exactly when the last asset settles; until then the page stays inert and loading',
+      last.p === '1' && early.length === 0 && two.state === 'loading' && two.inert && two.busy === 'true',
+      `before the last: ${two.state}, inert ${two.inert}, aria-busy ${two.busy} · after: p ${last.p}, ${last.state} · 1 before it: ${early.length}`,
+    ],
+    [
+      'then it fades out and removes itself: <main> released, focus back on the link that had it, done "loaded"',
+      last.state === 'leaving' && last.fading > 0 && gone.ms !== null && !gone.overlay && !gone.inert && gone.busy === null && gone.focused === 'first' && gone.result === 'loaded',
+      `${last.state} (${last.fading} animation) → ${gone.state} · overlay ${gone.overlay} · inert ${gone.inert} · focus ${gone.focused} · ${gone.result}`,
+    ],
+  ]
+}
+
+async function preloaderMinimum(t) {
+  const { page } = await t.open({ query: '?fast' })
+  const gone = await until(async () => {
+    const s = await call(page, 'state')
+    return { ...s, ok: s.state === 'done' }
+  })
+  const log = await call(page, 'log')
+  const full = log.find((e) => e.p === '1')
+  const leaving = log.find((e) => e.state === 'leaving')
+  return [
+    [
+      'everything settled at once: --load-p is 1 at once, but the overlay stays 300 ms, no longer, so it doesn’t flash',
+      full && full.t < 150 && leaving && leaving.t >= 295 && leaving.t < 450 && gone.result === 'loaded',
+      `p 1 at ${full?.t} ms · leaving at ${leaving?.t} ms · ${gone.result}`,
+    ],
+  ]
+}
+
+async function preloaderMaximum(t) {
+  const { page } = await t.open({ query: '?hang&max=1200' })
+  const gone = await until(async () => {
+    const s = await call(page, 'state')
+    return { ...s, ok: s.state === 'done' }
+  })
+  const log = await call(page, 'log')
+  const leaving = log.find((e) => e.state === 'leaving')
+  const failsafe = await t.open({ query: '?failsafe' })
+  const at = await call(failsafe.page, 'state')
+  const failsafeLog = await call(failsafe.page, 'log')
+  const shown = failsafeLog.find((e) => e.state === 'done')
+  return [
+    [
+      'an asset that never settles: at the maximum the page shows anyway, without reaching 1, done "timeout"',
+      leaving && near(leaving.t, 1200, 120) && leaving.p === '0.5' && gone.result === 'timeout' && !gone.overlay && !gone.inert,
+      `leaving at ${leaving?.t} ms (max 1200) with p ${leaving?.p} · ${gone.result} · overlay ${gone.overlay} · inert ${gone.inert}`,
+    ],
+    [
+      'the CSS failsafe already fired: the overlay is removed at once, with no fade',
+      at.state === 'done' && !at.overlay && !at.inert && at.result === 'timeout' && shown && shown.t < 50 && !failsafeLog.some((e) => e.state === 'leaving'),
+      `${at.state} at ${shown?.t} ms · overlay ${at.overlay} · ${at.result} · states ${[...new Set(failsafeLog.map((e) => e.state))].join(' ')}`,
+    ],
+  ]
+}
+
+async function preloaderReduced(t) {
+  const { page } = await t.open({ reducedMotion: 'reduce' })
+  await until(async () => ({ ok: (await call(page, 'state')).p === '0.5' }))
+  await settleAndRead(page, 0)
+  const two = await settleAndRead(page, 1)
+  const last = await settleAndRead(page, 2)
+  const log = await call(page, 'log')
+  const fast = await t.open({ reducedMotion: 'reduce', query: '?fast' })
+  await until(async () => ({ ok: (await call(fast.page, 'state')).state === 'done' }))
+  const fastLog = await call(fast.page, 'log')
+  const done = fastLog.find((e) => e.state === 'done')
+  return [
+    [
+      'reduced motion: the same gating, no fade: removed the moment the last asset settles',
+      two.state === 'loading' && two.overlay && last.state === 'done' && !last.overlay && !log.some((e) => e.state === 'leaving') && last.focused === 'first',
+      `before the last: ${two.state} · after: ${last.state}, overlay ${last.overlay}, focus ${last.focused} · states ${[...new Set(log.map((e) => e.state))].join(' ')}`,
+    ],
+    [
+      'reduced motion keeps the minimum: a fast load still shows the overlay 300 ms',
+      done && done.t >= 295 && done.t < 450,
+      `done at ${done?.t} ms`,
+    ],
   ]
 }
 
@@ -915,6 +1221,52 @@ const CHECKS = {
     anchor: wellAnchor,
     reduced: wellReduced,
     destroy: wellDestroy,
+  },
+
+  flip: {
+    responds: flipResponds,
+    reorder: flipReorder,
+    interrupt: flipInterrupt,
+    reduced: flipReduced,
+    destroy: async (t) => {
+      const { page } = await t.open()
+      // Mid-flight, as a route change during one would.
+      await call(page, 'flip', 'detail')
+      await wait(150)
+      return [await destroyCheck(page)]
+    },
+  },
+
+  'layout-morph': {
+    responds: morphResponds,
+    reduced: morphReduced,
+    live: morphLive,
+    lazy: morphLazy,
+    destroy: async (t) => {
+      const { page } = await t.open()
+      await call(page, 'toggle', true)
+      await wait(150)
+      return [await destroyCheck(page)]
+    },
+  },
+
+  preloader: {
+    responds: preloaderResponds,
+    minimum: preloaderMinimum,
+    maximum: preloaderMaximum,
+    reduced: preloaderReduced,
+    destroy: async (t) => {
+      // Mid-load, as a route change during one would; then once it has finished.
+      const loading = await t.open()
+      const mid = await destroyCheck(loading.page)
+      const finished = await t.open({ query: '?fast' })
+      await until(async () => ({ ok: (await call(finished.page, 'state')).state === 'done' }))
+      const after = await destroyCheck(finished.page)
+      return [
+        [`mid-load: ${mid[0]}`, mid[1], mid[2]],
+        [`once it has finished: ${after[0]}`, after[1], after[2]],
+      ]
+    },
   },
 }
 

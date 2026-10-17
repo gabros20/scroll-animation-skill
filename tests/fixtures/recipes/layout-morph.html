@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>recipes fixture: LayoutMorph (motion)</title>
+    <link rel="stylesheet" href="./src/page.css" />
+    <style>
+      /* A 200x150 card at (40, 40) opens into an 800x500 panel at (300, 100). */
+      #stage {
+        position: relative;
+        height: 700px;
+      }
+      #stage .card,
+      #stage .panel {
+        position: absolute;
+        background: #a58a64;
+      }
+      #stage .card {
+        left: 40px;
+        top: 40px;
+        width: 200px;
+        height: 150px;
+      }
+      #stage .panel {
+        left: 300px;
+        top: 100px;
+        width: 800px;
+        height: 500px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- motion/LayoutMorph.tsx under MotionProvider. ?lazy mounts nothing for 600 ms, to see when domMax is fetched. -->
+    <div id="root"></div>
+    <script type="module" src="./src/layout-morph.tsx"></script>
+  </body>
+</html>

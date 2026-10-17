@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>recipes fixture: flip-transition (gsap)</title>
+    <link rel="stylesheet" href="./src/page.css" />
+    <style>
+      /* Grid: four 200x150 tiles in a row. Detail: #a spans the row at 640x400, the rest follow three to a row, and
+         #e, hidden in the grid, enters. */
+      #gallery {
+        display: grid;
+        grid-template-columns: repeat(4, 200px);
+        gap: 20px;
+        margin: 40px;
+        padding: 0;
+        list-style: none;
+      }
+      #gallery li {
+        height: 150px;
+        background: #c9c0ad;
+      }
+      #gallery #e {
+        display: none;
+      }
+      #gallery[data-view='detail'] {
+        grid-template-columns: repeat(3, 200px);
+      }
+      #gallery[data-view='detail'] #a {
+        grid-column: 1 / -1;
+        height: 400px;
+      }
+      #gallery[data-view='detail'] #e {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <ul id="gallery" data-view="grid">
+        <li id="a" data-flip-id="a">A</li>
+        <li id="b" data-flip-id="b">B</li>
+        <li id="c" data-flip-id="c">C</li>
+        <li id="d" data-flip-id="d">D</li>
+        <li id="e" data-flip-id="e">E</li>
+      </ul>
+      <div class="spacer"></div>
+    </main>
+    <script type="module" src="./src/flip.ts"></script>
+  </body>
+</html>
