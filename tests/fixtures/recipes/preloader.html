@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>recipes fixture: preloader</title>
+    <link rel="stylesheet" href="./src/page.css" />
+    <style>
+      [data-preloader] {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #1a1a1a;
+      }
+      [data-preloader] .bar {
+        width: 400px;
+        height: 4px;
+        background: #f4f1ea;
+        transform-origin: left;
+        scale: var(--load-p, 0) 1;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- preloader.ts over a page whose <main> it holds inert. The overlay is built by create(), as the server HTML would
+         have it. Assets: three promises the checks settle, an image, the font set and a fetched URL. ?fast lists two
+         that settle at once, ?hang one that never does (?max=… sets the maximum), ?failsafe fires the CSS failsafe first. -->
+    <main id="content">
+      <p><a href="#content" id="first">The first link</a></p>
+      <div class="spacer"></div>
+    </main>
+    <script type="module" src="./src/preloader.ts"></script>
+  </body>
+</html>
