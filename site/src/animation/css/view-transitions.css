@@ -1,0 +1,182 @@
+/*
+ * css/view-transitions.css: how a page change looks, for every caller of the View Transitions API: transition() in
+ * view-transitions.ts (vanilla pages), React's <ViewTransition> (it starts the transitions itself and uses the same
+ * pseudo-elements), and a multi-page site's cross-document navigations (css/view-transitions-mpa.css opts those in).
+ * Import it after css/animation.css. It needs no engine and no script.
+ *
+ *   <header data-header>…</header>                     anchored: never fades or slides with the page
+ *   <img style="view-transition-name: cover-kiln; view-transition-class: vt-morph">
+ *                                                     a shared element: the same name on both states
+ *   <main style="view-transition-name: page; view-transition-class: vt-forward vt-back">
+ *                                                     slides with the navigation's direction
+ *   <video style="view-transition-name: film; view-transition-class: vt-none">   swaps at once
+ *
+ *   React: <ViewTransition name="cover-kiln" share="vt-morph">,
+ *          <ViewTransition enter={{ forward: 'vt-forward', back: 'vt-back', default: 'none' }} exit={…}>, with
+ *          addTransitionType('forward' | 'back') in the transition. React assigns the classes; this file is them.
+ *
+ * - The root (the whole page) crossfades. A class does nothing until the element also has a view-transition-name
+ *   (React's name prop, or the browser's own when React gives none): only named elements get their own group.
+ * - Timing mirrors config.ts: the crossfade runs MOTION.disclosure (0.24 s, a hair under the browser's 0.25 s
+ *   default), the morph and the slides MOTION.route (0.4 s: they travel further), both on CURVES.disclosure, which
+ *   lands without creeping; under reduced motion the crossfade runs MOTION.entranceFade's 0.17 s, linear.
+ *   tests/view-transitions.mjs fails if they drift. --vt-distance (the slide, default 32px like --reveal-distance)
+ *   and the timing can be set on :root only: the pseudo-elements inherit from the root element, never from the
+ *   element they capture.
+ * - Reduced motion: no morph, no slide; every snapshot crossfades in place (WCAG 2.3.3 counts movement, size and
+ *   shape as motion, never opacity) and the header still swaps at once. transition() skips the API altogether
+ *   under reduced motion, and the cross-document opt-in sits under no-preference, so this crossfade is what React's
+ *   transitions (which no stylesheet can stop) and any other direct startViewTransition() caller get.
+ * - Pointer events: while a transition runs, the ::view-transition overlay covers the viewport and takes every click
+ *   and hover (the browser targets the root element), so nothing on the live page is hit through a picture that
+ *   doesn't match it yet. That is the browser's default and is kept on purpose: it lasts 0.4 s at most. The overlay
+ *   is removed when the last animation ends, and the page takes clicks again in the next frame. (React shrinks the
+ *   overlay to nothing when its transition leaves the root unchanged, so clicks then pass through.)
+ * - Print and forced colours: nothing here. Transitions never run in print, and the snapshots are the page's own
+ *   rendering, forced colours included.
+ */
+
+/* ── 1. The timing, mirrored from config.ts ────────────────────────────────────────────────────────── */
+:root {
+  --vt-duration: 0.24s; /* MOTION.disclosure.duration: the crossfade */
+  --vt-route-duration: 0.4s; /* MOTION.route.duration: the morph and the slides */
+  --vt-ease: cubic-bezier(0.23, 1, 0.32, 1); /* CURVES.disclosure: MOTION.disclosure.curve and MOTION.route.curve */
+  --vt-reduced-duration: 0.17s; /* MOTION.entranceFade.duration */
+  --vt-distance: 32px;
+  --_vt-dir: 1;
+}
+:root:dir(rtl) {
+  --_vt-dir: -1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* ── 2. Every group and snapshot: the browser's own animations on our timing ───────────────────────
+   * Only duration and curve are set, never animation-name, so the browser keeps its own keyframes: the group's size
+   * and position, the old/new fade and the plus-lighter blend that keeps a crossfade at full opacity all the way
+   * through (two 50% layers composited normally let the background show through mid-fade: the ghost). A rule that
+   * replaces animation-name on a pair that crossfades has to set mix-blend-mode: plus-lighter itself. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: var(--vt-duration);
+    animation-timing-function: var(--vt-ease);
+  }
+
+  /* ── 3. Directional slides ────────────────────────────────────────────────────────────────────────
+   * Keyed on the transition's type, so an element that carries both classes follows the direction: transition(…,
+   * { types: ['forward'] }), mountCrossDocumentTransitions()'s direction, or React's addTransitionType. React's
+   * enter/exit maps give the element only the class for this transition's type, which selects the same rule. With
+   * neither type the element crossfades like everything else. A slide (its group too) runs MOTION.route. */
+  :root:active-view-transition-type(forward)::view-transition-group(*.vt-forward),
+  :root:active-view-transition-type(forward)::view-transition-old(*.vt-forward),
+  :root:active-view-transition-type(forward)::view-transition-new(*.vt-forward),
+  :root:active-view-transition-type(back)::view-transition-group(*.vt-back),
+  :root:active-view-transition-type(back)::view-transition-old(*.vt-back),
+  :root:active-view-transition-type(back)::view-transition-new(*.vt-back) {
+    animation-duration: var(--vt-route-duration);
+  }
+  :root:active-view-transition-type(forward)::view-transition-old(*.vt-forward) {
+    animation-name: vt-slide-out-forward;
+  }
+  :root:active-view-transition-type(forward)::view-transition-new(*.vt-forward) {
+    animation-name: vt-slide-in-forward;
+  }
+  :root:active-view-transition-type(back)::view-transition-old(*.vt-back) {
+    animation-name: vt-slide-out-back;
+  }
+  :root:active-view-transition-type(back)::view-transition-new(*.vt-back) {
+    animation-name: vt-slide-in-back;
+  }
+
+  /* The shared element's group and pair run MOTION.route (section 4 has the rest of it). */
+  ::view-transition-group(*.vt-morph),
+  ::view-transition-old(*.vt-morph),
+  ::view-transition-new(*.vt-morph) {
+    animation-duration: var(--vt-route-duration);
+  }
+}
+
+@keyframes vt-slide-out-forward {
+  to {
+    opacity: 0;
+    translate: calc(var(--vt-distance) * var(--_vt-dir) * -1) 0;
+  }
+}
+@keyframes vt-slide-in-forward {
+  from {
+    opacity: 0;
+    translate: calc(var(--vt-distance) * var(--_vt-dir)) 0;
+  }
+}
+@keyframes vt-slide-out-back {
+  to {
+    opacity: 0;
+    translate: calc(var(--vt-distance) * var(--_vt-dir)) 0;
+  }
+}
+@keyframes vt-slide-in-back {
+  from {
+    opacity: 0;
+    translate: calc(var(--vt-distance) * var(--_vt-dir) * -1) 0;
+  }
+}
+
+/* ── 4. The shared element ─────────────────────────────────────────────────────────────────────────
+ * The group carries the element from its old box to its new one (the browser's size-and-position animation, on
+ * MOTION.route above). Both snapshots fill the moving box and crop to it, so a cover that changes aspect ratio (a 4:3 card
+ * into a 16:9 hero) never shows two differently stretched pictures at once. Meant for images and boxes whose contents
+ * scale; a heading that reflows is better as two elements that crossfade. Outside the media query: under reduced
+ * motion the group jumps to the new box and the two snapshots crossfade there, at the same fit. */
+::view-transition-old(*.vt-morph),
+::view-transition-new(*.vt-morph) {
+  block-size: 100%;
+  object-fit: cover;
+  overflow: clip;
+}
+
+/* ── 5. No transition for this element ────────────────────────────────────────────────────────────
+ * Swaps the moment the page does: the new state shows at once in its own box and the old one is gone. For media that
+ * must not be frozen into a picture mid-play, or anything that should simply not move. */
+::view-transition-group(*.vt-none),
+::view-transition-new(*.vt-none) {
+  animation: none;
+}
+::view-transition-old(*.vt-none) {
+  animation: none;
+  opacity: 0;
+}
+
+/* ── 6. The anchored header ────────────────────────────────────────────────────────────────────────
+ * The header is captured on its own, so it neither fades nor slides with the root; it shows its new state at once,
+ * and its ink (data-header-ink, css/header-theme.css) changes underneath it as it would without a transition. Its
+ * group is raised over every other group, as a fixed header sits over the page: a shared image mid-morph passes
+ * under it. Keep one [data-header] rendered: two elements with one view-transition-name abort the transition
+ * (transition() then just updates). :root raises these over the reduced-motion rules below. */
+[data-header] {
+  view-transition-name: site-header;
+}
+:root::view-transition-group(site-header) {
+  animation: none;
+  z-index: 1;
+}
+:root::view-transition-new(site-header) {
+  animation: none;
+}
+:root::view-transition-old(site-header) {
+  animation: none;
+  opacity: 0;
+}
+
+/* ── 7. Reduced motion ─────────────────────────────────────────────────────────────────────────────
+ * Groups don't move or resize; every snapshot crossfades in place, short and linear. The slide rules live under
+ * no-preference, so the browser's fade (and its plus-lighter blend) is what runs here. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*) {
+    animation: none;
+  }
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: var(--vt-reduced-duration);
+    animation-timing-function: linear;
+  }
+}

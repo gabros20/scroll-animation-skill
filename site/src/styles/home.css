@@ -8,6 +8,7 @@
 @import '../animation/css/scene.css';
 @import '../animation/css/rail.css';
 @import '../animation/css/header-theme.css';
+@import '../animation/css/view-transitions.css';
 @import './site.css';
 
 [data-header-theme='light'] {
