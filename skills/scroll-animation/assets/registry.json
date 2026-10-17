@@ -240,7 +240,7 @@
           "packages": []
         }
       },
-      "reference": "references/motion.md"
+      "reference": "references/page-transitions.md"
     },
     "flip-transition": {
       "summary": "A change of view inside one route (grid to detail, reorder, filter): Flip records every [data-flip-id], runs change(), lands each element from its old box (transform only, MOTION.route); one flip per root, killable; change() only under reduced motion",
@@ -264,7 +264,7 @@
           ]
         }
       },
-      "reference": "references/gsap.md"
+      "reference": "references/page-transitions.md"
     },
     "layout-morph": {
       "summary": "A card that opens into a panel in one route with Motion's layoutId: LayoutGroup plus a strict LazyMotion that fetches domMax for that subtree only; a plain swap under reduced motion (live)",
@@ -290,7 +290,7 @@
           ]
         }
       },
-      "reference": "references/motion.md"
+      "reference": "references/page-transitions.md"
     },
     "preloader": {
       "summary": "An Immersive-only loading screen driven by the page's own assets (decode, canplaythrough, fonts, fetched bytes, promises): monotonic --load-p, data-preloader-state, a 300 ms minimum and a 4 s failsafe, inert content and focus handed back",
@@ -310,7 +310,7 @@
           "packages": []
         }
       },
-      "reference": "references/motion.md"
+      "reference": "references/page-transitions.md"
     },
     "reveal": {
       "summary": "Triggered entrances (rise, fade, clip, scale-in) on the measured curves, at the trigger line or on mount: a CSS resting state under the pre-JS gate, failsafe-safe, live reduced motion, a load veil, Activity-safe",
@@ -761,7 +761,7 @@
           ]
         }
       },
-      "reference": "references/scenes.md"
+      "reference": "references/scrollytelling.md"
     },
     "scroll-well": {
       "summary": "A section that pulls the scroll to rest while it holds most of the view (centred, or its nearer edge when it is taller than the viewport): a step added to the reader's scroll each frame, released by scrolling away, paused for anchor jumps, clamped inside a pinned scene, lengths on the layout scale; native scrolling only, none under reduced motion",

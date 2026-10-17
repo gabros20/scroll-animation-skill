@@ -58,7 +58,8 @@ Each has a default. Ask only when detection is inconclusive **and** the answer c
 | Page transitions | none, or cross-document CSS | view transitions, shared elements | the canvas persists across routes |
 
 Default: **Reading** unless the brief asks for pinned storytelling, inertial scroll or 3D. A profile only sets
-defaults; a route may differ from the site (the journal stays Reading on an Expressive site).
+defaults; a route may differ from the site (the journal stays Reading on an Expressive site). The page-transition
+tool per router is in [page-transitions.md](page-transitions.md) §1.
 
 ### 3.2 Scroll authority, per route
 
@@ -76,6 +77,9 @@ CSS is always available. Add engines by job, not by habit:
 - **GSAP** for timeline choreography (a section with about four or more named spans on one ruler), SplitText,
   DrawSVG/MorphSVG, Flip in vanilla code, ScrollSmoother, and every non-React project. All plugins are free.
 - **Three.js / R3F** only for a 3D scene or WebGL-enhanced images.
+- **No engine** for a scrollytelling section's sticky graphic: `scrolly-steps` watches the steps and crossfades its
+  states in CSS in every profile; the route's engine only drives richer transitions
+  ([scrollytelling.md](scrollytelling.md)).
 - **Bytes already paid:** when a route already loads GSAP, its entrances use GSAP rather than adding Motion, and the
   reverse. One engine per element, and one engine per scene.
 
@@ -131,14 +135,15 @@ Existing motion: header colour script kept (drives data-theme); AOS replaced by 
 
 ## Scene ledger
 
-| # | Section | Clock | Block (engine) | Runway | Reduced motion |
-|---|---|---|---|---|---|
-| 1 | Hero | trigger | split-word hero (CSS, first paint) | none | text visible, no motion |
-| 2 | Product film | media | ScrubVideo (GSAP) on PinnedScene | 4 viewports | poster, no pin |
-| 3 | Work rail | scroll | horizontal-rail (GSAP) | track width | native horizontal scroller |
+| # | Section | Beat | Clock | Block (engine) | Runway | Reduced motion |
+|---|---|---|---|---|---|---|
+| 1 | Hero | the promise | trigger | split-word hero (CSS, first paint) | none | text visible, no motion |
+| 2 | Product film | how it's made | media | ScrubVideo (GSAP) on PinnedScene | 4 viewports | poster, no pin |
+| 3 | Work rail | the proof | scroll | horizontal-rail (GSAP) | track width | native horizontal scroller |
 ```
 
-A section that wants the scroll clock names what the reader gains by driving it; otherwise it is a trigger.
+A section that wants the scroll clock names what the reader gains by driving it; otherwise it is a trigger. The
+beat is the one idea the section tells; a narrative page gets one row per beat, so a scrolly section's steps are rows.
 
 ## 5. Asking the questions
 
@@ -150,6 +155,9 @@ One batch, each with its default, only what detection couldn't settle:
 > `scroll-animation media scrub`. I'll go with these unless you say otherwise.
 
 For existing motion, name what you found and propose the least invasive option; don't offer three choices per item.
+A narrative brief (a data story, a visual essay, a case study told in steps) adds one question: the story beats, in
+order, each with what the reader should see ([scrollytelling.md](scrollytelling.md) §2). Propose them from the
+content when it exists.
 
 ## Traps
 

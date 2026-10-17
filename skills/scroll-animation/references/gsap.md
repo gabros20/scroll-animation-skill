@@ -70,9 +70,13 @@ useGSAP(() => {
   `contextSafe()` that `useGSAP` returns, or they outlive the component.
 - `dependencies` re-run the function; `revertOnUpdate: true` reverts first. Never let React update text that SplitText
   split: key the element by its content ([text.md](text.md) §6).
-- **Observed on GSAP 3.15.0, not documented:** `revert()` reverts the recorded animations before it calls the cleanup
-  your function returned, and `useGSAP` (@gsap/react 2.1.2) inherits that order. So in React a block's `destroy()`
-  runs after its tweens have reverted, while `mount()` destroys first (§3). Write cleanups that hold in either order.
+- **Teardown order, measured on GSAP 3.15.0 and @gsap/react 2.1.2 (undocumented):** build each block as
+  `useGSAP(() => { const b = block(el); return () => b?.destroy() }, { scope })`. The context reverts what it
+  recorded (the block's tweens, ScrollTriggers, matchMedia builds and SplitText) before your returned cleanup runs,
+  the reverse of `mount()`'s order (§3). Every block's `destroy()` is written to run second and still puts the DOM
+  back exactly, under unmount, StrictMode's double effect and `<Activity>` hide and show (checked per block, in a
+  teardown suite). Anything a block starts later, from an event or after an `await` (a flip), is outside the context:
+  keep its handle and end it in the cleanup.
 
 ## 3. Vanilla pages: `mount`
 
@@ -254,7 +258,7 @@ All are in the `gsap` package and free: import from `gsap/<Plugin>` and pass to 
 | Plugin | For | In this pack |
 |---|---|---|
 | SplitText | lines and words revealed below the fold | `split-reveal` ([text.md](text.md)) |
-| Flip | a layout change animated from the old box: `Flip.getState()`, change the DOM, `Flip.from(state)` | no block yet; React routes use Motion's `layoutId` ([motion.md](motion.md) §8) |
+| Flip | a layout change inside one route, animated from the old box | `flip-transition` ([page-transitions.md](page-transitions.md) §6); React routes may use Motion's `layoutId` (`layout-morph`) |
 | DrawSVG | strokes drawn as the reader scrolls | `draw-on-scroll` ([layered-visuals.md](layered-visuals.md) §9) |
 | MorphSVG | one path's `d` into another's; `convertToPath()` first for circles and rects | no block: log `shapeIndex` or `precompile` once, then hard-code the value |
 | Observer | gestures (wheel, touch, pointer), not scroll position | `stepped-sections`; `ScrollTrigger.observe()` is the same, with nothing more to register |

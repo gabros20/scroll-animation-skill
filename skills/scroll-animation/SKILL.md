@@ -1,17 +1,17 @@
 ---
 name: scroll-animation
-description: Build, fix and review scroll-driven animation for editorial and creative sites: reveals, split text, CSS scroll effects, pinned scenes, horizontal rails, scrubbed and looping video, header ink that follows each section, and smooth scroll with Lenis or ScrollSmoother, in CSS, Motion (React) and GSAP, with their iOS Safari, accessibility and performance fixes. Use for "fade in on scroll", "pin this section", "scrub the video", "add smooth scroll", GSAP, ScrollTrigger, Lenis or Motion questions, a scrub stuck on frame one, reveals that never fire, or scroll jank. Not for UI micro-interactions.
+description: Build, fix and review scroll-driven animation for editorial and creative sites: reveals, split text, CSS scroll effects, pinned scenes, rails, scrubbed and looping video, scrollytelling, header ink, page transitions and smooth scroll (Lenis, ScrollSmoother), in CSS, Motion (React) and GSAP, with iOS Safari, accessibility and performance fixes. Use for "fade in on scroll", "pin this section", "scrub the video", "transitions between pages", GSAP, ScrollTrigger, Lenis or Motion questions, a scrub stuck on frame one, reveals that never fire, or scroll jank. Not for UI micro-interactions.
 ---
 
 # Scroll animation
 
 ## Mission and boundary
 
-A motion system for editorial and creative pages. Every animation runs on one of four clocks: **trigger** (plays
-once when content arrives), **scroll** (a function of the reader's position in a range), **media** (follows what a
-video decoder presents) and **render** (a render loop). Name the clock first; it decides the cost, the engine and
-which traps apply. Each job goes to the engine that does it best: CSS for decoration, Motion for React component and
-section motion, GSAP for timelines and its plugins.
+A motion system for editorial and creative pages. Every animation runs on a clock: **trigger** (plays once when
+content arrives), **scroll** (a function of the reader's position in a range), **media** (follows what a video
+decoder presents), **render** (a render loop) or **route** (once per navigation or page load). Name the clock first;
+it decides the cost, the engine and which traps apply. Each job goes to the engine that does it best: CSS for
+decoration, Motion for React component and section motion, GSAP for timelines and its plugins.
 
 The skill ships tested, copy-and-own blocks (`scroll-animation list`), the references that explain every decision,
 and a CLI that copies blocks, prepares media and checks the result. It was extracted from a production site whose
@@ -35,6 +35,8 @@ First pick the lane, then the reference:
 |---|---|---|
 | Any new page, site or motion system | [preflight.md](references/preflight.md) | profile, scroll authority per route, engines, budgets, layout scale, `ANIMATION.md` |
 | Smooth or inertial scroll; Lenis or ScrollSmoother already present; anchors or modals under a smoother | [scroll-authority.md](references/scroll-authority.md) | the owner per route, one clock, what each owner breaks |
+| Page transitions, a shared element from card to detail page, a grid opening in place, a preloader; a navigation that lands at the wrong scroll position or leaves triggers stale | [page-transitions.md](references/page-transitions.md) | which tool per router, `view-transitions`, `<RouteChange>` / `routeChanged()`, framework hooks, Flip and `layoutId`, preloaders |
+| Scrollytelling: a sticky graphic or chart beside text steps, a data story or visual essay | [scrollytelling.md](references/scrollytelling.md) | story beats, the five techniques and four layouts mapped to blocks, `scrolly-steps`, phones, accessibility |
 | Content that animates in (sections, cards, images, stats, a number counting up) | [entrances.md](references/entrances.md) | triage by clock, `Reveal` per engine, trigger lines, once or replay, the load veil, count-up, the gate and SSR |
 | A headline or paragraph revealed by word or line | [text.md](references/text.md) | `SplitWords` on the server or SplitText below the fold, fonts first, aria, React keys, CJK and Thai |
 | Motion (React) code: `useScroll`, springs, `LazyMotion`, Motion under Lenis | [motion.md](references/motion.md) | `m` under strict, live reduced motion, hand-written scroll styles, the `frame` driver |
@@ -70,7 +72,11 @@ First pick the lane, then the reference:
 | media | a scrubbed video on a pinned scene | `scrub-video` (motion: `ScrubVideo`; gsap: `scrubVideo`) |
 | media | an image sequence scrubbed on a canvas | `frame-sequence` (motion: `FrameSequence`; gsap: `frameSequence`) |
 | media | an in-view background loop with a pause control | `loop-video` (motion: `LoopVideo`; gsap: `loopVideo`) |
-| — | scroll owner for a route | `smooth-lenis` + `smooth-react`, or `smooth-smoother` (GSAP-only pages; start it with `createSmoother`) |
+| trigger | a sticky graphic beside natively scrolling steps, one state per step (scrollytelling) | `scrolly-steps` (motion: `ScrollySteps`, `useScrollySteps`; agnostic: `mountScrollySteps`) |
+| trigger | a change of view inside one route: grid to detail, reorder, filter; a card opening into a panel | recipes `flip-transition` (gsap: `flipTransition`), `layout-morph` (motion: `LayoutMorph`, `Morph`) |
+| route | a page change: the root crossfade, shared elements, directional slides | `view-transitions` (css: React's `<ViewTransition>` with the classes; agnostic: `transition`, `mountCrossDocumentTransitions`) |
+| route | an Immersive first screen held until its assets load, with real progress | recipe `preloader` (agnostic: `mountPreloader`) |
+| — | scroll owner for a route | `smooth-lenis` + `smooth-react`, or `smooth-smoother` (GSAP-only pages; start it with `createSmoother`); `<RouteChange>` / `routeChanged()` after each client navigation |
 | — | foundation | `config`, `base-css`, `gsap-setup` (plus `mount` on a vanilla GSAP page) or `motion-provider` |
 
 When a route already loads GSAP, its entrances use GSAP rather than adding Motion, and the reverse. One engine per

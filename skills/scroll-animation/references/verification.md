@@ -25,7 +25,8 @@ should never wait for tier 3, because a real device is the scarcest resource in 
 4. [Before debugging a scene: rule out a stale stylesheet](#4-before-debugging-a-scene-rule-out-a-stale-stylesheet)
 5. [The scripts](#5-the-scripts)
 6. [Tier 3: a real device](#6-tier-3-a-real-device)
-7. [Traps](#traps)
+7. [Symptom index](#7-symptom-index)
+8. [Traps](#traps)
 
 ## 1. Tier 1: the scripted browser harness
 
@@ -219,6 +220,16 @@ skipped:
 - **A result is only trustworthy from the device class and OS version it claims to fix.** A fix
   verified on one iOS version is not verified on another if the underlying WebKit behaviour changed
   between them (`ios-safari-motion.md` §1).
+
+## 7. Symptom index
+
+| Symptom | Where |
+| --- | --- |
+| After a link the page lands at the new route's bottom, or back/forward lands at the wrong position, under Lenis | a glide outlived the navigation: [page-transitions.md](page-transitions.md) §4 |
+| A layout-level trigger (a reading progress) keeps the previous route's numbers | no refresh after the navigation: [page-transitions.md](page-transitions.md) §4 |
+| A page transition never runs, or the page just swaps | reduced motion, two `[data-header]`s, Firefox on a multi-page site, or a stripped `blocking="render"`: [page-transitions.md](page-transitions.md) §2–§3 |
+| A Motion `layoutId` swap sticks on the old box | reduced motion under Motion 13.4: [motion.md](motion.md) §8 |
+| A scrolly graphic doesn't stick, or the last step never activates | an `overflow: hidden` ancestor, ScrollSmoother, the tail removed: [scrollytelling.md](scrollytelling.md) §5 and its traps |
 
 ## Traps
 

@@ -192,5 +192,52 @@
       "references/video.md",
       "references/css-scroll-effects.md"
     ]
+  },
+  {
+    "id": "next-journal-view-transitions",
+    "prompt": "Add page transitions to our Next.js App Router journal: the cover morphs from the index card into the article hero, and the page slides with the direction.",
+    "expected_references": [
+      "references/page-transitions.md"
+    ],
+    "forbidden_references": [
+      "references/video.md",
+      "references/scenes.md"
+    ]
+  },
+  {
+    "id": "lenis-route-glide",
+    "prompt": "Two pages share one Lenis layout. Clicking a link while the page still glides lands the next page at its bottom, and back lands at the wrong place.",
+    "expected_references": [
+      "references/page-transitions.md",
+      "references/scroll-authority.md"
+    ],
+    "forbidden_references": [
+      "references/video.md",
+      "references/text.md"
+    ]
+  },
+  {
+    "id": "scrollytelling-chart-story",
+    "prompt": "Build a data story: a sticky chart beside six text steps that changes as each step reaches the middle of the screen, stacked on phones, in React.",
+    "expected_references": [
+      "references/preflight.md",
+      "references/scrollytelling.md"
+    ],
+    "forbidden_references": [
+      "references/video.md",
+      "references/brownfield-coexistence.md"
+    ]
+  },
+  {
+    "id": "gsap-grid-to-detail-flip",
+    "prompt": "On our vanilla GSAP page, clicking a project in the grid should open it into a detail view in place, the image gliding from its thumbnail without restarting its video.",
+    "expected_references": [
+      "references/page-transitions.md",
+      "references/gsap.md"
+    ],
+    "forbidden_references": [
+      "references/scrollytelling.md",
+      "references/sequences.md"
+    ]
   }
 ]

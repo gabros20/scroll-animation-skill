@@ -129,6 +129,8 @@ defaults, not measurements:
 - **Keep the page's total runway in view.** The ledger shows it. One pin at a time, and pins followed by more pins
   tire the reader: a whole page told as one scroll-driven story turns monotonous, and expensive, past three or four
   panels.
+- **A story told in steps beside a sticky graphic** is paced the same way: one idea per step, the gap between steps
+  its reading time ([scrollytelling.md](scrollytelling.md) §2).
 - **A stack of sections handing off over one pinned layer is one range wrapper** with more children. Never nest scroll
   scenes: who owns the scroll becomes ambiguous.
 - **One timeline per section, never a page master.** A page-wide timeline couples every section, so editing section 3
