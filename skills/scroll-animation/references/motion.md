@@ -34,15 +34,15 @@ tree that uses Motion blocks:
 
 ```tsx
 <MotionProvider>{children}</MotionProvider>                      // domAnimation
-<MotionProvider features={domMax}>{children}</MotionProvider>    // adds layout and layoutId
 ```
 
 - **`LazyMotion strict`.** Render `m.div` (import `m` from `motion/react`), never `motion.div`. The full `motion`
   component weighs about 34 kB; `m` is a small shell that loads its features separately. `strict` makes a stray
   `motion.*` throw instead of silently loading the full bundle, and `audit-motion.mjs` flags one as `motion-strict`.
-- **Features.** `domAnimation`, the default, covers entrances, gestures and exits. Pass `domMax` for `layout` and
-  `layoutId`, or a loader, `features={() => import('./motion-features').then((mod) => mod.default)}`, to fetch the
-  bundle after hydration.
+- **Features.** `domAnimation`, the default, covers entrances, gestures and exits. Never pass `domMax` to the
+  provider: `layout` and `layoutId` load it per subtree through `LayoutMorph` (§8), so a page without a morph never
+  fetches it. A loader, `features={() => import('./motion-features').then((mod) => mod.default)}`, fetches the
+  provider's bundle after hydration.
 - **`MotionConfig reducedMotion="user"`**: Motion drops transform and layout animation for a visitor who asked for less
   motion. It reaches only Motion's own animations (§2).
 - It marks the engine ready (`html[data-animation-ready]`), which switches off the CSS failsafe
@@ -180,13 +180,21 @@ const cancel = scroll((progress) => { bar.style.transform = `scaleX(${progress})
 
 ## 8. Layout and view transitions
 
-- `layout` and `layoutId` (shared-element motion inside a page) need `domMax` (§1).
+- `layout` and `layoutId` (shared-element motion inside a page) need `domMax`'s projection, about 46 kB minified
+  (14 kB gzipped, measured on Motion 13.4). The `layout-morph` recipe's `<LayoutMorph>` loads it for its subtree only,
+  on first mount, from `motion/layout-features.ts` (importing `domMax` anywhere else pulls it back into the main
+  bundle).
+- **Reduced motion: no `layoutId` at all.** Measured on Motion 13.4.4: under `MotionConfig reducedMotion="user"` a
+  `layoutId` swap stuck on the old box for good in 2 of 12 runs (WebKit, Firefox), and a `duration: 0` layout
+  transition did the same. `Morph` drops the id under `useReducedMotionLive()`, so the swap is plain; a panel that
+  mounted while it was on has no id, so the first swap after switching it off is plain too.
 - Motion 13.4 adds `AnimateView` (`import { AnimateView } from 'motion/react-animate-view'`, React 19.3 or later),
   which animates React's view transitions: enter, exit, share and update.
 - **Never `AnimatePresence` across App Router routes.** The router renders layouts and pages as separate server
   subtrees, so no one client component owns the route key that exit animations need. Keep it for presence inside a
   page: a panel, a list item.
-- The pack has no page-transition block yet. Route changes follow [scroll-authority.md](scroll-authority.md) §8.
+- Across routes, use React's `<ViewTransition share="vt-morph">` with the `view-transitions` block, never `layoutId`;
+  page transitions and route hygiene are in [page-transitions.md](page-transitions.md).
 
 ## 9. Hide and show
 
@@ -212,3 +220,4 @@ again on show.
 - [ ] No React state per frame, and no hook inside `.map()`: it only works while the array's length never changes.
       Extract the child component.
 - [ ] No `AnimatePresence` across App Router routes (§8).
+- [ ] No `domMax` on the provider: `layoutId` lives in `LayoutMorph`, without an id under reduced motion (§1, §8).

@@ -37,7 +37,8 @@ positional movement that still tells the story:
 | Colour track | stays, exact, with no catch-up: a colour change isn't movement |
 | Draw on scroll | fully drawn |
 | Smooth scroll (Lenis, ScrollSmoother) | native scrolling, followed live: Lenis is torn down; ScrollSmoother, started by `createSmoother`, runs in its native mode (`smooth: 0`, no `data-speed` / `data-lag`) |
-| Page transition | an instant swap, or a crossfade without movement |
+| Page transition | an instant swap, or a crossfade in place without movement ([page-transitions.md](page-transitions.md) §8) |
+| Scrollytelling steps | the sticky graphic stays, its states swap at once ([scrollytelling.md](scrollytelling.md) §7) |
 | WebGL world | the poster image; the canvas is never mounted |
 | Loop video, marquee | stopped, poster or first frame; `marquee-velocity`'s toggle can still start it, since clipped items only show by moving |
 | Header ink per section | the ink changes at once, with no colour transition |
@@ -72,12 +73,16 @@ Each engine covers only its own animations. Anything you write by hand checks th
 - **Motion.** `MotionConfig reducedMotion="user"` (in `MotionProvider`) drops transform and layout animation. A
   `useMotionValueEvent` writer, a typewriter or any timing-only sequence reads the setting itself, live, with
   `useReducedMotionLive()` (`motion/useReducedMotionLive.ts`): Motion 13.4's `useReducedMotion()` reads it once, at mount.
-- **View Transitions.** CSS can't intercept `document.startViewTransition()`: guard the call in JS, and shorten the
-  pseudo-element animations under `reduce`.
+- **View Transitions.** CSS can't stop `document.startViewTransition()`, so the `view-transitions` block's
+  `transition()` skips the API under `reduce` and the cross-document opt-in sits under `no-preference`. Its CSS gives
+  what still runs (React's `<ViewTransition>`, direct calls) a crossfade in place, which WCAG 2.3.3 doesn't count as
+  motion ([page-transitions.md](page-transitions.md) §8):
   ```css
   @media (prefers-reduced-motion: reduce) {
-    ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) {
-      animation-duration: 0s !important;
+    ::view-transition-group(*) { animation: none; }               /* no morph, no slide */
+    ::view-transition-old(*), ::view-transition-new(*) {
+      animation-duration: var(--vt-reduced-duration);             /* MOTION.entranceFade: 0.17s */
+      animation-timing-function: linear;
     }
   }
   ```

@@ -118,5 +118,40 @@
     "id": "morph-menu-icon",
     "prompt": "Morph the hamburger icon into a close icon with GSAP's MorphSVG when the menu opens.",
     "should_trigger": false
+  },
+  {
+    "id": "scrollytelling-sticky-chart",
+    "prompt": "Build a scrollytelling article where a sticky chart beside the text changes as each paragraph scrolls past.",
+    "should_trigger": true
+  },
+  {
+    "id": "journal-page-transitions",
+    "prompt": "Add page transitions between the journal index and each article in our Next.js App Router site.",
+    "should_trigger": true
+  },
+  {
+    "id": "lenis-back-button-position",
+    "prompt": "With Lenis on, the back button lands at the wrong scroll position after navigating between two pages of our app.",
+    "should_trigger": true
+  },
+  {
+    "id": "shared-element-card-detail",
+    "prompt": "The project card's image should morph into the hero image of the detail page when the reader opens it.",
+    "should_trigger": true
+  },
+  {
+    "id": "mpa-cross-document-transition",
+    "prompt": "Our static Astro site has no client router; crossfade between pages and slide back when the reader hits the back button.",
+    "should_trigger": true
+  },
+  {
+    "id": "dialog-open-transition",
+    "prompt": "Make the confirmation dialog grow out of the delete button when it opens and shrink back into it when it closes.",
+    "should_trigger": false
+  },
+  {
+    "id": "carousel-slide-transition",
+    "prompt": "Give the product gallery carousel a crossfade between slides when the reader swipes or taps the arrows.",
+    "should_trigger": false
   }
 ]

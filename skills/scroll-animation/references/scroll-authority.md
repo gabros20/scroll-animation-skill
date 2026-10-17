@@ -107,6 +107,8 @@ React: `<SmoothScroll authority="lenis" driver={gsapDriver(gsap, ScrollTrigger)}
 - **Reduced motion**: followed live. While it's on there is no Lenis: the page scrolls natively and the stamp reads
   `native`. When the visitor changes the setting mid-visit, Lenis is torn down, or started again at the reader's
   position. The handle stays the same object, and a modal's `stop()` holds across the switch.
+- **Two Lenis routes under one layout** keep one Lenis alive across the navigation, and a glide in flight overrides
+  the router (S9: the new route landed at its bottom). `<RouteChange>` is required there (§8).
 - **Reload mid-page**: the browser restores the scroll position before Lenis starts; `createSmoothScroll` starts
   Lenis there instead of jumping to 0.
 - **Velocity**: `lenis.velocity` is the smoothed velocity. Logic that branches on scroll speed sees the lerp's
@@ -193,8 +195,13 @@ elements. Independent effects may keep their own IntersectionObserver-gated loop
   destroyed in its cleanup. Under Next's Cache Components that cleanup also runs when a route is hidden by
   `<Activity>`, so a hidden route never keeps a Lenis instance or a stale stamp.
 - GSAP work on a route lives in `useGSAP(() => …, { scope })`, which reverts it on unmount and on hide.
-- After a transition settles (fonts loaded, images sized), call `ScrollTrigger.refresh()` once. Reading a
-  ScrollTrigger's progress before that returns stale numbers (up to 300 px off after content above it moves).
+- **After each client navigation**, `<RouteChange route={usePathname()} refresh={…}>` around the root layout's
+  children, or `routeChanged()` on a vanilla page, syncs the authority (`handle.sync()`: a Lenis glide would override
+  the router) and refreshes once, for triggers the navigation doesn't re-create (S9). The router owns the position:
+  never scroll from route code, and keep `history.scrollRestoration` at `'auto'` (`'manual'` lost every back/forward
+  in Next). The verdicts and each framework's hook are in [page-transitions.md](page-transitions.md) §4–§5.
+- Late fonts and images still need a refresh once they settle: a ScrollTrigger read before it is up to 300 px off
+  after content above it moves (S5).
 - A scene re-created above the viewport (a route shown again) brings its runway back there. WebKit's scroll anchoring
   then moves the page by the runway's height to keep what the reader sees in place (measured 1708 → 3645 px on a
   rail's re-create); Chromium and Firefox keep the offset. Restore the reader's place after the re-create.
@@ -211,4 +218,4 @@ elements. Independent effects may keep their own IntersectionObserver-gated loop
 - [ ] Under Lenis in Safari: CSS timelines only for decoration.
 - [ ] Modals call `stop()` / `start()`; nested scrollers carry `data-lenis-prevent`.
 - [ ] Nothing kills a ScrollSmoother without re-creating it: its triggers are bound to the wrapper.
-- [ ] `ScrollTrigger.refresh()` runs once after layout settles on each route.
+- [ ] Each client navigation runs `<RouteChange>` or `routeChanged()` once; `scrollRestoration` stays `'auto'`.

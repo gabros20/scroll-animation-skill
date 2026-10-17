@@ -4,9 +4,10 @@
  *
  * - `LazyMotion strict`: blocks render `m.div`, never `motion.div`. The full `motion` component pulls ~34 kB; `m` plus a
  *   feature bundle is a fraction of that, and `strict` turns a stray `motion.*` into an error instead of a silent
- *   bundle regression. `domAnimation` covers entrances, gestures and exit; pass `features={domMax}` for `layout` /
- *   `layoutId` (shared-element motion inside a page), or a loader
- *   (`features={() => import('./motion-features').then((m) => m.default)}`) to defer the bundle past hydration.
+ *   bundle regression. `domAnimation` covers entrances, gestures and exit. Never pass `domMax` here: `layout` /
+ *   `layoutId` (shared-element motion inside a page) load it per subtree through motion/LayoutMorph.tsx, so a page
+ *   without a morph never fetches it. A loader (`features={() => import('./motion-features').then((m) => m.default)}`)
+ *   defers the provider's bundle past hydration.
  * - `MotionConfig reducedMotion="user"`: Motion drops transform and layout animation for visitors who asked for less
  *   motion. It only covers Motion's own animations: every hand-written style writer still checks
  *   `prefersReducedMotion()` itself.

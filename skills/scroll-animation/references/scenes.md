@@ -55,6 +55,8 @@ keeps `data-scene-state` current. GSAP takes the markup with `pinnedScene(root, 
   refreshed (spike S5: S1–S7 are the skill's own browser measurements, September 2026).
 - **The pin is `100lvh`**: a scene is read while scrolling, when iOS collapses its toolbars. An `svh` pin falls short
   and shows the page along the bottom; `dvh` resizes the pin, and every framing read, on each toolbar animation.
+  A sticky graphic changing per step beside scrolling text is `scrolly-steps`, not a pin: a column, in `svh`
+  ([scrollytelling.md](scrollytelling.md) §5).
 - **The content's `-100lvh` margin uses the pin's unit**, so the wrapper is exactly as tall as the content; mixing
   `svh` and `lvh` measures one toolbar-height wrong.
 - **No transform on the root, the pin or an ancestor, and no `overflow: hidden` on an ancestor** (use `clip`): either
@@ -114,8 +116,8 @@ p = 0   headExit                                  tailEnter       1
 `onProgress(p)` and `scene.progress()` are **exact**, and logic reads them: modes, acts, `inert`, URLs, analytics. A
 spring or lerp settles *across* a threshold and flips it back and forth, so it never feeds one.
 
-Smooth once per value path: under Lenis or ScrollSmoother, which already smooth, write the exact value; on a native
-route, smooth only visuals, at the consumer (`useSpring`, a numeric `scrub`).
+Smooth once (invariant 3): under Lenis or ScrollSmoother write the exact value; on a native route, smooth only
+visuals, at the consumer (`useSpring`, a numeric `scrub`).
 
 In GSAP, `onProgress` runs inside ScrollTrigger's update, so with Lenis on `gsap.ticker` it lands in the scroll's frame
 (S4). The ScrubVideo backdrop follows the playhead instead (`onPlayhead`): what must match the picture reads the
@@ -245,8 +247,7 @@ Mark every empty pacing act `data-scene-spacer` by hand: no engine infers it, an
 Sections in `data-scene-content` ride over the render:
 
 - **No background**: it would cover the render the scene exists to show.
-- **No `overflow: hidden`**: it makes the section a scroll container, which stops any sticky or scroll-timeline child
-  inside it; clip with `overflow: clip`.
+- **No `overflow: hidden`** (§1): it stops any sticky or scroll-timeline child; clip with `overflow: clip`.
 - **Sized in `svh`** (or fluid heights) while the pin is `lvh`, so a one-screen section never resizes mid-scroll.
 - **Exits are an exit fade on the group**: `data-scroll-fx="exit-fade"` ([css-scroll-effects.md](css-scroll-effects.md)
   §9), which stays gone past its range. Under ScrollSmoother, where `view()` doesn't run, write the fade in
