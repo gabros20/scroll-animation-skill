@@ -653,6 +653,46 @@
       },
       "reference": "references/layered-visuals.md"
     },
+    "scrolly-steps": {
+      "summary": "A sticky graphic beside natively scrolling steps that changes once per step (scrollytelling): two observer regions at a line, the last step whose top reached it wins, a scrolly:step event and onStep, optional --step-p; stacked on phones, without JavaScript and in print",
+      "clock": "trigger",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "agnostic": {
+          "files": [
+            "scrolly-steps.ts",
+            "css/scrolly.css"
+          ],
+          "requires": [
+            "base-css",
+            "config",
+            "scroll-authority"
+          ],
+          "packages": []
+        },
+        "motion": {
+          "files": [
+            "scrolly-steps.ts",
+            "motion/ScrollySteps.tsx",
+            "css/scrolly.css"
+          ],
+          "requires": [
+            "base-css",
+            "config",
+            "scroll-authority"
+          ],
+          "packages": [
+            "react"
+          ]
+        }
+      },
+      "reference": "references/scenes.md"
+    },
     "scroll-well": {
       "summary": "A section that pulls the scroll to rest while it holds most of the view (centred, or its nearer edge when it is taller than the viewport): a step added to the reader's scroll each frame, released by scrolling away, paused for anchor jumps, clamped inside a pinned scene, lengths on the layout scale; native scrolling only, none under reduced motion",
       "clock": "scroll",
