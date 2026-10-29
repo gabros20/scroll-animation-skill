@@ -1,6 +1,6 @@
 /**
  * pages/guide.ts — `/guide/`, the Reading page. Native scrolling, stamped by smooth/authority.ts's nativeHandle. mount()
- * creates the entrances, the one split heading and the four clocks' scrollytelling section in page order; the header's
+ * creates the entrances, the one split heading and the five clocks' scrollytelling section in page order; the header's
  * ink is page chrome. The reading-progress bar and the parallax figure are css/scroll-effects.css on CSS timelines,
  * and need no script at all. Navigations to and from / are cross-document view transitions (pages/transitions.ts).
  */

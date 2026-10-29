@@ -6,7 +6,7 @@
 //
 //   load       each page loads without errors and stamps its scroll authority: smoother on /, native on /guide/
 //   split      the hero headline is split in the served HTML, and the load shifts no layout (CLS < 0.01)
-//   scene      the four clocks' timeline rises monotonically through the pin, with the pin held at the top
+//   scene      the five clocks' timeline rises monotonically through the pin, with the pin held at the top
 //   rail       the engine map's track moves the whole travel, flush at both ends
 //   entrances  a scroll through each page lands every entrance, split heading and count-up, and the header's ink
 //              follows the section under it
@@ -19,7 +19,7 @@
 //   transition cross-document view transitions between the pages: / -> /guide/ and back carry "forward" and "back",
 //              the root crossfades and the header's group never animates (Chromium, WebKit); ScrollSmoother on /
 //              takes up the new page at rest, with no glide; Firefox has none, and the navigations just load
-//   scrolly    /guide/'s four-clocks section: sticky at 1280, each step marking its own clock (the colour at once, the
+//   scrolly    /guide/'s five-clocks section: sticky at 1280, each step marking its own clock (the colour at once, the
 //              marker sliding a row per step), back up to the first, a reload on a step seeking the marker there;
 //              under reduced motion the colour alone, instant, no marker and no transform; stacked at 390
 
@@ -35,8 +35,8 @@ const BROWSERS = { chromium, webkit, firefox }
 const PAGES = { home: '/', guide: '/guide/' }
 const AUTHORITY = { home: 'smoother', guide: 'native' }
 const VIEWPORT = { width: 1280, height: 800 }
-const CLOCKS = ['trigger', 'scroll', 'media', 'render']
-const HEADLINE = 'Every animation runs on one of four clocks'
+const CLOCKS = ['trigger', 'scroll', 'media', 'render', 'route']
+const HEADLINE = 'Every animation runs on one of five clocks'
 const CHECK_IDS = ['load', 'split', 'scene', 'rail', 'entrances', 'reduced', 'nojs', 'mount', 'transition', 'scrolly']
 
 // ── args ────────────────────────────────────────────────────────────────
@@ -883,12 +883,13 @@ const CHECKS = {
       const { page } = await t.open('/guide/')
       await page.evaluate(`window.__c.scrolly = ${read.toString()}`)
       const seen = []
-      for (let i = 0; i < 4; i++) seen.push(await at(page, i, 700))
+      const steps = await page.evaluate(() => document.querySelectorAll('[data-scrolly-step]').length)
+      for (let i = 0; i < steps; i++) seen.push(await at(page, i, 700))
       const up = await at(page, 0, 700)
       out.push([
         'guide',
         'scrolly: sticky at 1280, each step marks its own clock (colour and marker), and back up to the first',
-        seen.every((s, i) => s.mode === 'sticky' && s.active === i && lit(s, i) && s.marker === i * ROW) && up.active === 0 && lit(up, 0) && up.marker === 0,
+        seen.length === CLOCKS.length && seen.every((s, i) => s.mode === 'sticky' && s.active === i && lit(s, i) && s.marker === i * ROW) && up.active === 0 && lit(up, 0) && up.marker === 0,
         `${seen.map((s, i) => `step ${i}: active ${s.active}, marker ${s.marker}px, lit ${s.lit.indexOf(ACCENT)}`).join(' · ')} · back up: active ${up.active}, marker ${up.marker}px`,
       ])
       // A reload on step 2: the core's first report has previous null, so the timeline seeks there instead of tweening.

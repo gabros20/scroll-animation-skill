@@ -1,6 +1,6 @@
 {
   "skillVersion": "1.0.0",
-  "dir": "site/src/animation",
+  "dir": "src/animation",
   "engines": [
     "agnostic",
     "css",
@@ -19,20 +19,20 @@
     "gsap/horizontal-rail.ts": "23395aed00b898eb",
     "css/rail.css": "00485ea92eebb879",
     "gsap/reveal.ts": "b3e1dcddd413c42d",
-    "css/reveal.css": "2d31e05119550d32",
+    "css/reveal.css": "82a3bc05e2348e7f",
     "gsap/split-reveal.ts": "4901377a672037df",
     "split-words.ts": "d76af3671f7a3f06",
     "css/split.css": "ec0c0f651018e84a",
     "count-up.ts": "fc01d059966850e7",
     "header-theme.ts": "a2aca41e57b93801",
     "css/header-theme.css": "2a3f8422c6b2dfc7",
-    "css/scroll-effects.css": "9f635e4de26088a6",
+    "css/scroll-effects.css": "fcbbce04cd816317",
     "gsap/mount.ts": "ad52fdd4a82d09fe",
-    "smooth/route.ts": "7700dd3b48ce28be",
-    "view-transitions.ts": "67293d5c570415bd",
+    "smooth/route.ts": "5f973132fbc3cff3",
+    "view-transitions.ts": "ee1fd4486ebefb1a",
     "css/view-transitions.css": "bfaa79267e7363c8",
-    "css/view-transitions-mpa.css": "f7adb42f3faa4699",
-    "scrolly-steps.ts": "5180874bc55236f5",
+    "css/view-transitions-mpa.css": "90ff035a0b7a9ec6",
+    "scrolly-steps.ts": "b0cf2f4fe3836640",
     "css/scrolly.css": "2e1961ebc50b05cb"
   }
 }

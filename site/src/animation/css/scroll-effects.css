@@ -159,6 +159,11 @@
         var(--fx-range-end, cover 100%), var(--fx-range-end, entry 100%), var(--fx-range-end, exit-crossing 35%),
         var(--fx-range-end, entry 100%);
     }
+    /* No scroll anchor that moves: Chromium restores back/forward against one, off by its drift (1500 → 1454). */
+    :where(:root:not([data-scroll-authority='smoother']))
+      :is([data-scroll-fx~='parallax'], [data-scroll-fx~='scale-in']) {
+      overflow-anchor: none;
+    }
   }
 }
 
@@ -293,6 +298,7 @@
       --fx-range-start: inherit;
       --fx-range-end: inherit;
       animation: fx-stack-card linear both;
+      overflow-anchor: none; /* it shrinks with the scroll: no anchor for a back/forward restore (§2) */
       animation-timeline: var(--_fx-next);
       animation-range-start: var(--fx-range-start, entry 0%);
       animation-range-end: var(--fx-range-end, entry 100%);

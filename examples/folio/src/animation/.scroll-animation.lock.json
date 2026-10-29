@@ -1,6 +1,6 @@
 {
   "skillVersion": "1.0.0",
-  "dir": "examples/folio/src/animation",
+  "dir": "src/animation",
   "engines": [
     "agnostic",
     "css",
@@ -16,7 +16,7 @@
     "motion/MotionProvider.tsx": "b3e3b8a7fe746942",
     "smooth/authority.ts": "48a641d3e6f88b8a",
     "smooth/lenis.ts": "791e0d652aa1621e",
-    "smooth/SmoothScroll.tsx": "e585a6639aa0c196",
+    "smooth/SmoothScroll.tsx": "e9399a86e1bb1e56",
     "scene.ts": "681c45e78fd3add5",
     "css/scene.css": "2862e3dd2903c50f",
     "gsap/pinned-scene.ts": "66bd7063f88e5ba6",
@@ -31,7 +31,7 @@
     "motion/LoopVideo.tsx": "e371fc0a8488d76b",
     "motion/useReducedMotionLive.ts": "f16b298eb3d9321e",
     "motion/Reveal.tsx": "6a8c19a436b7c8a3",
-    "css/reveal.css": "2d31e05119550d32",
+    "css/reveal.css": "82a3bc05e2348e7f",
     "motion/SplitWords.tsx": "5e49833fc89d4d73",
     "split-words.ts": "d76af3671f7a3f06",
     "css/split.css": "ec0c0f651018e84a",
@@ -42,13 +42,13 @@
     "css/header-theme.css": "2a3f8422c6b2dfc7",
     "gsap/horizontal-rail.ts": "23395aed00b898eb",
     "css/rail.css": "00485ea92eebb879",
-    "css/scroll-effects.css": "9f635e4de26088a6",
+    "css/scroll-effects.css": "fcbbce04cd816317",
     "image-ink.ts": "4815e855ec0337cb",
-    "smooth/route.ts": "7700dd3b48ce28be",
+    "smooth/route.ts": "5f973132fbc3cff3",
     "css/view-transitions.css": "bfaa79267e7363c8",
-    "css/view-transitions-mpa.css": "f7adb42f3faa4699",
-    "scrolly-steps.ts": "5180874bc55236f5",
-    "motion/ScrollySteps.tsx": "dbd529acbaccd19b",
+    "css/view-transitions-mpa.css": "90ff035a0b7a9ec6",
+    "scrolly-steps.ts": "b0cf2f4fe3836640",
+    "motion/ScrollySteps.tsx": "d59ae2fa86065f9a",
     "css/scrolly.css": "2e1961ebc50b05cb"
   }
 }

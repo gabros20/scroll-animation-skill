@@ -3,7 +3,8 @@
 import { useGSAP } from "@gsap/react";
 import { useRef, type ReactNode } from "react";
 import { horizontalRail, type HorizontalRailOptions } from "@/animation/gsap/horizontal-rail";
-import { setupGsap } from "@/animation/gsap/setup";
+import { ScrollTrigger, setupGsap } from "@/animation/gsap/setup";
+import { onRouteRefresh } from "@/animation/smooth/route";
 
 // Once per page load, before any GSAP block runs (idempotent; /blocks has no
 // LenisScroll to do it).
@@ -35,6 +36,10 @@ type RailProps = {
  */
 export function Rail({ labelledBy, pinned, options, className, trackClassName, children }: RailProps) {
   const root = useRef<HTMLElement>(null);
+
+  // /blocks renders a rail without LenisScroll: the route registers its
+  // refresh here too (one function, so on `/` it still runs once).
+  useGSAP(() => onRouteRefresh(ScrollTrigger.refresh));
 
   useGSAP(
     () => {

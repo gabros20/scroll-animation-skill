@@ -13,7 +13,8 @@
  *   config.ts), only until an engine marks the item data-reveal-state="shown", and never under reduced motion. So a
  *   reader with JavaScript off, or one who asked for less motion, sees every item at rest, and no <noscript> rule is
  *   needed. If no engine boots, animation.css's failsafe reveals the items at 4 s and its latch keeps them revealed.
- * - Only transform, opacity and clip-path change, so a hidden item keeps its box and revealing it shifts nothing.
+ * - Only transform, opacity and clip-path change, so a hidden item keeps its box and revealing it shifts nothing
+ *   (and overflow-anchor, which paints nothing: a moved item anchors no back/forward restore, §1).
  * - rise and scale-in write `transform`, so it is spoken for on an item. Offset or centre the item with `translate`
  *   (it composes) or on a wrapper.
  * - Distances are custom properties on the item itself: --reveal-distance (rise; signed, default 32px, a negative
@@ -24,7 +25,8 @@
  */
 
 /* ── 1. The resting state ──────────────────────────────────────────────────────────────────────────
- * Each property is set by one rule per effect, so an effect never touches what it doesn't animate. */
+ * Each property is set by one rule per effect, so an effect never touches what it doesn't animate. A moved item is
+ * no scroll anchor: Chromium restores back/forward against one still at its resting offset (1965 → 1997, measured). */
 @media (prefers-reduced-motion: no-preference) {
   html[data-animation='on'] [data-reveal-item]:not([data-reveal-state='shown'], [data-reveal-effect='clip']) {
     opacity: 0;
@@ -37,9 +39,11 @@
       [data-reveal-effect='scale-in']
     ) {
     transform: translateY(var(--reveal-distance, 32px));
+    overflow-anchor: none;
   }
   html[data-animation='on'] [data-reveal-item][data-reveal-effect='scale-in']:not([data-reveal-state='shown']) {
     transform: scale(var(--reveal-scale, 0.95));
+    overflow-anchor: none;
   }
   /* A wipe up from the bottom edge. */
   html[data-animation='on'] [data-reveal-item][data-reveal-effect='clip']:not([data-reveal-state='shown']) {
