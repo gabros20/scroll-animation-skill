@@ -97,7 +97,7 @@ One idea per viewport, four scenes plus the hero:
 ### `/journal` index and `/journal/[slug]` article: Reading (native)
 
 Index: a two-up grid of article cards, cover image, category, title, dek, date and read time. Each
-cover is the shared-element source for the article's hero (view transitions, Phase 4).
+cover is the shared-element source for the article's hero: a React `<ViewTransition share="vt-morph">` on both.
 
 Article: cover hero, byline, a reading-progress bar (CSS `scroll()` timeline, no
 script; static in Firefox), body copy with one CSS-parallax figure roughly a third of the way through, and one loop

@@ -195,9 +195,10 @@ elements. Independent effects may keep their own IntersectionObserver-gated loop
   destroyed in its cleanup. Under Next's Cache Components that cleanup also runs when a route is hidden by
   `<Activity>`, so a hidden route never keeps a Lenis instance or a stale stamp.
 - GSAP work on a route lives in `useGSAP(() => …, { scope })`, which reverts it on unmount and on hide.
-- **After each client navigation**, `<RouteChange route={usePathname()} refresh={…}>` around the root layout's
-  children, or `routeChanged()` on a vanilla page, syncs the authority (`handle.sync()`: a Lenis glide would override
-  the router) and refreshes once, for triggers the navigation doesn't re-create (S9). The router owns the position:
+- **After each client navigation**, `<RouteChange route={usePathname()}>` around the root layout's children, or
+  `routeChanged()` on a vanilla page, syncs the authority (`handle.sync()`: a Lenis glide would override the router)
+  and runs the refreshes the GSAP routes registered (`onRouteRefresh`) once, for triggers the navigation doesn't
+  re-create (S9), then again as a streamed route settles. The router owns the position:
   never scroll from route code, and keep `history.scrollRestoration` at `'auto'` (`'manual'` lost every back/forward
   in Next). The verdicts and each framework's hook are in [page-transitions.md](page-transitions.md) §4–§5.
 - Late fonts and images still need a refresh once they settle: a ScrollTrigger read before it is up to 300 px off

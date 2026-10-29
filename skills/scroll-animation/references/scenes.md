@@ -45,18 +45,16 @@ and reduced-motion collapse, checked in a browser.
 
 `css/scene.css` gives both engines this geometry (import it after `animation.css`). Motion renders it with
 `<PinnedScene pinned={…}>{acts}</PinnedScene>`, where `pinned` may also be a function of
-`{ band, progress, mode, reduced }` (the first two exact MotionValues; the band is the scrub between the holds, §3).
-With `usePinnedScene()` you render the root, pin and content markup yourself (`rootRef`, `pinRef`), and the hook
-keeps `data-scene-state` current. GSAP takes the markup with `pinnedScene(root, options)`. The maths is
+`{ band, progress, mode, reduced }` (`band` and `progress` are exact MotionValues, §3).
+`usePinnedScene()` lets you render the markup yourself (`rootRef`, `pinRef`) and keeps `data-scene-state` current. GSAP takes the markup with `pinnedScene(root, options)`. The maths is
 `assets/scene.ts`.
 
 - **Measure the wrapper, never the pin.** A sticky element stops moving, so its rect is no ruler. Progress is
   `-rect.top / (height − innerHeight)`, which a ScrollTrigger from `'top top'` to `'bottom bottom'` matches once
-  refreshed (spike S5: S1–S7 are the skill's own browser measurements, September 2026).
+  refreshed (S5).
 - **The pin is `100lvh`**: a scene is read while scrolling, when iOS collapses its toolbars. An `svh` pin falls short
   and shows the page along the bottom; `dvh` resizes the pin, and every framing read, on each toolbar animation.
-  A sticky graphic changing per step beside scrolling text is `scrolly-steps`, not a pin: a column, in `svh`
-  ([scrollytelling.md](scrollytelling.md) §5).
+  A sticky graphic beside scrolling steps is `scrolly-steps`, in `svh` ([scrollytelling.md](scrollytelling.md) §5).
 - **The content's `-100lvh` margin uses the pin's unit**, so the wrapper is exactly as tall as the content; mixing
   `svh` and `lvh` measures one toolbar-height wrong.
 - **No transform on the root, the pin or an ancestor, and no `overflow: hidden` on an ancestor** (use `clip`): either
@@ -71,8 +69,7 @@ the wrapper's rect on mount, wake, resize, tab return, bfcache restore, focus an
 one frame, so a resume never waits for a scroll event. GSAP adds `pin`, `refreshPriority` and `onBuild`.
 
 The handle's `mode`, `act`, `awake` and `reduced` are methods in Motion and getters in GSAP. Both have `progress()`,
-`band()`, `bounds()`, `rangePx()` and `rehydrate()`; GSAP adds `refresh()`, `debug()` and `destroy()`, called from
-`useGSAP`'s cleanup or the route's `mount(routeRoot)`.
+`band()`, `bounds()`, `rangePx()` and `rehydrate()`; GSAP adds `refresh()`, `debug()` and `destroy()`.
 
 ## 2. Acts
 
@@ -81,8 +78,7 @@ acts land at 0, ½ and 1: halves, not thirds. Thirds need N = 4, so one act is t
 `data-scene-spacer` act paces it.
 
 Mark acts **stacked in the pin** with `data-scene-act`. Every act but the active one is `inert`, so a keyboard or
-screen reader never lands on hidden copy; the scene writes it a frame after mount, on every resume and on every
-transition. **Hide acts off that attribute**, `[data-scene-act][inert] { opacity: 0 }`, which is right from the
+screen reader never lands on hidden copy; the scene writes it a frame after mount, on resume and on transition. **Hide acts off that attribute**, `[data-scene-act][inert] { opacity: 0 }`, which is right from the
 scene's first frame and after a reload. `onAct` fires on transitions only, never on mount or resume, so a JS writer
 also applies `scene.act()` in `onRehydrate`. Use `opacity` or `visibility`, never `display: none`: the print rules force
 the first two back. Under reduced motion no act is inert.
@@ -107,9 +103,9 @@ p = 0   headExit                                  tailEnter       1
 - **The stepper crosses every boundary `p` has passed** (`stepMode`), so a jump from the head to the end lands in
   `tail` on one event. Resumes use the absolute `modeFromProgress`.
 - **The band** maps `[headExit, tailEnter]` to 0..1 (`scene.band()`; Motion's `band` MotionValue). Media follows the
-  band, not raw progress, so the holds own the ends and never fight the scrub for a frame.
-- **Modes change per transition**, never per frame: React state and `data-scene-state` on the root. `onRehydrate` runs
-  before `onMode`, so media snaps with the new mode and the handover after it is a no-op.
+  band, not raw progress, so the holds own the ends.
+- **Modes change per transition**, never per frame (React state, `data-scene-state`). `onRehydrate` runs before
+  `onMode`, so media snaps with the new mode.
 
 ## 4. Exact and smoothed progress
 
@@ -145,9 +141,8 @@ Write scroll-linked styles by hand in `onProgress`, never bound through Motion's
 ```
 
 Motion 13.4 can hand a bound style to a native timeline that drifts back to its first-render value past the input
-range, pinned or not, and the scene's `['start start', 'end end']` is one of the offsets it hands over (S3,
-[motion.md](motion.md) §4). Padding the input range to 0 and 1 fixes the ends but not the size mismatch, so it is only
-the fallback.
+range, and the scene's `['start start', 'end end']` is one of the offsets it hands over (S3,
+[motion.md](motion.md) §4). Padding the input range to 0 and 1 fixes the ends, not the size mismatch: a fallback only.
 
 - Write the first value too: Motion's `onProgress` fires on change, and `onRehydrate` (with `p` and `band`) runs on
   mount.
@@ -172,24 +167,22 @@ camera={{ desktop: {
 }, mobile: { … } }}
 ```
 
-- **Two shots, not one crop**: interpolating lands on both designed frames; a single crop fits one end.
+- **Two shots, not one crop**: a single crop fits one end only.
 - **Size by viewport height** (`frameSize` in `svh`): viewports vary far more in aspect than in height.
-- **Coverage beats the design zoom**: the zoom rises only as far as keeping the canvas edges off screen needs, so the
-  composition holds wherever there is room.
+- **Coverage beats the design zoom**: it rises only as far as keeping the canvas edges off screen needs.
 - **CSS owns the size, JS only the transform**: `--scene-frame-w/-h` (a scoped `<style>` in React, inline per tier in
   GSAP), then one deduped `translate3d(…) scale(…)` per frame. Geometry is read on mount, resize and tier change only.
 - **The camera reads the band, never the playhead**: the render animates its own subject, and cancelling that travel
   slides the whole frame under static copy.
 
-Every field defaults to identity and `mobile` falls back to `desktop`; without `camera` the video simply covers the
-pin. Reduced motion holds the head shot.
+Every field defaults to identity, `mobile` falls back to `desktop`, and without `camera` the video covers the pin. Reduced motion holds the head shot.
 
 ## 8. The scroll well
 
-The `scroll-well` recipe pulls the scroll toward a section's rest while the section holds most of the view. Each frame
-it adds one small step to the scroll as it stands, and scrolling away releases it for the visit: the reader always
-wins. A section that fits the viewport rests centred. A taller one rests anywhere it fills the view; short of that,
-the well reaches for its nearer edge. Use it on a composition meant to be seen whole, never on running text.
+The `scroll-well` recipe pulls the scroll toward a section's rest while the section holds most of the view, one small
+step per frame; scrolling away releases it for the visit, so the reader always wins. A section that fits the viewport
+rests centred; a taller one anywhere it fills the view, else at its nearer edge. Use it on a composition meant to be
+seen whole, never on running text.
 
 ```tsx
 <section className="feature"><ScrollWell />…</section>               // Motion: the well pulls its parent
@@ -202,9 +195,9 @@ const well = createScrollWell(el)                                    // no engin
 - **Inside a pin it clamps to `[data-scene-root]`** (the `clamp` default), so its ends land on the scene's progress 0
   and 1. Unclamped, a short target can rest outside the pin and show the previous section over the render.
 - Its viewport height is a snapshot per visit: read live on iOS, the toolbar moves the target and feeds back.
-- It suspends its writes for anchor clicks and `hashchange`. Any other smooth scroll it didn't start is cancelled a
-  frame at a time, so call the handle's `suspend()` just before a router jump, `scrollIntoView` or the authority's
-  `scrollTo`. Where there is no handle (`<ScrollWell />`, `mount()`), call `suspendScrollWells()`.
+- It suspends its writes for anchor clicks and `hashchange`, and cancels any other smooth scroll a frame at a time:
+  call the handle's `suspend()` (no handle: `suspendScrollWells()`) just before a router jump, `scrollIntoView` or the
+  authority's `scrollTo`.
 - **Native scrolling only.** Under Lenis or ScrollSmoother it pulls nothing and warns once: a second writer would fight
   the smoother. It reads the owner from `<html data-scroll-authority>`, or from the `lenis` class a site's own Lenis
   sets ([brownfield-coexistence.md](brownfield-coexistence.md) §4). A ScrollSmoother started by hand leaves no stamp:
@@ -247,11 +240,10 @@ Mark every empty pacing act `data-scene-spacer` by hand: no engine infers it, an
 Sections in `data-scene-content` ride over the render:
 
 - **No background**: it would cover the render the scene exists to show.
-- **No `overflow: hidden`** (§1): it stops any sticky or scroll-timeline child; clip with `overflow: clip`.
-- **Sized in `svh`** (or fluid heights) while the pin is `lvh`, so a one-screen section never resizes mid-scroll.
+- **No `overflow: hidden`** (§1): clip with `overflow: clip`.
+- **Sized in `svh`** (or fluid heights), so a one-screen section never resizes mid-scroll.
 - **Exits are an exit fade on the group**: `data-scroll-fx="exit-fade"` ([css-scroll-effects.md](css-scroll-effects.md)
-  §9), which stays gone past its range. Under ScrollSmoother, where `view()` doesn't run, write the fade in
-  `onProgress` (§6). Entrances stay triggered reveals.
+  §9). Under ScrollSmoother, where `view()` doesn't run, write it in `onProgress` (§6). Entrances stay triggered reveals.
 
 ## 12. Travel on a scaled layout
 
@@ -316,8 +308,8 @@ const rail = horizontalRail(el)   // .travel() .rtl() .scrollToPanel(i) .refresh
   cuts the last panel short.
 - **The runway is the travel**: the spacer takes its height, with no content layer, so `rangePx()` equals it. It exists
   only once the rail measures, so create the rail in page order (§9).
-- **Every ScrollTrigger refresh re-measures it**, in the `revert` event: pins off, no trigger measured yet. A
-  ResizeObserver on the track and panels asks for a refresh; after adding or removing panels, call `rail.refresh()`.
+- **Every ScrollTrigger refresh re-measures it** (in `revert`: pins off). A ResizeObserver on the track and panels asks
+  for a refresh; after adding or removing panels, call `rail.refresh()`.
 - **One linear band, two writers**: `translate` runs from 0 at band 0 to the whole travel (floored to device pixels)
   at band 1, so the last panel ends flush or clipped by under a device pixel. Where CSS scroll timelines run
   (Chromium; Safari 26, off the main thread from 26.4) the rail writes the band's scroll offsets and the signed travel
@@ -339,18 +331,18 @@ const rail = horizontalRail(el)   // .travel() .rtl() .scrollToPanel(i) .refresh
 - **`rail.scrollToPanel(i)`** makes the same move for previous and next buttons, smooth unless `{ immediate: true }`.
   Focus jumps because a ScrollTrigger refresh stops a native smooth scroll part-way (observed on GSAP 3.15.0).
 - **Reduced motion** (live): no pin, runway or translate. The track is a native horizontal scroller with mandatory
-  snap, focusable while it is one (the rail adds `tabindex="0"`: Safari never focuses a scroller itself), with a focus
-  ring. `scrollToPanel()` then scrolls the track.
-- **Without JavaScript** the same scroller keeps every panel in reach. Its rule applies while the pre-JS gate is missing
-  ([entrances.md](entrances.md) §9) and no rail has mounted (`data-scene-state` on the `data-rail` root), so a gated
-  page never turns the track into a scroller while its bundle loads.
-- **Print**: every panel in flow, one under the next, none translated.
+  snap and a focus ring, focusable (the rail adds `tabindex="0"`: Safari never focuses a scroller itself);
+  `scrollToPanel()` scrolls it.
+- **Without JavaScript** the same scroller keeps every panel in reach: its rule applies while the pre-JS gate is
+  missing ([entrances.md](entrances.md) §9) and no rail has mounted (`data-scene-state`), never while a gated page's
+  bundle loads.
+- **Print**: every panel in flow, none translated.
 - **ScrollSmoother**: `horizontalRail(el, { pin: 'gsap' })` (§5), created after the smoother ([gsap.md](gsap.md) §6).
 
 ## Traps
 
-- [ ] The wrapper is measured, never the pin; the pin is `lvh` and the content margin matches it (§1).
-- [ ] No transform on the root, pin or an ancestor; no `overflow: hidden` on an ancestor, `-x` included (§1).
+- [ ] The wrapper is measured, never the pin; the pin is `lvh`, the content margin matches; no transform or
+  `overflow: hidden` (`-x` included) on the root, pin or an ancestor (§1).
 - [ ] Three one-viewport acts give halves, not thirds; only stacked acts carry `data-scene-act`, hidden off `[inert]`
   (§2).
 - [ ] Hysteresis is a ratio of its hold; no spring or lerp feeds a mode, an act or `inert` (§3, §4).

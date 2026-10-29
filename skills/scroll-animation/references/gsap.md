@@ -107,6 +107,9 @@ const unmount = mount(document.querySelector('main')!, {
   trigger binds to it. Never call `mount()` inside a `gsap.matchMedia()` callback (§7).
 - **This is GreenSock's mistake #11 turned into a design:** kill a route's triggers when it goes and re-create them
   when it comes back. An MPA needs no cleanup on `pagehide`; a client router calls it.
+- **A client route change** keeps the order of the route contract: unmount, swap, let the router scroll,
+  `routeChanged()`, then `mount()`; in React a GSAP route's layout registers
+  `useGSAP(() => onRouteRefresh(ScrollTrigger.refresh))` ([page-transitions.md](page-transitions.md) §4).
 - **Your own GSAP code** outside a block: `const ctx = gsap.context(() => { … }, root)`, then `ctx.revert()` when the
   route goes. `ctx.add()` records work that runs later, such as a click handler's tween.
 - **Observed on 3.15.0:** a tween made in a `delayedCall`'s callback is recorded in the context the `delayedCall` was

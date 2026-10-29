@@ -186,7 +186,8 @@
     "id": "gsap-triggers-after-navigation",
     "prompt": "After navigating between pages in our Next.js app, GSAP ScrollTriggers fire twice and their start positions are off.",
     "expected_references": [
-      "references/gsap.md"
+      "references/gsap.md",
+      "references/page-transitions.md"
     ],
     "forbidden_references": [
       "references/video.md",
