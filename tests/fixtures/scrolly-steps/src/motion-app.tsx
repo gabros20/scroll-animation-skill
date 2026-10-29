@@ -2,7 +2,8 @@
 // inside the section renders useScrollyActive() as data-hook-active / data-hook-direction, so a check can compare the
 // hook with the attributes the core writes, and onStep calls land in window.__hookSteps. The section sits in its own
 // <Activity> boundary, so a check can hide and show it the way Next keeps a route alive, and it can be unmounted
-// outright. `?progress` passes progress. Server-rendered by motion-ssr.tsx, hydrated by motion-entry.tsx.
+// outright. `?progress` passes progress. `__fx.set()` changes line, query and live after the mount, and appends steps
+// (client data rendered later). Server-rendered by motion-ssr.tsx, hydrated by motion-entry.tsx.
 import { Activity, useEffect, useState } from 'react'
 
 import {
@@ -24,6 +25,7 @@ declare global {
       show(): void
       unmount(): void
       remount(): void
+      set(next: Partial<Later>): void
       scrollTo(y: number, immediate?: boolean): void
     }
     __hookSteps: ScrollyStepDetail[]
@@ -35,9 +37,25 @@ function HookProbe() {
   return <span id="hook" hidden data-hook-active={active} data-hook-direction={direction ?? 'none'} />
 }
 
-function Story({ progress }: { progress: boolean }) {
+/** What a check changes after the mount; `extra` steps are appended, all showing the last state. */
+interface Later {
+  line?: number
+  query?: string
+  live?: boolean
+  extra: number
+}
+
+function Story({ progress, later }: { progress: boolean; later: Later }) {
+  const steps = [...STEPS, ...Array.from({ length: later.extra }, () => ({ show: STATES[STATES.length - 1] }))]
   return (
-    <ScrollySteps id="scrolly" progress={progress} onStep={(detail) => (window.__hookSteps ??= []).push(detail)}>
+    <ScrollySteps
+      id="scrolly"
+      progress={progress}
+      line={later.line}
+      query={later.query}
+      live={later.live}
+      onStep={(detail) => (window.__hookSteps ??= []).push(detail)}
+    >
       <ScrollyGraphic id="graphic">
         {STATES.map((v) => (
           <ScrollyState key={v} value={v} id={`state-${v}`}>
@@ -47,7 +65,7 @@ function Story({ progress }: { progress: boolean }) {
         ))}
       </ScrollyGraphic>
       <ScrollyStepList id="steps">
-        {STEPS.map((s, i) => (
+        {steps.map((s, i) => (
           <ScrollyStep key={i} id={`step-${i}`} show={s.show}>
             <h3>Step {i}</h3>
             <p>Step {i} tells part of the story.</p>
@@ -68,12 +86,14 @@ function Story({ progress }: { progress: boolean }) {
 export function App({ progress = false }: { progress?: boolean }) {
   const [shown, setShown] = useState(true)
   const [mounted, setMounted] = useState(true)
+  const [later, setLater] = useState<Later>({ extra: 0 })
   useEffect(() => {
     window.__fx = {
       hide: () => setShown(false),
       show: () => setShown(true),
       unmount: () => setMounted(false),
       remount: () => setMounted(true),
+      set: (next) => setLater((was) => ({ ...was, ...next })),
       scrollTo: (y, immediate = true) => window.scrollTo({ top: y, behavior: immediate ? 'instant' : 'smooth' }),
     }
   }, [])
@@ -94,7 +114,7 @@ export function App({ progress = false }: { progress?: boolean }) {
         </section>
         {mounted && (
           <Activity mode={shown ? 'visible' : 'hidden'}>
-            <Story progress={progress} />
+            <Story progress={progress} later={later} />
           </Activity>
         )}
       </main>

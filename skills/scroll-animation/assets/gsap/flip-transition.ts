@@ -27,9 +27,10 @@
  *   and wraps it in a spacer, and a sticky box moves with the scroll, so the recorded boxes are wrong by the time the
  *   flip plays. The boxes are viewport coordinates: a scroll during the 0.4 s puts a target off by the distance until
  *   it lands (GSAP's documented caveat for `absolute`).
- * - One at a time per root: a flip still running is landed (progress 1) and killed before the next records its boxes,
- *   so two never stack offsets, and its promise resolves. Flip.killFlipsOf() completes a flip on the same targets
- *   started elsewhere.
+ * - One at a time per root, from the call on: a flip still running is landed (progress 1) and killed before the next
+ *   records its boxes, so two never stack offsets, and its promise resolves. One still waiting for an async change()
+ *   is killed too: its change runs to the end (it is the caller's), but it never animates, and its promise resolves
+ *   when the change does. Flip.killFlipsOf() completes a flip on the same targets started elsewhere.
  * - Reduced motion (live, read at each call): `change()` only, nothing animates, nothing inline.
  * - Timing: MOTION.route (0.4 s on CURVES.disclosure), the route morph's, since this stands in for one.
  * - React: run it from an event handler, make the change synchronous (`change: () => flushSync(() => setOpen(true))`)
@@ -37,7 +38,8 @@
  *   cleanup: useGSAP's contextSafe doesn't record it, because Flip.from runs after `change()` resolves, outside the
  *   call. Keep `data-flip-id` on the rendered elements; keys alone mean nothing to Flip.
  * - Leaves nothing: when a flip lands (or is killed), Flip clears the transforms it wrote and puts back each target's
- *   inline style, and the empty style attribute that leaves where there was none is dropped.
+ *   inline style, and the empty style attribute that leaves where there was none is dropped. A flip killed while its
+ *   change is pending takes off what its measurement wrote (the targets' parked transforms, <body>'s scroll lock).
  */
 import { Flip } from 'gsap/Flip'
 
@@ -64,12 +66,20 @@ export interface FlipTransitionOptions {
 }
 
 export interface FlipTransition extends Promise<void> {
-  /** Lands the flip at once and stops it. A flip that hasn't started yet (an async change) won't animate. */
+  /**
+   * Lands the flip at once and stops it. A flip that hasn't started yet (an async change) won't animate, and what
+   * its measurement wrote is tidied once the change resolves.
+   */
   kill(): void
 }
 
 /** Lands the flip still running in each root, so the next one starts from where things really are. */
 const running = new WeakMap<ParentNode, () => void>()
+/**
+ * Elements that had no style attribute before a flip measured them: the empty one Flip leaves is ours to drop, even
+ * when a later flip, started before this one tidied, finds it there.
+ */
+const unstyledBefore = new WeakSet<Element>()
 
 export function flipTransition(root: ParentNode, options: FlipTransitionOptions): FlipTransition {
   setupGsap({ plugins: [Flip] })
@@ -78,6 +88,10 @@ export function flipTransition(root: ParentNode, options: FlipTransitionOptions)
   const ease = options.ease ?? EASES[MOTION.route.curve]
   let killed = false
   let land: (() => void) | null = null
+  const kill = () => {
+    killed = true
+    land?.()
+  }
 
   const run = async () => {
     const before = Array.from(root.querySelectorAll(selector))
@@ -89,46 +103,64 @@ export function flipTransition(root: ParentNode, options: FlipTransitionOptions)
     }
     // Flip puts inline styles back by emptying them, and empties the body's after locking its scroll for the
     // measurement: an empty style attribute is dropped where there was none.
-    const bare = (els: Element[]) => els.filter((el) => !el.hasAttribute('style'))
+    const bare = (els: Element[]) =>
+      els.filter((el) => {
+        if (el.hasAttribute('style') && !unstyledBefore.has(el)) return false
+        unstyledBefore.add(el)
+        return true
+      })
     const unstyled = bare([...before, document.body])
     const tidy = () => {
       for (const el of unstyled) if (el.getAttribute('style') === '') el.removeAttribute('style')
     }
-    const state = Flip.getState(before)
-    await options.change()
-    if (killed) return
-    const after = Array.from(root.querySelectorAll(selector))
-    unstyled.push(...bare(after))
-    await new Promise<void>((resolve) => {
-      const flip = Flip.from(state, {
-        targets: after,
-        duration,
-        ease,
-        scale: options.scale ?? true,
-        absolute: options.absolute ?? false,
-        nested: options.nested ?? false,
-        fade: options.fade ?? false,
-        onEnter: (entering) =>
-          gsap.fromTo(entering, { opacity: 0 }, { opacity: 1, duration, ease, clearProps: 'opacity' }),
-        onComplete: resolve,
-        onInterrupt: resolve,
+    // Measuring parks each target's own translate, rotate and scale at an inline `none` (GSAP folds them into its
+    // transform), which only Flip.from's landing takes off: a flip killed before it animates takes them off itself.
+    const parked = ['translate', 'rotate', 'scale'] as const
+    const authored = before.map((el) => parked.map((name) => (el as HTMLElement).style?.getPropertyValue(name) ?? ''))
+    const unpark = () =>
+      before.forEach((el, i) => {
+        const style = (el as HTMLElement).style
+        parked.forEach((name, j) => {
+          if (style && !authored[i][j] && style.getPropertyValue(name) === 'none') style.removeProperty(name)
+        })
       })
-      // Landing it fires onComplete, which resolves the promise; Flip has cleaned up by the time progress() returns.
-      land = () => {
-        flip.progress(1).kill()
-        tidy()
+    // The root's flip from here, while change() is still pending too: a second call stops this one first.
+    running.set(root, kill)
+    try {
+      const state = Flip.getState(before)
+      await options.change()
+      if (killed) {
+        unpark()
+        return
       }
-      running.set(root, land)
-    })
-    if (running.get(root) === land) running.delete(root)
-    // After Flip's own clean-up, which runs once the callbacks have.
-    tidy()
+      const after = Array.from(root.querySelectorAll(selector))
+      unstyled.push(...bare(after))
+      await new Promise<void>((resolve) => {
+        const flip = Flip.from(state, {
+          targets: after,
+          duration,
+          ease,
+          scale: options.scale ?? true,
+          absolute: options.absolute ?? false,
+          nested: options.nested ?? false,
+          fade: options.fade ?? false,
+          onEnter: (entering) =>
+            gsap.fromTo(entering, { opacity: 0 }, { opacity: 1, duration, ease, clearProps: 'opacity' }),
+          onComplete: resolve,
+          onInterrupt: resolve,
+        })
+        // Landing it fires onComplete, which resolves the promise; Flip has cleaned up by the time progress() returns.
+        land = () => {
+          flip.progress(1).kill()
+          tidy()
+        }
+      })
+    } finally {
+      if (running.get(root) === kill) running.delete(root)
+      // After Flip's own clean-up, which runs once the callbacks have; or after a change this flip was killed during.
+      tidy()
+    }
   }
 
-  return Object.assign(run(), {
-    kill() {
-      killed = true
-      land?.()
-    },
-  })
+  return Object.assign(run(), { kill })
 }

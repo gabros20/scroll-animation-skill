@@ -1,5 +1,7 @@
 // flip.html: gsap/flip-transition.ts on a grid that opens #a into a detail (and #e enters), or reverses its order.
 // "Mounted" is nothing: the recipe is a call. destroy() kills a running flip and puts the grid back as it was.
+// `pending(view)` starts a flip whose change waits for `release()` (an async change: a fetch, a re-render), and every
+// Flip.from call is counted, so a check can tell a flip that animated from one that was stopped first.
 import { Flip } from 'gsap/Flip'
 
 import { expose } from './harness'
@@ -8,6 +10,13 @@ import { flipTransition, type FlipTransition } from '../../../../skills/scroll-a
 import { gsapCensus } from './census'
 
 setupGsap({ plugins: [Flip] })
+
+let froms = 0
+const from = Flip.from.bind(Flip)
+Flip.from = (...args: Parameters<typeof Flip.from>) => {
+  froms++
+  return from(...args)
+}
 
 const gallery = document.getElementById('gallery')!
 const IDS = ['a', 'b', 'c', 'd', 'e']
@@ -36,6 +45,7 @@ function change(view: string, reverse: boolean) {
 }
 
 let current: FlipTransition | null = null
+let pendingRelease = () => {}
 /** One entry per flip started: true once its promise has resolved. */
 const history: boolean[] = []
 const samples: Array<{ boxes: Record<string, Box>; width: string; height: string }> = []
@@ -99,5 +109,26 @@ expose<true>({
       return { ok, samples: samples.slice(), boxes: boxes(), inline: inline(), opacityE }
     },
     history: () => history.slice(),
+    froms: () => froms,
+    bodyStyle: () => document.body.getAttribute('style'),
+    /** A flip to `view` whose change lands only on release(): the first of two calls, or one killed mid-change. */
+    pending(view: string) {
+      let release = () => {}
+      const flip = flipTransition(gallery, {
+        change: () =>
+          new Promise<void>((resolve) => {
+            release = () => {
+              change(view, false)()
+              resolve()
+            }
+          }),
+      })
+      current = flip
+      const i = history.push(false) - 1
+      flip.then(() => (history[i] = true))
+      pendingRelease = () => release()
+    },
+    release: () => pendingRelease(),
+    kill: () => current?.kill(),
   },
 })

@@ -22,6 +22,7 @@
 //             plays again on return
 //   layout    the resting state costs no layout: every box and the page height are unchanged once revealed, and a
 //             resting item's computed style differs from its revealed one only in opacity, transform and clip-path
+//             (and overflow-anchor, which paints and moves nothing: a moved item is no scroll anchor)
 //   stagger   items that cross together start in document order, MOTION.lineStagger apart
 //   activity  hide and show the route (Next's Activity on Motion; teardown + display: none elsewhere): nothing
 //             replays, what was hidden stays hidden, and the engine picks up again
@@ -537,7 +538,8 @@ const CHECKS = {
     const after = await page.evaluate((props) => window.__t.layout(props), LAYOUT_PROPS)
     const styleAfter = await page.evaluate((ids) => ids.map((id) => window.__t.style(id)), VIEW)
     const moved = before.items.filter((b, i) => JSON.stringify(b) !== JSON.stringify(after.items[i]))
-    const ALLOWED = new Set(['opacity', 'transform', 'clip-path'])
+    // overflow-anchor paints and moves nothing: it keeps a moved item from anchoring a back/forward restore.
+    const ALLOWED = new Set(['opacity', 'transform', 'clip-path', 'overflow-anchor'])
     const differs = [
       ...new Set(styleBefore.flatMap((s, i) => Object.keys(s).filter((p) => s[p] !== styleAfter[i][p] && !ALLOWED.has(p)))),
     ]

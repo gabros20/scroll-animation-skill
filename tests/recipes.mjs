@@ -15,9 +15,12 @@
 // draw, stepped, scroll-well (GSAP; ?core runs the engine-free core, ?lenis runs it under Lenis),
 // scroll-well-motion (React), and the page-level recipes: flip (gsap/flip-transition.ts), layout-morph
 // (motion/LayoutMorph.tsx; ?lazy mounts it late, to see when domMax is fetched) and preloader (preloader.ts; ?fast,
-// ?hang, ?max=…, ?failsafe). WebKit tabs to links only with Option held, as Safari does by default, so its keyboard
-// checks press Alt+Tab.
+// ?hang, ?max=…, ?failsafe, ?chunks, ?video=metadata|auto: a muted inline <video> of a 2 s clip, cached in
+// tests/.scratch/clip.mp4 from `pretest` or made with ffmpeg; without either the video check is skipped). WebKit tabs
+// to links only with Option held, as Safari does by default, so its keyboard checks press Alt+Tab.
 
+import { execFileSync } from 'node:child_process'
+import { copyFileSync, existsSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -27,6 +30,7 @@ import { build, preview } from 'vite'
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const fixtureRoot = join(testsDir, 'fixtures', 'recipes')
 const outDir = join(testsDir, '.scratch', 'recipes-dist')
+const scratchClip = join(testsDir, '.scratch', 'clip.mp4')
 
 const BROWSERS = { chromium, webkit, firefox }
 const PAGES = [
@@ -86,6 +90,7 @@ async function serve() {
       rollupOptions: { input: Object.fromEntries(PAGES.map((p) => [p, join(fixtureRoot, `${p}.html`)])), onwarn },
     },
   })
+  hasClip = copyClip()
   return preview({
     root: fixtureRoot,
     configFile: false,
@@ -93,6 +98,21 @@ async function serve() {
     build: { outDir },
     preview: { host: '127.0.0.1', port: 0, strictPort: false },
   })
+}
+
+/** The preloader's video: `pretest`'s clip if it ran, else the same one made with ffmpeg; false if neither works. */
+let hasClip = false
+function copyClip() {
+  try {
+    if (!existsSync(scratchClip)) {
+      mkdirSync(dirname(scratchClip), { recursive: true })
+      execFileSync('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'testsrc=size=640x360:rate=30:duration=2', '-g', '1', '-pix_fmt', 'yuv420p', scratchClip], { stdio: 'ignore' })
+    }
+    copyFileSync(scratchClip, join(outDir, 'clip.mp4'))
+    return true
+  } catch {
+    return false
+  }
 }
 
 // ── helpers ─────────────────────────────────────────────────────────────
@@ -530,6 +550,46 @@ async function flipInterrupt(t) {
   ]
 }
 
+async function flipPending(t) {
+  // A second call while the first still waits for its async change: the first is stopped before it animates.
+  const { page } = await t.open()
+  const grid = await call(page, 'boxes')
+  await call(page, 'pending', 'detail')
+  const second = await call(page, 'flip', 'grid', true)
+  await wait(100)
+  await call(page, 'release')
+  const end = await call(page, 'landed')
+  await wait(100)
+  const history = await call(page, 'history')
+  const froms = await call(page, 'froms')
+  // kill() while the change is pending: nothing animates, and the measurement's scroll lock leaves <body> as it was.
+  const killed = await t.open()
+  const bodyBefore = await call(killed.page, 'bodyStyle')
+  await call(killed.page, 'pending', 'detail')
+  const during = await call(killed.page, 'bodyStyle')
+  await call(killed.page, 'kill')
+  await call(killed.page, 'release')
+  await wait(100)
+  const after = {
+    body: await call(killed.page, 'bodyStyle'),
+    froms: await call(killed.page, 'froms'),
+    history: await call(killed.page, 'history'),
+    inline: await call(killed.page, 'inline'),
+  }
+  return [
+    [
+      'a call while another still waits for its change stops it first: only one flip animates, both promises resolve',
+      froms === 1 && history.length === 2 && history.every(Boolean) && allAt(second.boxes, grid) && end.ok && Object.values(end.inline).every((v) => v === null),
+      `Flip.from ran ${froms}× · resolved ${history.join(',')} · second starts at #a ${boxText(second.boxes.a)} (grid ${boxText(grid.a)}) · inline ${JSON.stringify(end.inline)}`,
+    ],
+    [
+      'kill() during an async change: it never animates, its promise resolves, and <body> and the tiles keep no style attribute',
+      bodyBefore === null && after.body === null && after.froms === 0 && after.history[0] === true && Object.values(after.inline).every((v) => v === null),
+      `<body> style ${JSON.stringify(bodyBefore)} → ${JSON.stringify(during)} during → ${JSON.stringify(after.body)} · Flip.from ${after.froms}× · resolved ${after.history[0]} · inline ${JSON.stringify(after.inline)}`,
+    ],
+  ]
+}
+
 async function flipReduced(t) {
   const { page } = await t.open({ reducedMotion: 'reduce' })
   const to = await call(page, 'layout', 'detail')
@@ -725,6 +785,51 @@ async function preloaderMaximum(t) {
       `${at.state} at ${shown?.t} ms · overlay ${at.overlay} · ${at.result} · states ${[...new Set(failsafeLog.map((e) => e.state))].join(' ')}`,
     ],
   ]
+}
+
+async function preloaderWrites(t) {
+  const { page } = await t.open({ query: '?chunks' })
+  // 20 chunks of a thousandth of the fetch, one at a time; with a second asset that never settles, the mean moves half
+  // a thousandth per chunk, so --load-p (three decimals) changes every other chunk and aria-valuenow once.
+  for (let i = 0; i < 20; i++) {
+    await call(page, 'feed', 1)
+    await wait(10)
+  }
+  const s = await until(async () => {
+    const state = await call(page, 'state')
+    return { ...state, ok: state.p === '0.01' }
+  }, 2000)
+  const w = await call(page, 'writes')
+  const repeats = (list) => list.filter((v, i) => i > 0 && v === list[i - 1]).length
+  return [
+    [
+      '--load-p is written on the overlay, never <html>, and only when its rounded value changes (aria-valuenow too)',
+      s.ms !== null && w.html === 0 && repeats(w.overlay) === 0 && repeats(w.valuenow) === 0 && w.overlay.length === new Set(w.overlay).size,
+      `p ${s.p} after 20 chunks · ${w.overlay.length} --load-p writes (${w.overlay.join(' ')}) · ${w.valuenow.length} aria-valuenow (${w.valuenow.join(' ')}) · <html> ${w.html}`,
+    ],
+  ]
+}
+
+async function preloaderVideo(t) {
+  if (!hasClip) {
+    console.log('[recipes] preloader video: ffmpeg unavailable and no cached clip at tests/.scratch/clip.mp4, skipped')
+    return []
+  }
+  const out = []
+  for (const preload of ['metadata', 'auto']) {
+    const { page } = await t.open({ query: `?video=${preload}` })
+    const gone = await until(async () => {
+      const s = await call(page, 'state')
+      return { ...s, ok: s.state === 'done' }
+    })
+    const v = await call(page, 'video')
+    out.push([
+      `a muted inline <video preload="${preload}"> settles at its first frame (a WebKit-style metadata-only load is primed once), well before the maximum, paused where it was`,
+      gone.ms !== null && gone.result === 'loaded' && v.readyState >= 2 && v.paused && v.currentTime === 0 && v.plays <= 1,
+      `${gone.result} after ${gone.ms} ms · readyState ${v.readyState} · paused ${v.paused} at ${v.currentTime} s · ${v.plays} prime`,
+    ])
+  }
+  return out
 }
 
 async function preloaderReduced(t) {
@@ -1227,6 +1332,7 @@ const CHECKS = {
     responds: flipResponds,
     reorder: flipReorder,
     interrupt: flipInterrupt,
+    pending: flipPending,
     reduced: flipReduced,
     destroy: async (t) => {
       const { page } = await t.open()
@@ -1254,6 +1360,8 @@ const CHECKS = {
     responds: preloaderResponds,
     minimum: preloaderMinimum,
     maximum: preloaderMaximum,
+    writes: preloaderWrites,
+    video: preloaderVideo,
     reduced: preloaderReduced,
     destroy: async (t) => {
       // Mid-load, as a route change during one would; then once it has finished.
