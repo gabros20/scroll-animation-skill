@@ -82,7 +82,9 @@
  *   step a reader scrolls past talks over the text they are reading. Turn it on when a state carries information the
  *   steps don't (a chart's value).
  * - destroy() disconnects everything and removes the live region, and leaves the last state in place, so a route
- *   shown again (Next's Activity) doesn't flash the first state before the next mount re-reads the page.
+ *   shown again (Next's Activity) doesn't flash the first state before the next mount re-reads the page. The handle
+ *   is inert after it: refresh() and a second destroy() do nothing (a callback that kept the handle can't restart
+ *   observers nothing would disconnect); mount again for a new one.
  * - Under ScrollSmoother sticky never sticks inside #smooth-content: pin the graphic with ScrollTrigger (scroll-
  *   authority.md §5). The steps' activations are the same.
  */
@@ -125,7 +127,7 @@ export interface ScrollyStepsHandle {
   readonly mode: ScrollyMode
   /** The last --step-p written (0 without progress: true). */
   readonly progress: number
-  /** Re-read the steps and states (added or removed) and resolve again. */
+  /** Re-read the steps and states (added or removed) and resolve again. A no-op once destroyed. */
   refresh(): void
   destroy(): void
 }
@@ -243,6 +245,7 @@ export function mountScrollySteps(root: HTMLElement, options: ScrollyStepsOption
       return progress
     },
     refresh() {
+      if (destroyed) return
       collect()
       if (mode === 'sticky') {
         observe()
@@ -250,6 +253,7 @@ export function mountScrollySteps(root: HTMLElement, options: ScrollyStepsOption
       }
     },
     destroy() {
+      if (destroyed) return
       destroyed = true
       query.removeEventListener('change', onQuery)
       view.removeEventListener('resize', onResize)

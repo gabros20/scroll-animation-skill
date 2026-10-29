@@ -15,14 +15,17 @@
  *   </ScrollySteps>
  *
  *   const { active, direction } = useScrollyActive()           inside <ScrollySteps>: re-renders once per step
- *   const { active, direction } = useScrollySteps(ref, opts)   your own markup
+ *   const { active, direction, refresh } = useScrollySteps(ref, opts)   your own markup
  *
  * - The server renders the plain markup, which reads stacked without JavaScript; css/scrolly.css lays it out side by
  *   side before hydration where the core will choose sticky, so hydrating shifts nothing. The core owns every
  *   attribute it writes (data-scrolly-active, data-step-state, data-state-active, inert, aria-hidden), so nothing here
  *   renders them and a re-render never fights it.
  * - `line`, `query`, `live` and `side` render as the root's data-scrolly-* attributes: the CSS reads them before the
- *   core mounts (a root with its own `query` stays stacked until then, the one documented layout shift).
+ *   core mounts (a root with its own `query` stays stacked until then, the one documented layout shift). A change of
+ *   `line`, `query` or `live` (or `progress`) mounts the core again with it.
+ * - Steps or states rendered later (client data): <ScrollySteps> re-reads them whenever its children change; with
+ *   your own markup, call the hook's `refresh()` in an effect after they render (useScrollyActive() has it too).
  * - `active` and `direction` are a useSyncExternalStore subscription: they change once per step, never per frame. On
  *   the server and through hydration they are { active: 0, direction: null }. For per-frame work inside a step pass
  *   `progress` and read --step-p in CSS, or onProgress; never React state.
@@ -39,6 +42,7 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -49,12 +53,18 @@ import {
 import {
   mountScrollySteps,
   type ScrollyDirection,
+  type ScrollyStepsHandle,
   type ScrollyStepsOptions,
 } from '../scrolly-steps'
 
 export interface ScrollyActive {
   active: number
   direction: ScrollyDirection
+}
+
+export interface ScrollyStepsState extends ScrollyActive {
+  /** Re-read the steps and states after they changed (the core's refresh()); stable, and a no-op before the mount. */
+  refresh(): void
 }
 
 export type UseScrollyStepsOptions = Pick<
@@ -72,7 +82,7 @@ const readOnServer = () => SERVER
 export function useScrollySteps(
   rootRef: RefObject<HTMLElement | null>,
   { line, query, progress, live, onStep, onMode, onProgress }: UseScrollyStepsOptions = {},
-): ScrollyActive {
+): ScrollyStepsState {
   const [store] = useState(createStepStore)
   const handlers = useRef<Handlers>({})
   // The latest callbacks, without remounting the core when their identity changes.
@@ -86,14 +96,17 @@ export function useScrollySteps(
     },
     [store, rootRef, line, query, progress, live],
   )
-  return useSyncExternalStore(subscribe, store.read, readOnServer)
+  const state = useSyncExternalStore(subscribe, store.read, readOnServer)
+  return useMemo(() => ({ ...state, refresh: store.refresh }), [state, store])
 }
 
 /** The active step as a store: read by React while it renders, written by the core only when the step changes. */
 function createStepStore() {
   let snapshot: ScrollyActive = SERVER
+  let current: ScrollyStepsHandle | null = null
   return {
     read: () => snapshot,
+    refresh: () => current?.refresh(),
     mount(
       root: HTMLElement,
       options: Pick<ScrollyStepsOptions, 'line' | 'query' | 'progress' | 'live'>,
@@ -112,17 +125,21 @@ function createStepStore() {
         onMode: (mode, handle) => handlers.current.onMode?.(mode, handle),
         onProgress: (p, handle) => handlers.current.onProgress?.(p, handle),
       })
-      return () => scrolly.destroy()
+      current = scrolly
+      return () => {
+        if (current === scrolly) current = null
+        scrolly.destroy()
+      }
     },
   }
 }
 
 // ── components ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
-const ScrollyContext = createContext<ScrollyActive>(SERVER)
+const ScrollyContext = createContext<ScrollyStepsState>({ ...SERVER, refresh: () => {} })
 
-/** The enclosing <ScrollySteps>' active step and direction: re-renders once per step. */
-export function useScrollyActive(): ScrollyActive {
+/** The enclosing <ScrollySteps>' active step and direction (and its refresh): re-renders once per step. */
+export function useScrollyActive(): ScrollyStepsState {
   return useContext(ScrollyContext)
 }
 
@@ -145,14 +162,30 @@ export function ScrollySteps({
   ...rest
 }: ScrollyStepsProps) {
   const ref = useRef<HTMLElement>(null)
-  // The core reads line, query and live from the attributes, so the CSS sees what it sees before it mounts.
-  const state = useScrollySteps(ref, { progress, onStep, onMode, onProgress })
+  // line, query and live also render as attributes below, so the CSS sees them before the core mounts; the core
+  // takes the line as rounded there.
+  const percent = line === undefined ? undefined : Math.round(line * 1000) / 10
+  const state = useScrollySteps(ref, {
+    line: percent === undefined ? undefined : percent / 100,
+    query,
+    progress,
+    live,
+    onStep,
+    onMode,
+    onProgress,
+  })
+  // New children may carry new steps or states (client data): the core re-reads them. A re-render with the same
+  // children (a step change re-renders this) doesn't.
+  const { refresh } = state
+  useIsomorphicLayoutEffect(() => {
+    refresh()
+  }, [children, refresh])
   return (
     <section
       {...rest}
       ref={ref}
       data-scrolly=""
-      data-scrolly-line={line === undefined ? undefined : String(Math.round(line * 1000) / 10)}
+      data-scrolly-line={percent === undefined ? undefined : String(percent)}
       data-scrolly-query={query}
       data-scrolly-live={live ? '' : undefined}
       data-scrolly-side={side === 'start' ? 'start' : undefined}

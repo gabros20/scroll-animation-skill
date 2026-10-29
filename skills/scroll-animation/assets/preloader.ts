@@ -14,12 +14,22 @@
  *   })
  *   const result = await loading.done      // 'loaded' | 'timeout': the overlay is gone     loading.destroy()
  *
- * - Progress is real: each asset counts equally, and --load-p (on <html>, 0 to 1) is their mean, written only
- *   upwards. An <img> settles when decode() does (don't list a loading="lazy" one: it never loads off screen); a
- *   <video> counts its buffered fraction and settles at `canplaythrough` (give it preload="auto"); a FontFaceSet
- *   (document.fonts) at `ready`; a URL string is fetched and counts its bytes against Content-Length (it lands in the
- *   HTTP cache for the real request); any promise settles when it does. A failure settles too: a broken asset never
- *   holds the page. --load-p reaches 1 exactly when the last one settles, never before.
+ * - Progress is real: each asset counts equally, and --load-p (0 to 1) is their mean, written only upwards and only
+ *   when its rounded value changes, on the overlay (or `progressOn`), so each write restyles that subtree, never the
+ *   whole document. An <img> settles when decode() does (don't list a loading="lazy" one: it never loads off
+ *   screen); a FontFaceSet (document.fonts) at `ready`; a URL string is fetched and counts its bytes against
+ *   Content-Length (it lands in the HTTP cache for the real request); any promise settles when it does. A failure
+ *   settles too: a broken asset never holds the page. --load-p reaches 1 exactly when the last one settles.
+ * - A <video> settles at `loadeddata`, its first frame: what a first screen needs to show it (playing through is the
+ *   page's business, not the overlay's). It counts its buffered fraction until then. iOS loads only metadata for a
+ *   video that has never played (`preload` is a hint it ignores; references/video.md §11), and so does desktop
+ *   WebKit for preload="metadata" (measured: loadedmetadata, then the network idles at readyState 1). So, like the
+ *   video controller, a video that has its metadata but no frame and still sits idle 200 ms later (Chromium and
+ *   Firefox reach the frame 4 to 30 ms after the metadata) is primed once: a muted play(), paused at once and put
+ *   back where it was (iOS 18.3 simulator: the first frame 240 ms after the metadata; unprimed, `maxMs` ran out at
+ *   readyState 1). Give it `muted playsinline` (only those may play unasked, and an iPhone takes a video without
+ *   playsinline fullscreen) and preload="metadata" or "auto": preload="none" fetches nothing, and an unmuted video
+ *   waits out `maxMs`. Refused (Low Power Mode), it waits out `maxMs` too.
  * - A minimum, only to avoid a flash: once everything has settled the overlay stays until `minMs` (300) after mount.
  *   Keep it at or under 300 ms. A maximum, the failsafe: after `maxMs` (4000, the CSS failsafe's 4 s in
  *   css/animation.css) the page shows anyway and `done` resolves 'timeout'. If that failsafe already fired
@@ -55,6 +65,8 @@ export interface PreloaderOptions {
   minMs?: number
   /** Ms after mount when the page shows whatever is still loading. Default 4000. */
   maxMs?: number
+  /** Where --load-p is written: the element whose subtree draws the progress. Default: the overlay. */
+  progressOn?: HTMLElement
 }
 
 export type PreloaderResult = 'loaded' | 'timeout'
@@ -70,12 +82,15 @@ export interface PreloaderHandle {
 
 const STATE = 'preloaderState'
 const PROGRESS = '--load-p'
+/** How long a video may idle at its metadata before it is primed. */
+const PRIME_AFTER_MS = 200
 /** Below 1 until the last asset has settled, however many there are. */
 const UNSETTLED_MAX = 0.999
 
 export function mountPreloader(overlay: HTMLElement, options: PreloaderOptions): PreloaderHandle {
   const html = document.documentElement
-  const htmlHadStyle = html.hasAttribute('style')
+  const target = options.progressOn ?? overlay
+  const targetHadStyle = target.hasAttribute('style')
   const minMs = options.minMs ?? 300
   const maxMs = options.maxMs ?? 4000
   const start = performance.now()
@@ -90,14 +105,19 @@ export function mountPreloader(overlay: HTMLElement, options: PreloaderOptions):
   const cleanups: Array<() => void> = []
   const timers: number[] = []
   let p = 0
+  let written: string | null = null
+  let valuenow: string | null = null
   let phase: 'loading' | 'leaving' | 'done' | 'destroyed' = 'loading'
   let fade: Animation | null = null
   let resolveDone: (result: PreloaderResult) => void = () => {}
   const done = new Promise<PreloaderResult>((resolve) => (resolveDone = resolve))
 
+  // Only a change is written: every write restyles the target's subtree, and a fetch reports per chunk.
   const write = () => {
-    html.style.setProperty(PROGRESS, String(Math.round(p * 1000) / 1000))
-    if (progressbar) overlay.setAttribute('aria-valuenow', String(Math.round(p * 100)))
+    const value = String(Math.round(p * 1000) / 1000)
+    if (value !== written) target.style.setProperty(PROGRESS, (written = value))
+    const now = String(Math.round(p * 100))
+    if (progressbar && now !== valuenow) overlay.setAttribute('aria-valuenow', (valuenow = now))
   }
 
   const report = (i: number, fraction: number) => {
@@ -189,8 +209,8 @@ export function mountPreloader(overlay: HTMLElement, options: PreloaderOptions):
       }
       if (progressbar) overlay.removeAttribute('aria-valuenow')
       delete html.dataset[STATE]
-      html.style.removeProperty(PROGRESS)
-      if (!htmlHadStyle && html.getAttribute('style') === '') html.removeAttribute('style')
+      target.style.removeProperty(PROGRESS)
+      if (!targetHadStyle && target.getAttribute('style') === '') target.removeAttribute('style')
     },
   }
 }
@@ -212,23 +232,10 @@ function track(asset: PreloadAsset, progress: (fraction: number) => void, settle
     }
   }
   if (asset instanceof HTMLVideoElement) {
-    // HAVE_ENOUGH_DATA is what canplaythrough announces.
-    if (asset.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
-      queueMicrotask(once)
-      return () => (live = false)
-    }
-    const onProgress = () => {
-      const { buffered, duration } = asset
-      if (!buffered.length || !Number.isFinite(duration) || duration <= 0) return
-      progress(buffered.end(buffered.length - 1) / duration)
-    }
-    const events = ['canplaythrough', 'error'] as const
-    asset.addEventListener('progress', onProgress)
-    events.forEach((type) => asset.addEventListener(type, once))
+    const stop = trackVideo(asset, progress, once, () => live)
     return () => {
       live = false
-      asset.removeEventListener('progress', onProgress)
-      events.forEach((type) => asset.removeEventListener(type, once))
+      stop()
     }
   }
   const pending =
@@ -239,6 +246,60 @@ function track(asset: PreloadAsset, progress: (fraction: number) => void, settle
         : asset
   Promise.resolve(pending).then(once, once)
   return () => (live = false)
+}
+
+/** A video settles at its first frame (HAVE_CURRENT_DATA, loadeddata's), primed once if it idles short of it. */
+function trackVideo(
+  video: HTMLVideoElement,
+  progress: (fraction: number) => void,
+  once: () => void,
+  live: () => boolean,
+): () => void {
+  let primed = false
+  let wait = 0
+  const settled = () => video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
+  if (settled()) {
+    queueMicrotask(once)
+    return () => {}
+  }
+  const onProgress = () => {
+    const { buffered, duration } = video
+    if (!buffered.length || !Number.isFinite(duration) || duration <= 0) return
+    progress(buffered.end(buffered.length - 1) / duration)
+  }
+  // Metadata, no frame, the network idle: iOS's never-played video (and WebKit's preload="metadata") stops here.
+  const prime = () => {
+    if (primed || !live() || settled() || !video.paused || !video.muted || !video.playsInline) return
+    const idle = video.networkState === HTMLMediaElement.NETWORK_IDLE
+    if (video.readyState < HTMLMediaElement.HAVE_METADATA || !idle) return
+    primed = true
+    const at = video.currentTime
+    video.play().then(
+      () => {
+        if (video.autoplay) return
+        // Put back once the pause has landed: the playhead it stops at is final only then (iOS: 8 ms on).
+        video.addEventListener('pause', () => video.currentTime !== at && (video.currentTime = at), { once: true })
+        video.pause()
+      },
+      () => {},
+    )
+  }
+  const later = () => {
+    clearTimeout(wait)
+    wait = window.setTimeout(prime, PRIME_AFTER_MS)
+  }
+  const settleOn = ['loadeddata', 'error'] as const
+  const primeOn = ['loadedmetadata', 'suspend'] as const
+  video.addEventListener('progress', onProgress)
+  settleOn.forEach((type) => video.addEventListener(type, once))
+  primeOn.forEach((type) => video.addEventListener(type, later))
+  later()
+  return () => {
+    clearTimeout(wait)
+    video.removeEventListener('progress', onProgress)
+    settleOn.forEach((type) => video.removeEventListener(type, once))
+    primeOn.forEach((type) => video.removeEventListener(type, later))
+  }
 }
 
 /** Fetches `url` to the end, reporting received bytes against Content-Length when the server sends one. */

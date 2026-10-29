@@ -6,7 +6,8 @@
 // --step-p is monotonic within a step and nothing runs off-screen; a breakpoint switch and a reduced-motion toggle keep
 // the active step; keyboard focus activates its step; the graphic stays in the section, the last step reaches the line
 // and mounting shifts nothing; no scroll listener; the crossfade's numbers are config.ts's; the React wrapper's hook
-// agrees with the attributes and survives Activity. Builds tests/fixtures/scrolly-steps with Vite (the React page's
+// agrees with the attributes and survives Activity; a destroyed handle stays inert; the React wrapper follows later
+// changes of line, query and live, and steps rendered after the mount. Builds tests/fixtures/scrolly-steps with Vite (the React page's
 // server render first, for Node), serves it with `vite preview`, prints one PASS/FAIL line per check/page/browser, and
 // exits 1 on any FAIL. Needs the Playwright browsers, so it is its own script: `npm run test:scrolly-steps`.
 //
@@ -864,6 +865,79 @@ const CHECKS = {
       return out
     },
   },
+  later: {
+    pages: ['native', 'motion'],
+    async run(t) {
+      const { page } = await t.open()
+      if (t.page === 'native') {
+        // A callback that kept the handle (onStep hands it over) calls it after the teardown.
+        const after = await page.evaluate(() => {
+          const handle = window.__fx.handle()
+          const before = window.__t.liveObservers()
+          window.__fx.destroy()
+          const destroyed = window.__t.liveObservers()
+          handle.refresh()
+          const refreshed = window.__t.liveObservers()
+          handle.destroy()
+          return { before, destroyed, refreshed, listeners: window.__t.liveBlockListeners() }
+        })
+        return [
+          [
+            'destroy() leaves the handle inert: refresh() after it starts no observer, a second destroy() is a no-op',
+            after.before === 2 && after.destroyed === 0 && after.refreshed === 0 && after.listeners.length === 0,
+            `observers: ${after.before} mounted → ${after.destroyed} destroyed → ${after.refreshed} after refresh() · listeners ${after.listeners.join(',') || 'none'}`,
+          ],
+        ]
+      }
+      const out = []
+      const read = () =>
+        page.evaluate(() => ({
+          line: document.querySelector('[data-scrolly]').style.getPropertyValue('--scrolly-line'),
+          lineY: window.__t.lineY(),
+          live: window.__t.live(),
+          mode: window.__t.mode(),
+          observers: window.__t.liveObservers(),
+        }))
+      const was = await read()
+      await page.evaluate(() => window.__fx.set({ line: 0.4, live: true }))
+      await page.evaluate(() => window.__t.frames(4))
+      const now = await read()
+      // Step 1's top 30 px below the new line, so above the old one: under the old line it would be active.
+      await jump(page, await lineAt(page, 1, -30))
+      const at = await page.evaluate(() => window.__t.active())
+      const lineOk = at === 0
+      out.push([
+        '<ScrollySteps line live> changed after the mount: the core mounts again with them (the line moves, the live region appears)',
+        was.line === '0.5' && now.line === '0.4' && was.live === null && now.live?.live === 'polite' && now.observers === 2 && lineOk,
+        `--scrolly-line ${was.line} → ${now.line} · line ${was.lineY} → ${now.lineY} px · live ${JSON.stringify(was.live)} → ${JSON.stringify(now.live)} · ${now.observers} observers · active ${at}`,
+      ])
+      await page.evaluate(() => window.__fx.set({ query: '(min-width: 4000px)' }))
+      const stacked = await until(page, () => window.__t.mode() === 'stacked', null, 3000)
+      const q = await read()
+      await page.evaluate(() => window.__fx.set({ query: undefined }))
+      const sticky = await until(page, () => window.__t.mode() === 'sticky', null, 3000)
+      out.push([
+        '<ScrollySteps query> changed after the mount: a query that no longer matches stacks the section; back, sticky again',
+        stacked !== null && q.observers === 0 && sticky !== null,
+        `stacked ${stacked !== null} with ${q.observers} observers · sticky again ${sticky !== null}`,
+      ])
+      // Two steps rendered after the mount: the core collects them, and the last becomes active at the line.
+      await page.evaluate(() => window.__fx.set({ extra: 2 }))
+      await page.evaluate(() => window.__t.frames(4))
+      const last = LAST + 2
+      const present = await page.evaluate((n) => !!document.getElementById(`step-${n}`), last)
+      await jump(page, Math.min(await lineAt(page, last, 20), await page.evaluate(() => window.__t.maxScroll())))
+      const [addedOk, active] = await activeBecomes(page, last)
+      const hook = await page.evaluate(() => window.__t.hook())
+      out.push([
+        'steps rendered after the mount (client data): <ScrollySteps> re-reads them, so a new step activates at the line',
+        present && addedOk && hook?.[0] === last,
+        `step-${last} rendered ${present} · active ${active} (expected ${last}) · hook ${hook}`,
+      ])
+      return out
+    },
+  },
+
   // fixtures/scrolly-steps/src/gsap.ts: the reference's snippet. The core mounts once; gsap.matchMedia builds the
   // timeline per breakpoint and seeks it to the core's step; onStep tweens to the next label, seeks on a mount report.
   gsap: {

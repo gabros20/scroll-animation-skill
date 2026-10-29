@@ -2,15 +2,18 @@
 // The fixture's routes: Home (Lenis on GSAP's ticker, a ScrollTrigger pin with spacing, three triggers below it, a
 // hash target), More (Lenis too, under the same layout, so Lenis lives on across the navigation) and Journal (native,
 // two triggers, a hash target). More and Journal are shorter than Home, so a restore measured against the wrong page
-// clamps. Every trigger logs its refreshes to window.__rhLog for tests/route-hygiene.mjs.
+// clamps. Streamed (Lenis, same layout) streams in: loading.tsx first, then the page, then a section inside it, and
+// `?long=1` lengthens it without changing the pathname. Every trigger logs its refreshes to window.__rhLog for
+// tests/route-hygiene.mjs.
 import { useGSAP } from '@gsap/react'
 import type Lenis from 'lenis'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { useRef, useState, type ReactNode } from 'react'
 
 import { gsap, ScrollTrigger, setupGsap } from '@/animation/gsap/setup'
 import { gsapDriver, type Driver } from '@/animation/smooth/lenis'
+import { onRouteRefresh } from '@/animation/smooth/route'
 import { RouteChange, SmoothScroll } from '@/animation/smooth/SmoothScroll'
 
 declare global {
@@ -38,20 +41,24 @@ const driver: Driver = (lenis) => {
   }
 }
 
-const refresh = () => ScrollTrigger.refresh()
+// The checks turn the route hygiene off through sessionStorage to measure what happens without it: a route that
+// never changes never runs it, and `settle={0}` keeps a fresh load from watching.
+const useContractOff = () => useState(() => typeof window !== 'undefined' && sessionStorage.getItem('rh:contract') === 'off')[0]
 
-/**
- * The route hygiene, around the root layout's children (smooth/route.ts). The checks turn it off through
- * sessionStorage to measure what happens without it: a route that never changes never runs it.
- */
+/** The route hygiene, around the root layout's children (smooth/route.ts). No refresh here: the routes register theirs. */
 export function RouteScroll({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const [off] = useState(() => typeof window !== 'undefined' && sessionStorage.getItem('rh:contract') === 'off')
+  const off = useContractOff()
   return (
-    <RouteChange route={off ? 'off' : pathname} refresh={refresh}>
+    <RouteChange route={off ? 'off' : pathname} settle={off ? 0 : undefined}>
       {children}
     </RouteChange>
   )
+}
+
+/** Every route here makes triggers, so each route layout registers the refresh while it's shown. */
+function useRouteRefresh() {
+  useGSAP(() => onRouteRefresh(ScrollTrigger.refresh))
 }
 
 /** A trigger in the persistent layout: a reading progress over the whole page, which no navigation re-creates. */
@@ -63,6 +70,7 @@ export function LayoutProgress() {
 }
 
 export function LenisRoute({ children }: { children: ReactNode }) {
+  useRouteRefresh()
   return (
     <SmoothScroll authority="lenis" driver={driver}>
       {children}
@@ -71,6 +79,7 @@ export function LenisRoute({ children }: { children: ReactNode }) {
 }
 
 export function NativeRoute({ children }: { children: ReactNode }) {
+  useRouteRefresh()
   return <SmoothScroll authority="native">{children}</SmoothScroll>
 }
 
@@ -130,6 +139,7 @@ export function Home({ base }: { base: string }) {
           ['journal', `${base}/journal`, 'Journal'],
           ['journal-hash', `${base}/journal#notes`, 'Notes'],
           ['more', `${base}/more`, 'More'],
+          ...(base ? [] : [['streamed', '/streamed', 'Streamed'] as [string, string, string]]),
         ]}
       />
       <section className="screen">Home</section>
@@ -212,6 +222,61 @@ export function More({ base }: { base: string }) {
         k2
       </section>
       <section className="tail">end</section>
+    </div>
+  )
+}
+
+export function Streamed({ long, children }: { long: boolean; children: ReactNode }) {
+  const root = useRef<HTMLDivElement>(null)
+  // The page's content follows its search params, so a change of them is a route change here (smooth/route.ts).
+  const search = useSearchParams().toString()
+  const off = useContractOff()
+  useGSAP(
+    () => {
+      // s2 sits below the streamed section and the `long` blocks, so both move it.
+      for (const id of ['s1', 's2']) {
+        ScrollTrigger.create({ id: `streamed-${id}`, trigger: `#${id}`, start: 'top 80%', end: 'bottom top', onRefresh: logRefresh })
+      }
+    },
+    { scope: root },
+  )
+  return (
+    <RouteChange route={off ? 'off' : search} settle={off ? 0 : undefined}>
+      <div ref={root} data-route="streamed" data-streamed={long ? 'long' : 'short'}>
+        <Nav
+          links={[
+            ['home', '/', 'Home'],
+            ['streamed-long', '/streamed?long=1', 'Long'],
+            ['streamed-short', '/streamed', 'Short'],
+          ]}
+        />
+        <section className="screen">Streamed</section>
+        <section className="block" id="s1">
+          s1
+        </section>
+        {children}
+        {long &&
+          ['l1', 'l2', 'l3'].map((id) => (
+            <section key={id} className="block">
+              {id} (?long=1)
+            </section>
+          ))}
+        <section className="block" id="s2">
+          s2
+        </section>
+        <section className="tail">end</section>
+      </div>
+    </RouteChange>
+  )
+}
+
+/** The section that streams in after the page: three blocks where the fallback held one. */
+export function StreamedSection() {
+  return (
+    <div data-streamed-section>
+      <section className="block">streamed 1</section>
+      <section className="block">streamed 2</section>
+      <section className="block">streamed 3</section>
     </div>
   )
 }

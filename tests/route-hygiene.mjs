@@ -22,16 +22,22 @@
 // The sequence, on one page per (browser, variant, prefix, contract):
 //   load Home → scroll to Y1 → link to Journal → scroll to Y2 → back → forward → link to Home#after → link to
 //   Journal#notes → link to Home → link to More (Lenis lives on) → back → a flick of the wheel, and while Lenis still
-//   glides: link to More, back to Home, link to Journal. After each step:
+//   glides: link to More, back to Home, link to Journal. Then, outside /vt: link to Home → link to Streamed (loading.tsx
+//   commits first, then the page, then a section inside it streams in) → link to /streamed?long=1 → link to /streamed
+//   (search-param navigations: the pathname holds), and a fresh load of Streamed whose HTML arrives in one piece
+//   (React then reveals the streamed content after `load`, past ScrollTrigger's own refresh, in Chromium). After each
+//   step, once the step's content has landed:
 //   authority   exactly one `data-scroll-authority` stamp, the route's; one live Lenis on Home, none and no
 //               html.lenis on Journal
 //   triggers    ScrollTrigger.getAll() holds the shown route's triggers only (hidden routes' killed or disabled), as
-//               many as a fresh load of that route, each with a fresh load's start and end (±1 px)
+//               many as a fresh load of that route, each with a fresh load's start and end (±1 px; on Streamed, the
+//               fresh load once its streamed section shows, refreshed: the numbers its content gives)
 //   scroll      a link lands at the top (or the hash target under --header-h); back and forward restore the position
 //               the route had; on Home, Lenis's animated and target scroll agree with scrollY and a wheel notch
 //               carries on from there
 //   transition  every refresh logged during the navigation saw the trigger's own route alone (no half-swapped DOM),
 //               and Lenis never smoothed the jump (no frame with isScrolling 'smooth')
+//   limit       on Streamed, Lenis's limit is the page's scroll height less the viewport, as streamed
 
 import { spawn, spawnSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
@@ -286,6 +292,7 @@ function probes(contractOff) {
         routes,
         triggers,
         y: window.scrollY,
+        max: document.documentElement.scrollHeight - window.innerHeight,
         lenis: lenis ? { animated: lenis.animatedScroll, target: lenis.targetScroll, limit: lenis.limit, scrolling: lenis.isScrolling } : null,
         hashTop: location.hash ? target(decodeURIComponent(location.hash.slice(1))) : null,
         restoration: history.scrollRestoration,
@@ -387,7 +394,7 @@ function scrollOf(s, expect) {
 function transitionOf(rec, s, { expectVT, kind, from, momentum }) {
   const refreshes = rec.log.filter((e) => e.kind === 'refresh')
   // A route's trigger ids start with the route; the layout's (layout-progress) belongs to every route.
-  const owner = (id) => ['home', 'more', 'journal'].find((r) => String(id).startsWith(`${r}-`)) ?? null
+  const owner = (id) => ['home', 'more', 'journal', 'streamed'].find((r) => String(id).startsWith(`${r}-`)) ?? null
   const swapped = refreshes.filter((e) => e.routes.length !== 1 || (owner(e.id) && e.routes[0] !== owner(e.id)))
   const frames = momentum ? rec.frames.slice(rec.frames.findIndex((f) => f.p === s.path)) : rec.frames
   const smooth = frames.filter((f) => f.s === 'smooth').length
@@ -405,20 +412,31 @@ function transitionOf(rec, s, { expectVT, kind, from, momentum }) {
   ]
 }
 
-// A fresh load's triggers, per browser and app: the contract changes navigations, never a fresh load.
+// A fresh load's triggers, per browser and app: the contract changes navigations, never a fresh load's numbers. A
+// streamed route's are read once its section shows and after one refresh: what its content measures, whether or not
+// this load's own refresh came after the reveal (the 'fresh load' step checks that).
 const freshCache = new Map()
 async function freshTriggers(context, base, prefix) {
   const key = `${context.browser().browserType().name()} ${base}${prefix}`
   if (freshCache.has(key)) return freshCache.get(key)
   const out = {}
-  for (const [route, path] of [
+  for (const [route, url] of [
     ['home', prefix || '/'],
     ['more', `${prefix}/more`],
     ['journal', `${prefix}/journal`],
+    ...(prefix ? [] : [
+      ['streamed', '/streamed'],
+      ['streamed-long', '/streamed?long=1'],
+    ]),
   ]) {
     const page = await context.newPage()
-    await page.goto(`${base}${path}`, { waitUntil: 'load' })
-    const s = await settle(page, path)
+    await page.goto(`${base}${url}`, { waitUntil: 'load' })
+    if (route.startsWith('streamed')) {
+      await page.waitForSelector('[data-streamed-section]', { state: 'visible', timeout: 10000 })
+      await settle(page, '/streamed')
+      await page.evaluate(() => window.__rhST.refresh())
+    }
+    const s = await settle(page, url.split('?')[0])
     out[route] = s.triggers.map(({ id, start, end }) => ({ id, start, end }))
     await page.close()
   }
@@ -441,18 +459,23 @@ async function sequence({ browser, base, prefix, contract, line }) {
     const more = `${prefix}/more`
     const journal = `${prefix}/journal`
     const expectVT = prefix === '/vt'
-    const at = (path) => (path === journal ? 'journal' : path === more ? 'more' : 'home')
+    const at = (path) => (path === journal ? 'journal' : path === more ? 'more' : path === '/streamed' ? 'streamed' : 'home')
 
-    const step = async (name, path, act, expect, kind = 'link', momentum = false) => {
+    // `ready`: a selector the step's content shows once it has landed (a streamed route); `route`: the fresh load to
+    // compare with, when the pathname alone doesn't say (a search-param navigation).
+    const step = async (name, path, act, expect, kind = 'link', momentum = false, { ready, route = at(path) } = {}) => {
       const from = await page.evaluate(() => window.scrollY)
       await page.evaluate(() => window.__rh.record())
       await act()
+      if (ready) await page.waitForSelector(ready, { state: 'attached', timeout: 10000 })
       const s = await settle(page, path)
       const rec = await page.evaluate(() => window.__rh.stopRecord())
-      const route = at(path)
       line(...authorityOf(s, route), `${name}: authority`)
       line(...triggersOf(s, fresh[route]), `${name}: triggers`)
       if (expect) line(...scrollOf(s, expect), `${name}: scroll`)
+      if (ready && s.lenis) {
+        line(near(s.lenis.limit, s.max), `Lenis limit ${Math.round(s.lenis.limit)}, page ${s.max}`, `${name}: limit`)
+      }
       if (act !== noop) line(...transitionOf(rec, s, { expectVT, kind, from, momentum }), `${name}: transition`)
       return s
     }
@@ -500,6 +523,58 @@ async function sequence({ browser, base, prefix, contract, line }) {
     await step('link to More again', more, to('more'), { y: 0 })
     await step('flick, then back to Home', home, flickThen(null), { y: Y1 }, 'traverse', true)
     await step('flick, then link to Journal', journal, flickThen('journal'), { y: 0 }, 'link', true)
+
+    if (!prefix) {
+      const streamed = '/streamed'
+      const landed = (kind) => `[data-streamed="${kind}"] [data-streamed-section]`
+      await step('link to Home (for Streamed)', home, to('home'), { y: 0 })
+      await step('link to Streamed (loading.tsx, then a streamed section)', streamed, to('streamed'), { y: 0 }, 'link', false, {
+        ready: landed('short'),
+      })
+      await step('search params: link to /streamed?long=1', streamed, to('streamed-long'), null, 'link', false, {
+        ready: landed('long'),
+        route: 'streamed-long',
+      })
+      await step('search params: link to /streamed', streamed, to('streamed-short'), null, 'link', false, { ready: landed('short') })
+
+      // A fresh load, its HTML held back and delivered in one piece: React reveals the page and its section in one
+      // batch ~300 ms later, often after `load` and ScrollTrigger's own refresh (Chromium; WebKit and Firefox hydrate
+      // after the reveal). What layout-progress held at the reveal says whether this load raced; up to 4 loads.
+      const freshLate = async () => {
+        const late = await context.newPage()
+        late.on('pageerror', (e) => errors.push(e.message))
+        await late.addInitScript(() => {
+          new MutationObserver((_, mo) => {
+            const section = document.querySelector('[data-streamed-section]')
+            if (!section || !section.getClientRects().length) return
+            mo.disconnect()
+            const t = window.__rhST?.getById('layout-progress')
+            window.__rhReveal = { end: t ? Math.round(t.end) : null, max: document.documentElement.scrollHeight - innerHeight }
+          }).observe(document, { subtree: true, childList: true, attributes: true })
+        })
+        await late.route(`${base}${streamed}`, async (r) => {
+          const res = await r.fetch()
+          await r.fulfill({ response: res, body: await res.body() })
+        })
+        await late.goto(`${base}${streamed}`, { waitUntil: 'load' })
+        await late.waitForSelector(landed('short'), { state: 'visible', timeout: 10000 })
+        const s = await settle(late, streamed)
+        const reveal = await late.evaluate(() => window.__rhReveal ?? null)
+        await late.close()
+        return { s, reveal, raced: reveal?.end != null && reveal.end < reveal.max - 1 }
+      }
+      let late
+      let loads = 0
+      do {
+        late = await freshLate()
+        loads++
+      } while (!late.raced && loads < 4)
+      const [ok, detail] = triggersOf(late.s, fresh.streamed)
+      const raced = late.raced
+        ? `layout-progress 0–${late.reveal.end} at the reveal (page 0–${late.reveal.max})`
+        : `revealed before the first refresh in ${loads} load(s): not raced here`
+      line(ok, `${raced} · ${detail}`, 'fresh load of Streamed, revealed after load: triggers')
+    }
   } finally {
     await context.close()
   }

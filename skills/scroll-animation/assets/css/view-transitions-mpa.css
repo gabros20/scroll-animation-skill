@@ -1,11 +1,17 @@
 /*
  * css/view-transitions-mpa.css: cross-document view transitions for a multi-page site (every navigation loads a new
- * document: a static site, Astro without its router, a server-rendered site). Import it on EVERY page, next to
- * css/view-transitions.css, which holds what the transition looks like. Both documents must opt in, or the
- * navigation just loads.
+ * document: a static site, Astro without its router, a server-rendered site). Put it on EVERY page, inline in a
+ * <style> in <head>, next to css/view-transitions.css, which holds what the transition looks like. Both documents
+ * must opt in, or the navigation just loads.
+ *
+ * Inline, not bundled: the browser reads the incoming page's opt-in as it reveals that page, and a rule that reaches
+ * it only through a linked stylesheet can come too late. Measured in Chromium 153 on the site (f0d68f3): with this
+ * rule only in the bundled CSS, 4 of 8 navigations into a page were skipped ("ViewTransition opt-in disabled"); with
+ * it inline in <head>, 8 of 8 ran. A build step that copies this file's text into a <style> keeps the file the
+ * block's own (site/plugins/animation-html.ts does that from a placeholder).
  *
  * Its own file because @view-transition is an at-rule: no selector can scope it to some pages, so a project opts
- * in by importing the file. A single-page app (Next, React Router) never imports it: its navigations stay in one
+ * in page by page. A single-page app (Next, React Router) never imports it: its navigations stay in one
  * document, and React's <ViewTransition> or transition() animates them.
  *
  * Under reduced motion the browser doesn't transition at all: the new page replaces the old one, as transition()
