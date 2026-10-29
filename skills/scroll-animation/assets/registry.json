@@ -293,7 +293,7 @@
       "reference": "references/page-transitions.md"
     },
     "preloader": {
-      "summary": "An Immersive-only loading screen driven by the page's own assets (decode, canplaythrough, fonts, fetched bytes, promises): monotonic --load-p, data-preloader-state, a 300 ms minimum and a 4 s failsafe, inert content and focus handed back",
+      "summary": "An Immersive-only loading screen driven by the page's own assets (decode, a video's first frame at loadeddata, primed once where iOS loads only metadata, fonts, fetched bytes, promises): monotonic --load-p on the overlay, data-preloader-state, a 300 ms minimum and a 4 s failsafe, inert content and focus handed back",
       "clock": "route",
       "tier": "recipe",
       "profiles": [

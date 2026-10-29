@@ -226,8 +226,10 @@ skipped:
 | Symptom | Where |
 | --- | --- |
 | After a link the page lands at the new route's bottom, or back/forward lands at the wrong position, under Lenis | a glide outlived the navigation: [page-transitions.md](page-transitions.md) §4 |
-| A layout-level trigger (a reading progress) keeps the previous route's numbers | no refresh after the navigation: [page-transitions.md](page-transitions.md) §4 |
-| A page transition never runs, or the page just swaps | reduced motion, two `[data-header]`s, Firefox on a multi-page site, or a stripped `blocking="render"`: [page-transitions.md](page-transitions.md) §2–§3 |
+| A layout-level trigger (a reading progress) keeps the previous route's numbers | no refresh after the navigation, or a streamed route refreshed at its fallback: [page-transitions.md](page-transitions.md) §4 |
+| Back/forward in Chromium lands a few dozen px off | a scroll anchor still moving at restore: [page-transitions.md](page-transitions.md) §4 |
+| A page transition never runs, or the page just swaps | reduced motion, two `[data-header]`s, Firefox on a multi-page site, an MPA opt-in only in the bundled CSS: [page-transitions.md](page-transitions.md) §2–§3 |
+| A multi-page transition crossfades but never slides forward or back | a stripped `blocking="render"`: the direction type is lost, the transition still runs ([page-transitions.md](page-transitions.md) §3) |
 | A Motion `layoutId` swap sticks on the old box | reduced motion under Motion 13.4: [motion.md](motion.md) §8 |
 | A scrolly graphic doesn't stick, or the last step never activates | an `overflow: hidden` ancestor, ScrollSmoother, the tail removed: [scrollytelling.md](scrollytelling.md) §5 and its traps |
 

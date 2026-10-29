@@ -37,15 +37,15 @@ Section numbers are stable: block comments cite them.
 
 ## 1. All-intra is for scrub, not for playback
 
-A scrub seeks on nearly every scroll frame, and a seek decodes from the previous keyframe: on a normal GOP that is up
-to a whole GOP per seek, which is what "mud" and "holds frame one, then jumps" look like. All-intra (every frame a
+A scrub seeks on nearly every scroll frame, and a seek decodes from the previous keyframe: up to a whole GOP per
+seek, which is what "mud" and "holds frame one, then jumps" look like. All-intra (every frame a
 keyframe) makes each seek one decode; `media scrub` encodes it and `media probe` calls it `scrub-ready` (§13).
 
-A clip that only plays forward or loops gains nothing from all-intra and pays for it in bitrate.
+A clip that only plays forward or loops gains nothing from all-intra and pays in bitrate.
 
 All-intra, a seek is still a round trip through the media player (on iOS, another process), and iOS decides when a
 video may load. An image sequence (sequences.md) has neither, at the cost of bytes and memory: take it when a phone's
-decoder can't keep up with a skim. Apple has shipped both (a canvas JPEG sequence in 2019, `<video>` scrubs now).
+decoder can't keep up with a skim.
 
 ## 2. Loop seams, measured on the encoded file
 
@@ -61,11 +61,11 @@ cost = {L: np.abs(A[L - 1] - A[E]).mean() for L in candidates}   # cost <= floor
 ```
 
 One sharp minimum under the floor is the cycle; none means the clip holds no whole cycle. The segment's motion must be
-flat, not decaying, or the intro's settle replays every cycle; a synthetic loop is checked on its pixels, not its
-parameters, since a resample step can break a loop whose pose is periodic.
+flat, not decaying, or the intro's settle replays every cycle. Check a synthetic loop on its pixels, not its
+parameters: a resample step can break a loop whose pose is periodic.
 
-**Verify on the encoded file.** CRF's per-frame rate control can quantise two identical master frames differently and
-pop at every wrap, and that pop exists only in the delivered bitstream:
+**Verify on the encoded file.** CRF's per-frame rate control can quantise two identical master frames differently: a
+pop at every wrap that exists only in the delivered bitstream:
 
 ```sh
 ffmpeg -i out.mp4 -vf "select=eq(n\,79)" -fps_mode passthrough -frames:v 1 end.png   # E
@@ -82,27 +82,26 @@ How the blocks spell it:
 ## 3. The rVFC wrap
 
 Polling `currentTime` in rAF can't wrap on an exact frame: the check lands anywhere in a 16.7 ms window, and a late
-wrap flashes the next cycle's frame. `requestVideoFrameCallback` hands over the presented frame's `mediaTime`, so the
-decision is a frame index. The controller (`wrapDue`) wraps once the loop's last frame is on screen **or already due by
+wrap flashes the next cycle's frame. `requestVideoFrameCallback` gives the presented frame's `mediaTime`: a frame index. The controller (`wrapDue`) wraps once the loop's last frame is on screen **or already due by
 the playback position**, because WebKit runs the callback about 0.8 of a frame late (27 ms measured); a rAF backstop
 and an `ended` re-wrap catch the rest without moving an on-time wrap. LoopVideo wraps on the presented frame's end
 (`mediaTime` is its start) within 1.5 frames of the duration: a tighter margin lost to WebKit's end-of-media handling
 one run in three. Firing up to a frame early skips the last frame, so seam clips end on a spare clone (§10).
 
-- Without rVFC, poll and wrap a full frame early: losing a cycle's last frame is cheap, showing the next cycle's first
-  frame early is the visible fault.
+- Without rVFC, poll and wrap a full frame early: a lost last frame is cheap, the next cycle's first frame shown early
+  is the visible fault.
 - Verify by logging presented frame indices: a clean sawtooth (`… 78 79 32 33 …`), nothing outside the loop.
 
 ## 4. Seeks: tracking the band, one in flight
 
 In the band the playhead **tracks** the scroll frame for frame, decoder paused: it wants the band's frame, rounded,
 and seeks only when that changes. Smoothing belongs to the scroll (Lenis, native momentum); a second stage on the
-playhead is lag. The old 0.18 glide trailed the page by 50–67 ms at every speed on the iOS simulator, kept turning
-200–370 ms after the scroll stopped and leapt after every long frame.
+playhead is lag: a 0.18 glide trailed the page by 50–67 ms on the iOS simulator and kept turning 200–370 ms after the
+scroll stopped.
 
 - **One seek in flight, the newest frame next.** Gecko aborts a seek that a newer one replaces (nothing paints while
-  they keep coming); WebKit and Chromium queue the newest. The controller keeps one in flight and on `seeked` sends the
-  frame the band wants then: a slow decoder shows fewer frames, never stale ones. A seek lands a quarter frame into its
+  they keep coming). The controller keeps one in flight and on `seeked` sends the frame the band wants then: a slow
+  decoder shows fewer frames, never stale ones. A seek lands a quarter frame into its
   frame. Wraps and snaps skip the queue: behind a stale seek they land a frame late.
 - **The glide is only the handover out of a loop:** the playhead's distance from the band decays at `glide` (0.18) per
   60 Hz frame (`dt`-based) while the band moves on. Safari drops a `play()` issued mid-seek, so play waits for
@@ -120,26 +119,24 @@ playhead is lag. The old 0.18 glide trailed the page by 50–67 ms at every spee
 Warm early, wake late: a single observer either wastes bandwidth or stalls on arrival.
 
 **Never call `load()` on the warm tier**: on phones it aborts a `play()` in flight when both observers fire in one
-batch. `preload = 'auto'` is the hint, and all LoopVideo sets, since its `<source>` children exist at mount.
-ScrubVideo starts with no source: the controller sets the picked tier's `src` a frame after mount (under
-`preload="none"`, which fetches nothing), and `warm()` raises `preload` at the warm margin. Its one soft `load()` is for
-an evicted resource or an awake scene whose network sits idle (iOS ignoring `preload`); a first load is never aborted.
+batch. `preload = 'auto'` is the hint (LoopVideo's only one). ScrubVideo starts with no source and `preload="none"`
+(§7), and `warm()` raises `preload` at the warm margin. Its one soft `load()` is for an evicted resource or an awake
+scene whose network sits idle (iOS ignoring `preload`); a first load is never aborted.
 
 ## 6. The compositing anchor and the reset's `max-width`
 
 A `translateZ(0)` in a video's transform is a Safari compositing anchor that keeps its layer from being demoted.
-`scene.css` gives every `[data-scene-media]` one by default, and a camera's inline `translate3d(…) scale(…)` replaces it
-while staying 3D, so a ScrubVideo has it with or without a camera. LoopVideo sets it inline (in GSAP only when nothing
+`scene.css` gives every `[data-scene-media]` one, and a camera's `translate3d(…) scale(…)` stays 3D. LoopVideo sets it inline (in GSAP only when nothing
 else set a transform). Don't clean it up, and never animate a transform on a video's ancestors.
 
-A reset's `video { max-width: 100% }` silently clamps an oversized camera box to the pin's width. `scene.css` sets
+A reset's `video { max-width: 100% }` clamps an oversized camera box to the pin's width. `scene.css` sets
 `max-width: none` on `[data-scene-media]`; any other oversized video needs the same fix, scoped, never global.
 
 ## 7. Desktop and mobile sources
 
 ScrubVideo takes `src` and `mobileSrc` (with `poster` and `mobilePoster`), cut from one master canvas. The controller
-picks the tier by `DESKTOP_QUERY` (`config.ts`), or `mobileSrc` everywhere under Save-Data (§11), a frame after mount,
-never in the hydrating commit, so only one tier is fetched and the server renders the poster alone. Crossing the
+picks the tier by `DESKTOP_QUERY` (`config.ts`), or `mobileSrc` under Save-Data (§11), a frame after mount, never in
+the hydrating commit, so only one tier is fetched and the server renders the poster alone. Crossing the
 breakpoint swaps the source, and `onTier` tells the camera which crop is on screen.
 
 Hand-written `<source media>` tiers are chosen once, at resource selection (unlike `<picture>`), so a `<picture>` poster
@@ -147,68 +144,61 @@ behind one drifts to another framing on resize: resync with `load()` on a real f
 
 ## 8. Serving: HTTP Range and caching
 
-- **Range requests.** Seeking fetches byte ranges, so the server must answer `Range` with `206 Partial Content`: without
-  it Safari won't play the file and other browsers can only seek within what has downloaded. Check with a GET,
-  `curl -s -o /dev/null -D - -r 0-1 <url>`, and expect `206` with `Content-Range: bytes 0-1/<size>` (a HEAD request
-  may ignore `Range`). Static servers and CDNs do this; a framework route or service worker that streams the file
-  often answers `200` (Workbox needs its range-requests plugin).
-- **Faststart.** `moov` before `mdat` lets playback start before the file finishes; every `media` encode sets it and
-  `media probe` reports it.
+- **Range requests.** Seeking fetches byte ranges: the server must answer `Range` with `206 Partial Content`: without
+  it Safari won't play the file and other browsers seek only within what has downloaded. Check with a GET (a HEAD
+  may ignore `Range`), `curl -s -o /dev/null -D - -r 0-1 <url>`: `206` with `Content-Range: bytes 0-1/<size>`. A
+  framework route or service worker that streams the file often answers `200` (Workbox needs its range-requests plugin).
+- **Faststart** (`moov` before `mdat`) lets playback start early; every `media` encode sets it.
 - **Caching.** Content-hashed names with `Cache-Control: public, max-age=31536000, immutable`, so a revisit never
   refetches; leave video out of gzip and brotli (already compressed).
 
 ## 9. Posters
 
-Take the poster from the **encoded** file, never the master: the master's colour pipeline and artefacts differ from
-the decoded frames, and the mismatch flashes when decoding starts (worse under a blend mode). The `media` commands do
-this (§13).
+Take the poster from the **encoded** file, never the master: the master's colour and artefacts differ from the decoded
+frames, and the mismatch flashes when decoding starts (worse under a blend mode). The `media` commands do this.
 
 - **Accurate colour.** ffmpeg's fast YUV to RGB path lands 2–3 levels dark, a visible step when the video starts; the
-  CLI converts limited to full range with accurate rounding, and tags every encode BT.709 so Safari and Chrome agree.
+  CLI rounds accurately and tags BT.709, so Safari and Chrome agree.
 - **Match the frame that rests.** ScrubVideo holds the head loop's `fromFrame` (frame 0 without a loop) in the head
   and under reduced motion. `media scrub` writes frame 0, so for a head loop run
   `media poster out.mp4 --at <fromFrame / fps>`.
-- **A poster is a frame of the same asset.** An art-directed still that no frame matches is a `<picture>` under the
-  video, not the `poster` attribute.
+- **A poster is a frame of the same asset.** An art-directed still no frame matches is a `<picture>` under the video.
 
 ## 10. Keyframes at loop seams
 
 A normal-GOP loop that re-enters mid-GOP decodes from the previous keyframe each cycle: a hitch per repeat on a short
 loop. `media loop` encodes one GOP per clip, so frame 0 is the keyframe a native `loop` needs. For an intro-then-seam
 loop (LoopVideo `loopFromFrame`), `media loop <in> --loop-from L` also keys frame L (by frame number, after any
-`--fps`), ends the file on one spare clone of the last frame (the early wrap in §3 only ever skips that), re-probes
-the output to confirm both keyframes, and prints the `loopFromFrame` and `fps` to pass. Hand encodes need the same
-spare (`tpad=stop_mode=clone:stop=1`) and keyframe; `media probe` lists keyframe positions when there are 12 or fewer.
+`--fps`), ends the file on one spare clone of the last frame (the early wrap in §3 only ever skips that), and prints the `loopFromFrame` and `fps` to pass. Hand encodes need the same
+spare (`tpad=stop_mode=clone:stop=1`) and keyframe.
 
 ## 11. Autoplay, Low Power Mode and Save-Data
 
 - **Sound needs a gesture**: play sound-carrying video from a click handler. Never start muted and unmute later: the
   grants behind it differ per engine and can be revoked mid-play.
-- **Decorative video is `muted playsinline`** (iOS plays inline only with both) and IO-gated; the audit's `video-attrs`
-  rule flags a missing attribute.
-- **A refused `play()` stays refused until the reader asks.** Low Power Mode and autoplay policy reject the promise.
-  LoopVideo keeps the poster and the control, and a sticky flag stops every retry until a click, because a timer would
-  hammer the refusal every 2 s. ScrubVideo counts refusals in `debug().rejections`.
-- **Save-Data** (`navigator.connection.saveData`; Safari and Firefox don't expose it): LoopVideo shows the poster, skips
-  the warm tier and fetches nothing until the control is pressed. ScrubVideo takes its smallest tier (`mobileSrc`) at
-  every viewport and scrubs as usual. Both follow it live where `connection` fires `change`.
-- **Reduced motion** stops LoopVideo's autoplay but keeps its warm tier, and the control still plays it: the setting
-  asks for less motion, not less content. ScrubVideo fetches no video: the poster is the scene, and lifting the
-  setting mid-visit loads the tier where the reader is.
-- **The element is the source of truth.** Every path that changes playback acts on the element, and the UI mirrors
-  its `play` and `pause` events, never the code's intent.
+- **Decorative video is `muted playsinline`** (iOS plays inline only with both) and IO-gated (audit rule `video-attrs`).
+- **A refused `play()` stays refused until the reader asks** (Low Power Mode, autoplay policy). LoopVideo keeps the
+  poster and the control, and a sticky flag stops every retry until a click (a timer would hammer it every 2 s). ScrubVideo counts refusals in `debug().rejections`.
+- **Save-Data** (`navigator.connection.saveData`; Safari and Firefox don't expose it): LoopVideo shows the poster and
+  fetches nothing until the control is pressed. ScrubVideo takes `mobileSrc` at every viewport.
+  Both follow it live where `connection` fires `change`.
+- **Reduced motion** stops LoopVideo's autoplay but keeps its warm tier, and the control still plays it: less motion,
+  not less content. ScrubVideo fetches no video (the poster is the scene); lifting the setting mid-visit loads the tier
+  where the reader is.
+- **The element is the source of truth**: playback acts on the element, and the UI mirrors its `play` and `pause`
+  events, never the code's intent.
 
-**iOS loads only metadata for a video that has never played** (`preload` is a hint it ignores), so a scene of holds
-never gets a frame, and its first seek clears the poster, leaving nothing (measured on the device pass). The controller
-primes each source once (a muted `play()`, paused at once) and seeks only once a frame exists; refused in Low Power
-Mode, the poster stays. Primed, the simulator fetched the whole clip in one request, paused; the prime runs in the
+**iOS loads only metadata for a video that has never played** (`preload` is a hint it ignores): a scene of holds
+never gets a frame, and its first seek clears the poster (measured on the device pass). The controller primes each
+source once (a muted `play()`, paused at once) and seeks only once a frame exists; refused in Low Power Mode, the
+poster stays. Primed, the simulator fetched the whole clip in one request, paused; the prime runs in the
 awake tick, so on iOS data starts at the wake margin, not the warm one.
 
 ## 12. Tab-sleep rehydrate
 
-Scroll is the durable truth; the playhead is derived. After a long background tab the browser may freeze rAF, evict the
-decoder or leave `currentTime` stale while the scroll position is still right. So every resume (scenes.md §1 lists
-the triggers) re-derives everything, coalesced to one frame:
+Scroll is the durable truth; the playhead is derived. A long background tab may freeze rAF, evict the decoder or leave
+`currentTime` stale, while the scroll position is still right. So every resume (scenes.md §1)
+re-derives everything, coalesced to one frame:
 
 1. re-measure the range and read the wrapper's rect;
 2. derive mode, band and act **absolutely** (`sceneAt`), not through the live stepper;
@@ -218,8 +208,7 @@ the triggers) re-derives everything, coalesced to one frame:
 
 A hidden tab stops the controller and pauses the video. LoopVideo re-checks on `visibilitychange`, `pageshow` and
 `focus`, with the same single `load()`. Never scroll the reader back, reload on focus or store the playhead in
-`sessionStorage`: each fights a scroll position that is already right. For a scene frozen after a sleep, load the page
-with `?motion-debug` and call `window.__scrub()`: the counter that stopped names the layer (scenes.md §13).
+`sessionStorage`: each fights a scroll position that is already right. A scene frozen after a sleep: scenes.md §13.
 
 ## 13. Encoding with `scroll-animation media`
 
@@ -243,7 +232,7 @@ Every encode is yuv420p, faststart, silent and tagged BT.709, written beside the
 
 ## 14. The video controller
 
-`media/video-controller.ts` is the decoder behind ScrubVideo in both engines. It never reads scroll; a scene drives it:
+`media/video-controller.ts` is ScrubVideo's decoder in both engines. It never reads scroll; a scene drives it:
 
 ```ts
 const video = createVideoController(el, { fps: 30, headLoop, tailLoop, glide: 0.18, loopSeconds: 5, src, mobileSrc,
@@ -254,19 +243,18 @@ video.setAwake(awake)   // per wake transition
 video.setReduced(r) · video.rehydrate({ mode, band, awake, reason }) · video.warm() · video.destroy()
 ```
 
-- **Holds by default**: no `headLoop` holds frame 0 and no `tailLoop` holds the last frame, so a plain scrub needs no
-  seams. `fps` must be the clip's exact rate.
+- **Holds by default**: no `headLoop` holds frame 0, no `tailLoop` the last frame. `fps` must be the clip's exact rate.
 - **A hold follows the band**, clamped, in every mode: the scene leaves `tail` 0.7 × `tailLeadPx` past the band's end,
   and a hold parked on the last frame until then lagged that far on the way back (Folio: 280 px, 54 frames).
-- **It runs only while awake, visible and not reduced**; `destroy()` stops and pauses, so a hidden route never decodes.
+- **It runs only while awake, visible and not reduced**; `destroy()` stops and pauses.
 - **Two drivers, never at once**: seeks in the band (decoder paused), playback with rVFC wraps in a loop.
-- **A loop runs `loopSeconds` (5) per visit to its region**, because WCAG 2.2.2 allows 5 s of self-moving content
-  without a pause control. Then it finishes the cycle and holds the frame beside the band, so the scrub takes over
-  without a jump; a new visit, or a restart after sleep, starts a new budget. `Infinity` needs a pause control of yours.
+- **A loop runs `loopSeconds` (5) per visit to its region**, the 5 s WCAG 2.2.2 allows without a pause control (§16).
+  Then it finishes the cycle and holds the frame beside the band, so the scrub takes over without a jump; a new visit,
+  or a restart after sleep, starts a new budget. `Infinity` needs a pause control of yours.
 - **A watchdog** re-issues `play()` when a loop should run but sits paused (Safari pauses a video it judges hidden,
   around a resize), at most once per ~30 frames.
 
-To drive it from a scene of your own, copy `ScrubVideo`'s wiring: `rehydrate` before `setMode`, `setBand(scene.band())`
+A scene of your own copies `ScrubVideo`'s wiring: `rehydrate` before `setMode`, `setBand(scene.band())`
 on every progress event.
 
 ## 15. ScrubVideo and LoopVideo
@@ -279,15 +267,15 @@ on every progress event.
 ```
 
 ScrubVideo takes every PinnedScene prop and event ([scenes.md](scenes.md)), plus `glide`, `loopSeconds`, `camera`,
-`backdrop`, `videoClassName` and `pinned` (more of the pin above the video, such as stacked captions); its `ref` gets
+`backdrop`, `videoClassName` and `pinned` (more of the pin, above the video); its `ref` gets
 `{ scene, video, debug() }`. GSAP reads the same markup, with the sources on the video as `data-src`, `data-mobile-src`,
 `poster` and `data-mobile-poster`, and `preload="none"` kept on it, or the picked source fetches at page load.
 `scrubVideo(root, { fps: 30, headLoop, tailLoop })` returns the scene handle plus `video` and `controller`, or `null`
 without a video.
 
-Bringing your own clip: encode it all-intra (§13), measure seams (§2) or omit the loops to hold, add a `camera` if the
-shot moves (scenes.md §7), and sample `backdrop` stops (`{ at, top, bottom }` in `#rrggbb`) from the clip's top and
-bottom edges: the backdrop is a backstop for the paint before the first camera frame.
+Your own clip: encode it all-intra (§13), measure seams (§2) or omit the loops, add a `camera` if the shot
+moves (scenes.md §7), and sample `backdrop` stops (`{ at, top, bottom }` in `#rrggbb`) from the clip's top and bottom
+edges: it paints before the first camera frame.
 
 ```tsx
 <div className="relative">
@@ -299,47 +287,42 @@ bottom edges: the backdrop is a backstop for the paint before the first camera f
 ```
 
 LoopVideo renders the `<video>` and a sibling `<button>` with no wrapper, so give the parent `position: relative`.
-Without `loopFromFrame` it loops natively; with it and `fps`, it plays the intro once and loops from the seam. It plays
-at 20% visible, pauses when it leaves and resumes in place, never from frame 0.
+Without `loopFromFrame` it loops natively; with it and `fps`, it plays the intro once and loops from the seam. Out of
+view it pauses, and it resumes in place, never from frame 0.
 GSAP marks the video `data-loop-video` (`data-loop-from-frame`, `data-fps`, `data-controls`), with an optional sibling
 `<button data-loop-toggle>`, or a `<button data-loop-toggle data-loop-toggle-for="<video id>">` anywhere in the root;
 mount with `initLoopVideos(routeRoot)` or `loopVideo(el, options)`, and `destroy()` pauses.
 
 ## 16. Pausing: hidden routes and WCAG 2.2.2
 
-**Hidden routes.** With Cache Components, Next keeps visited routes alive under `<Activity>`: effects clean up on hide
-and re-run on show, but a hidden `<video>` keeps playing and decoding unless something pauses it. Every block pauses in
+**Hidden routes.** Next's `<Activity>` (Cache Components) keeps visited routes alive, and a hidden `<video>` keeps
+playing and decoding unless something pauses it. Every block pauses in
 its cleanup: LoopVideo in a layout effect (a passive cleanup can lag a paint), ScrubVideo through `controller.destroy()`.
-On show, a loop resumes only if it is in view and nothing else holds it. In GSAP, call `destroy()` from `useGSAP`'s or the route's cleanup.
+On show, a loop resumes only if it is in view and nothing else holds it.
 
-**WCAG 2.2.2 (Pause, Stop, Hide).** Content that moves by itself for more than 5 s beside other content needs a way to
-pause it. WCAG counts how long the movement lasts, and a loop moves for as long as it is in view, so LoopVideo shows its
-control whatever the cycle length; `controls={false}` (GSAP `data-controls="false"`) opts out only a loop that is
+**WCAG 2.2.2** ([accessibility.md](accessibility.md) §3): a loop moves for as long as it is in view, so LoopVideo
+shows its control whatever the cycle length; `controls={false}` (GSAP `data-controls="false"`) opts out only a loop that is
 decorative and brief. It is a real `<button>` whose name flips between `pauseLabel` and `playLabel` with the
 element's events, without `aria-pressed` (a toggle's name must not change with its state); a supplied GSAP button keeps
-its content and gets `aria-label`. A reader's pause survives scrolling away and back; only play clears it. Footage that
+its content and gets `aria-label`. A reader's pause survives scrolling away; only play clears it. Footage that
 carries meaning gets `alt` (GSAP `data-alt`): visually hidden text beside the `aria-hidden` video.
 
 ScrubVideo caps its head and tail loops instead (`loopSeconds`, §14), so it ships no control.
 
 ## 17. WebGL video textures
 
-A three.js `VideoTexture` uploads the video's frame to the GPU each time a new one is presented, at the video's full
-size: size the encode to the texture you need, and pause the video off-screen and on hide
-like any loop. A cross-origin video needs CORS headers and `crossOrigin = 'anonymous'`, or WebGL refuses the upload.
-Scrubbing a video texture is still a `<video>` seek, with the same all-intra encode and controller.
+A three.js `VideoTexture` uploads each presented frame to the GPU at the video's full size: size the encode to the
+texture you need, and pause the video off-screen and on hide like any loop. A cross-origin video needs CORS headers and `crossOrigin = 'anonymous'`, or WebGL refuses the upload.
+A scrubbed texture still seeks a `<video>`: the same encode and controller.
 
 ## Traps
 
 - [ ] A scrub asset is all-intra (`scrub-ready`); a forward-only or looping clip is not (§1).
-- [ ] Seams are measured against the floor and verified on the encoded file; loops and scrubs use `qcomp=1` (§2, §13).
-- [ ] Loops wrap on rVFC, never by polling `currentTime` in rAF; wraps skip the seek queue (§3, §4).
-- [ ] The band tracks the scroll: no smoothing on the playhead, one seek in flight, holds follow the band (§4, §14).
-- [ ] No `load()` on the warm tier (§5).
-- [ ] The compositing anchor stays; an oversized video has a scoped `max-width: none` (§6).
-- [ ] The server answers `Range` with `206`, and media is cached immutable under hashed names (§8).
-- [ ] Posters come from the encoded file, at the frame the scene rests on (§9).
-- [ ] An intro-then-seam loop is encoded with `media loop --loop-from` (§10).
+- [ ] Seams are measured against the floor, on the encoded file; encodes use `qcomp=1` (§2, §13).
+- [ ] Loops wrap on rVFC, never by polling `currentTime`; the playhead tracks the band, one seek in flight (§3, §4).
+- [ ] No `load()` on the warm tier; the compositing anchor stays; an oversized video's `max-width: none` is scoped (§5, §6).
+- [ ] `Range` gets `206`; media is cached immutable under hashed names (§8).
+- [ ] Posters come from the encoded file at the resting frame; an intro-then-seam loop uses `media loop --loop-from` (§9, §10).
 - [ ] Sound plays from a click; a refused `play()` is never retried on a timer (§11).
 - [ ] A resume derives the playhead from scroll and snaps; an evicted decoder gets one `load()` (§12).
-- [ ] Every video pauses in its cleanup and on hide; LoopVideo keeps its control, ScrubVideo's loop cap (§14, §16).
+- [ ] Every video pauses in its cleanup and on hide; LoopVideo keeps its control (§16).

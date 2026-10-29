@@ -115,6 +115,9 @@ on React routes). Import the CSS after `css/animation.css`; `GATE_SCRIPT` must b
 - **Stacked is the default**: phones, no JavaScript, print and a failed boot. The graphic column is hidden and each
   step's `data-scrolly-inline` figure reads in flow. Sticky needs the gate and `DESKTOP_QUERY` (1024 px), or the
   root's own `data-scrolly-query`, which costs one layout shift at mount.
+- **`css/scrolly.css` repeats the 1024 px** for its pre-mount layout. Where `config.ts` takes `DESKTOP_QUERY` from
+  elsewhere (fluid-design's `fluid.ts`, any layout breakpoint), change that `min-width` with it, or the core mounts
+  at another width than the CSS laid out and the layout shifts.
 - A breakpoint change switches live and keeps the reader on the same step.
 - **Keep, simplify or drop the graphic per beat.** Keep the sticky layout where the graphic still reads at half the
   width (set `data-scrolly-query` lower). Simplify a chart to the states that carry the story as inline figures.
