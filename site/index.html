@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!--animation-gate-->
     <!--view-transitions-opt-in-->
-    <title>scroll-animation: motion for editorial sites, on four clocks</title>
+    <title>scroll-animation: motion for editorial sites, on five clocks</title>
     <meta
       name="description"
       content="A skill for coding agents: tested, copy-and-own scroll animation blocks for GSAP, Motion and CSS, the references behind them, and a CLI."
@@ -35,7 +35,7 @@
             </div>
             <div class="hero__body">
               <p class="eyebrow">scroll-animation · a skill for coding agents</p>
-              <h1 class="hero__title" data-split-words>Every animation runs on one of four clocks</h1>
+              <h1 class="hero__title" data-split-words>Every animation runs on one of five clocks</h1>
               <p class="hero__lede">
                 Tested, copy-and-own blocks for GSAP, Motion and CSS, the references that explain every decision, and
                 a CLI that copies the blocks into your project. This page is built from them.
@@ -52,7 +52,7 @@
             </p>
           </section>
 
-          <section class="clocks" data-scene-root data-header-theme="light" aria-label="The four clocks">
+          <section class="clocks" data-scene-root data-header-theme="light" aria-label="The five clocks">
             <div class="clocks__pin" data-scene-pin>
               <div class="dial" aria-hidden="true">
                 <div class="dial__row" data-clock="trigger">
@@ -67,11 +67,14 @@
                 <div class="dial__row" data-clock="render">
                   <span class="dial__name">render</span><span class="dial__meter"><span data-clock-fill></span></span>
                 </div>
+                <div class="dial__row" data-clock="route">
+                  <span class="dial__name">route</span><span class="dial__meter"><span data-clock-fill></span></span>
+                </div>
               </div>
             </div>
             <div class="clocks__acts" data-scene-content>
               <article class="act" data-reveal>
-                <p class="act__count" data-reveal-item>Clock 1 of 4</p>
+                <p class="act__count" data-reveal-item>Clock 1 of 5</p>
                 <h3 class="act__title" data-reveal-item>Trigger</h3>
                 <p data-reveal-item>
                   Plays once when content arrives: an entrance on the measured curve, a headline split into words by
@@ -80,7 +83,7 @@
                 </p>
               </article>
               <article class="act" data-reveal>
-                <p class="act__count" data-reveal-item>Clock 2 of 4</p>
+                <p class="act__count" data-reveal-item>Clock 2 of 5</p>
                 <h3 class="act__title" data-reveal-item>Scroll</h3>
                 <p data-reveal-item>
                   A function of the reader's position in a range: this pinned scene, the rail below, the header's ink.
@@ -89,7 +92,7 @@
                 </p>
               </article>
               <article class="act" data-reveal>
-                <p class="act__count" data-reveal-item>Clock 3 of 4</p>
+                <p class="act__count" data-reveal-item>Clock 3 of 5</p>
                 <h3 class="act__title" data-reveal-item>Media</h3>
                 <p data-reveal-item>
                   Follows what a video decoder presents: a scrubbed video, an image sequence on a canvas, a loop with
@@ -98,11 +101,21 @@
                 </p>
               </article>
               <article class="act" data-reveal>
-                <p class="act__count" data-reveal-item>Clock 4 of 4</p>
+                <p class="act__count" data-reveal-item>Clock 4 of 5</p>
                 <h3 class="act__title" data-reveal-item>Render</h3>
                 <p data-reveal-item>
                   A render loop: WebGL or a canvas drawing every frame, on the same tick as the scroll. Per-frame work
                   stops off-screen, in hidden tabs and in hidden routes.
+                </p>
+              </article>
+              <article class="act" data-reveal>
+                <p class="act__count" data-reveal-item>Clock 5 of 5</p>
+                <h3 class="act__title" data-reveal-item>Route</h3>
+                <p data-reveal-item>
+                  Once per navigation or page load: this page and the guide crossfade into each other in a view
+                  transition while the header holds still, each navigation typed forward or back. The scroll authority
+                  takes up where the navigation left the page. <code>view-transitions</code>,
+                  <code>flip-transition</code>, <code>preloader</code>.
                 </p>
               </article>
             </div>
@@ -137,7 +150,7 @@
                     under LazyMotion strict, reduced motion followed live. Scroll-linked styles are written by hand,
                     never bound through <code>style</code>.
                   </p>
-                  <a href="/guide/#clocks">The four clocks</a>
+                  <a href="/guide/#clocks">The five clocks</a>
                 </article>
                 <article class="engine" data-rail-panel>
                   <p class="engine__name">GSAP</p>
@@ -165,8 +178,8 @@
           <section class="stats" data-header-theme="light" data-count-ups aria-label="The skill in numbers">
             <ul class="stats__list">
               <li class="stat">
-                <span class="stat__value"><span data-count-up>4</span></span>
-                <span class="stat__label">clocks: trigger, scroll, media, render</span>
+                <span class="stat__value"><span data-count-up>5</span></span>
+                <span class="stat__label">clocks: trigger, scroll, media, render, route</span>
               </li>
               <li class="stat">
                 <span class="stat__value"><span data-count-up>3</span></span>
@@ -192,13 +205,14 @@
               </p>
               <ul class="blocks__list">
                 <li data-reveal-item><code>smooth-smoother</code> ScrollSmoother owns the scroll; reduced motion runs it in native mode</li>
-                <li data-reveal-item><code>pinned-scene</code> the four clocks, pinned by ScrollTrigger</li>
+                <li data-reveal-item><code>pinned-scene</code> the five clocks, pinned by ScrollTrigger</li>
                 <li data-reveal-item><code>horizontal-rail</code> the engine map; a native snap scroller under reduced motion</li>
                 <li data-reveal-item><code>split-words</code> the headline, split into words when the site is built</li>
                 <li data-reveal-item><code>split-reveal</code> these headings, line by line once their font is in</li>
                 <li data-reveal-item><code>reveal</code> the copy, on the measured entrance curve</li>
                 <li data-reveal-item><code>count-up</code> the numbers above, from the final value in the HTML</li>
                 <li data-reveal-item><code>header-theme</code> the header's ink, from the section under it</li>
+                <li data-reveal-item><code>view-transitions</code> the hand-over to the guide and back, its direction from the history step</li>
                 <li data-reveal-item><code>mount</code> creates them in page order on the route's root</li>
               </ul>
             </div>

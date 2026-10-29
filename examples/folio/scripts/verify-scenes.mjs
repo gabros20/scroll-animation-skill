@@ -30,12 +30,14 @@
 //                  progress bar not drawn, and no text or image left hidden (but the scrolly states not shown); and
 //                  the scrolly section as below.
 //   scrolly        the article's scrolly-steps section: sticky at 1440, each step activating its own state, the two
-//                  detail steps panning to their own frames, back up to the first, a reload on a step landing on its
-//                  frame without a pan, no picture the page doesn't already load; stacked at 390 with each step's
+//                  detail steps panning to their own frames, back up to the first, a pan left for a frameless step
+//                  still landing, a reload on a step landing on its frame without a pan (the pan's transform read
+//                  two frames apart: Motion's JS-driven pan isn't in getAnimations()), no picture the page doesn't already load; stacked at 390 with each step's
 //                  figure in flow; under reduced motion still sticky, the swap and the pan instant.
 //   transition     at 1440, client-side: / -> /journal -> the rust card (a "forward" view transition with the
 //                  cover's ::view-transition-group, the header's group named and never animated, the article at the
-//                  top) -> the browser's back (no transition, the index where it was left) -> /, the live
+//                  top) -> the browser's back (no transition, the index where it was left) -> the card again -> the
+//                  article's "Journal" breadcrumb (a "back" transition: the cover morphs back, vt-back slides) -> /, the live
 //                  ScrollTriggers back to their first count (window.__triggers under ?motion-debug), one authority
 //                  at every step.
 //
@@ -749,14 +751,21 @@ const toStep = (page, i) =>
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   }, i);
 
-/** The section as the reader sees it: mode, active step, the shown state and its opacity, the pan's transform. */
+/**
+ * The section as the reader sees it: mode, active step, the shown state and its opacity, the pan's transform.
+ * `running` counts the CSS and WAAPI animations (the crossfade); Motion drives the pan's x/y/scale from JavaScript,
+ * which getAnimations() never lists, so `panMoving` reads the pan's transform two frames apart.
+ */
 const readScrolly = (page) =>
-  page.evaluate(() => {
+  page.evaluate(async () => {
     const root = document.querySelector("[data-scrolly]");
     const shown = root.querySelector("[data-scrolly-state][data-state-active]");
     const pan = root.querySelector('[data-scrolly-state="detail"] > div');
     const states = [...root.querySelectorAll("[data-scrolly-state]")];
+    const before = pan ? getComputedStyle(pan).transform : null;
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     return {
+      panMoving: pan ? getComputedStyle(pan).transform !== before : false,
       mode: root.dataset.scrollyMode,
       active: Number(root.dataset.scrollyActive),
       shows: [...root.querySelectorAll("[data-scrolly-step]")].map((s) => s.dataset.scrollyShow),
@@ -822,6 +831,15 @@ async function checkScrolly(browser, base, vp, line) {
       const known = new Set(outside.flatMap((el) => [el.getAttribute("srcset"), el.getAttribute("poster") && new URL(el.getAttribute("poster"), location.href).href]).filter(Boolean));
       return [...root.querySelectorAll("img")].filter((img) => !known.has(img.getAttribute("srcset") ?? img.src)).map((img) => img.getAttribute("src"));
     });
+    // Left mid-pan for a step with no frame (the state crossfade is shorter than the pan): the pan still lands.
+    await toStep(page, 0);
+    await sleep(1600);
+    await toStep(page, 1);
+    await sleep(300);
+    const midPan = await readScrolly(page);
+    await toStep(page, 2);
+    await sleep(1600);
+    const leftMidPan = await readScrolly(page);
     // A reload on the second step: the core's first report has direction null, so the pan jumps to its frame.
     await toStep(page, 1);
     await sleep(1600);
@@ -840,9 +858,14 @@ async function checkScrolly(browser, base, vp, line) {
       `step 0 ${seen[0].pan} · step 1 ${seen[1].pan}`,
     );
     line(
-      reloaded.active === 1 && reloaded.pan === seen[1].pan && reloaded.running === 0,
+      midPan.panMoving && leftMidPan.active === 2 && leftMidPan.pan === seen[1].pan && !leftMidPan.panMoving,
+      `${ARTICLE} ${size(vp)} scrolly: a step without a frame lets a pan in flight land`,
+      `300 ms into the pan ${midPan.pan} (moving ${midPan.panMoving}) · then step 2: ${leftMidPan.pan}, moving ${leftMidPan.panMoving} (step 1's frame ${seen[1].pan})`,
+    );
+    line(
+      reloaded.active === 1 && reloaded.pan === seen[1].pan && reloaded.running === 0 && !reloaded.panMoving,
       `${ARTICLE} ${size(vp)} scrolly: a reload on a step lands on its frame without panning`,
-      `active ${reloaded.active}, pan ${reloaded.pan}, ${reloaded.running} animation(s) running`,
+      `active ${reloaded.active}, pan ${reloaded.pan}, ${reloaded.running} animation(s) running, pan moving ${reloaded.panMoving}`,
     );
     line(reuse.length === 0, `${ARTICLE} ${size(vp)} scrolly: every picture is one the page already loads`, reuse.length ? `new: ${reuse.join(", ")}` : "");
   } finally {
@@ -868,13 +891,15 @@ async function checkScrollyReduced(browser, base, vp, line) {
         swap.active === 2 &&
         swap.opacity === "1" &&
         swap.running === 0 &&
+        !swap.panMoving &&
         pan0.active === 0 &&
         Math.abs(scaleOf(pan0.pan) - 1.5) < 0.01 &&
         Math.abs(scaleOf(pan1.pan) - 1.6) < 0.01 &&
         pan0.running === 0 &&
+        !pan0.panMoving &&
         errors.length === 0,
       `${ARTICLE} ${size(vp)} scrolly, reduced motion: sticky, the swap and the pan are instant`,
-      `mode ${pan1.mode} · two frames after step 1 -> 2: ${swap.shown} (${swap.opacities}), ${swap.running} running · two frames after 2 -> 0: pan ${pan0.pan}, ${pan0.running} running`,
+      `mode ${pan1.mode} · two frames after step 1 -> 2: ${swap.shown} (${swap.opacities}), ${swap.running} running · two frames after 2 -> 0: pan ${pan0.pan}, ${pan0.running} running, pan moving ${pan0.panMoving}`,
     );
   } finally {
     await context.close();
@@ -901,12 +926,13 @@ function countLenis() {
   if (start) {
     Document.prototype.startViewTransition = function (arg) {
       const t = start.call(this, arg);
-      const record = { types: [], animating: [], header: null };
+      const record = { types: [], animating: [], names: [], header: null };
       window.__vt.push(record);
       t.ready
         .then(() => {
           record.types = [...(t.types ?? [])];
           record.animating = document.getAnimations().map((a) => a.effect?.pseudoElement).filter(Boolean);
+          record.names = document.getAnimations().map((a) => a.animationName).filter(Boolean);
           record.header = getComputedStyle(document.querySelector("[data-header]")).viewTransitionName;
         })
         .catch((e) => (record.error = String(e)));
@@ -918,7 +944,8 @@ function countLenis() {
 /**
  * The journal's shared element and the route contract, client-side all the way: / -> /journal (header link) -> the
  * rust card (a "forward" transition: the cover's group morphs, the header's group never animates, the article lands
- * at the top) -> the browser's back (no transition: the index comes back where it was) -> / again, where the live
+ * at the top) -> the browser's back (no transition: the index comes back where it was) -> the card again -> the
+ * "Journal" breadcrumb (a "back" transition: the hero morphs back, the pages slide vt-back) -> / again, where the live
  * triggers are as many as on the first load. At every step one authority: the route's stamp, one Lenis on /, none on
  * the journal.
  */
@@ -960,6 +987,12 @@ async function checkCoverTransition(browser, base, vp, line) {
     const vt = await page.evaluate(() => window.__vt.at(-1) ?? null);
     await page.goBack();
     const back = await settle("/journal", "native");
+    // Again into the article, and out through its "Journal" breadcrumb: a "back" transition.
+    await page.locator('a[href="/journal/what-rust-is-for"]').first().click();
+    await settle(ARTICLE, "native");
+    await page.locator('main header a[href="/journal"]').click();
+    const crumb = await settle("/journal", "native");
+    const vtBack = await page.evaluate(() => window.__vt.at(-1) ?? null);
     await page.click('header a[href="/"]');
     const again = await settle("/", "lenis");
     const same = await page.evaluate(() => window.__sameDocument === true);
@@ -971,6 +1004,18 @@ async function checkCoverTransition(browser, base, vp, line) {
       vt ? `types [${vt.types}] · ${vt.animating.includes(cover) ? "cover group animating" : "no cover group"} · header named ${vt.header}, ${vt.animating.filter((p) => p.includes("site-header")).length} header animations${vt.error ? ` · ${vt.error}` : ""}` : "no view transition ran",
     );
     line(article.y === 0, `${ARTICLE} ${size(vp)} the article lands at the top`, `scrollY ${article.y}`);
+    const slides = ["vt-slide-out-back", "vt-slide-in-back"];
+    line(
+      vtBack !== null &&
+        crumb.vts === back.vts + 2 && // the card again, then the breadcrumb: one transition each
+        vtBack.types.join() === "back" &&
+        vtBack.animating.includes(cover) &&
+        slides.every((n) => vtBack.names.includes(n)) &&
+        !vtBack.animating.some((p) => p.includes("site-header")) &&
+        crumb.y === 0,
+      `${ARTICLE} -> /journal ${size(vp)} the "Journal" breadcrumb: a back transition, the hero morphs back into its card and the pages slide vt-back`,
+      vtBack ? `types [${vtBack.types}] · ${vtBack.animating.includes(cover) ? "cover group animating" : "no cover group"} · animations ${[...new Set(vtBack.names)].join(", ")} · view transitions ${back.vts} -> ${crumb.vts} · index at ${crumb.y}${vtBack.error ? ` · ${vtBack.error}` : ""}` : "no view transition ran",
+    );
     line(
       Math.abs(back.y - left) <= 2 && back.vts === article.vts,
       `/journal ${size(vp)} the browser's back restores the index where it was left, with no transition`,
@@ -982,9 +1027,9 @@ async function checkCoverTransition(browser, base, vp, line) {
       `${home.triggers} on the first load, ${again.triggers} after the round trip${same ? "" : " · a full page load happened"}`,
     );
     line(
-      authority(home, "lenis", 1) && authority(index, "native", 0) && authority(article, "native", 0) && authority(back, "native", 0) && authority(again, "lenis", 1) && errors.length === 0,
+      authority(home, "lenis", 1) && authority(index, "native", 0) && authority(article, "native", 0) && authority(back, "native", 0) && authority(crumb, "native", 0) && authority(again, "lenis", 1) && errors.length === 0,
       `${size(vp)} one scroll authority at every step: lenis on /, native on the journal`,
-      [home, index, article, back, again].map((s) => `${s.path} ${s.stamp}×${s.stamps} Lenis ${s.lenis}`).join(" · ") + (errors.length ? ` · errors: ${errors.join(" | ")}` : ""),
+      [home, index, article, back, crumb, again].map((s) => `${s.path} ${s.stamp}×${s.stamps} Lenis ${s.lenis}`).join(" · ") + (errors.length ? ` · errors: ${errors.join(" | ")}` : ""),
     );
   } finally {
     await context.close();

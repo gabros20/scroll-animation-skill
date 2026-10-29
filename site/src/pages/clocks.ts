@@ -1,7 +1,7 @@
 /**
- * pages/clocks.ts — the four clocks on `/`: a pinned scene (gsap/pinned-scene.ts) that ScrollTrigger pins, since
+ * pages/clocks.ts — the five clocks on `/`: a pinned scene (gsap/pinned-scene.ts) that ScrollTrigger pins, since
  * sticky never sticks inside ScrollSmoother's content, driving one paused section timeline with a named span per
- * clock: trigger, scroll, media, render.
+ * clock: trigger, scroll, media, render, route.
  *
  * - The timeline follows the scene's exact progress, which is what `scrub: true` does. ScrollSmoother already smooths
  *   the scroll, so nothing smooths it a second time (invariant 3). A second ScrollTrigger with `scrub` would also be
@@ -14,7 +14,7 @@ import { pinnedScene, type PinnedSceneHandle } from '../animation/gsap/pinned-sc
 import { gsap } from '../animation/gsap/setup'
 
 /** The timeline's labels, one span each, in order. */
-export const CLOCKS = ['trigger', 'scroll', 'media', 'render'] as const
+export const CLOCKS = ['trigger', 'scroll', 'media', 'render', 'route'] as const
 
 export interface ClocksHandle extends PinnedSceneHandle {
   /** The section timeline: null under reduced motion. */

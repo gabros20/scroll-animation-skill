@@ -5,8 +5,8 @@ plain TypeScript, no framework. The copy is placeholder facts about the skill; t
 
 | Page | Profile | Scroll authority | What moves |
 |---|---|---|---|
-| `/` (`index.html`) | Expressive | ScrollSmoother (`smooth: 1, effects: true`), the fixed header outside `#smooth-wrapper` | the hero headline split into words at build time, the four clocks on a pin ScrollTrigger holds, the engine-map rail, `data-speed` / `data-lag` orbs, split-reveal headings, reveal copy, count-ups, header ink |
-| `/guide/` (`guide/index.html`) | Reading | native | reveal copy, one split-reveal heading, the four clocks as scrolly steps beside a sticky panel, a reading-progress bar and a parallax figure on CSS timelines, header ink |
+| `/` (`index.html`) | Expressive | ScrollSmoother (`smooth: 1, effects: true`), the fixed header outside `#smooth-wrapper` | the hero headline split into words at build time, the five clocks on a pin ScrollTrigger holds, the engine-map rail, `data-speed` / `data-lag` orbs, split-reveal headings, reveal copy, count-ups, header ink |
+| `/guide/` (`guide/index.html`) | Reading | native | reveal copy, one split-reveal heading, the five clocks as scrolly steps beside a sticky panel, a reading-progress bar and a parallax figure on CSS timelines, header ink |
 
 Navigating between the two pages is a cross-document view transition: the page crossfades under the anchored header, typed `forward` on a link and `back` on the back button (Chromium, Safari; Firefox just loads the page).
 
@@ -44,7 +44,7 @@ The site only wires them:
 - `src/pages/clock-steps.ts` is `/guide/`'s scrolly section: the agnostic core picks the step, `guide.css`
   colours its clock from `data-scrolly-active`, and a paused GSAP timeline slides the marker to it (desktop,
   no reduced motion).
-- `src/pages/clocks.ts` is the four-clocks scene: `pinnedScene(root, { pin: 'gsap' })` driving one paused timeline
+- `src/pages/clocks.ts` is the five-clocks scene: `pinnedScene(root, { pin: 'gsap' })` driving one paused timeline
   with a named span per clock, built per matchMedia build so reduced motion is live.
 - `plugins/animation-html.ts` writes `GATE_SCRIPT` and the cross-document opt-in (`css/view-transitions-mpa.css`,
   inline: Chromium skipped about half the transitions into `/` with it only in the bundled stylesheet) into every

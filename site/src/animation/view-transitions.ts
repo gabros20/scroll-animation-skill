@@ -9,16 +9,22 @@
  *
  *   mountCrossDocumentTransitions()        a multi-page site, on every page, from a render-blocking script:
  *                                          <script type="module" blocking="render" src="…">; with
- *                                          css/view-transitions-mpa.css imported on every page
+ *                                          css/view-transitions-mpa.css inline in every page's <head> (its header
+ *                                          says why a bundled stylesheet isn't enough)
  *
  * - transition(update) runs `update` inside document.startViewTransition when it can, and directly, with no transition,
  *   when it can't: no API, reduced motion (read live, at each call), a hidden tab (the browser would skip it anyway),
- *   or a transition already running (ours, React's, the browser's own). A second call never starts a second transition
- *   or aborts the first: its update runs at once (or right after the first's, if the browser hasn't run that yet, so
- *   the last call wins), and the running transition carries on. Either way the
- *   promise resolves once `update` has, and rejects only with `update`'s own error. A transition the browser aborts
- *   (two elements with one view-transition-name, the tab hidden mid-way) still runs `update` and resolves; nothing
- *   surfaces as an unhandled AbortError or InvalidStateError.
+ *   or a transition already running. Ours is always seen. React's, or the browser's own, is seen only through
+ *   document.activeViewTransition (Chromium 142, Safari 26.2, Firefox 147): on an older engine with the API, a call
+ *   during one starts a transition of its own, and the browser skips the running one (the spec's rule for a second
+ *   transition: its update still runs, its animation is cut short). A second call never starts a second transition
+ *   over ours or aborts it: its update runs at once, or, while ours still waits for its update, right after that
+ *   update. A synchronous second update lands before the browser captures the new state, so the last call wins in
+ *   the snapshot; an async one (a fetch) lands after the capture, so the running transition animates to the first
+ *   update's page and the second's DOM replaces it as the update resolves. Either way the promise resolves once
+ *   `update` has, and rejects only with `update`'s own error. A transition the browser aborts (two elements with one
+ *   view-transition-name, the tab hidden mid-way) still runs `update` and resolves; nothing surfaces as an unhandled
+ *   AbortError or InvalidStateError.
  * - types (`:active-view-transition-type()`): `forward` and `back` pick the CSS's slides. Browsers that take only an
  *   update callback (Safari 18.0–18.1, Firefox 144–146) still transition, without the types.
  * - The scroll authority: Lenis keeps a target position of its own, so a smooth scroll still under way when `update`
@@ -72,8 +78,8 @@ let pending: Promise<void> | null = null
 export function transition(update: Update, options: TransitionOptions = {}): TransitionPromise {
   const vt = canStart() ? start(update, options.types) : null
   if (!vt) {
-    // Behind an update of ours that is still waiting for the capture, this one runs right after it (before the new
-    // state is captured), so the last call still wins; otherwise it runs now.
+    // Behind an update of ours that is still waiting for the capture, this one runs right after it: before the new
+    // state is captured when it is synchronous (the last call wins), after it when it awaits; otherwise it runs now.
     const updated = pending ? pending.then(() => run(update), () => run(update)) : run(update)
     return Object.assign(updated, { finished: updated.then(noop, noop) })
   }

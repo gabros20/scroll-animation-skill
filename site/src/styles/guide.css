@@ -116,7 +116,7 @@
   color: var(--muted);
 }
 
-/* ── The four clocks, one step at a time (scrolly-steps) ───────────────────────────────────────────
+/* ── The five clocks, one step at a time (scrolly-steps) ───────────────────────────────────────────
  * css/scrolly.css lays it out: stacked by default, the panel sticky beside the steps from 1024 px up. The panel is one
  * state; the active clock is coloured from the root's data-scrolly-active (instant, every mode), and GSAP slides the
  * marker to it (pages/clock-steps.ts) on desktop without reduced motion. The marker is a row tall and starts on row
@@ -189,7 +189,8 @@
 .clock-steps[data-scrolly-active='0'] [data-clock='0'],
 .clock-steps[data-scrolly-active='1'] [data-clock='1'],
 .clock-steps[data-scrolly-active='2'] [data-clock='2'],
-.clock-steps[data-scrolly-active='3'] [data-clock='3'] {
+.clock-steps[data-scrolly-active='3'] [data-clock='3'],
+.clock-steps[data-scrolly-active='4'] [data-clock='4'] {
   color: #f08a5d;
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { animate } from "motion/react";
+import { animate, type AnimationPlaybackControls } from "motion/react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { CURVES, MOTION, prefersReducedMotion } from "@/animation/config";
 import { useScrollyActive } from "@/animation/motion/ScrollySteps";
@@ -17,8 +17,9 @@ import type { ScrollyFrame } from "@/content/journal";
  * page landed on (a reload, a #fragment: direction is null on the core's first
  * report), reduced motion (read live: Motion's MotionConfig doesn't reach an
  * imperative animate), and the stacked layout, where the graphic isn't shown.
- * A step without a frame of its own leaves the camera where it is, so it is
- * already in place when the reader scrolls back up to it.
+ * A step without a frame of its own leaves the camera alone: a pan still in
+ * flight (MOTION.entrance outlasts the states' crossfade) lands where it was
+ * going, so the camera is in place when the reader scrolls back up to it.
  */
 export function ScrollyPan({
   frames,
@@ -29,6 +30,9 @@ export function ScrollyPan({
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  // The pan in flight: only the next framed step replaces it, never a
+  // frameless one.
+  const pan = useRef<AnimationPlaybackControls | null>(null);
   const { active, direction } = useScrollyActive();
   const frame = frames[active];
 
@@ -37,14 +41,14 @@ export function ScrollyPan({
     if (!el || !frame) return;
     const shown = el.closest('[data-scrolly-mode="sticky"]') !== null;
     const jump = direction === null || !shown || prefersReducedMotion();
-    const controls = animate(
+    pan.current?.stop();
+    pan.current = animate(
       el,
       { x: frame.x, y: frame.y, scale: frame.scale },
       jump
         ? { duration: 0 }
         : { duration: MOTION.entrance.duration, ease: CURVES[MOTION.entrance.curve] },
     );
-    return () => controls.stop();
   }, [frame, direction]);
 
   const first = frames.find((f) => f !== null);

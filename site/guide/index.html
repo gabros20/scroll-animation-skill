@@ -8,7 +8,7 @@
     <title>Guide · scroll-animation</title>
     <meta
       name="description"
-      content="How the scroll-animation storefront moves: one scroll authority per page, four clocks, reduced motion as an alternate scene, content that reads without JavaScript."
+      content="How the scroll-animation storefront moves: one scroll authority per page, five clocks, reduced motion as an alternate scene, content that reads without JavaScript."
     />
     <link rel="stylesheet" href="/src/styles/guide.css" />
     <script type="module" blocking="render" src="/src/pages/transitions.ts"></script>
@@ -70,23 +70,24 @@
         </figure>
 
         <section class="guide__section" id="clocks" data-header-theme="light" data-reveal>
-          <h2 data-reveal-item>Four clocks</h2>
+          <h2 data-reveal-item>Five clocks</h2>
           <p data-reveal-item>
-            Every animation runs on one of four clocks: trigger (it plays once when content arrives), scroll (a
-            function of the reader's position in a range), media (it follows what a video decoder presents) and render
-            (a render loop). Name the clock first: it decides the cost, the engine and which traps apply.
+            Every animation runs on one of five clocks: trigger (it plays once when content arrives), scroll (a
+            function of the reader's position in a range), media (it follows what a video decoder presents), render
+            (a render loop) and route (once per navigation or page load). Name the clock first: it decides the cost,
+            the engine and which traps apply.
           </p>
           <p data-reveal-item>
-            The paragraphs on this page run on the trigger clock. The bar under the header runs on the scroll clock,
-            with no JavaScript at all. So do the four steps below: each one changes the panel beside it once, as it
-            reaches the middle of the screen.
+            The paragraphs on this page run on the trigger clock, and so do the five steps below: each one changes the
+            panel beside it once, as it reaches the middle of the screen. The bar under the header runs on the scroll
+            clock, with no JavaScript at all. A link between this page and the home page runs on the route clock.
           </p>
         </section>
 
         <!-- scrolly-steps: the panel sticks beside the steps from 1024 px up, and the step at the middle of the
              viewport marks its clock (css/scrolly.css, pages/clock-steps.ts). Phones, no JavaScript and print read the
              steps alone: the panel only repeats their names. -->
-        <section class="clock-steps" data-scrolly aria-label="The four clocks, one at a time" data-header-theme="light">
+        <section class="clock-steps" data-scrolly aria-label="The five clocks, one at a time" data-header-theme="light">
           <div class="clock-steps__panel" data-scrolly-graphic>
             <figure class="clock-panel" data-scrolly-state="clocks">
               <span class="clock-panel__marker" aria-hidden="true"></span>
@@ -95,6 +96,7 @@
                 <li data-clock="1"><strong>Scroll</strong> follows the position</li>
                 <li data-clock="2"><strong>Media</strong> follows the decoder</li>
                 <li data-clock="3"><strong>Render</strong> runs every frame</li>
+                <li data-clock="4"><strong>Route</strong> once per page</li>
               </ol>
             </figure>
           </div>
@@ -126,6 +128,14 @@
               <p>
                 A loop that draws every frame while it is on screen: a WebGL scene, a cursor follower, a marquee that
                 speeds up with the scroll. It costs the most, so it stops when it leaves the screen.
+              </p>
+            </li>
+            <li class="clock-step" data-scrolly-step data-scrolly-show="clocks">
+              <p class="eyebrow">Route</p>
+              <p>
+                It runs once per navigation or page load: the crossfade between this page and the home page, a
+                cover that grows into its article, a loading screen for a scene that needs its assets first. Then the
+                page's scroll takes over where the navigation left it.
               </p>
             </li>
           </ol>

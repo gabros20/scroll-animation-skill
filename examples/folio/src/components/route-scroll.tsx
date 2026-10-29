@@ -2,27 +2,18 @@
 
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { ScrollTrigger } from "@/animation/gsap/setup";
 import { RouteChange } from "@/animation/smooth/SmoothScroll";
-
-// Only a page that made a trigger has anything to re-measure: the Reading
-// routes never start ScrollTrigger, and a refresh would start it (its scroll
-// and resize listeners) on a page with nothing to measure.
-const refresh = () => {
-  if (ScrollTrigger.getAll().length) ScrollTrigger.refresh();
-};
 
 /**
  * The route contract (smooth/route.ts), once per client navigation: the
  * route's scroll authority takes up the position Next placed (a Lenis glide
- * in flight would override it), then one ScrollTrigger refresh for anything
- * the navigation didn't re-create. Around the root layout's children, so its
- * layout effect runs after every route's own.
+ * in flight would override it), then the refreshes the shown routes
+ * registered, once, for anything the navigation didn't re-create, and again
+ * as late content lands. Around the root layout's children, so its layout
+ * effect runs after every route's own. No GSAP here: the GSAP routes register
+ * ScrollTrigger.refresh themselves (LenisScroll, Rail), so the journal never
+ * loads it.
  */
 export function RouteScroll({ children }: { children: ReactNode }) {
-  return (
-    <RouteChange route={usePathname()} refresh={refresh}>
-      {children}
-    </RouteChange>
-  );
+  return <RouteChange route={usePathname()}>{children}</RouteChange>;
 }

@@ -103,7 +103,7 @@
   font-size: 1.25rem;
 }
 
-/* ── The four clocks: a scene ScrollTrigger pins (pages/clocks.ts) ─────────────────────────────────
+/* ── The five clocks: a scene ScrollTrigger pins (pages/clocks.ts) ─────────────────────────────────
  * The acts ride over the pin with no background (css/scene.css pulls them back over it); the dial sits in the pin's
  * right column, so the copy never covers it. Its resting state is the timeline's last frame: every clock lit, every
  * meter full. */
