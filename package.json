@@ -30,6 +30,7 @@
     "test:scrolly-steps": "node tests/scrolly-steps.mjs",
     "test:view-transitions": "node tests/view-transitions.mjs",
     "test:route-hygiene": "node tests/route-hygiene.mjs",
+    "test:render-bridge": "node tests/render-bridge.mjs",
     "test:smoke": "node tests/run-smoke.mjs",
     "test:audit": "node skills/scroll-animation/scripts/tools/audit-motion.mjs --selftest",
     "test:cli": "node tests/cli.mjs",

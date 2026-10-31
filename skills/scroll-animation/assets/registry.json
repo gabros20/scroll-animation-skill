@@ -834,7 +834,7 @@
       "reference": "references/scenes.md"
     },
     "scene-css": {
-      "summary": "Pinned scene geometry for both engines (data-scene-root/pin/content/spacer/media/gutter/act): sticky 100lvh pin, the content pulled back over it, the reduced-motion collapse and print",
+      "summary": "Pinned scene geometry for both engines (data-scene-root/pin/content/spacer/media/gutter/act): sticky 100lvh pin, the content pulled back over it, a poster and canvas slot (data-scene-poster/canvas), the reduced-motion collapse and print",
       "clock": "scroll",
       "tier": "primitive",
       "profiles": [
@@ -889,6 +889,50 @@
             "gsap-setup",
             "scene-core",
             "scene-css"
+          ],
+          "packages": [
+            "gsap"
+          ]
+        }
+      },
+      "reference": "references/scenes.md"
+    },
+    "render-bridge": {
+      "summary": "A real-time canvas inside a pinned scene: the scene's exact progress feeds the canvas's conductor (one measurement, the pin's) and the canvas renders on the scroll authority's own tick (advance(), frameloop=\"never\"), only when awake, visible and dirty; no sweep on reload or wake, a live reduced-motion hold, the route re-measure registered. The 3d skill owns the conductor and the canvas",
+      "clock": "render",
+      "tier": "primitive",
+      "profiles": [
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "motion": {
+          "files": [
+            "render-bridge.ts",
+            "motion/usePinnedSceneRender.ts"
+          ],
+          "requires": [
+            "pinned-scene",
+            "scene-core",
+            "scene-css",
+            "scroll-authority"
+          ],
+          "packages": [
+            "motion",
+            "react"
+          ]
+        },
+        "gsap": {
+          "files": [
+            "render-bridge.ts",
+            "gsap/pinned-scene-render.ts"
+          ],
+          "requires": [
+            "gsap-setup",
+            "pinned-scene",
+            "scene-core",
+            "scene-css",
+            "scroll-authority"
           ],
           "packages": [
             "gsap"
