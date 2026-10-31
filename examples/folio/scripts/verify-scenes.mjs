@@ -1079,12 +1079,32 @@ const noWebgl = () => {
 
 /** Scrolls /lab's scene to progress p and lets it settle. */
 async function labJump(page, p) {
-  await page.evaluate((p) => {
+  // Polled, not a fixed wait: on a slow runner Lenis can still hold the old limit (a page just made shorter clamps
+  // the jump) and the act cross-fade can still be mid-way. Re-issue the jump until the page sits on its target, then
+  // wait for every act to rest at 0 or 1 opacity.
+  await page.evaluate(async (p) => {
     const scene = document.querySelector(".lab-scene");
-    const top = scene.getBoundingClientRect().top + scrollY;
-    scrollTo(0, Math.round(top + (scene.offsetHeight - innerHeight) * p));
+    const target = () => {
+      const top = scene.getBoundingClientRect().top + scrollY;
+      return Math.round(top + (scene.offsetHeight - innerHeight) * p);
+    };
+    const acts = [...scene.querySelectorAll("[data-scene-act]")];
+    const resting = () => acts.every((a) => ["0", "1"].includes(getComputedStyle(a).opacity));
+    const deadline = performance.now() + 6000;
+    let settledAt = 0;
+    while (performance.now() < deadline) {
+      const to = target();
+      if (Math.abs(scrollY - to) > 2) {
+        scrollTo(0, to);
+        settledAt = 0;
+      } else if (resting()) {
+        settledAt ||= performance.now();
+        if (performance.now() - settledAt >= 300) return;
+      } else settledAt = 0;
+      await new Promise((r) => setTimeout(r, 100));
+    }
   }, p);
-  await sleep(700);
+  await sleep(200);
 }
 
 /** The scene, the conductor, the acts, the canvas and the poster, as the reader would find them. */
