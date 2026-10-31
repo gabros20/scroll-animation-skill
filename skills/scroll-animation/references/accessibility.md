@@ -87,7 +87,8 @@ Each engine covers only its own animations. Anything you write by hand checks th
   }
   ```
 - **WebGL.** Check the query (and WebGL support) once before mounting the canvas; under `reduce`, render the poster
-  and never load the 3D bundle.
+  and never load the 3D bundle. A live switch is the scene's: `render-bridge` holds the conductor and stops feeding
+  scroll, and `css/scene.css` hides the canvas slot over the poster ([webgl.md](webgl.md) §6).
 
 Verify it: with reduced motion emulated, `document.getAnimations().filter((a) => a.playState === 'running')` is empty
 once the page settles, and no element inside a scene is still `position: sticky`.
@@ -95,7 +96,9 @@ once the page settles, and no element inside a scene is still `position: sticky`
 ## 3. Auto-moving content and flashes
 
 - **WCAG 2.2.2, Pause, Stop, Hide.** Anything that moves by itself for more than 5 seconds next to other content (a
-  loop video, a marquee, an ambient WebGL loop) needs a visible pause control, or it stops within 5 seconds. Pause on
+  loop video, a marquee, an ambient WebGL loop) needs a visible pause control, or it stops within 5 seconds. A bridged
+  canvas draws nothing at rest; one that idles, drifts or loops moves by itself and needs the control
+  ([webgl.md](webgl.md) §4). Pause on
   `:hover` and `:focus-within` too for marquees. `marquee-velocity` also pauses off screen, and keyboard focus on an
   item it clips moves the row until the item shows. Under reduced motion it doesn't start by itself.
 - **WCAG 2.3.1, three flashes.** No shader, glitch or strobe effect flashes more than three times in any second.

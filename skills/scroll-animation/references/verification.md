@@ -232,6 +232,10 @@ skipped:
 | A multi-page transition crossfades but never slides forward or back | a stripped `blocking="render"`: the direction type is lost, the transition still runs ([page-transitions.md](page-transitions.md) §3) |
 | A Motion `layoutId` swap sticks on the old box | reduced motion under Motion 13.4: [motion.md](motion.md) §8 |
 | A scrolly graphic doesn't stick, or the last step never activates | an `overflow: hidden` ancestor, ScrollSmoother, the tail removed: [scrollytelling.md](scrollytelling.md) §5 and its traps |
+| A 3D canvas in a scene draws a frame behind the copy or the scroll | rendered on its own loop (`demand`, a page rAF, a `scroll` listener) or fed by a 3d adapter: [webgl.md](webgl.md) §3–§4 |
+| A canvas sweeps from 0 or shows a default pose on reload | fed outside `render-bridge`, or the mesh takes its pose only in `onFrame`: [webgl.md](webgl.md) §6 |
+| A canvas is blank or black after load or in a view transition | the new canvas never rendered (a late canvas without `requestRender()`); the old snapshot keeps its last frame: [webgl.md](webgl.md) §6 |
+| WebGL contexts pile up across routes | a canvas kept mounted on leave or a renderer never disposed; under Cache Components, one per kept route: [webgl.md](webgl.md) §6 |
 
 ## Traps
 

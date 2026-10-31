@@ -153,5 +153,15 @@
     "id": "carousel-slide-transition",
     "prompt": "Give the product gallery carousel a crossfade between slides when the reader swipes or taps the arrows.",
     "should_trigger": false
+  },
+  {
+    "id": "scroll-3d-model-turn",
+    "prompt": "As the reader scrolls through the pinned product section, our three.js headphones model should turn and the camera should move in close, in step with the copy riding over it.",
+    "should_trigger": true
+  },
+  {
+    "id": "glb-model-shader",
+    "prompt": "Model a low-poly lighthouse for our React Three Fiber scene, optimise the exported GLB for the web, and write a water shader around it.",
+    "should_trigger": false
   }
 ]

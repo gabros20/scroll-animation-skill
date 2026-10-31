@@ -939,7 +939,7 @@
           ]
         }
       },
-      "reference": "references/scenes.md"
+      "reference": "references/webgl.md"
     },
     "video-controller": {
       "summary": "The decoder behind a scrubbed video (coalesced seeks, dt glide, rVFC loop wraps with late-callback and ended recovery, play watchdog, eviction recovery, tier sources) and the camera/backdrop framing maths",

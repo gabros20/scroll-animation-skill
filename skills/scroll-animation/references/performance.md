@@ -138,6 +138,11 @@ compound relentlessly when the loop never stops. This gating is what makes even 
 scene affordable at all; without it, "decode only what's on screen" is a principle with no
 enforcement.
 
+A real-time canvas in a pinned scene runs `frameloop="never"`, so its own pause no longer applies:
+`render-bridge` gates it on the scene's `awake`, the page's visibility and new input, which measured
+0 renders/s at rest, off screen and hidden, against 60/s for a canvas advanced every tick. Budget one
+WebGL context per route that Cache Components keep ([webgl.md](webgl.md) §4, §6).
+
 ## 7. `content-visibility` never touches a scene
 
 `content-visibility: auto` (with `contain-intrinsic-size`) is a render optimisation for below-fold
