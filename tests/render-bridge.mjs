@@ -25,7 +25,7 @@
 // rest, reduced, destroy; `nowebgl`: getContext('webgl') returns null, so SceneCanvas takes its poster path and the
 // poster shows, nothing thrown; and the canvas slot's CSS alone on static.html: the poster without JavaScript, under
 // reduced motion and in print, the canvas slot over it otherwise, and with acts stacked in the pin a
-// [data-scene-frame] that keeps poster and slot 16:9 when reduced motion collapses the pin.
+// [data-scene-still] that keeps poster and slot 16:9 when reduced motion collapses the pin.
 // First, the fixture's TSX is typechecked (tsconfig.json beside it, against Folio's pinned types).
 //
 // three and @react-three/fiber are the fixture's only extra dependencies, resolved from examples/folio's node_modules

@@ -140,7 +140,7 @@ const bridge = usePinnedSceneRender(conductor, { render: (ms) => advance(ms / 10
 const Stage = () => {                                  // PinnedScene's `pinned`, inside [data-scene-pin]
   const reduced = useReducedMotionLive()               // motion/useReducedMotionLive.ts
   return (
-    <div data-scene-frame>                             {/* only with acts stacked in the pin */}
+    <div data-scene-still>                             {/* only with acts stacked in the pin */}
       <img data-scene-poster src="/media/hero-poster.avif" alt="…" width={1600} height={900} />
       <div data-scene-canvas>
         {reduced ? null : (
@@ -159,7 +159,7 @@ const Stage = () => {                                  // PinnedScene's `pinned`
   (`@media (scripting: none)`) and in print the slot is `display: none`; under reduced motion a canvas left mounted is
   `visibility: hidden`, a backstop.
 - Acts stacked in the pin flow under reduced motion and the pin grows to hold them (1000×600 → 1000×1763 with three 400 px
-  acts); slots that fill the pin grow with it. Wrap both in `[data-scene-frame]`: it fills the pin while the scene
+  acts); slots that fill the pin grow with it. Wrap both in `[data-scene-still]`: it fills the pin while the scene
   runs and stays a `--scene-poster-ratio` (16 / 9) picture above the acts.
 - The poster is server-rendered, sized and designed: it is the LCP element. Leave `SceneCanvas`'s own `poster` unset;
   the slot's poster sits under it.

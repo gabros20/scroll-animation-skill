@@ -8,7 +8,7 @@
  *       <video data-scene-media …></video>       the pinned media
  *       <img data-scene-poster …>                or a real-time canvas (render-bridge.ts): its poster first,
  *       <div data-scene-canvas>…</div>           then the canvas slot over it (SceneCanvas, frameloop="never");
- *                                                with acts stacked in the pin, both inside <div data-scene-frame>
+ *                                                with acts stacked in the pin, both inside <div data-scene-still>
  *     </div>
  *     <div data-scene-content>                   pulled back over the pin; the acts ride over it
  *       <section>…</section>
@@ -88,9 +88,9 @@
    pin, the slot takes no pointer events; give it `pointer-events: auto` for a canvas the reader interacts with.
    Acts stacked in the pin flow under reduced motion and the pin grows to hold them; a poster and slot that fill the
    pin would grow with it (a 16:9 poster cropped into a strip as tall as every act). So with stacked acts, wrap the two
-   in [data-scene-frame]: it fills the pin while the scene runs and, under reduced motion, stays a picture
+   in [data-scene-still]: it fills the pin while the scene runs and, under reduced motion, stays a picture
    (--scene-poster-ratio, 16 / 9) above the acts. */
-[data-scene-frame],
+[data-scene-still],
 [data-scene-poster],
 [data-scene-canvas] {
   position: absolute;
@@ -149,7 +149,7 @@
   [data-scene-spacer] {
     height: 0 !important;
   }
-  [data-scene-pin]:has([data-scene-act]) [data-scene-frame] {
+  [data-scene-pin]:has([data-scene-act]) [data-scene-still] {
     position: relative !important;
     inset: auto !important;
     height: auto !important;
@@ -178,7 +178,7 @@
     height: auto !important;
     transform: none !important;
   }
-  [data-scene-frame],
+  [data-scene-still],
   [data-scene-poster] {
     position: static !important;
     width: 100% !important;
