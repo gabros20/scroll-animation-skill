@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
-import { MediaSlot } from "@/components/media-slot";
+import Image from "next/image";
+import { LabScene } from "@/components/lab-scene";
+import { mediaExists, mediaSrc } from "@/lib/media";
+import "./lab.css";
 
 export const metadata: Metadata = {
   title: "Lab",
@@ -34,45 +37,53 @@ const CHAPTERS = [
   },
 ];
 
-export default function LabPage() {
-  return (
-    <div className="px-6 py-20 sm:px-10 lg:py-28">
-      <h1 className="font-display text-5xl tracking-tight lg:text-6xl">Lab</h1>
-      <p className="mt-4 max-w-md font-sans text-lg text-ink-soft">
-        A closer look at one object in three dimensions. Scroll to move
-        around it.
-      </p>
+const POSTER = "lab/camera-poster.avif";
+const POSTER_ALT = "An antique bellows camera on a wooden tripod, rendered in three dimensions.";
 
-      {/*
-        scroll-animation: ScrollCanvas + camera-path (Phase 5). Persistent
-        R3F canvas, dynamically imported; this poster is what renders before
-        it mounts and what reduced motion / no-WebGL show instead.
-      */}
-      <div className="relative mt-12">
-        <MediaSlot
-          kind="image"
-          src="lab/camera-poster.avif"
-          alt="An antique bellows camera on a wooden tripod, rendered in three dimensions."
-          width={1920}
-          height={1080}
-          priority
-          className="w-full rounded-sm"
-        />
+/**
+ * Immersive: one object, five chapters. The heading, the intro and every
+ * chapter are server HTML; LabScene (a client island) pins them over the
+ * poster and, once the poster has loaded, the 3d skill's canvas over that.
+ */
+export default function LabPage() {
+  const poster = mediaExists(POSTER) ? (
+    <Image
+      data-scene-poster=""
+      src={mediaSrc(POSTER)}
+      alt={POSTER_ALT}
+      width={1920}
+      height={1080}
+      sizes="100vw"
+      preload
+    />
+  ) : (
+    <div data-scene-poster="" aria-hidden="true" className="media-placeholder" />
+  );
+
+  return (
+    <>
+      <div className="px-6 pt-20 pb-12 sm:px-10 lg:pt-28">
+        <h1 className="font-display text-5xl tracking-tight lg:text-6xl">Lab</h1>
+        <p className="mt-4 max-w-md font-sans text-lg text-ink-soft">
+          A closer look at one object in three dimensions.
+          <span className="motion-reduce:hidden"> Scroll to move around it.</span>
+        </p>
       </div>
 
       {/*
-        Chapter track. camera-path (Phase 5) reads these as its Catmull-Rom
-        stops; for now they are plain scroll content, in reading order.
+        scroll-animation: render-bridge (GSAP, on pinned-scene). The chapters
+        are the scene's acts, stacked in the pin; the 3d skill's conductor and
+        SceneCanvas (src/three/) frame the camera for each one.
       */}
-      <ol className="mx-auto mt-16 max-w-xl">
+      <LabScene poster={poster}>
         {CHAPTERS.map((chapter) => (
-          <li key={chapter.number} className="border-t border-line py-8 first:border-t-0">
+          <li key={chapter.number} data-scene-act="" className="lab-act">
             <span className="font-sans text-sm text-muted">{chapter.number}</span>
-            <h2 className="mt-2 font-display text-2xl">{chapter.title}</h2>
-            <p className="mt-2 font-sans text-ink-soft">{chapter.body}</p>
+            <h2 className="mt-2 font-display text-3xl leading-tight lg:text-4xl">{chapter.title}</h2>
+            <p className="mt-3 font-sans text-ink-soft">{chapter.body}</p>
           </li>
         ))}
-      </ol>
-    </div>
+      </LabScene>
+    </>
   );
 }

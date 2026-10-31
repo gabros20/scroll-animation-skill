@@ -64,6 +64,16 @@ foundation (`config`, `base-css`, `gsap-setup`, `motion-provider`, `smooth-lenis
   Motion: fixtures on `/blocks` (`src/app/blocks/`), on their defaults, and the loop videos with
   their pause control in the journal (`src/components/media-slot.tsx`).
 
+- `render-bridge` for GSAP, on the same `pinned-scene`: `/lab`
+  (`src/components/lab-scene.tsx`). The antique camera's five chapters are acts stacked in the pin;
+  the scene's progress feeds the 3d skill's conductor, and the bridge draws the canvas on GSAP's
+  ticker (after Lenis), only while the scroll moves. The conductor and `SceneCanvas` are copied
+  from the 3d skill into `src/three/` (each file's header says from where, and what Folio
+  changed); the model and its five camera poses are `src/three/camera-stage.tsx`, a lazy chunk
+  that brings three, R3F and drei, requested only after the poster (the LCP element) has loaded.
+  Reduced motion, no WebGL, a lost context, no JavaScript and print keep the poster, with the
+  chapters in flow.
+
 - `scrolly-steps` for Motion: "One wall, ten years" in `/journal/what-rust-is-for`
   (`src/components/article-scrolly.tsx`, the steps in `src/content/journal.ts`). A sticky graphic
   from 1024 px up, built from the article's own pictures; the two steps on one photograph pan
@@ -85,7 +95,7 @@ that client navigation swaps it without leaving a second Lenis, and that a reloa
 scroll position.
 
 `pnpm verify:scenes` fetches the media and builds if either is missing, starts `next start`, and
-runs the skill's `verify-motion.mjs --scenes --reveal` on `/`, `/journal/what-rust-is-for` and
+runs the skill's `verify-motion.mjs --scenes --reveal` on `/`, `/journal/what-rust-is-for`, `/lab` and
 `/blocks` at 1440×900 and 390×844, holding every scene to head, scrub, scrub, scrub, tail. Around
 it, in Chromium and WebKit:
 
@@ -107,6 +117,15 @@ it, in Chromium and WebKit:
   `::view-transition-group` and an anchored header, the article lands at the top, the browser's
   back restores the index with no transition, and back on `/` the live ScrollTriggers are as many
   as on the first load, with one scroll authority at every step.
+
+On `/lab`, in Chromium with SwiftShader for WebGL: the poster is the LCP element and three and
+the model load after it; the canvas draws the model; each chapter's act shows alone (the others
+`inert`) with the camera on that chapter; 0 renders at rest, off-screen and in a hidden tab;
+leaving the route releases the WebGL context and the browser's back lands on the same chapter, as
+does a reload; reduced motion switched on live unmounts the canvas; after `WEBGL_lose_context`
+the poster stands. In every engine: reduced motion, no WebGL and no JavaScript show the poster
+and all five chapters, and no route's initial JavaScript carries three. `--only lab` runs just
+these.
 
 Firefox, which has no scroll-driven animations, runs the article: `verify-motion --reveal`, then
 the static fallback (everything shown, nothing left hidden, nothing attached to the parallax), and

@@ -40,17 +40,22 @@
 //                  article's "Journal" breadcrumb (a "back" transition: the cover morphs back, vt-back slides) -> /, the live
 //                  ScrollTriggers back to their first count (window.__triggers under ?motion-debug), one authority
 //                  at every step.
+//   lab            /lab's real-time scene (Chromium + SwiftShader; WebKit and Firefox without WebGL): the poster as
+//                  LCP and three after it, the chapters on the scroll, every frame that moves the scene drawn in that
+//                  frame (on load, and after reduced motion on and off re-creates Lenis), 0 renders at rest, off
+//                  screen and hidden, back/forward and reload, reduced motion live, a lost context, no WebGL.
 //
 // Pages are prerendered, so a build made before `pnpm media` holds placeholders: missing media is fetched first,
 // and the build is made when there is none or the media just arrived. Starts `next start` on a free port and always
 // stops it.
 //
-//   node scripts/verify-scenes.mjs [--browsers chromium,webkit,firefox]
+//   node scripts/verify-scenes.mjs [--browsers chromium,webkit,firefox] [--only lab]
 
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { gzipSync } from "node:zlib";
 import { chromium, firefox, webkit } from "playwright";
 import { nextBuild, startServer, stopServer } from "./lib/next-server.mjs";
 
@@ -66,7 +71,7 @@ const VIEWPORTS = [
 ];
 const ARTICLE = "/journal/what-rust-is-for";
 // Each route and the scenes it must have: verify-motion passes a page with none.
-const ROUTES = { "/": 2, [ARTICLE]: 0, "/blocks": 3 };
+const ROUTES = { "/": 2, [ARTICLE]: 0, "/lab": 1, "/blocks": 3 };
 const HEADLINE = "Things, made well.";
 // #211d18 and #f4f0e9 (globals.css): the header's ink over paper and over the dark section.
 const INK = "rgb(33, 29, 24)";
@@ -84,15 +89,18 @@ const MEDIA = [
   "journal/rust-detail.avif",
   "objects/stoneware-vessel.avif",
   "objects/glass-shade.avif",
+  "lab/camera-poster.avif",
+  "lab/antique-camera.glb",
 ];
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const size = (vp) => `${vp.width}x${vp.height}`;
 
 function parseArgs(argv) {
-  const out = { browsers: Object.keys(ENGINES) };
+  const out = { browsers: Object.keys(ENGINES), only: null };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === "--browsers") out.browsers = argv[++i].split(",");
+    else if (argv[i] === "--only" && argv[i + 1] === "lab") out.only = argv[++i];
     else throw new Error(`unknown argument: ${argv[i]}`);
   }
   for (const b of out.browsers) if (!ENGINES[b]) throw new Error(`unknown browser: ${b}`);
@@ -1036,6 +1044,487 @@ async function checkCoverTransition(browser, base, vp, line) {
   }
 }
 
+// ── Phase 5: /lab ───────────────────────────────────────────────────────
+
+const LAB = "/lab";
+const LAB_CHAPTERS = ["The body", "The bellows", "The lens", "The tripod", "The whole object"];
+// Headless Chromium has WebGL only through SwiftShader with these switches (spike S11).
+const GL_LAUNCH = { args: ["--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] };
+// A minified three.js build keeps its console prefixes: the marker for a chunk that carries three.
+const THREE_MARK = "THREE.WebGLRenderer";
+
+/** Records every WebGL context the page creates (__liveGl(): how many aren't lost). */
+const glRecorder = () => {
+  window.__gl = [];
+  const getContext = HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext = function (type, ...rest) {
+    const ctx = getContext.call(this, type, ...rest);
+    if (ctx && /webgl/.test(type) && !window.__gl.some((e) => e.ctx === ctx)) window.__gl.push({ ctx, canvas: this });
+    return ctx;
+  };
+  window.__liveGl = () => window.__gl.filter((e) => !e.ctx.isContextLost()).length;
+  window.__lcp = null;
+  new PerformanceObserver((list) => {
+    for (const entry of list.getEntries()) window.__lcp = entry.element;
+  }).observe({ type: "largest-contentful-paint", buffered: true });
+};
+
+/** A browser without WebGL: every webgl context request fails. */
+const noWebgl = () => {
+  const getContext = HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext = function (type, ...rest) {
+    return /webgl/.test(type) ? null : getContext.call(this, type, ...rest);
+  };
+};
+
+/** Scrolls /lab's scene to progress p and lets it settle. */
+async function labJump(page, p) {
+  // Polled, not a fixed wait: on a slow runner Lenis can still hold the old limit (a page just made shorter clamps
+  // the jump) and the act cross-fade can still be mid-way. Re-issue the jump until the page sits on its target, then
+  // wait for every act to rest at 0 or 1 opacity.
+  await page.evaluate(async (p) => {
+    const scene = document.querySelector(".lab-scene");
+    const target = () => {
+      const top = scene.getBoundingClientRect().top + scrollY;
+      return Math.round(top + (scene.offsetHeight - innerHeight) * p);
+    };
+    const acts = [...scene.querySelectorAll("[data-scene-act]")];
+    const resting = () => acts.every((a) => ["0", "1"].includes(getComputedStyle(a).opacity));
+    const deadline = performance.now() + 6000;
+    let settledAt = 0;
+    while (performance.now() < deadline) {
+      const to = target();
+      if (Math.abs(scrollY - to) > 2) {
+        scrollTo(0, to);
+        settledAt = 0;
+      } else if (resting()) {
+        settledAt ||= performance.now();
+        if (performance.now() - settledAt >= 300) return;
+      } else settledAt = 0;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  }, p);
+  await sleep(200);
+}
+
+/** The scene, the conductor, the acts, the canvas and the poster, as the reader would find them. */
+const labState = (page) =>
+  page.evaluate(() => {
+    const lab = window.__lab ?? null;
+    const scene = lab?.scene() ?? null;
+    const root = document.querySelector(".lab-scene");
+    const acts = [...root.querySelectorAll("[data-scene-act]")];
+    const poster = root.querySelector("img[data-scene-poster]");
+    const slot = root.querySelector("[data-scene-canvas]");
+    const posterCs = poster && getComputedStyle(poster);
+    const slotCs = getComputedStyle(slot);
+    const canvas = slot.querySelector("canvas");
+    const rects = acts.map((a) => a.getBoundingClientRect());
+    return {
+      act: scene?.act ?? null,
+      awake: scene?.awake ?? null,
+      index: lab?.state().index ?? null,
+      exact: lab ? +lab.state().exact.toFixed(3) : null,
+      inert: acts.map((a) => a.inert),
+      opacity: acts.map((a) => +getComputedStyle(a).opacity),
+      visible: acts.map((a) => getComputedStyle(a).visibility === "visible" && +getComputedStyle(a).opacity > 0.99),
+      inFlow: rects.every((r, i) => i === 0 || r.top >= rects[i - 1].bottom - 1),
+      renders: lab?.renders ?? 0,
+      draws: lab?.draws ?? 0,
+      drawnAt: lab?.drawnAt ?? null,
+      posterAt: lab?.posterAt ?? null,
+      mountedAt: lab?.mountedAt ?? null,
+      lost: lab?.lost ?? 0,
+      mode: slot.querySelector("[data-scene-mode]")?.getAttribute("data-scene-mode") ?? null,
+      canvas: !!canvas,
+      // The poster is what the reader sees when no canvas covers it.
+      posterShown:
+        !!poster && poster.complete && poster.naturalWidth > 0 && posterCs.visibility === "visible" && +posterCs.opacity === 1 &&
+        (!canvas || slotCs.visibility === "hidden" || +slotCs.opacity === 0),
+      pin: getComputedStyle(root.querySelector("[data-scene-pin]")).position,
+      liveGl: window.__liveGl?.() ?? null,
+      lcpPoster: window.__lcp ? window.__lcp.hasAttribute("data-scene-poster") : null,
+    };
+  });
+
+/** Bridge render calls and canvas draws over `ms`, optionally while `during` runs. */
+async function labRendersOver(page, ms, during) {
+  const a = await labState(page);
+  const started = Date.now();
+  if (during) await during();
+  const left = ms - (Date.now() - started);
+  if (left > 0) await sleep(left);
+  const b = await labState(page);
+  const secs = Math.max(ms, Date.now() - started) / 1000;
+  return { renders: Math.round((b.renders - a.renders) / secs), draws: Math.round((b.draws - a.draws) / secs) };
+}
+
+/** Wheel-scrolls `notches` × 100 px, one notch every 50 ms (Lenis glides each one). */
+async function labWheel(page, notches, dy = 100) {
+  await page.mouse.move(200, 400);
+  for (let i = 0; i < notches; i++) {
+    await page.mouse.wheel(0, dy);
+    await sleep(50);
+  }
+}
+
+/** From the scene's first placement, the lowest opacity the shown act has over 12 frames (1: it landed, no fade). */
+async function labLanding(page) {
+  await page.waitForSelector(".lab-scene[data-lab-placed]", { timeout: 30000 });
+  return page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        let low = 1;
+        let n = 0;
+        const sample = () => {
+          const act = [...document.querySelectorAll(".lab-scene [data-scene-act]")].find((a) => !a.inert);
+          low = Math.min(low, act ? +getComputedStyle(act).opacity : 0);
+          if (++n < 12) requestAnimationFrame(sample);
+          else resolve(Math.round(low * 100) / 100);
+        };
+        sample();
+      }),
+  );
+}
+
+/**
+ * A wheel run through the scene, recorded at the end of every frame (a ResizeObserver callback is the last script
+ * before paint): over the frames where the scene moves inside its range, did the bridge render in that frame, with
+ * that frame's progress (the rect's, within 1 px of the range)? Lenis glides, so the scroll moves for many frames.
+ */
+async function labLag(page) {
+  await page.evaluate(() => {
+    const rows = [];
+    const root = document.querySelector(".lab-scene");
+    const probe = document.createElement("div");
+    probe.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;pointer-events:none;opacity:0;contain:strict";
+    document.body.appendChild(probe);
+    let on = true;
+    let flip = false;
+    new ResizeObserver(() => {
+      if (!on) return;
+      const r = root.getBoundingClientRect();
+      const range = r.height - innerHeight;
+      rows.push({ y: scrollY, truth: range > 0 ? Math.min(1, Math.max(0, -r.top / range)) : null, range, rn: window.__lab.renders, e: window.__lab.exact });
+    }).observe(probe);
+    const tick = () => {
+      if (!on) return probe.remove();
+      flip = !flip;
+      probe.style.width = flip ? "2px" : "1px";
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    window.__labLagStop = () => ((on = false), rows);
+  });
+  await labWheel(page, 12);
+  await sleep(1200);
+  await labWheel(page, 6, -100);
+  await sleep(1200);
+  const rows = await page.evaluate(() => window.__labLagStop());
+  let moving = 0;
+  let inFrame = 0;
+  let worst = 0;
+  const late = [];
+  for (let n = 1; n < rows.length; n++) {
+    const r = rows[n];
+    if (Math.abs(r.y - rows[n - 1].y) <= 0.5 || r.truth === null || r.truth <= 0 || r.truth >= 1) continue;
+    moving++;
+    const err = r.e === null ? Infinity : Math.abs(r.e - r.truth) * r.range;
+    worst = Math.max(worst, err);
+    if (r.rn > rows[n - 1].rn && err <= 1.01) inFrame++;
+    else if (late.length < 2) late.push({ n, errPx: Math.round(err * 10) / 10 });
+  }
+  return { moving, inFrame, worstPx: Math.round(worst * 10) / 10, late };
+}
+
+/** Headless pages are never hidden: override the visibility getters and fire the event (the bridge's gate reads them). */
+const fakeHidden = (page, hidden) =>
+  page.evaluate((hidden) => {
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => (hidden ? "hidden" : "visible") });
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => hidden });
+    document.dispatchEvent(new Event("visibilitychange"));
+  }, hidden);
+
+const nearly = (a, b, tol = 0.01) => a !== null && Math.abs(a - b) <= tol;
+const onlyAct = (s, k) => s.act === k && s.index === k && s.inert.every((v, i) => v === (i !== k)) && s.opacity[k] === 1;
+
+/** The served HTML of /lab, and three in no route's initial JavaScript. */
+async function checkLabHtml(base, line) {
+  const html = await (await fetch(`${base}${LAB}`)).text();
+  const titles = LAB_CHAPTERS.filter((t) => html.includes(`>${t}</h2>`));
+  line(
+    /<h1\b[^>]*>Lab<\/h1>/.test(html) && titles.length === 5 && /<img[^>]*data-scene-poster=""[^>]*camera-poster/.test(html),
+    "served HTML of /lab: the heading, the five chapters and the poster",
+    `${titles.length}/5 chapters${/data-scene-poster/.test(html) ? ", poster" : ", NO poster"}`,
+  );
+  const sizes = [];
+  const carriers = [];
+  for (const route of ["/", "/journal", ARTICLE, LAB, "/blocks"]) {
+    const page = await (await fetch(`${base}${route}`)).text();
+    const srcs = [...new Set([...page.matchAll(/(?:src|href)="(\/_next\/static\/chunks\/[^"]+\.js)"/g)].map((m) => m[1]))];
+    let raw = 0;
+    let gz = 0;
+    for (const src of srcs) {
+      const body = Buffer.from(await (await fetch(`${base}${src}`)).arrayBuffer());
+      raw += body.length;
+      gz += gzipSync(body).length;
+      if (body.includes(THREE_MARK)) carriers.push(`${route} ${src}`);
+    }
+    sizes.push(`${route} ${Math.round(raw / 1024)} KB (${Math.round(gz / 1024)} KB gz)`);
+  }
+  line(carriers.length === 0, "three.js is in no route's initial JavaScript", `${carriers.join(", ") || sizes.join(" · ")}`);
+}
+
+/** With WebGL (Chromium + SwiftShader): the poster first, then the canvas, ticked by the bridge only when it must. */
+async function checkLabWebgl(browser, base, vp, line) {
+  const { context, page, errors } = await openPage(browser, vp, { init: glRecorder });
+  const at = `${LAB} ${size(vp)}`;
+  try {
+    await page.goto(`${base}${LAB}?motion-debug`, { waitUntil: "load" });
+    await page.waitForFunction(() => window.__lab?.drawnAt, null, { timeout: 30000 });
+    await sleep(800);
+    const first = await labState(page);
+    const net = await page.evaluate(() => {
+      const entries = performance.getEntriesByType("resource");
+      const poster = entries.find((e) => e.name.includes("camera-poster"));
+      const glb = entries.find((e) => e.name.includes("antique-camera.glb"));
+      const late = entries.filter((e) => e.initiatorType === "script" && poster && e.startTime >= poster.responseEnd);
+      return {
+        posterEnd: poster ? Math.round(poster.responseEnd) : null,
+        glbStart: glb ? Math.round(glb.startTime) : null,
+        lazyKB: Math.round(late.reduce((n, e) => n + (e.encodedBodySize || 0), 0) / 1024),
+      };
+    });
+    const ink = await page.evaluate(() => window.__lab.sample());
+    line(
+      first.lcpPoster === true && net.posterEnd !== null && net.glbStart >= net.posterEnd && first.mountedAt >= first.posterAt,
+      `${at} the poster is the LCP element; three and the model load after it`,
+      `LCP ${first.lcpPoster ? "poster" : "not the poster"} · poster in at ${net.posterEnd} ms, model requested at ${net.glbStart} ms, ${net.lazyKB} KB of JS after the poster`,
+    );
+    line(
+      ink !== null && ink > 0.02 && first.canvas && first.mode === "live" && first.liveGl === 1,
+      `${at} renders a frame of the model`,
+      `${ink === null ? "no canvas" : `${Math.round(ink * 100)}% of the canvas is the model`} · first frame ${Math.round(first.drawnAt - first.posterAt)} ms after the poster · ${first.liveGl} live context(s)`,
+    );
+
+    const steps = [];
+    for (let k = 0; k < 5; k++) {
+      await labJump(page, k / 4);
+      steps.push(await labState(page));
+    }
+    line(
+      steps.every((s, k) => onlyAct(s, k) && nearly(s.exact, k / 4)),
+      `${at} the chapters follow the scroll: one act shown, the others inert, the camera on the same chapter`,
+      steps.map((s, k) => `p ${k / 4}: act ${s.act}, chapter ${s.index}, exact ${s.exact}`).join(" · "),
+    );
+
+    await labJump(page, 0.4);
+    await sleep(1000);
+    const rest = await labRendersOver(page, 1000);
+    const scrolling = await labRendersOver(page, 1200, () => labWheel(page, 20));
+    await sleep(1500);
+    const after = await labRendersOver(page, 1000);
+    line(
+      rest.renders === 0 && after.renders === 0 && scrolling.draws > 0,
+      `${at} draws only while the scroll moves: 0 renders/s at rest`,
+      `at rest ${rest.renders}/s · scrolling ${scrolling.renders} renders/s, ${scrolling.draws} draws/s · settled again ${after.renders}/s`,
+    );
+
+    // The bridge draws after Lenis and ScrollTrigger in every tick, though its useGSAP ran before the layout started
+    // Lenis: every frame that moves the scene draws that frame's progress.
+    await labJump(page, 0.1);
+    const lag = await labLag(page);
+    line(
+      lag.moving >= 20 && lag.inFrame === lag.moving,
+      `${at} every frame that moves the scene draws in that frame, at its progress (0 frames late)`,
+      `${lag.inFrame}/${lag.moving} in frame, worst ${lag.worstPx} px${lag.late.length ? `, late: ${JSON.stringify(lag.late)}` : ""}`,
+    );
+
+    // Off-screen: two viewports of page appended after the scene, scrolled to.
+    await page.evaluate(() => {
+      const tail = document.createElement("div");
+      tail.id = "verify-tail";
+      tail.style.height = "250vh";
+      document.querySelector(".lab-scene").after(tail);
+    });
+    await sleep(600);
+    await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+    await sleep(1200);
+    const away = await labState(page);
+    const offscreen = await labRendersOver(page, 1000, () => labWheel(page, 5, -100));
+    await page.evaluate(() => document.getElementById("verify-tail").remove());
+    await sleep(600);
+    await labJump(page, 0.25);
+    await sleep(800);
+    const back = await labState(page);
+    line(
+      away.awake === false && offscreen.renders === 0 && onlyAct(back, 1) && back.draws > away.draws,
+      `${at} 0 renders off-screen, and back in view it draws the scroll's chapter`,
+      `asleep ${!away.awake}, ${offscreen.renders} renders/s off-screen · back: act ${back.act}, chapter ${back.index}, ${back.draws - away.draws} draws`,
+    );
+
+    await fakeHidden(page, true);
+    await sleep(200);
+    const hiddenBefore = await labState(page);
+    await labJump(page, 0.75);
+    const hidden = await labRendersOver(page, 1000);
+    await fakeHidden(page, false);
+    await sleep(1000);
+    const shown = await labState(page);
+    line(
+      hidden.renders === 0 && shown.draws > hiddenBefore.draws && onlyAct(shown, 3) && nearly(shown.exact, 0.75),
+      `${at} 0 renders while the tab is hidden, even as the scroll moves; shown again at the scroll's chapter`,
+      `hidden ${hidden.renders}/s · shown: chapter ${shown.index}, exact ${shown.exact}`,
+    );
+
+    // Leaving the route releases the context; the browser's back lands on the same chapter.
+    await labJump(page, 0.5);
+    await page.click('header a[href="/journal"]');
+    await page.waitForURL(`${base}/journal`);
+    await sleep(1200);
+    const gone = await page.evaluate(() => window.__liveGl());
+    await page.goBack();
+    await page.waitForURL(/\/lab/);
+    const backLow = await labLanding(page);
+    await page.waitForFunction(() => window.__lab?.drawnAt, null, { timeout: 30000 });
+    await sleep(800);
+    const returned = await labState(page);
+    line(
+      gone === 0 && returned.liveGl === 1 && onlyAct(returned, 2) && nearly(returned.exact, 0.5, 0.02) && backLow === 1,
+      `${at} leaving releases the WebGL context; back/forward lands on the same chapter, shown at once (no fade in)`,
+      `${gone} live context(s) on /journal · back on /lab: act ${returned.act}, chapter ${returned.index}, exact ${returned.exact}, lowest opacity ${backLow}, ${returned.liveGl} live context(s)`,
+    );
+
+    await labJump(page, 0.75);
+    await page.reload({ waitUntil: "load" });
+    const reloadLow = await labLanding(page);
+    await page.waitForFunction(() => window.__lab?.drawnAt, null, { timeout: 30000 });
+    await sleep(800);
+    const reloaded = await labState(page);
+    line(
+      onlyAct(reloaded, 3) && nearly(reloaded.exact, 0.75, 0.02) && reloadLow === 1,
+      `${at} a reload mid-scene draws the same chapter, shown at once (no fade in)`,
+      `act ${reloaded.act}, chapter ${reloaded.index}, exact ${reloaded.exact}, lowest opacity ${reloadLow}`,
+    );
+
+    // Reduced motion, switched on live: the canvas goes, the poster and every chapter stay.
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await sleep(1000);
+    const reduced = await labState(page);
+    const reducedDraws = await labRendersOver(page, 1000, () => labWheel(page, 5));
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await labJump(page, 0.5);
+    await page.waitForFunction(() => window.__lab?.drawnAt, null, { timeout: 30000 });
+    await sleep(1000);
+    const motion = await labState(page);
+    line(
+      !reduced.canvas && reduced.posterShown && reduced.visible.every(Boolean) && reduced.inert.every((v) => !v) && reducedDraws.draws === 0 &&
+        motion.canvas && onlyAct(motion, 2),
+      `${at} reduced motion, live: the canvas unmounts, the poster and all five chapters show; off again, the canvas returns on the chapter`,
+      `reduced: canvas ${reduced.canvas}, poster ${reduced.posterShown}, ${reduced.visible.filter(Boolean).length}/5 chapters shown, ${reducedDraws.draws} draws/s scrolling · motion: canvas ${motion.canvas}, chapter ${motion.index}`,
+    );
+
+    // Lenis was re-created behind the bridge's ticker callback: still drawn in the frame.
+    await labJump(page, 0.1);
+    const lagBack = await labLag(page);
+    line(
+      lagBack.moving >= 20 && lagBack.inFrame === lagBack.moving,
+      `${at} after reduced motion on and off, every frame that moves the scene still draws in that frame`,
+      `${lagBack.inFrame}/${lagBack.moving} in frame, worst ${lagBack.worstPx} px${lagBack.late.length ? `, late: ${JSON.stringify(lagBack.late)}` : ""}`,
+    );
+
+    // A lost context: the poster takes over and nothing draws. (SceneCanvas also reports the context it drops itself
+    // when it unmounts, as on the reduced-motion switch above: count from here.)
+    const lostBefore = (await labState(page)).lost;
+    await page.evaluate(() => {
+      const entry = window.__gl.find((e) => !e.ctx.isContextLost() && e.canvas.closest("[data-scene-canvas]"));
+      entry?.ctx.getExtension("WEBGL_lose_context")?.loseContext();
+    });
+    await sleep(1000);
+    const lost = await labState(page);
+    const lostDraws = await labRendersOver(page, 1000, () => labWheel(page, 5));
+    line(
+      lost.lost === lostBefore + 1 && lost.mode === "poster" && !lost.canvas && lost.posterShown && lostDraws.draws === 0,
+      `${at} after WEBGL_lose_context the poster stands and nothing draws`,
+      `${lost.lost - lostBefore} loss reported, mode ${lost.mode}, canvas ${lost.canvas}, poster ${lost.posterShown}, ${lostDraws.draws} draws/s scrolling`,
+    );
+    line(errors.length === 0, `${at} no page errors`, errors.join(" | "));
+  } finally {
+    await context.close();
+  }
+}
+
+/** Every engine: reduced motion from the start, no WebGL, no JavaScript. */
+async function checkLabFallbacks(browser, base, vp, line) {
+  const at = `${LAB} ${size(vp)}`;
+  {
+    const { context, page } = await openPage(browser, vp, { motion: "reduce", init: glRecorder });
+    let model = 0;
+    page.on("request", (r) => r.url().includes("antique-camera.glb") && model++);
+    try {
+      await page.goto(`${base}${LAB}?motion-debug`, { waitUntil: "load" });
+      await sleep(1500);
+      const s = await labState(page);
+      line(
+        s.posterShown && !s.canvas && s.liveGl === 0 && model === 0 && s.pin !== "sticky" && s.visible.every(Boolean) && s.inert.every((v) => !v) && s.inFlow,
+        `${at} reduced motion: the poster, every chapter in flow, no canvas, no model fetched`,
+        `poster ${s.posterShown}, canvas ${s.canvas}, ${s.liveGl} context(s), model requests ${model}, pin ${s.pin}, ${s.visible.filter(Boolean).length}/5 chapters shown${s.inFlow ? " in flow" : ", overlapping"}`,
+      );
+    } finally {
+      await context.close();
+    }
+  }
+  {
+    const { context, page } = await openPage(browser, vp, { init: noWebgl });
+    let model = 0;
+    page.on("request", (r) => r.url().includes("antique-camera.glb") && model++);
+    try {
+      await page.goto(`${base}${LAB}?motion-debug`, { waitUntil: "load" });
+      await sleep(1500);
+      const head = await labState(page);
+      const steps = [];
+      for (let k = 0; k < 5; k++) {
+        await labJump(page, k / 4);
+        steps.push(await labState(page));
+      }
+      line(
+        head.posterShown && head.mode === "poster" && !head.canvas && model === 0 && steps.every((s, k) => s.act === k && s.inert.every((v, i) => v === (i !== k)) && s.posterShown),
+        `${at} no WebGL: the poster stands, no model fetched, and the chapters still follow the scroll`,
+        `mode ${head.mode}, model requests ${model}, acts ${steps.map((s) => s.act).join(",")}`,
+      );
+    } finally {
+      await context.close();
+    }
+  }
+  {
+    const { context, page } = await openPage(browser, vp, { js: false });
+    try {
+      await page.goto(`${base}${LAB}`, { waitUntil: "load" });
+      await sleep(500);
+      const s = await page.evaluate(() => {
+        const root = document.querySelector(".lab-scene");
+        const titles = [...root.querySelectorAll("[data-scene-act] h2")];
+        const rects = titles.map((h) => h.getBoundingClientRect());
+        const poster = root.querySelector("img[data-scene-poster]");
+        return {
+          h1: document.querySelector("h1")?.textContent,
+          titles: titles.filter((h) => getComputedStyle(h).visibility === "visible" && +getComputedStyle(h.closest("[data-scene-act]")).opacity === 1).length,
+          inFlow: rects.every((r, i) => i === 0 || r.top >= rects[i - 1].bottom),
+          poster: !!poster && poster.complete && poster.naturalWidth > 0 && poster.getBoundingClientRect().height > 0,
+          pin: getComputedStyle(root.querySelector("[data-scene-pin]")).position,
+        };
+      });
+      line(
+        s.h1 === "Lab" && s.titles === 5 && s.inFlow && s.poster && s.pin !== "sticky",
+        `${at} without JavaScript: the heading, the poster and all five chapters in flow`,
+        `h1 "${s.h1}", ${s.titles}/5 chapters shown${s.inFlow ? " in flow" : ", overlapping"}, poster ${s.poster}, pin ${s.pin}`,
+      );
+    } finally {
+      await context.close();
+    }
+  }
+}
+
 // ── main ────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -1067,9 +1556,22 @@ async function main() {
       if (!ok) failures++;
       results.push(`${ok ? "PASS" : "FAIL"}  ${name.padEnd(8)}  ${what}${detail ? `  (${detail})` : ""}`);
     };
-    await checkHeroHtml(server.base, lineFor("html"));
+    if (!args.only) await checkHeroHtml(server.base, lineFor("html"));
+    await checkLabHtml(server.base, lineFor("html"));
     for (const name of args.browsers) {
       const line = lineFor(name);
+      // /lab: the WebGL path in Chromium (SwiftShader), the fallbacks in every engine.
+      if (name === "chromium") {
+        browser = await chromium.launch(GL_LAUNCH);
+        for (const vp of VIEWPORTS) await checkLabWebgl(browser, server.base, vp, line);
+        await browser.close();
+        browser = null;
+      }
+      browser = await ENGINES[name].launch();
+      for (const vp of VIEWPORTS) await checkLabFallbacks(browser, server.base, vp, line);
+      await browser.close();
+      browser = null;
+      if (args.only) continue;
       if (!FULL.has(name)) {
         runVerifyMotion(name, ARTICLE, server.base + ARTICLE, line);
         browser = await ENGINES[name].launch();

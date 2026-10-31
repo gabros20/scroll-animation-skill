@@ -18,6 +18,12 @@ export default defineConfig({
   root,
   logLevel: 'warn',
   esbuild: { jsx: 'automatic' },
+  // S11 imports the skill's runtime (skills/scroll-animation/assets) as `@sa/…`. Those files sit outside this
+  // folder, so dedupe makes them share this folder's libraries instead of the repository root's copies.
+  resolve: {
+    alias: { '@sa': resolve(root, '../../../skills/scroll-animation/assets') },
+    dedupe: ['react', 'react-dom', 'gsap', 'lenis', 'motion', 'framer-motion', 'motion-dom', 'motion-utils', 'three', '@react-three/fiber']
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,

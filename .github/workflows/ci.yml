@@ -45,6 +45,9 @@ jobs:
       # Route changes under Next 16 (Folio's install): Lenis, ScrollTrigger and scroll position across navigations,
       # Activity and <ViewTransition> (S9). The no-contract control runs locally; CI checks the contract only.
       - run: npm run test:route-hygiene -- --contract on
+      # The render seam (S11): WebGL on SwiftShader in Chromium, the DOM stand-in in WebKit and Firefox. three and R3F
+      # come from Folio's install.
+      - run: npm run test:render-bridge
       # The media-v1 release, SHA-256-checked by the fetch; cached on the manifest that pins it.
       - id: media-cache
         uses: actions/cache@v4

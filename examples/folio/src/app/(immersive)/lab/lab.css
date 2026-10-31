@@ -1,0 +1,126 @@
+/*
+ * /lab's scene (src/components/lab-scene.tsx) on top of css/scene.css.
+ *
+ * Flow is the default: without JavaScript (no html[data-animation], the
+ * pre-JS gate) the pin is released, the poster stands as a 16:9 picture and
+ * the five chapters read as a list under it. Reduced motion gets the same
+ * from scene.css's collapse; print from its print rules.
+ *
+ * With JavaScript and motion allowed the chapters are acts stacked in the
+ * pin: the scene makes every one but the active act `inert`, and they are
+ * hidden off that attribute. Until the scene first places them (its first
+ * progress or rehydrate, data-lab-placed) only the first one shows, so a load
+ * never flashes all five at once; then the scene's act shows at once, and the
+ * acts cross-fade only from two frames later (data-lab-live): a reload or a
+ * return mid-scene lands on its chapter instead of fading it in.
+ * Phones frame the object in the top 56svh with the act in the band below;
+ * from 1024 px the frame fills the pin and the act sits in a left column (the
+ * scene shifts the camera's subject right to clear it).
+ */
+
+.lab-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+}
+
+.lab-acts {
+  max-width: 36rem;
+  margin: 3rem auto 0;
+  padding: 0 1.5rem 5rem;
+}
+
+.lab-act + .lab-act {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--color-line);
+}
+
+/* The canvas fades in over the poster once it has drawn the model, and is
+   gone (its slot empty) after a lost context. */
+.lab-scene [data-scene-canvas] {
+  opacity: 0;
+  transition: opacity 500ms ease-out;
+}
+.lab-scene [data-scene-canvas][data-lab-drawn] {
+  opacity: 1;
+}
+
+/* No JavaScript: scene.css still pins; release it, the way reduced motion does. */
+:root:not([data-animation]) .lab-scene [data-scene-pin] {
+  position: relative;
+  height: auto;
+}
+:root:not([data-animation]) .lab-scene [data-scene-content] {
+  margin-top: 0;
+}
+:root:not([data-animation]) .lab-scene [data-scene-spacer] {
+  height: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-animation] .lab-frame {
+    position: absolute;
+    inset-inline: 0;
+    top: calc(var(--header-h) + 1rem);
+    height: 56svh;
+    aspect-ratio: auto;
+  }
+  :root[data-animation] .lab-acts {
+    position: absolute;
+    inset-inline: 0;
+    top: calc(var(--header-h) + 56svh + 2rem);
+    bottom: 0;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+  :root[data-animation] .lab-act {
+    position: absolute;
+    top: 0;
+    inset-inline: 1.5rem;
+    max-width: 24rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  :root[data-animation] .lab-scene[data-lab-live] .lab-act {
+    transition:
+      opacity 400ms ease-out,
+      visibility 400ms;
+  }
+  :root[data-animation] .lab-act[inert],
+  :root[data-animation] .lab-scene:not([data-lab-placed]) .lab-act:not(:first-child) {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  @media (min-width: 1024px) {
+    :root[data-animation] .lab-frame {
+      top: var(--header-h);
+      bottom: 0;
+      height: auto;
+    }
+    :root[data-animation] .lab-acts {
+      top: var(--header-h);
+      left: 2.5rem;
+      right: auto;
+      width: 20rem;
+    }
+    :root[data-animation] .lab-act {
+      top: 50%;
+      inset-inline: 0;
+      transform: translateY(-50%);
+    }
+  }
+}
+
+@media print {
+  .lab-frame,
+  .lab-acts {
+    position: static !important;
+    height: auto !important;
+  }
+  .lab-act {
+    transform: none !important;
+  }
+}

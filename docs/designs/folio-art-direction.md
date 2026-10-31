@@ -112,8 +112,9 @@ video with a pause button around two-thirds through. Two articles ship now, both
 
 One object, five chapters, no second object and no second world: an antique bellows camera (see
 the glTF entry below), scrolled through in five stops (body, bellows, lens, tripod, the whole
-object). A rendered poster stands in for the canvas until ScrollCanvas and camera-path exist
-(Phase 5), and is what reduced motion and no-WebGL fall back to permanently.
+object). The camera renders live in a pinned scene (Phase 5: our `render-bridge` feeding the 3d
+skill's conductor and SceneCanvas); the rendered poster is the LCP element and what reduced motion
+and no-WebGL show instead.
 
 ### `/blocks`
 

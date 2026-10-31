@@ -1,11 +1,14 @@
 /*
- * css/scene.css — pinned scene geometry for both engines (motion/PinnedScene.tsx, gsap/pinned-scene.ts), plus its
- * reduced-motion collapse and print rules. Import it after animation.css.
+ * css/scene.css — pinned scene geometry for both engines (motion/PinnedScene.tsx, gsap/pinned-scene.ts), the slot
+ * for a real-time canvas and its poster, plus the reduced-motion collapse and print rules. Import it after animation.css.
  *
  *   <div data-scene-root>                        the range wrapper: the scene measures THIS, never the pin
  *     <div data-scene-pin>                       sticky, 100lvh (data-scene-pin="gsap": ScrollTrigger pins it)
  *       <div data-scene-gutter></div>            optional backdrop ramp, painted by media/camera.ts
  *       <video data-scene-media …></video>       the pinned media
+ *       <img data-scene-poster …>                or a real-time canvas (render-bridge.ts): its poster first,
+ *       <div data-scene-canvas>…</div>           then the canvas slot over it (SceneCanvas, frameloop="never");
+ *                                                with acts stacked in the pin, both inside <div data-scene-still>
  *     </div>
  *     <div data-scene-content>                   pulled back over the pin; the acts ride over it
  *       <section>…</section>
@@ -77,6 +80,37 @@
   transform-origin: top left;
 }
 
+/* A real-time canvas (render-bridge.ts) and its poster both fill the pin, the poster first in the markup so the
+   canvas paints over it (no z-index: that would lift the canvas over acts stacked in the pin). The slot is
+   transparent until the canvas presents its first frame, and empty once a lost context or a missing WebGL has removed
+   the canvas (the 3d skill's SceneCanvas does), so the poster shows through in every one of those cases. Without
+   JavaScript, under reduced motion and in print the canvas is hidden outright and the poster is the scene. Like the
+   pin, the slot takes no pointer events; give it `pointer-events: auto` for a canvas the reader interacts with.
+   Acts stacked in the pin flow under reduced motion and the pin grows to hold them; a poster and slot that fill the
+   pin would grow with it (a 16:9 poster cropped into a strip as tall as every act). So with stacked acts, wrap the two
+   in [data-scene-still]: it fills the pin while the scene runs and, under reduced motion, stays a picture
+   (--scene-poster-ratio, 16 / 9) above the acts. */
+[data-scene-still],
+[data-scene-poster],
+[data-scene-canvas] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+[data-scene-poster] {
+  display: block;
+  max-width: none;
+  object-fit: cover;
+}
+
+@media (scripting: none) {
+  [data-scene-canvas] {
+    display: none;
+  }
+}
+
 /* Acts stacked in the pin take clicks again; inactive ones are inert, which removes them from hit testing too. */
 [data-scene-pin] [data-scene-act] {
   pointer-events: auto;
@@ -115,6 +149,17 @@
   [data-scene-spacer] {
     height: 0 !important;
   }
+  [data-scene-pin]:has([data-scene-act]) [data-scene-still] {
+    position: relative !important;
+    inset: auto !important;
+    height: auto !important;
+    aspect-ratio: var(--scene-poster-ratio, 16 / 9);
+  }
+  /* A backstop: unmount the canvas under reduced motion (webgl.md §5), so it holds no context and does no work. One
+     still mounted is held by the bridge (render-bridge.ts) and hidden here. */
+  [data-scene-canvas] {
+    visibility: hidden !important;
+  }
 }
 
 /* Print: every act in flow, the media as one still above them, no spacers. */
@@ -133,8 +178,15 @@
     height: auto !important;
     transform: none !important;
   }
+  [data-scene-still],
+  [data-scene-poster] {
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+  }
   [data-scene-gutter],
-  [data-scene-spacer] {
+  [data-scene-spacer],
+  [data-scene-canvas] {
     display: none !important;
   }
   [data-scene-pin] [data-scene-act] {

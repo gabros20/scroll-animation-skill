@@ -176,9 +176,12 @@ Values that must line up on screen are produced and consumed in one frame callba
 | Lenis → Motion `useScroll` | Lenis driven from `frame.update` | 1 / 1 |
 | Lenis → R3F plane on a DOM box | `<Canvas frameloop="never">` + `advance()` from the GSAP ticker after Lenis | 0 |
 | Lenis → R3F plane on a DOM box | `frameloop="demand"` + `invalidate()` | 1 on every other frame |
+| Motion `useScroll` → R3F canvas in a pin | `advance()` in Motion's `frame.render` | 0 |
+| Motion `useScroll` → R3F canvas in a pin | `frameloop="demand"`, or a page rAF | 1 |
 
 A scene's scroll-coupled values come from one engine. `frameloop="demand"` suits a canvas that doesn't track DOM
-elements. Independent effects may keep their own IntersectionObserver-gated loops.
+elements. A canvas in a pinned scene renders on this tick through `render-bridge`, only when something changed
+([webgl.md](webgl.md) §4). Independent effects may keep their own IntersectionObserver-gated loops.
 
 ## 7. Mobile
 

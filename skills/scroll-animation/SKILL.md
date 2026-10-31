@@ -47,6 +47,7 @@ First pick the lane, then the reference:
 | Layers: parallax in JS, colour tracks, a velocity marquee, cursor media, drawn lines, blend text, header ink per section, stepped sections | [layered-visuals.md](references/layered-visuals.md) | the cheapest engine per effect, the recipes, the header's IntersectionObserver probe |
 | Any `<video>`: scrub, loop, conditional autoplay | [video.md](references/video.md) | encoding, loop seams, seeks, preload tiers, posters, serving, pause controls, tab-sleep recovery |
 | An image sequence on scroll (Apple-style), or Lottie or Rive driven by scroll | [sequences.md](references/sequences.md) | sequence or video, the frame manifest, decode window, byte budgets |
+| A 3D model, camera or world (three.js, R3F) moving with scroll in a pinned section; a canvas that lags the copy, sweeps on reload or leaks contexts | [webgl.md](references/webgl.md) | real-time or rendered, the boundary with the 3d skill, `render-bridge` on the authority's tick, lifecycle, checks |
 | Reduced motion, auto-moving content, keyboard, split text, no-JS, print | [accessibility.md](references/accessibility.md) | the alternate scene per engine, pause controls, focus, screen readers |
 | A site that already animates (header scripts, GSAP, Lenis, AOS) | [brownfield-coexistence.md](references/brownfield-coexistence.md) | keep, adapt or replace; one writer per property |
 | A scene or video misbehaving on iPhone or Safari | [ios-safari-motion.md](references/ios-safari-motion.md) | toolbar, pin units, play watchdog, mask sweeps |
@@ -69,6 +70,7 @@ First pick the lane, then the reference:
 | scroll | a horizontal rail of panels | `horizontal-rail` (gsap: `horizontalRail`, on `pinned-scene`) |
 | scroll | a section pulled to rest | `scroll-well` (motion: `ScrollWell`; gsap: `scrollWell`; agnostic: `createScrollWell`; native scrolling only) |
 | scroll | a pinned scene: stacked acts, a scroll-driven timeline | `pinned-scene` (motion: `PinnedScene`; gsap: `pinnedScene`) |
+| render | a real-time 3D canvas (three, R3F) in a pinned scene, fed by the pin; the 3D itself is the 3d skill's | `render-bridge` (motion: `usePinnedSceneRender`; gsap: `pinnedSceneRender`; on `pinned-scene`) |
 | media | a scrubbed video on a pinned scene | `scrub-video` (motion: `ScrubVideo`; gsap: `scrubVideo`) |
 | media | an image sequence scrubbed on a canvas | `frame-sequence` (motion: `FrameSequence`; gsap: `frameSequence`) |
 | media | an in-view background loop with a pause control | `loop-video` (motion: `LoopVideo`; gsap: `loopVideo`) |

@@ -6,8 +6,8 @@ scroll-linked writes, camera framing, travel on a scaled layout and the horizont
 **Read when:** a section pins while the reader scrolls through it: a scrubbed video or image sequence, stacked acts,
 copy riding over a render, a paused GSAP timeline driven by scroll, a scroll well inside a pin, a rail of panels
 sliding sideways.
-**Skip when:** the section only enters once (a triggered reveal), or the question is the media itself: decoding and
-encoding are in [video.md](video.md) and [sequences.md](sequences.md).
+**Skip when:** the section only enters once (a triggered reveal), or the question is the media itself:
+[video.md](video.md), [sequences.md](sequences.md), a real-time canvas in [webgl.md](webgl.md).
 
 **Inputs:** the scene's acts and runway from the `ANIMATION.md` ledger, the route's scroll authority, the engine.
 **Produces:** a `pinned-scene` block (`PinnedScene` / `pinnedScene`) or a `horizontal-rail`, with its acts, writers
@@ -83,7 +83,7 @@ scene's first frame and after a reload. `onAct` fires on transitions only, never
 also applies `scene.act()` in `onRehydrate`. Use `opacity` or `visibility`, never `display: none`: the print rules force
 the first two back. Under reduced motion no act is inert.
 
-The marked acts are paced evenly over progress (one viewport of content each lines them up); the active one is the
+The marked acts are paced evenly over progress (one viewport each lines them up); the active one is the
 nearest, switching `actHysteresis` (0.1 acts) past the midpoint so a resting scroll can't flap it. Never mark acts in
 the content layer: they scroll into view themselves, and `inert` would trap keyboard users above.
 
@@ -147,7 +147,7 @@ range, and the scene's `['start start', 'end end']` is one of the offsets it han
 - Write the first value too: Motion's `onProgress` fires on change, and `onRehydrate` (with `p` and `band`) runs on
   mount.
 - Quantise a coarse write (a colour to 1/256) and skip repeats, so a still frame writes nothing.
-- A binding and a hand writer may share a node, never a property: the next render clobbers the hand write.
+- A binding and a hand writer may share a node, never a property: the next render clobbers it.
 - Reduced motion is the writer's job, because `MotionConfig` never reaches a hand write: read `scene.reduced()` or
   `useReducedMotionLive()`, never Motion's `useReducedMotion()`, which reads once per mount
   ([motion.md](motion.md) §2).

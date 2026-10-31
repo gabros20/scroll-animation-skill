@@ -23,6 +23,7 @@ Plain TypeScript for GSAP pages: Vite, Astro, a static page, or React through `u
 | `horizontal-rail.ts` | `horizontal-rail` | `horizontalRail(root, options)`: a pinned scene sliding a track of panels sideways; RTL, focus that follows, a native scroller under reduced motion | `references/scenes.md` |
 | `pinned-scene.ts` | `pinned-scene` | `pinnedScene(root, options)`: exact progress, head/scrub/tail modes, acts made `inert`; `pin: 'gsap'` under ScrollSmoother | `references/scenes.md` |
 | `scrub-video.ts` | `scrub-video` | `scrubVideo(root, options)`: a pinned scene plus the video controller, camera and backdrop | `references/video.md` |
+| `pinned-scene-render.ts` | `render-bridge` | `pinnedSceneRender(conductor, { render })`: a real-time canvas in a `pinnedScene()`, fed the scene's exact progress and drawn last in each `gsap.ticker` tick, only when dirty; pass its `onProgress`/`onRehydrate` to the scene | `references/webgl.md` |
 | `frame-sequence.ts` | `frame-sequence` | `frameSequence(canvas, { manifest, trigger })` or `{ manifest, progress: () => p }` | `references/sequences.md` |
 | `loop-video.ts` | `loop-video` | `loopVideo(video, options)`, or `initLoopVideos(root)` over `[data-loop-video]`, with a WCAG 2.2.2 pause control | `references/video.md` |
 | `mount.ts` | `mount` | `mount(routeRoot, { selector: (el) => handle })` on a vanilla page: every match created in document order across block types inside one `gsap.context`, one refresh; the returned cleanup destroys in reverse. React uses `useGSAP` instead | `references/gsap.md` |
@@ -62,6 +63,7 @@ behaviour, and `destroy()` undoes everything it wrote. Create them after the pag
 | `cursor-media.ts` | `cursor-media` | `cursorMedia(root, options)`: a media preview that follows a fine pointer over a list of links, and sits at the focused item for the keyboard |
 | `draw-on-scroll.ts` | `draw-on-scroll` | `drawOnScroll(root, options)`: SVG strokes drawn with DrawSVGPlugin as the reader scrolls |
 | `stepped-sections.ts` | `stepped-sections` | `steppedSections(root, options)`: one full-viewport section per wheel notch, swipe or key; read its warnings first |
+| `flip-transition.ts` | `flip-transition` | `flipTransition(root, { change })`: a change of view inside one route (grid to detail, reorder, filter); every `[data-flip-id]` lands from its old box, `change()` alone under reduced motion. `references/page-transitions.md` |
 | `scroll-well.ts` | `scroll-well` | `scrollWell(target, options)`: pulls the scroll to rest on a section that holds most of the view, released by scrolling away; native scrolling only. The engine-free core is `../scroll-well.ts`; read its warnings first |
 
 ## Differences from the Motion blocks

@@ -240,5 +240,29 @@
       "references/scrollytelling.md",
       "references/sequences.md"
     ]
+  },
+  {
+    "id": "pinned-3d-turn",
+    "prompt": "On our Motion site, an R3F model should turn as the reader scrolls a pinned section; readers can also drag it to look closer.",
+    "expected_references": [
+      "references/webgl.md",
+      "references/scenes.md"
+    ],
+    "forbidden_references": [
+      "references/video.md",
+      "references/layered-visuals.md"
+    ]
+  },
+  {
+    "id": "canvas-lags-copy",
+    "prompt": "The three.js canvas in our pinned scene runs a frame behind the text over it and glides in from the start after a reload.",
+    "expected_references": [
+      "references/verification.md",
+      "references/webgl.md"
+    ],
+    "forbidden_references": [
+      "references/video.md",
+      "references/brownfield-coexistence.md"
+    ]
   }
 ]

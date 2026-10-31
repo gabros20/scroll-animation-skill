@@ -12,7 +12,7 @@ prompts included, is in [`media-src/`](media-src/README.md).
 | Source | Khronos [glTF-Sample-Assets](https://github.com/KhronosGroup/glTF-Sample-Assets/tree/81e8b567643b5166e6ff40024e4ff71ad4b18676/Models/AntiqueCamera) `Models/AntiqueCamera`, commit `81e8b56` |
 | Licence | [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/legalcode) (SPDX `CC0-1.0`), covering "Everything" in the model |
 | Attribution | © 2018 UX3D, artist Maximillan Kamps (as credited in the model's `metadata.json`). CC0 asks for none; it's given anyway. |
-| Used in | `lab/antique-camera.glb`, and rendered for `hero/scrub-camera-*`, `blocks/camera-sequence/`, `lab/camera-poster.avif` |
+| Used in | `lab/antique-camera.glb` (rendered live on `/lab`), and rendered for `hero/scrub-camera-*`, `blocks/camera-sequence/`, `lab/camera-poster.avif` |
 
 The original tripod carries a UX3D logo. That logo is a trademark, which the model's licence
 excludes from the CC0 grant (`LicenseRef-LegalMark-UX3D`), and Folio shows no real brands. It was

@@ -40,7 +40,8 @@ scroll authority per route, the profile from `ANIMATION.md`.
 
 Barba, Taxi and swup are legacy vanilla routers: where one already runs, keep it and give it §4's hygiene after
 its swap; never add one to a new project. A canvas that persists across routes (Immersive, [preflight.md](preflight.md)
-§3.1) has no block yet.
+§3.1) has no block yet: a canvas route unmounts its canvas on leave, and a view transition's old snapshot keeps its
+last frame ([webgl.md](webgl.md) §6).
 
 ## 2. The view-transitions block
 
@@ -196,6 +197,7 @@ useGSAP(() => onRouteRefresh(ScrollTrigger.refresh))   // onRouteRefresh from '@
   1500 → 1454). `css/reveal.css` and `css/scroll-effects.css` set `overflow-anchor: none` on exactly those states;
   give the same to any element of your own that moves with the scroll.
 - **Activity** already behaves: `SmoothScroll` and `useGSAP` clean up on hide (a hidden route's registration too).
+  A hidden canvas route keeps its WebGL context; never give it `frameloop="always"` ([webgl.md](webgl.md) §6).
 
 ## 5. Framework lifecycles
 

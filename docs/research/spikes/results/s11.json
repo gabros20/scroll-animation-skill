@@ -1,0 +1,6980 @@
+{
+ "spike": "S11",
+ "versions": {
+  "chromium": "153.0.8010.12",
+  "webkit": "26.6"
+ },
+ "q1": [
+  {
+   "browser": "chromium",
+   "engine": "motion",
+   "auth": "native",
+   "extra": "",
+   "geometry": {
+    "top": 621.4375,
+    "height": 2400,
+    "vh": 600,
+    "lvh": 600,
+    "rangePx": 1800
+   },
+   "wheel": [
+    {
+     "frameInterval": {
+      "n": 254,
+      "max": 19.1,
+      "p95": 18.1,
+      "median": 16.6,
+      "mean": 16.549
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "aVsB": 0,
+      "aVsC": 0,
+      "truthVsLvhPx": 0,
+      "frames": 255
+     },
+     "lag": {
+      "sp": {
+       "0": 15
+      },
+      "a": {
+       "0": 15
+      },
+      "b": {
+       "0": 15
+      },
+      "c": {
+       "0": 15
+      }
+     }
+    },
+    {
+     "frameInterval": {
+      "n": 254,
+      "max": 18.8,
+      "p95": 18.2,
+      "median": 16.7,
+      "mean": 16.666
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "aVsB": 0,
+      "aVsC": 0,
+      "truthVsLvhPx": 0,
+      "frames": 255
+     },
+     "lag": {
+      "sp": {
+       "0": 15
+      },
+      "a": {
+       "0": 15
+      },
+      "b": {
+       "0": 15
+      },
+      "c": {
+       "0": 15
+      }
+     }
+    }
+   ],
+   "jump": {
+    "transient3f": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 14
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 97
+    }
+   },
+   "resize": {
+    "transient300ms": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 149.927,
+      "framesOff": 2
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0.083,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 36
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 49
+    },
+    "rangeAfter": {
+     "top": 621.4375,
+     "height": 2400,
+     "vh": 600,
+     "lvh": 600,
+     "rangePx": 1800
+    }
+   },
+   "shiftThenRouteChanged": {
+    "beforeRouteChanged80ms": {
+     "sp": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "a": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 3
+    },
+    "afterRouteChanged": {
+     "sp": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "a": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 57
+    },
+    "afterNextScroll": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 20
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 20
+     },
+     "aVsB": 0.166,
+     "aVsC": 0.166,
+     "truthVsLvhPx": 0,
+     "frames": 20
+    }
+   },
+   "reload": {
+    "y": 1431,
+    "framesWithRoot": 90,
+    "firstFrameRight": {
+     "sp": 0,
+     "a": 0,
+     "b": 0,
+     "c": 0
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 80
+    }
+   }
+  },
+  {
+   "browser": "chromium",
+   "engine": "motion",
+   "auth": "lenis-motion",
+   "extra": "",
+   "geometry": {
+    "top": 621.4375,
+    "height": 2400,
+    "vh": 600,
+    "lvh": 600,
+    "rangePx": 1800
+   },
+   "wheel": [
+    {
+     "frameInterval": {
+      "n": 275,
+      "max": 18.9,
+      "p95": 18.4,
+      "median": 16.7,
+      "mean": 16.571
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "aVsB": 0,
+      "aVsC": 0,
+      "truthVsLvhPx": 0,
+      "frames": 276
+     },
+     "lag": {
+      "sp": {
+       "0": 141
+      },
+      "a": {
+       "0": 141
+      },
+      "b": {
+       "0": 141
+      },
+      "c": {
+       "0": 141
+      }
+     }
+    },
+    {
+     "frameInterval": {
+      "n": 274,
+      "max": 18.7,
+      "p95": 18.2,
+      "median": 16.7,
+      "mean": 16.665
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "aVsB": 0,
+      "aVsC": 0,
+      "truthVsLvhPx": 0,
+      "frames": 275
+     },
+     "lag": {
+      "sp": {
+       "0": 141
+      },
+      "a": {
+       "0": 141
+      },
+      "b": {
+       "0": 141
+      },
+      "c": {
+       "0": 141
+      }
+     }
+    }
+   ],
+   "jump": {
+    "transient3f": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 14
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 96
+    }
+   },
+   "resize": {
+    "transient300ms": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 149.927,
+      "framesOff": 2
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0.083,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 36
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 48
+    },
+    "rangeAfter": {
+     "top": 621.4375,
+     "height": 2400,
+     "vh": 600,
+     "lvh": 600,
+     "rangePx": 1800
+    }
+   },
+   "shiftThenRouteChanged": {
+    "beforeRouteChanged80ms": {
+     "sp": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "a": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 3
+    },
+    "afterRouteChanged": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "aVsB": 0.166,
+     "aVsC": 0.166,
+     "truthVsLvhPx": 0,
+     "frames": 57
+    },
+    "afterNextScroll": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 21
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 21
+     },
+     "aVsB": 0.166,
+     "aVsC": 0.166,
+     "truthVsLvhPx": 0,
+     "frames": 21
+    }
+   },
+   "reload": {
+    "y": 1431,
+    "framesWithRoot": 91,
+    "firstFrameRight": {
+     "sp": 0,
+     "a": 0,
+     "b": 0,
+     "c": 0
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 81
+    }
+   }
+  },
+  {
+   "browser": "chromium",
+   "engine": "gsap",
+   "auth": "native",
+   "extra": "",
+   "geometry": {
+    "top": 621.4375,
+    "height": 2400,
+    "vh": 600,
+    "lvh": 600,
+    "rangePx": 1800
+   },
+   "wheel": [
+    {
+     "frameInterval": {
+      "n": 254,
+      "max": 18.7,
+      "p95": 18.4,
+      "median": 16.7,
+      "mean": 16.604
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "aVsB": 0,
+      "aVsC": 0,
+      "truthVsLvhPx": 0,
+      "frames": 255
+     },
+     "lag": {
+      "sp": {
+       "0": 15
+      },
+      "a": {
+       "0": 15
+      },
+      "b": {
+       "0": 15
+      },
+      "c": {
+       "0": 15
+      }
+     }
+    },
+    {
+     "frameInterval": {
+      "n": 253,
+      "max": 18.7,
+      "p95": 18.3,
+      "median": 16.7,
+      "mean": 16.671
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "aVsB": 0,
+      "aVsC": 0,
+      "truthVsLvhPx": 0,
+      "frames": 254
+     },
+     "lag": {
+      "sp": {
+       "0": 15
+      },
+      "a": {
+       "0": 15
+      },
+      "b": {
+       "0": 15
+      },
+      "c": {
+       "0": 15
+      }
+     }
+    }
+   ],
+   "jump": {
+    "transient3f": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 15
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 97
+    }
+   },
+   "resize": {
+    "transient300ms": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 150.365,
+      "framesOff": 20
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0.084,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 36
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 49
+    },
+    "rangeAfter": {
+     "top": 621.4375,
+     "height": 2400,
+     "vh": 600,
+     "lvh": 600,
+     "rangePx": 1800
+    }
+   },
+   "shiftThenRouteChanged": {
+    "beforeRouteChanged80ms": {
+     "sp": {
+      "maxPx": 300.438,
+      "framesOff": 3
+     },
+     "a": {
+      "maxPx": 300.438,
+      "framesOff": 3
+     },
+     "b": {
+      "maxPx": 300.438,
+      "framesOff": 3
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 3
+    },
+    "afterRouteChanged": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "aVsB": 0,
+     "aVsC": 0.166,
+     "truthVsLvhPx": 0,
+     "frames": 57
+    },
+    "afterNextScroll": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 20
+     },
+     "aVsB": 0,
+     "aVsC": 0.166,
+     "truthVsLvhPx": 0,
+     "frames": 20
+    }
+   },
+   "reload": {
+    "y": 1431,
+    "framesWithRoot": 91,
+    "firstFrameRight": {
+     "sp": 0,
+     "a": 0,
+     "b": 0,
+     "c": 0
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 81
+    }
+   }
+  },
+  {
+   "browser": "chromium",
+   "engine": "gsap",
+   "auth": "lenis-gsap",
+   "extra": "",
+   "geometry": {
+    "top": 621.4375,
+    "height": 2400,
+    "vh": 600,
+    "lvh": 600,
+    "rangePx": 1800
+   },
+   "wheel": [
+    {
+     "frameInterval": {
+      "n": 275,
+      "max": 17.3,
+      "p95": 16.8,
+      "median": 16.7,
+      "mean": 16.575
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 25,
+       "framesOff": 114
+      },
+      "aVsB": 0,
+      "aVsC": 0.014,
+      "truthVsLvhPx": 0,
+      "frames": 276
+     },
+     "lag": {
+      "sp": {
+       "0": 141
+      },
+      "a": {
+       "0": 141
+      },
+      "b": {
+       "0": 141
+      },
+      "c": {
+       "1": 141
+      }
+     }
+    },
+    {
+     "frameInterval": {
+      "n": 274,
+      "max": 17.1,
+      "p95": 16.8,
+      "median": 16.7,
+      "mean": 16.666
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 25,
+       "framesOff": 114
+      },
+      "aVsB": 0,
+      "aVsC": 0.014,
+      "truthVsLvhPx": 0,
+      "frames": 275
+     },
+     "lag": {
+      "sp": {
+       "0": 141
+      },
+      "a": {
+       "0": 141
+      },
+      "b": {
+       "0": 141
+      },
+      "c": {
+       "1": 141
+      }
+     }
+    }
+   ],
+   "jump": {
+    "transient3f": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 14
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 97
+    }
+   },
+   "resize": {
+    "transient300ms": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 150.365,
+      "framesOff": 20
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0.084,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 36
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 49
+    },
+    "rangeAfter": {
+     "top": 621.4375,
+     "height": 2400,
+     "vh": 600,
+     "lvh": 600,
+     "rangePx": 1800
+    }
+   },
+   "shiftThenRouteChanged": {
+    "beforeRouteChanged80ms": {
+     "sp": {
+      "maxPx": 300.438,
+      "framesOff": 3
+     },
+     "a": {
+      "maxPx": 300.438,
+      "framesOff": 3
+     },
+     "b": {
+      "maxPx": 300.438,
+      "framesOff": 3
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 3
+    },
+    "afterRouteChanged": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "aVsB": 0,
+     "aVsC": 0.166,
+     "truthVsLvhPx": 0,
+     "frames": 57
+    },
+    "afterNextScroll": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 21
+     },
+     "aVsB": 0,
+     "aVsC": 0.166,
+     "truthVsLvhPx": 0,
+     "frames": 21
+    }
+   },
+   "reload": {
+    "y": 1431,
+    "framesWithRoot": 91,
+    "firstFrameRight": {
+     "sp": 0,
+     "a": 0,
+     "b": 0,
+     "c": 0
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 81
+    }
+   }
+  },
+  {
+   "browser": "chromium",
+   "engine": "motion",
+   "auth": "native",
+   "extra": "&bridgeRefresh=1",
+   "geometry": {
+    "top": 621.4375,
+    "height": 2400,
+    "vh": 600,
+    "lvh": 600,
+    "rangePx": 1800
+   },
+   "wheel": [
+    {
+     "frameInterval": {
+      "n": 255,
+      "max": 46,
+      "p95": 18,
+      "median": 16.7,
+      "mean": 16.658
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "aVsB": 0,
+      "aVsC": 0,
+      "truthVsLvhPx": 0,
+      "frames": 256
+     },
+     "lag": {
+      "sp": {
+       "0": 15
+      },
+      "a": {
+       "0": 15
+      },
+      "b": {
+       "0": 15
+      },
+      "c": {
+       "0": 15
+      }
+     }
+    },
+    {
+     "frameInterval": {
+      "n": 253,
+      "max": 18.4,
+      "p95": 16.9,
+      "median": 16.7,
+      "mean": 16.666
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "aVsB": 0,
+      "aVsC": 0,
+      "truthVsLvhPx": 0,
+      "frames": 254
+     },
+     "lag": {
+      "sp": {
+       "0": 15
+      },
+      "a": {
+       "0": 15
+      },
+      "b": {
+       "0": 15
+      },
+      "c": {
+       "0": 15
+      }
+     }
+    }
+   ],
+   "jump": {
+    "transient3f": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 13
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 97
+    }
+   },
+   "resize": {
+    "transient300ms": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 149.927,
+      "framesOff": 2
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0.083,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 36
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 49
+    },
+    "rangeAfter": {
+     "top": 621.4375,
+     "height": 2400,
+     "vh": 600,
+     "lvh": 600,
+     "rangePx": 1800
+    }
+   },
+   "shiftThenRouteChanged": {
+    "beforeRouteChanged80ms": {
+     "sp": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "a": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 3
+    },
+    "afterRouteChanged": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "aVsB": 0.167,
+     "aVsC": 0.167,
+     "truthVsLvhPx": 0,
+     "frames": 57
+    },
+    "afterNextScroll": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 20
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 20
+     },
+     "aVsB": 0.166,
+     "aVsC": 0.166,
+     "truthVsLvhPx": 0,
+     "frames": 20
+    }
+   },
+   "reload": {
+    "y": 1431,
+    "framesWithRoot": 90,
+    "firstFrameRight": {
+     "sp": 0,
+     "a": 0,
+     "b": 0,
+     "c": 0
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 80
+    }
+   }
+  },
+  {
+   "browser": "webkit",
+   "engine": "motion",
+   "auth": "native",
+   "extra": "",
+   "geometry": {
+    "top": 621.4375,
+    "height": 2400,
+    "vh": 600,
+    "lvh": 600,
+    "rangePx": 1800
+   },
+   "wheel": [
+    {
+     "frameInterval": {
+      "n": 233,
+      "max": 20,
+      "p95": 19,
+      "median": 17,
+      "mean": 16.665
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "aVsB": 0,
+      "aVsC": 0,
+      "truthVsLvhPx": 0,
+      "frames": 234
+     },
+     "lag": {
+      "sp": {
+       "0": 15
+      },
+      "a": {
+       "0": 15
+      },
+      "b": {
+       "0": 15
+      },
+      "c": {
+       "0": 15
+      }
+     }
+    },
+    {
+     "frameInterval": {
+      "n": 232,
+      "max": 21,
+      "p95": 18,
+      "median": 17,
+      "mean": 16.668
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "aVsB": 0,
+      "aVsC": 0,
+      "truthVsLvhPx": 0,
+      "frames": 233
+     },
+     "lag": {
+      "sp": {
+       "0": 15
+      },
+      "a": {
+       "0": 15
+      },
+      "b": {
+       "0": 15
+      },
+      "c": {
+       "0": 15
+      }
+     }
+    }
+   ],
+   "jump": {
+    "transient3f": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 15
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 97
+    }
+   },
+   "resize": {
+    "transient300ms": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 149.927,
+      "framesOff": 2
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0.083,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 36
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 50
+    },
+    "rangeAfter": {
+     "top": 621.4375,
+     "height": 2400,
+     "vh": 600,
+     "lvh": 600,
+     "rangePx": 1800
+    }
+   },
+   "shiftThenRouteChanged": {
+    "beforeRouteChanged80ms": {
+     "sp": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "a": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 3
+    },
+    "afterRouteChanged": {
+     "sp": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "a": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 57
+    },
+    "afterNextScroll": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 19
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 19
+     },
+     "aVsB": 0.166,
+     "aVsC": 0.166,
+     "truthVsLvhPx": 0,
+     "frames": 19
+    }
+   },
+   "reload": {
+    "y": 0,
+    "framesWithRoot": 91,
+    "firstFrameRight": {
+     "sp": 0,
+     "a": 0,
+     "b": 0,
+     "c": 0
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 81
+    }
+   }
+  },
+  {
+   "browser": "webkit",
+   "engine": "motion",
+   "auth": "lenis-motion",
+   "extra": "",
+   "geometry": {
+    "top": 621.4375,
+    "height": 2400,
+    "vh": 600,
+    "lvh": 600,
+    "rangePx": 1800
+   },
+   "wheel": [
+    {
+     "frameInterval": {
+      "n": 236,
+      "max": 20,
+      "p95": 18,
+      "median": 17,
+      "mean": 16.657
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "aVsB": 0,
+      "aVsC": 0,
+      "truthVsLvhPx": 0,
+      "frames": 237
+     },
+     "lag": {
+      "sp": {
+       "0": 126
+      },
+      "a": {
+       "0": 126
+      },
+      "b": {
+       "0": 126
+      },
+      "c": {
+       "0": 126
+      }
+     }
+    },
+    {
+     "frameInterval": {
+      "n": 233,
+      "max": 19,
+      "p95": 18,
+      "median": 17,
+      "mean": 16.665
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "aVsB": 0,
+      "aVsC": 0,
+      "truthVsLvhPx": 0,
+      "frames": 234
+     },
+     "lag": {
+      "sp": {
+       "0": 123
+      },
+      "a": {
+       "0": 123
+      },
+      "b": {
+       "0": 123
+      },
+      "c": {
+       "0": 123
+      }
+     }
+    }
+   ],
+   "jump": {
+    "transient3f": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 14
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 99
+    }
+   },
+   "resize": {
+    "transient300ms": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 149.927,
+      "framesOff": 2
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0.083,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 36
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 49
+    },
+    "rangeAfter": {
+     "top": 621.4375,
+     "height": 2400,
+     "vh": 600,
+     "lvh": 600,
+     "rangePx": 1800
+    }
+   },
+   "shiftThenRouteChanged": {
+    "beforeRouteChanged80ms": {
+     "sp": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "a": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 3
+    },
+    "afterRouteChanged": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "aVsB": 0.166,
+     "aVsC": 0.166,
+     "truthVsLvhPx": 0,
+     "frames": 57
+    },
+    "afterNextScroll": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 19
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 19
+     },
+     "aVsB": 0.166,
+     "aVsC": 0.166,
+     "truthVsLvhPx": 0,
+     "frames": 19
+    }
+   },
+   "reload": {
+    "y": 0,
+    "framesWithRoot": 91,
+    "firstFrameRight": {
+     "sp": 0,
+     "a": 0,
+     "b": 0,
+     "c": 0
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 81
+    }
+   }
+  },
+  {
+   "browser": "webkit",
+   "engine": "gsap",
+   "auth": "native",
+   "extra": "",
+   "geometry": {
+    "top": 621.4375,
+    "height": 2400,
+    "vh": 600,
+    "lvh": 600,
+    "rangePx": 1800
+   },
+   "wheel": [
+    {
+     "frameInterval": {
+      "n": 232,
+      "max": 19,
+      "p95": 18,
+      "median": 17,
+      "mean": 16.668
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "aVsB": 0,
+      "aVsC": 0,
+      "truthVsLvhPx": 0,
+      "frames": 233
+     },
+     "lag": {
+      "sp": {
+       "0": 15
+      },
+      "a": {
+       "0": 15
+      },
+      "b": {
+       "0": 15
+      },
+      "c": {
+       "0": 15
+      }
+     }
+    },
+    {
+     "frameInterval": {
+      "n": 232,
+      "max": 19,
+      "p95": 18,
+      "median": 17,
+      "mean": 16.668
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "aVsB": 0,
+      "aVsC": 0,
+      "truthVsLvhPx": 0,
+      "frames": 233
+     },
+     "lag": {
+      "sp": {
+       "0": 15
+      },
+      "a": {
+       "0": 15
+      },
+      "b": {
+       "0": 15
+      },
+      "c": {
+       "0": 15
+      }
+     }
+    }
+   ],
+   "jump": {
+    "transient3f": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 15
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 97
+    }
+   },
+   "resize": {
+    "transient300ms": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 150.365,
+      "framesOff": 19
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0.084,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 36
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 48
+    },
+    "rangeAfter": {
+     "top": 621.4375,
+     "height": 2400,
+     "vh": 600,
+     "lvh": 600,
+     "rangePx": 1800
+    }
+   },
+   "shiftThenRouteChanged": {
+    "beforeRouteChanged80ms": {
+     "sp": {
+      "maxPx": 300.438,
+      "framesOff": 3
+     },
+     "a": {
+      "maxPx": 300.438,
+      "framesOff": 3
+     },
+     "b": {
+      "maxPx": 300.438,
+      "framesOff": 3
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 3
+    },
+    "afterRouteChanged": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "aVsB": 0,
+     "aVsC": 0.166,
+     "truthVsLvhPx": 0,
+     "frames": 57
+    },
+    "afterNextScroll": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 19
+     },
+     "aVsB": 0,
+     "aVsC": 0.166,
+     "truthVsLvhPx": 0,
+     "frames": 19
+    }
+   },
+   "reload": {
+    "y": 0,
+    "framesWithRoot": 91,
+    "firstFrameRight": {
+     "sp": 0,
+     "a": 0,
+     "b": 0,
+     "c": 0
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 81
+    }
+   }
+  },
+  {
+   "browser": "webkit",
+   "engine": "gsap",
+   "auth": "lenis-gsap",
+   "extra": "",
+   "geometry": {
+    "top": 621.4375,
+    "height": 2400,
+    "vh": 600,
+    "lvh": 600,
+    "rangePx": 1800
+   },
+   "wheel": [
+    {
+     "frameInterval": {
+      "n": 232,
+      "max": 19,
+      "p95": 18,
+      "median": 17,
+      "mean": 16.664
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 39,
+       "framesOff": 94
+      },
+      "aVsB": 0,
+      "aVsC": 0.022,
+      "truthVsLvhPx": 0,
+      "frames": 233
+     },
+     "lag": {
+      "sp": {
+       "0": 123
+      },
+      "a": {
+       "0": 123
+      },
+      "b": {
+       "0": 123
+      },
+      "c": {
+       "1": 123
+      }
+     }
+    },
+    {
+     "frameInterval": {
+      "n": 232,
+      "max": 20,
+      "p95": 18,
+      "median": 17,
+      "mean": 16.668
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 37,
+       "framesOff": 95
+      },
+      "aVsB": 0,
+      "aVsC": 0.02,
+      "truthVsLvhPx": 0,
+      "frames": 233
+     },
+     "lag": {
+      "sp": {
+       "0": 123
+      },
+      "a": {
+       "0": 123
+      },
+      "b": {
+       "0": 123
+      },
+      "c": {
+       "1": 123
+      }
+     }
+    }
+   ],
+   "jump": {
+    "transient3f": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 14
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 96
+    }
+   },
+   "resize": {
+    "transient300ms": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 150.365,
+      "framesOff": 20
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0.084,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 36
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 49
+    },
+    "rangeAfter": {
+     "top": 621.4375,
+     "height": 2400,
+     "vh": 600,
+     "lvh": 600,
+     "rangePx": 1800
+    }
+   },
+   "shiftThenRouteChanged": {
+    "beforeRouteChanged80ms": {
+     "sp": {
+      "maxPx": 300.438,
+      "framesOff": 3
+     },
+     "a": {
+      "maxPx": 300.438,
+      "framesOff": 3
+     },
+     "b": {
+      "maxPx": 300.438,
+      "framesOff": 3
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 3
+    },
+    "afterRouteChanged": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 58
+     },
+     "aVsB": 0,
+     "aVsC": 0.166,
+     "truthVsLvhPx": 0,
+     "frames": 58
+    },
+    "afterNextScroll": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 19
+     },
+     "aVsB": 0,
+     "aVsC": 0.166,
+     "truthVsLvhPx": 0,
+     "frames": 19
+    }
+   },
+   "reload": {
+    "y": 0,
+    "framesWithRoot": 91,
+    "firstFrameRight": {
+     "sp": 0,
+     "a": 0,
+     "b": 0,
+     "c": 0
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 81
+    }
+   }
+  },
+  {
+   "browser": "webkit",
+   "engine": "motion",
+   "auth": "native",
+   "extra": "&bridgeRefresh=1",
+   "geometry": {
+    "top": 621.4375,
+    "height": 2400,
+    "vh": 600,
+    "lvh": 600,
+    "rangePx": 1800
+   },
+   "wheel": [
+    {
+     "frameInterval": {
+      "n": 232,
+      "max": 20,
+      "p95": 18,
+      "median": 17,
+      "mean": 16.659
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "aVsB": 0,
+      "aVsC": 0,
+      "truthVsLvhPx": 0,
+      "frames": 233
+     },
+     "lag": {
+      "sp": {
+       "0": 15
+      },
+      "a": {
+       "0": 15
+      },
+      "b": {
+       "0": 15
+      },
+      "c": {
+       "0": 15
+      }
+     }
+    },
+    {
+     "frameInterval": {
+      "n": 232,
+      "max": 19,
+      "p95": 18,
+      "median": 17,
+      "mean": 16.668
+     },
+     "agreement": {
+      "sp": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "a": {
+       "maxPx": 0.438,
+       "framesOff": 0
+      },
+      "b": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "c": {
+       "maxPx": 0,
+       "framesOff": 0
+      },
+      "aVsB": 0,
+      "aVsC": 0,
+      "truthVsLvhPx": 0,
+      "frames": 233
+     },
+     "lag": {
+      "sp": {
+       "0": 15
+      },
+      "a": {
+       "0": 15
+      },
+      "b": {
+       "0": 15
+      },
+      "c": {
+       "0": 15
+      }
+     }
+    }
+   ],
+   "jump": {
+    "transient3f": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 14
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.438,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 97
+    }
+   },
+   "resize": {
+    "transient300ms": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 149.927,
+      "framesOff": 2
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0.083,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 36
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 48
+    },
+    "rangeAfter": {
+     "top": 621.4375,
+     "height": 2400,
+     "vh": 600,
+     "lvh": 600,
+     "rangePx": 1800
+    }
+   },
+   "shiftThenRouteChanged": {
+    "beforeRouteChanged80ms": {
+     "sp": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "a": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 3
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 3
+    },
+    "afterRouteChanged": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 57
+     },
+     "aVsB": 0.167,
+     "aVsC": 0.167,
+     "truthVsLvhPx": 0,
+     "frames": 57
+    },
+    "afterNextScroll": {
+     "sp": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0.437,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 300,
+      "framesOff": 19
+     },
+     "c": {
+      "maxPx": 300,
+      "framesOff": 19
+     },
+     "aVsB": 0.166,
+     "aVsC": 0.166,
+     "truthVsLvhPx": 0,
+     "frames": 19
+    }
+   },
+   "reload": {
+    "y": 0,
+    "framesWithRoot": 92,
+    "firstFrameRight": {
+     "sp": 0,
+     "a": 0,
+     "b": 0,
+     "c": 0
+    },
+    "settled": {
+     "sp": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "a": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "b": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "c": {
+      "maxPx": 0,
+      "framesOff": 0
+     },
+     "aVsB": 0,
+     "aVsC": 0,
+     "truthVsLvhPx": 0,
+     "frames": 82
+    }
+   }
+  }
+ ],
+ "q2": [
+  {
+   "engine": "gsap",
+   "auth": "native",
+   "loop": "loop=demand",
+   "damping": 5.5,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 435,
+      "max": 18.8,
+      "p95": 18.3,
+      "median": 16.7,
+      "mean": 16.603
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 5,
+     "smoothBestFitMeanErrPx": 36.031,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 0.666
+    },
+    {
+     "frameInterval": {
+      "n": 434,
+      "max": 18.7,
+      "p95": 18.3,
+      "median": 16.7,
+      "mean": 16.666
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 5,
+     "smoothBestFitMeanErrPx": 36.751,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 0.666
+    }
+   ]
+  },
+  {
+   "engine": "gsap",
+   "auth": "native",
+   "loop": "loop=always",
+   "damping": 5.5,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 435,
+      "max": 19.2,
+      "p95": 17.1,
+      "median": 16.7,
+      "mean": 16.634
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 5,
+     "smoothBestFitMeanErrPx": 32.316,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 60.004
+    },
+    {
+     "frameInterval": {
+      "n": 433,
+      "max": 30.1,
+      "p95": 16.9,
+      "median": 16.7,
+      "mean": 16.667
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 5,
+     "smoothBestFitMeanErrPx": 33.093,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 60.005
+    }
+   ]
+  },
+  {
+   "engine": "gsap",
+   "auth": "native",
+   "loop": "loop=advance&tick=gsap",
+   "damping": 5.5,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 435,
+      "max": 29,
+      "p95": 17.4,
+      "median": 16.7,
+      "mean": 16.68
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 1,
+     "smoothBestFitMeanErrPx": 36.024,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 60.005
+    },
+    {
+     "frameInterval": {
+      "n": 433,
+      "max": 17.8,
+      "p95": 17.4,
+      "median": 16.7,
+      "mean": 16.667
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 1,
+     "smoothBestFitMeanErrPx": 36.024,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 60.001
+    }
+   ]
+  },
+  {
+   "engine": "gsap",
+   "auth": "native",
+   "loop": "loop=advance&tick=raf",
+   "damping": 5.5,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 430,
+      "max": 81.3,
+      "p95": 17.7,
+      "median": 16.7,
+      "mean": 17.426
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 5,
+     "smoothBestFitMeanErrPx": 33.235,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 59.973
+    },
+    {
+     "frameInterval": {
+      "n": 433,
+      "max": 17.7,
+      "p95": 17.5,
+      "median": 16.7,
+      "mean": 16.666
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 1,
+     "smoothBestFitMeanErrPx": 36.024,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 60.001
+    }
+   ]
+  },
+  {
+   "engine": "gsap",
+   "auth": "native",
+   "loop": "loop=advance&tick=scroll",
+   "damping": 5.5,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 434,
+      "max": 61.8,
+      "p95": 17.5,
+      "median": 16.7,
+      "mean": 16.69
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 5,
+     "smoothBestFitMeanErrPx": 99.067,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 0
+    },
+    {
+     "frameInterval": {
+      "n": 433,
+      "max": 18,
+      "p95": 17.4,
+      "median": 16.7,
+      "mean": 16.666
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 8,
+     "smoothBestFitMeanErrPx": 136.209,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 0
+    }
+   ]
+  },
+  {
+   "engine": "gsap",
+   "auth": "native",
+   "loop": "loop=advance&tick=gsap&dirty=1",
+   "damping": 5.5,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 434,
+      "max": 23.3,
+      "p95": 17.5,
+      "median": 16.7,
+      "mean": 16.627
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 1,
+     "smoothBestFitMeanErrPx": 49.533,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 0
+    },
+    {
+     "frameInterval": {
+      "n": 433,
+      "max": 17.8,
+      "p95": 17.5,
+      "median": 16.7,
+      "mean": 16.664
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 1,
+     "smoothBestFitMeanErrPx": 36.024,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 0
+    }
+   ]
+  },
+  {
+   "engine": "gsap",
+   "auth": "lenis-gsap",
+   "loop": "loop=demand",
+   "damping": null,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 455,
+      "max": 18.8,
+      "p95": 16.9,
+      "median": 16.7,
+      "mean": 16.599
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 65,
+     "notRenderedInTheFrame": 77,
+     "lag": {
+      "0": 65,
+      "1": 77
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 24.562,
+      "p95": 20.437,
+      "median": 0.562,
+      "mean": 5.485
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 4.327,
+     "rendersPerMovingFrame": 0.458,
+     "rendersPerSecondScrolling": 27.41,
+     "rendersPerSecondAtRest": 0
+    },
+    {
+     "frameInterval": {
+      "n": 454,
+      "max": 17,
+      "p95": 16.8,
+      "median": 16.7,
+      "mean": 16.666
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 65,
+     "notRenderedInTheFrame": 77,
+     "lag": {
+      "0": 65,
+      "1": 77
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 24.562,
+      "p95": 20.437,
+      "median": 0.562,
+      "mean": 5.485
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 4.327,
+     "rendersPerMovingFrame": 0.458,
+     "rendersPerSecondScrolling": 27.41,
+     "rendersPerSecondAtRest": 0
+    }
+   ]
+  },
+  {
+   "engine": "gsap",
+   "auth": "lenis-gsap",
+   "loop": "loop=always",
+   "damping": null,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 455,
+      "max": 19.2,
+      "p95": 17.5,
+      "median": 16.7,
+      "mean": 16.638
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 142,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 142
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.437
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 0.345,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 60.005
+    },
+    {
+     "frameInterval": {
+      "n": 450,
+      "max": 38.2,
+      "p95": 17.6,
+      "median": 16.7,
+      "mean": 16.814
+     },
+     "movingFrames": 141,
+     "renderedInTheFrame": 141,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 141
+     },
+     "sceneLag": {
+      "0": 141
+     },
+     "exactErrScrollPx": {
+      "n": 141,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.437
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 0.345,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 59.973
+    }
+   ]
+  },
+  {
+   "engine": "gsap",
+   "auth": "lenis-gsap",
+   "loop": "loop=advance&tick=gsap",
+   "damping": null,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 455,
+      "max": 17.3,
+      "p95": 16.8,
+      "median": 16.7,
+      "mean": 16.607
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 142,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 142
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.437
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 0.345,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 60.005
+    },
+    {
+     "frameInterval": {
+      "n": 454,
+      "max": 17.6,
+      "p95": 16.8,
+      "median": 16.7,
+      "mean": 16.666
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 142,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 142
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.437
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 0.345,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 60.001
+    }
+   ]
+  },
+  {
+   "engine": "gsap",
+   "auth": "lenis-gsap",
+   "loop": "loop=advance&tick=gsap&dirty=1",
+   "damping": null,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 455,
+      "max": 17.8,
+      "p95": 17.2,
+      "median": 16.7,
+      "mean": 16.609
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 142,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 142
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 0.437,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 0
+    },
+    {
+     "frameInterval": {
+      "n": 454,
+      "max": 18,
+      "p95": 17.4,
+      "median": 16.7,
+      "mean": 16.665
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 142,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 142
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.437
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 0.345,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 0
+    }
+   ]
+  },
+  {
+   "engine": "motion",
+   "auth": "native",
+   "loop": "loop=demand",
+   "damping": 5.5,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 434,
+      "max": 29.7,
+      "p95": 17.5,
+      "median": 16.7,
+      "mean": 16.611
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 14,
+     "notRenderedInTheFrame": 2,
+     "lag": {
+      "1": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 820.563,
+      "p95": 100.438,
+      "median": 99.563,
+      "mean": 143.695
+     },
+     "smoothBestFitDelayFrames": 9,
+     "smoothBestFitMeanErrPx": 21.037,
+     "rendersPerMovingFrame": 0.875,
+     "rendersPerSecondScrolling": 52.395,
+     "rendersPerSecondAtRest": 0.674
+    },
+    {
+     "frameInterval": {
+      "n": 433,
+      "max": 17.7,
+      "p95": 17.5,
+      "median": 16.7,
+      "mean": 16.665
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 14,
+     "notRenderedInTheFrame": 2,
+     "lag": {
+      "1": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 820.563,
+      "p95": 100.438,
+      "median": 99.563,
+      "mean": 143.695
+     },
+     "smoothBestFitDelayFrames": 9,
+     "smoothBestFitMeanErrPx": 21.701,
+     "rendersPerMovingFrame": 0.875,
+     "rendersPerSecondScrolling": 52.395,
+     "rendersPerSecondAtRest": 0.674
+    }
+   ]
+  },
+  {
+   "engine": "motion",
+   "auth": "native",
+   "loop": "loop=always",
+   "damping": 5.5,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 434,
+      "max": 17.2,
+      "p95": 16.8,
+      "median": 16.7,
+      "mean": 16.618
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "1": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 820.563,
+      "p95": 100.438,
+      "median": 99.563,
+      "mean": 143.695
+     },
+     "smoothBestFitDelayFrames": 9,
+     "smoothBestFitMeanErrPx": 20.291,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 60.001
+    },
+    {
+     "frameInterval": {
+      "n": 433,
+      "max": 17,
+      "p95": 16.8,
+      "median": 16.7,
+      "mean": 16.666
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "1": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 820.563,
+      "p95": 100.438,
+      "median": 99.563,
+      "mean": 143.695
+     },
+     "smoothBestFitDelayFrames": 9,
+     "smoothBestFitMeanErrPx": 20.97,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 59.997
+    }
+   ]
+  },
+  {
+   "engine": "motion",
+   "auth": "native",
+   "loop": "loop=advance&tick=raf",
+   "damping": 5.5,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 429,
+      "max": 38,
+      "p95": 17.5,
+      "median": 16.7,
+      "mean": 16.831
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "1": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 820.563,
+      "p95": 100.438,
+      "median": 99.563,
+      "mean": 143.695
+     },
+     "smoothBestFitDelayFrames": 5,
+     "smoothBestFitMeanErrPx": 12.713,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 56.623
+    },
+    {
+     "frameInterval": {
+      "n": 433,
+      "max": 17.7,
+      "p95": 17.4,
+      "median": 16.7,
+      "mean": 16.666
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "1": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 820.563,
+      "p95": 100.438,
+      "median": 99.563,
+      "mean": 143.695
+     },
+     "smoothBestFitDelayFrames": 5,
+     "smoothBestFitMeanErrPx": 12.713,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 59.981
+    }
+   ]
+  },
+  {
+   "engine": "motion",
+   "auth": "native",
+   "loop": "loop=advance&tick=scroll",
+   "damping": 5.5,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 433,
+      "max": 61.8,
+      "p95": 17,
+      "median": 16.7,
+      "mean": 16.715
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "1": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 820.563,
+      "p95": 100.438,
+      "median": 99.563,
+      "mean": 143.695
+     },
+     "smoothBestFitDelayFrames": 9,
+     "smoothBestFitMeanErrPx": 106.523,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 0
+    },
+    {
+     "frameInterval": {
+      "n": 433,
+      "max": 17.7,
+      "p95": 17,
+      "median": 16.7,
+      "mean": 16.666
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "1": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 820.563,
+      "p95": 100.438,
+      "median": 99.563,
+      "mean": 143.695
+     },
+     "smoothBestFitDelayFrames": 12,
+     "smoothBestFitMeanErrPx": 145.679,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 0
+    }
+   ]
+  },
+  {
+   "engine": "motion",
+   "auth": "native",
+   "loop": "loop=advance&tick=motion-render",
+   "damping": 5.5,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 434,
+      "max": 17.7,
+      "p95": 17.4,
+      "median": 16.7,
+      "mean": 16.611
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 1,
+     "smoothBestFitMeanErrPx": 36.024,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 60.001
+    },
+    {
+     "frameInterval": {
+      "n": 431,
+      "max": 38.9,
+      "p95": 17.4,
+      "median": 16.7,
+      "mean": 16.743
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 1,
+     "smoothBestFitMeanErrPx": 36.024,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 59.981
+    }
+   ]
+  },
+  {
+   "engine": "motion",
+   "auth": "native",
+   "loop": "loop=advance&tick=motion-render&dirty=1",
+   "damping": 5.5,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 433,
+      "max": 26.2,
+      "p95": 17.4,
+      "median": 16.6,
+      "mean": 16.645
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 4,
+     "smoothBestFitMeanErrPx": 48.452,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 60.241,
+     "rendersPerSecondAtRest": 0
+    },
+    {
+     "frameInterval": {
+      "n": 433,
+      "max": 17.7,
+      "p95": 17.4,
+      "median": 16.7,
+      "mean": 16.666
+     },
+     "movingFrames": 16,
+     "renderedInTheFrame": 16,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 16
+     },
+     "sceneLag": {
+      "0": 16
+     },
+     "exactErrScrollPx": {
+      "n": 16,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 1,
+     "smoothBestFitMeanErrPx": 36.024,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 0
+    }
+   ]
+  },
+  {
+   "engine": "motion",
+   "auth": "lenis-motion",
+   "loop": "loop=demand",
+   "damping": null,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 455,
+      "max": 17.8,
+      "p95": 17.5,
+      "median": 16.7,
+      "mean": 16.625
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 125,
+     "notRenderedInTheFrame": 17,
+     "lag": {
+      "1": 142
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 820.563,
+      "p95": 22.562,
+      "median": 10.437,
+      "mean": 16.203
+     },
+     "smoothBestFitDelayFrames": 1,
+     "smoothBestFitMeanErrPx": 0.343,
+     "rendersPerMovingFrame": 0.88,
+     "rendersPerSecondScrolling": 52.711,
+     "rendersPerSecondAtRest": 0
+    },
+    {
+     "frameInterval": {
+      "n": 454,
+      "max": 17.9,
+      "p95": 17.5,
+      "median": 16.7,
+      "mean": 16.666
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 125,
+     "notRenderedInTheFrame": 17,
+     "lag": {
+      "1": 142
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 820.563,
+      "p95": 23.438,
+      "median": 10.437,
+      "mean": 16.203
+     },
+     "smoothBestFitDelayFrames": 1,
+     "smoothBestFitMeanErrPx": 0.343,
+     "rendersPerMovingFrame": 0.88,
+     "rendersPerSecondScrolling": 52.711,
+     "rendersPerSecondAtRest": 0
+    }
+   ]
+  },
+  {
+   "engine": "motion",
+   "auth": "lenis-motion",
+   "loop": "loop=always",
+   "damping": null,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 455,
+      "max": 17.8,
+      "p95": 17.4,
+      "median": 16.7,
+      "mean": 16.612
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 142,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 142
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.437
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 0.345,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 59.981
+    },
+    {
+     "frameInterval": {
+      "n": 454,
+      "max": 20,
+      "p95": 17.5,
+      "median": 16.7,
+      "mean": 16.666
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 142,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 142
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.437
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 0.345,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 60.001
+    }
+   ]
+  },
+  {
+   "engine": "motion",
+   "auth": "lenis-motion",
+   "loop": "loop=advance&tick=motion-update",
+   "damping": null,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 450,
+      "max": 39.2,
+      "p95": 16.8,
+      "median": 16.7,
+      "mean": 16.812
+     },
+     "movingFrames": 141,
+     "renderedInTheFrame": 141,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 141
+     },
+     "sceneLag": {
+      "0": 141
+     },
+     "exactErrScrollPx": {
+      "n": 141,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.437
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 0.345,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 60.001
+    },
+    {
+     "frameInterval": {
+      "n": 454,
+      "max": 17,
+      "p95": 16.8,
+      "median": 16.7,
+      "mean": 16.666
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 142,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 142
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.437
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 0.345,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 59.997
+    }
+   ]
+  },
+  {
+   "engine": "motion",
+   "auth": "lenis-motion",
+   "loop": "loop=advance&tick=motion-render",
+   "damping": null,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 455,
+      "max": 17.7,
+      "p95": 16.9,
+      "median": 16.7,
+      "mean": 16.641
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 142,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 142
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.438
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 0.345,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 59.997
+    },
+    {
+     "frameInterval": {
+      "n": 454,
+      "max": 17.3,
+      "p95": 16.8,
+      "median": 16.7,
+      "mean": 16.666
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 142,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 142
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.437
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 0.345,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 60.001
+    }
+   ]
+  },
+  {
+   "engine": "motion",
+   "auth": "lenis-motion",
+   "loop": "loop=advance&tick=motion-postrender",
+   "damping": null,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 455,
+      "max": 17.4,
+      "p95": 16.8,
+      "median": 16.7,
+      "mean": 16.607
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 142,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 142
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.437
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 0.345,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 60.005
+    },
+    {
+     "frameInterval": {
+      "n": 455,
+      "max": 17.6,
+      "p95": 16.8,
+      "median": 16.7,
+      "mean": 16.667
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 142,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 142
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.437
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 0.345,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 60.004
+    }
+   ]
+  },
+  {
+   "engine": "motion",
+   "auth": "lenis-motion",
+   "loop": "loop=advance&tick=motion-render&dirty=1",
+   "damping": null,
+   "webgl": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+   "runs": [
+    {
+     "frameInterval": {
+      "n": 455,
+      "max": 18,
+      "p95": 16.8,
+      "median": 16.7,
+      "mean": 16.613
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 142,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 142
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.437
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 0.437,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 0
+    },
+    {
+     "frameInterval": {
+      "n": 455,
+      "max": 17.9,
+      "p95": 16.8,
+      "median": 16.7,
+      "mean": 16.666
+     },
+     "movingFrames": 142,
+     "renderedInTheFrame": 142,
+     "notRenderedInTheFrame": 0,
+     "lag": {
+      "0": 142
+     },
+     "sceneLag": {
+      "0": 142
+     },
+     "exactErrScrollPx": {
+      "n": 142,
+      "max": 0.438,
+      "p95": 0.438,
+      "median": 0.437,
+      "mean": 0.437
+     },
+     "smoothBestFitDelayFrames": 0,
+     "smoothBestFitMeanErrPx": 0.345,
+     "rendersPerMovingFrame": 1,
+     "rendersPerSecondScrolling": 59.88,
+     "rendersPerSecondAtRest": 0
+    }
+   ]
+  }
+ ],
+ "q3": [
+  {
+   "engine": "motion",
+   "auth": "lenis-motion",
+   "loop": "loop=demand",
+   "offscreen": {
+    "ourAwakeFalseFromPx": 220,
+    "canvasNeverFromPx": 220,
+    "rendersPerSecondOffscreen": 0,
+    "wheelOffscreenRenders": 0,
+    "state": {
+     "y": 3951,
+     "rn": 18,
+     "glFrames": 19,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": false,
+     "sceneReduced": false,
+     "p": 1,
+     "band": 1,
+     "a": 1,
+     "aSmooth": 1,
+     "aReduced": false,
+     "aIndex": 3,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    }
+   },
+   "hidden": {
+    "rendersPerSecondHidden": 0,
+    "frameloop": "never",
+    "rendersPerSecondAfterShow": 0
+   },
+   "reducedLive": {
+    "before": {
+     "y": 1341,
+     "rn": 21,
+     "glFrames": 22,
+     "frameloop": "demand",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.39975694444444443,
+     "band": 0.48199080381471393,
+     "a": 0.39975694444444443,
+     "aSmooth": 0.39975694444444443,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "after": {
+     "y": 1341,
+     "rn": 22,
+     "glFrames": 23,
+     "frameloop": "demand",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": true,
+     "p": 0.2998177083333333,
+     "band": 0,
+     "a": 0.2998177083333333,
+     "aSmooth": 0.2998177083333333,
+     "aReduced": true,
+     "aIndex": 1,
+     "wrapperHeight": 3000,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "rendersPerSecondAfterSwitch": 0,
+    "afterScroll": {
+     "y": 1641,
+     "rn": 23,
+     "glFrames": 24,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": true,
+     "p": 0.425,
+     "band": 0,
+     "a": 0.425,
+     "aSmooth": 0.425,
+     "aReduced": true,
+     "aIndex": 1,
+     "wrapperHeight": 3000,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "back": {
+     "y": 1641,
+     "rn": 24,
+     "glFrames": 25,
+     "frameloop": "demand",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.5664236111111111,
+     "band": 0.686350476839237,
+     "a": 0.5664236111111111,
+     "aSmooth": 0.5664236111111111,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "nearestBound": 0.333
+   },
+   "reload": {
+    "cornerPixel": [
+     32,
+     48,
+     64
+    ],
+    "y": 1431,
+    "firstRender": {
+     "f": 39,
+     "exact": 0.4497569444444444,
+     "smooth": 0.4497569444444444,
+     "y": 1431,
+     "truth": 0.4497569444444444
+    },
+    "rendersLogged": 1,
+    "smoothOffByMoreThan001": 0,
+    "maxSmoothErr": 0
+   },
+   "pageshowSynthetic": {
+    "firstRender": {
+     "f": 93,
+     "exact": 0.6997569444444445,
+     "smooth": 0.6997569444444445,
+     "y": 1881,
+     "truth": 0.6997569444444445
+    },
+    "renders": 1,
+    "smoothOffByMoreThan001": 0,
+    "final": {
+     "y": 1881,
+     "rn": 3,
+     "glFrames": 4,
+     "frameloop": "demand",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.6997569444444445,
+     "band": 0.8498382152588556,
+     "a": 0.6997569444444445,
+     "aSmooth": 0.6997569444444445,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    }
+   },
+   "contextLoss": {
+    "beforeLoss": {
+     "y": 1341,
+     "rn": 4,
+     "glFrames": 5,
+     "frameloop": "demand",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.4,
+     "band": 0.48228882833787473,
+     "a": 0.4,
+     "aSmooth": 0.4,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "lost": {
+     "y": 1341,
+     "rn": 4,
+     "glFrames": 5,
+     "frameloop": "demand",
+     "sceneMode": "poster",
+     "sceneReady": "false",
+     "canvasInDom": false,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.4,
+     "band": 0.48228882833787473,
+     "a": 0.4,
+     "aSmooth": 0.4,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 0,
+      "liveInDocument": 0,
+      "liveDetached": 0,
+      "canvasesInDocument": 0
+     }
+    },
+    "rendersPerSecondLost": 0,
+    "restored": {
+     "y": 1640,
+     "rn": 4,
+     "glFrames": 5,
+     "frameloop": "demand",
+     "sceneMode": "poster",
+     "sceneReady": "false",
+     "canvasInDom": false,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.5661111111111111,
+     "band": 0.6859673024523161,
+     "a": 0.5661111111111111,
+     "aSmooth": 0.5661111111111111,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 0,
+      "liveDetached": 1,
+      "canvasesInDocument": 0
+     }
+    },
+    "warnings": [
+     "THREE.WebGLRenderer: Context Lost."
+    ]
+   }
+  },
+  {
+   "engine": "motion",
+   "auth": "native",
+   "loop": "loop=demand",
+   "offscreen": {
+    "ourAwakeFalseFromPx": 220,
+    "canvasNeverFromPx": 220,
+    "rendersPerSecondOffscreen": 0,
+    "wheelOffscreenRenders": 0,
+    "state": {
+     "y": 3921,
+     "rn": 104,
+     "glFrames": 105,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": false,
+     "sceneReduced": false,
+     "p": 1,
+     "band": 1,
+     "a": 1,
+     "aSmooth": 1,
+     "aReduced": false,
+     "aIndex": 3,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    }
+   },
+   "hidden": {
+    "rendersPerSecondHidden": 0,
+    "frameloop": "never",
+    "rendersPerSecondAfterShow": 0
+   },
+   "reducedLive": {
+    "before": {
+     "y": 1341,
+     "rn": 107,
+     "glFrames": 108,
+     "frameloop": "demand",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.39975694444444443,
+     "band": 0.48199080381471393,
+     "a": 0.39975694444444443,
+     "aSmooth": 0.39975694444444443,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "after": {
+     "y": 1341,
+     "rn": 108,
+     "glFrames": 109,
+     "frameloop": "demand",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": true,
+     "p": 0.2998177083333333,
+     "band": 0,
+     "a": 0.2998177083333333,
+     "aSmooth": 0.2998177083333333,
+     "aReduced": true,
+     "aIndex": 1,
+     "wrapperHeight": 3000,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "rendersPerSecondAfterSwitch": 0,
+    "afterScroll": {
+     "y": 1641,
+     "rn": 109,
+     "glFrames": 110,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": true,
+     "p": 0.425,
+     "band": 0,
+     "a": 0.425,
+     "aSmooth": 0.425,
+     "aReduced": true,
+     "aIndex": 1,
+     "wrapperHeight": 3000,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "back": {
+     "y": 1641,
+     "rn": 110,
+     "glFrames": 111,
+     "frameloop": "demand",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.5664236111111111,
+     "band": 0.686350476839237,
+     "a": 0.5664236111111111,
+     "aSmooth": 0.5664236111111111,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "nearestBound": 0.333
+   },
+   "reload": {
+    "cornerPixel": [
+     32,
+     48,
+     64
+    ],
+    "y": 1431,
+    "firstRender": {
+     "f": 39,
+     "exact": 0.4497569444444444,
+     "smooth": 0.4497569444444444,
+     "y": 1431,
+     "truth": 0.4497569444444444
+    },
+    "rendersLogged": 1,
+    "smoothOffByMoreThan001": 0,
+    "maxSmoothErr": 0
+   },
+   "pageshowSynthetic": {
+    "firstRender": {
+     "f": 93,
+     "exact": 0.6997569444444445,
+     "smooth": 0.6997569444444445,
+     "y": 1881,
+     "truth": 0.6997569444444445
+    },
+    "renders": 1,
+    "smoothOffByMoreThan001": 0,
+    "final": {
+     "y": 1881,
+     "rn": 2,
+     "glFrames": 3,
+     "frameloop": "demand",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.6997569444444445,
+     "band": 0.8498382152588556,
+     "a": 0.6997569444444445,
+     "aSmooth": 0.6997569444444445,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    }
+   },
+   "contextLoss": {
+    "beforeLoss": {
+     "y": 1341,
+     "rn": 49,
+     "glFrames": 50,
+     "frameloop": "demand",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.4,
+     "band": 0.48228882833787473,
+     "a": 0.4,
+     "aSmooth": 0.4036795432495149,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "lost": {
+     "y": 1341,
+     "rn": 49,
+     "glFrames": 50,
+     "frameloop": "demand",
+     "sceneMode": "poster",
+     "sceneReady": "false",
+     "canvasInDom": false,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.4,
+     "band": 0.48228882833787473,
+     "a": 0.4,
+     "aSmooth": 0.4036795432495149,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 0,
+      "liveInDocument": 0,
+      "liveDetached": 0,
+      "canvasesInDocument": 0
+     }
+    },
+    "rendersPerSecondLost": 0,
+    "restored": {
+     "y": 1641,
+     "rn": 49,
+     "glFrames": 50,
+     "frameloop": "demand",
+     "sceneMode": "poster",
+     "sceneReady": "false",
+     "canvasInDom": false,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.5666666666666667,
+     "band": 0.6866485013623979,
+     "a": 0.5666666666666667,
+     "aSmooth": 0.4036795432495149,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 0,
+      "liveDetached": 1,
+      "canvasesInDocument": 0
+     }
+    },
+    "warnings": [
+     "THREE.WebGLRenderer: Context Lost."
+    ]
+   }
+  },
+  {
+   "engine": "gsap",
+   "auth": "lenis-gsap",
+   "loop": "loop=advance&tick=gsap",
+   "offscreen": {
+    "ourAwakeFalseFromPx": 220,
+    "canvasNeverFromPx": -100,
+    "rendersPerSecondOffscreen": 60,
+    "wheelOffscreenRenders": 50,
+    "state": {
+     "y": 3951,
+     "rn": 387,
+     "glFrames": 402,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": false,
+     "sceneReduced": false,
+     "p": 1,
+     "band": 1,
+     "a": 1,
+     "aSmooth": 1,
+     "aReduced": false,
+     "aIndex": 3,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    }
+   },
+   "hidden": {
+    "rendersPerSecondHidden": 61,
+    "frameloop": "never",
+    "rendersPerSecondAfterShow": 60
+   },
+   "reducedLive": {
+    "before": {
+     "y": 1341,
+     "rn": 658,
+     "glFrames": 673,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.39975694444444443,
+     "band": 0.48199080381471393,
+     "a": 0.39975694444444443,
+     "aSmooth": 0.39975694444444443,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "after": {
+     "y": 1341,
+     "rn": 731,
+     "glFrames": 746,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": true,
+     "p": 0.2998177083333333,
+     "band": 0,
+     "a": 0.2998177083333333,
+     "aSmooth": 0.2998177083333333,
+     "aReduced": true,
+     "aIndex": 1,
+     "wrapperHeight": 3000,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "rendersPerSecondAfterSwitch": 60,
+    "afterScroll": {
+     "y": 1641,
+     "rn": 864,
+     "glFrames": 879,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": true,
+     "p": 0.425,
+     "band": 0,
+     "a": 0.425,
+     "aSmooth": 0.425,
+     "aReduced": true,
+     "aIndex": 1,
+     "wrapperHeight": 3000,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "back": {
+     "y": 1641,
+     "rn": 954,
+     "glFrames": 969,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.5664236111111111,
+     "band": 0.686350476839237,
+     "a": 0.5664236111111111,
+     "aSmooth": 0.5664236111111111,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "nearestBound": 0.333
+   },
+   "reload": {
+    "cornerPixel": [
+     32,
+     48,
+     64
+    ],
+    "y": 1431,
+    "firstRender": {
+     "f": 38,
+     "exact": 0.4497569444444444,
+     "smooth": 0.4497569444444444,
+     "y": 1431,
+     "truth": 0.4497569444444444
+    },
+    "rendersLogged": 49,
+    "smoothOffByMoreThan001": 0,
+    "maxSmoothErr": 0
+   },
+   "pageshowSynthetic": {
+    "firstRender": {
+     "f": 92,
+     "exact": 0.7,
+     "smooth": 0.7,
+     "y": 1881,
+     "truth": 0.6997569444444445
+    },
+    "renders": 69,
+    "smoothOffByMoreThan001": 0,
+    "final": {
+     "y": 1881,
+     "rn": 123,
+     "glFrames": 137,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.6997569444444445,
+     "band": 0.8498382152588556,
+     "a": 0.6997569444444445,
+     "aSmooth": 0.6997569444444445,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    }
+   },
+   "contextLoss": {
+    "beforeLoss": {
+     "y": 1341,
+     "rn": 171,
+     "glFrames": 185,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.4,
+     "band": 0.48228882833787473,
+     "a": 0.4,
+     "aSmooth": 0.4,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "lost": {
+     "y": 1341,
+     "rn": 172,
+     "glFrames": 186,
+     "frameloop": "never",
+     "sceneMode": "poster",
+     "sceneReady": "false",
+     "canvasInDom": false,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.4,
+     "band": 0.48228882833787473,
+     "a": 0.4,
+     "aSmooth": 0.4,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 0,
+      "liveInDocument": 0,
+      "liveDetached": 0,
+      "canvasesInDocument": 0
+     }
+    },
+    "rendersPerSecondLost": 0,
+    "restored": {
+     "y": 1640,
+     "rn": 172,
+     "glFrames": 186,
+     "frameloop": "never",
+     "sceneMode": "poster",
+     "sceneReady": "false",
+     "canvasInDom": false,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.5661111111111111,
+     "band": 0.6859673024523161,
+     "a": 0.5661111111111111,
+     "aSmooth": 0.5661111111111111,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 0,
+      "liveDetached": 1,
+      "canvasesInDocument": 0
+     }
+    },
+    "warnings": [
+     "THREE.WebGLRenderer: Context Lost."
+    ]
+   }
+  },
+  {
+   "engine": "gsap",
+   "auth": "lenis-gsap",
+   "loop": "loop=advance&tick=gsap&gate=1&dirty=1&mountRender=0",
+   "offscreen": {
+    "ourAwakeFalseFromPx": 220,
+    "canvasNeverFromPx": -100,
+    "rendersPerSecondOffscreen": 0,
+    "wheelOffscreenRenders": 0,
+    "state": {
+     "y": 3951,
+     "rn": 1,
+     "glFrames": 1,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": false,
+     "sceneReduced": false,
+     "p": 1,
+     "band": 1,
+     "a": 1,
+     "aSmooth": 1,
+     "aReduced": false,
+     "aIndex": 3,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    }
+   },
+   "hidden": {
+    "rendersPerSecondHidden": 0,
+    "frameloop": "never",
+    "rendersPerSecondAfterShow": 0
+   },
+   "reducedLive": {
+    "before": {
+     "y": 1341,
+     "rn": 3,
+     "glFrames": 3,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.39975694444444443,
+     "band": 0.48199080381471393,
+     "a": 0.39975694444444443,
+     "aSmooth": 0.39975694444444443,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "after": {
+     "y": 1341,
+     "rn": 4,
+     "glFrames": 4,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": true,
+     "p": 0.2998177083333333,
+     "band": 0,
+     "a": 0.2998177083333333,
+     "aSmooth": 0.2998177083333333,
+     "aReduced": true,
+     "aIndex": 1,
+     "wrapperHeight": 3000,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "rendersPerSecondAfterSwitch": 0,
+    "afterScroll": {
+     "y": 1641,
+     "rn": 7,
+     "glFrames": 7,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": true,
+     "p": 0.425,
+     "band": 0,
+     "a": 0.425,
+     "aSmooth": 0.425,
+     "aReduced": true,
+     "aIndex": 1,
+     "wrapperHeight": 3000,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "back": {
+     "y": 1641,
+     "rn": 9,
+     "glFrames": 9,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.5664236111111111,
+     "band": 0.686350476839237,
+     "a": 0.5664236111111111,
+     "aSmooth": 0.5664236111111111,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "nearestBound": 0.333
+   },
+   "reload": {
+    "cornerPixel": [
+     244,
+     241,
+     234
+    ],
+    "y": 1431,
+    "firstRender": null,
+    "rendersLogged": 0,
+    "smoothOffByMoreThan001": 0,
+    "maxSmoothErr": null
+   },
+   "pageshowSynthetic": {
+    "firstRender": {
+     "f": 92,
+     "exact": 0.6997569444444445,
+     "smooth": 0.6997569444444445,
+     "y": 1881,
+     "truth": 0.6997569444444445
+    },
+    "renders": 1,
+    "smoothOffByMoreThan001": 0,
+    "final": {
+     "y": 1881,
+     "rn": 2,
+     "glFrames": 2,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.6997569444444445,
+     "band": 0.8498382152588556,
+     "a": 0.6997569444444445,
+     "aSmooth": 0.6997569444444445,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    }
+   },
+   "contextLoss": {
+    "beforeLoss": {
+     "y": 1341,
+     "rn": 3,
+     "glFrames": 3,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.4,
+     "band": 0.48228882833787473,
+     "a": 0.4,
+     "aSmooth": 0.4,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "lost": {
+     "y": 1341,
+     "rn": 3,
+     "glFrames": 3,
+     "frameloop": "never",
+     "sceneMode": "poster",
+     "sceneReady": "false",
+     "canvasInDom": false,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.4,
+     "band": 0.48228882833787473,
+     "a": 0.4,
+     "aSmooth": 0.4,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 0,
+      "liveInDocument": 0,
+      "liveDetached": 0,
+      "canvasesInDocument": 0
+     }
+    },
+    "rendersPerSecondLost": 0,
+    "restored": {
+     "y": 1640,
+     "rn": 3,
+     "glFrames": 3,
+     "frameloop": "never",
+     "sceneMode": "poster",
+     "sceneReady": "false",
+     "canvasInDom": false,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.5661111111111111,
+     "band": 0.6859673024523161,
+     "a": 0.5661111111111111,
+     "aSmooth": 0.5661111111111111,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 0,
+      "liveDetached": 1,
+      "canvasesInDocument": 0
+     }
+    },
+    "warnings": [
+     "THREE.WebGLRenderer: Context Lost."
+    ]
+   }
+  },
+  {
+   "engine": "gsap",
+   "auth": "lenis-gsap",
+   "loop": "loop=advance&tick=gsap&gate=1&dirty=1",
+   "offscreen": {
+    "ourAwakeFalseFromPx": 220,
+    "canvasNeverFromPx": -100,
+    "rendersPerSecondOffscreen": 0,
+    "wheelOffscreenRenders": 0,
+    "state": {
+     "y": 3951,
+     "rn": 1,
+     "glFrames": 2,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": false,
+     "sceneReduced": false,
+     "p": 1,
+     "band": 1,
+     "a": 1,
+     "aSmooth": 1,
+     "aReduced": false,
+     "aIndex": 3,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    }
+   },
+   "hidden": {
+    "rendersPerSecondHidden": 0,
+    "frameloop": "never",
+    "rendersPerSecondAfterShow": 0
+   },
+   "reducedLive": {
+    "before": {
+     "y": 1341,
+     "rn": 3,
+     "glFrames": 4,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.39975694444444443,
+     "band": 0.48199080381471393,
+     "a": 0.39975694444444443,
+     "aSmooth": 0.39975694444444443,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "after": {
+     "y": 1341,
+     "rn": 4,
+     "glFrames": 5,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": true,
+     "p": 0.2998177083333333,
+     "band": 0,
+     "a": 0.2998177083333333,
+     "aSmooth": 0.2998177083333333,
+     "aReduced": true,
+     "aIndex": 1,
+     "wrapperHeight": 3000,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "rendersPerSecondAfterSwitch": 0,
+    "afterScroll": {
+     "y": 1641,
+     "rn": 7,
+     "glFrames": 8,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": true,
+     "p": 0.425,
+     "band": 0,
+     "a": 0.425,
+     "aSmooth": 0.425,
+     "aReduced": true,
+     "aIndex": 1,
+     "wrapperHeight": 3000,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "back": {
+     "y": 1641,
+     "rn": 9,
+     "glFrames": 10,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.5664236111111111,
+     "band": 0.686350476839237,
+     "a": 0.5664236111111111,
+     "aSmooth": 0.5664236111111111,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "nearestBound": 0.333
+   },
+   "reload": {
+    "cornerPixel": [
+     32,
+     48,
+     64
+    ],
+    "y": 1431,
+    "firstRender": null,
+    "rendersLogged": 0,
+    "smoothOffByMoreThan001": 0,
+    "maxSmoothErr": null
+   },
+   "pageshowSynthetic": {
+    "firstRender": {
+     "f": 93,
+     "exact": 0.6997569444444445,
+     "smooth": 0.6997569444444445,
+     "y": 1881,
+     "truth": 0.6997569444444445
+    },
+    "renders": 1,
+    "smoothOffByMoreThan001": 0,
+    "final": {
+     "y": 1881,
+     "rn": 2,
+     "glFrames": 3,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.6997569444444445,
+     "band": 0.8498382152588556,
+     "a": 0.6997569444444445,
+     "aSmooth": 0.6997569444444445,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    }
+   },
+   "contextLoss": {
+    "beforeLoss": {
+     "y": 1341,
+     "rn": 3,
+     "glFrames": 4,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.4,
+     "band": 0.48228882833787473,
+     "a": 0.4,
+     "aSmooth": 0.4,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "lost": {
+     "y": 1341,
+     "rn": 3,
+     "glFrames": 4,
+     "frameloop": "never",
+     "sceneMode": "poster",
+     "sceneReady": "false",
+     "canvasInDom": false,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.4,
+     "band": 0.48228882833787473,
+     "a": 0.4,
+     "aSmooth": 0.4,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 0,
+      "liveInDocument": 0,
+      "liveDetached": 0,
+      "canvasesInDocument": 0
+     }
+    },
+    "rendersPerSecondLost": 0,
+    "restored": {
+     "y": 1640,
+     "rn": 3,
+     "glFrames": 4,
+     "frameloop": "never",
+     "sceneMode": "poster",
+     "sceneReady": "false",
+     "canvasInDom": false,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.5661111111111111,
+     "band": 0.6859673024523161,
+     "a": 0.5661111111111111,
+     "aSmooth": 0.5661111111111111,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 0,
+      "liveDetached": 1,
+      "canvasesInDocument": 0
+     }
+    },
+    "warnings": [
+     "THREE.WebGLRenderer: Context Lost."
+    ]
+   }
+  },
+  {
+   "engine": "motion",
+   "auth": "lenis-motion",
+   "loop": "loop=advance&tick=motion-render&gate=1&dirty=1",
+   "offscreen": {
+    "ourAwakeFalseFromPx": 220,
+    "canvasNeverFromPx": -100,
+    "rendersPerSecondOffscreen": 0,
+    "wheelOffscreenRenders": 0,
+    "state": {
+     "y": 3951,
+     "rn": 1,
+     "glFrames": 2,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": false,
+     "sceneReduced": false,
+     "p": 1,
+     "band": 1,
+     "a": 1,
+     "aSmooth": 1,
+     "aReduced": false,
+     "aIndex": 3,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    }
+   },
+   "hidden": {
+    "rendersPerSecondHidden": 0,
+    "frameloop": "never",
+    "rendersPerSecondAfterShow": 0
+   },
+   "reducedLive": {
+    "before": {
+     "y": 1341,
+     "rn": 3,
+     "glFrames": 4,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.39975694444444443,
+     "band": 0.48199080381471393,
+     "a": 0.39975694444444443,
+     "aSmooth": 0.39975694444444443,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "after": {
+     "y": 1341,
+     "rn": 5,
+     "glFrames": 6,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": true,
+     "p": 0.2998177083333333,
+     "band": 0,
+     "a": 0.2998177083333333,
+     "aSmooth": 0.2998177083333333,
+     "aReduced": true,
+     "aIndex": 1,
+     "wrapperHeight": 3000,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "rendersPerSecondAfterSwitch": 0,
+    "afterScroll": {
+     "y": 1641,
+     "rn": 8,
+     "glFrames": 9,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": true,
+     "p": 0.425,
+     "band": 0,
+     "a": 0.425,
+     "aSmooth": 0.425,
+     "aReduced": true,
+     "aIndex": 1,
+     "wrapperHeight": 3000,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "back": {
+     "y": 1641,
+     "rn": 10,
+     "glFrames": 11,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.5664236111111111,
+     "band": 0.686350476839237,
+     "a": 0.5664236111111111,
+     "aSmooth": 0.5664236111111111,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "nearestBound": 0.333
+   },
+   "reload": {
+    "cornerPixel": [
+     32,
+     48,
+     64
+    ],
+    "y": 1431,
+    "firstRender": null,
+    "rendersLogged": 0,
+    "smoothOffByMoreThan001": 0,
+    "maxSmoothErr": null
+   },
+   "pageshowSynthetic": {
+    "firstRender": {
+     "f": 93,
+     "exact": 0.6997569444444445,
+     "smooth": 0.6997569444444445,
+     "y": 1881,
+     "truth": 0.6997569444444445
+    },
+    "renders": 1,
+    "smoothOffByMoreThan001": 0,
+    "final": {
+     "y": 1881,
+     "rn": 2,
+     "glFrames": 3,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.6997569444444445,
+     "band": 0.8498382152588556,
+     "a": 0.6997569444444445,
+     "aSmooth": 0.6997569444444445,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    }
+   },
+   "contextLoss": {
+    "beforeLoss": {
+     "y": 1341,
+     "rn": 3,
+     "glFrames": 4,
+     "frameloop": "never",
+     "sceneMode": "live",
+     "sceneReady": "true",
+     "canvasInDom": true,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.4,
+     "band": 0.48228882833787473,
+     "a": 0.4,
+     "aSmooth": 0.4,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 1,
+      "liveDetached": 0,
+      "canvasesInDocument": 1
+     }
+    },
+    "lost": {
+     "y": 1341,
+     "rn": 3,
+     "glFrames": 4,
+     "frameloop": "never",
+     "sceneMode": "poster",
+     "sceneReady": "false",
+     "canvasInDom": false,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.4,
+     "band": 0.48228882833787473,
+     "a": 0.4,
+     "aSmooth": 0.4,
+     "aReduced": false,
+     "aIndex": 1,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 0,
+      "liveInDocument": 0,
+      "liveDetached": 0,
+      "canvasesInDocument": 0
+     }
+    },
+    "rendersPerSecondLost": 0,
+    "restored": {
+     "y": 1640,
+     "rn": 3,
+     "glFrames": 4,
+     "frameloop": "never",
+     "sceneMode": "poster",
+     "sceneReady": "false",
+     "canvasInDom": false,
+     "awake": true,
+     "sceneReduced": false,
+     "p": 0.5661111111111111,
+     "band": 0.6859673024523161,
+     "a": 0.5661111111111111,
+     "aSmooth": 0.5661111111111111,
+     "aReduced": false,
+     "aIndex": 2,
+     "wrapperHeight": 2400,
+     "contexts": {
+      "created": 2,
+      "live": 1,
+      "liveInDocument": 0,
+      "liveDetached": 1,
+      "canvasesInDocument": 0
+     }
+    },
+    "warnings": [
+     "THREE.WebGLRenderer: Context Lost."
+    ]
+   }
+  }
+ ],
+ "q4": [
+  {
+   "params": "keep=unmount&loop=demand",
+   "onA": {
+    "renders": 72,
+    "glFrames": 73,
+    "frameloop": "demand",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": true,
+    "y": 1500,
+    "exact": 0.48833333333333334,
+    "smooth": 0.48766511151776915,
+    "truth": 0.4880902777777778,
+    "contexts": {
+     "created": 2,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 1
+   },
+   "onB": {
+    "renders": 72,
+    "glFrames": 73,
+    "frameloop": "demand",
+    "sceneMode": null,
+    "sceneReady": null,
+    "canvasDisplayed": false,
+    "y": 0,
+    "exact": 0.48833333333333334,
+    "smooth": 0.48766511151776915,
+    "truth": null,
+    "contexts": {
+     "created": 2,
+     "live": 0,
+     "liveInDocument": 0,
+     "liveDetached": 0,
+     "canvasesInDocument": 0
+    },
+    "mounts": 1,
+    "rendersPerSecond": {
+     "useFrame": 0,
+     "glRender": 0
+    },
+    "rendersWhileScrollingB": {
+     "useFrame": 0,
+     "glRender": 0
+    }
+   },
+   "backOnA": {
+    "renders": 73,
+    "glFrames": 1,
+    "frameloop": "demand",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": true,
+    "y": 1500,
+    "exact": 0.4880902777777778,
+    "smooth": 0.4880902777777778,
+    "truth": 0.4880902777777778,
+    "contexts": {
+     "created": 4,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 2,
+    "firstRender": {
+     "nav": 2,
+     "f": 327,
+     "exact": 0.4880902777777778,
+     "smooth": 0.4880902777777778,
+     "y": 1500,
+     "truth": 0.4880902777777778,
+     "connected": true,
+     "visible": true
+    },
+    "rendersLogged": 1,
+    "smoothOffByMoreThan001": 0,
+    "rehydrates": [
+     {
+      "nav": 2,
+      "f": 323,
+      "reason": "wake",
+      "p": 0.4880902777777778
+     }
+    ]
+   },
+   "after20": {
+    "renders": 93,
+    "glFrames": 1,
+    "frameloop": "demand",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": true,
+    "y": 1500,
+    "exact": 0.4880902777777778,
+    "smooth": 0.4880902777777778,
+    "truth": 0.4880902777777778,
+    "contexts": {
+     "created": 44,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 22,
+    "rendersPerSecond": {
+     "useFrame": 0,
+     "glRender": 0
+    }
+   },
+   "warnings": []
+  },
+  {
+   "params": "keep=activity&loop=demand",
+   "onA": {
+    "renders": 73,
+    "glFrames": 74,
+    "frameloop": "demand",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": true,
+    "y": 1500,
+    "exact": 0.48833333333333334,
+    "smooth": 0.48772709683046483,
+    "truth": 0.4880902777777778,
+    "contexts": {
+     "created": 2,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 1
+   },
+   "onB": {
+    "renders": 73,
+    "glFrames": 75,
+    "frameloop": "demand",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": false,
+    "y": 0,
+    "exact": 0.48833333333333334,
+    "smooth": 0.48772709683046483,
+    "truth": null,
+    "contexts": {
+     "created": 2,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 1,
+    "rendersPerSecond": {
+     "useFrame": 0,
+     "glRender": 0
+    },
+    "rendersWhileScrollingB": {
+     "useFrame": 0,
+     "glRender": 0
+    }
+   },
+   "backOnA": {
+    "renders": 74,
+    "glFrames": 76,
+    "frameloop": "demand",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": true,
+    "y": 1500,
+    "exact": 0.4880902777777778,
+    "smooth": 0.4880902777777778,
+    "truth": 0.4880902777777778,
+    "contexts": {
+     "created": 3,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 2,
+    "firstRender": {
+     "nav": 2,
+     "f": 322,
+     "exact": 0.4880902777777778,
+     "smooth": 0.4880902777777778,
+     "y": 1500,
+     "truth": 0.4880902777777778,
+     "connected": true,
+     "visible": true
+    },
+    "rendersLogged": 1,
+    "smoothOffByMoreThan001": 0,
+    "rehydrates": [
+     {
+      "nav": 2,
+      "f": 322,
+      "reason": "mount",
+      "p": 0.4880902777777778
+     },
+     {
+      "nav": 2,
+      "f": 323,
+      "reason": "wake",
+      "p": 0.4880902777777778
+     }
+    ]
+   },
+   "after20": {
+    "renders": 94,
+    "glFrames": 116,
+    "frameloop": "demand",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": true,
+    "y": 1500,
+    "exact": 0.4880902777777778,
+    "smooth": 0.4880902777777778,
+    "truth": 0.4880902777777778,
+    "contexts": {
+     "created": 23,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 22,
+    "rendersPerSecond": {
+     "useFrame": 0,
+     "glRender": 0
+    }
+   },
+   "warnings": []
+  },
+  {
+   "params": "keep=activity&loop=always",
+   "onA": {
+    "renders": 104,
+    "glFrames": 118,
+    "frameloop": "always",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": true,
+    "y": 1500,
+    "exact": 0.48833333333333334,
+    "smooth": 0.4876668244202137,
+    "truth": 0.4880902777777778,
+    "contexts": {
+     "created": 2,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 1
+   },
+   "onB": {
+    "renders": 104,
+    "glFrames": 178,
+    "frameloop": "always",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": false,
+    "y": 0,
+    "exact": 0.48833333333333334,
+    "smooth": 0.4876668244202137,
+    "truth": null,
+    "contexts": {
+     "created": 2,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 1,
+    "rendersPerSecond": {
+     "useFrame": 0,
+     "glRender": 61
+    },
+    "rendersWhileScrollingB": {
+     "useFrame": 0,
+     "glRender": 37
+    }
+   },
+   "backOnA": {
+    "renders": 195,
+    "glFrames": 389,
+    "frameloop": "always",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": true,
+    "y": 1500,
+    "exact": 0.4880902777777778,
+    "smooth": 0.4880902777777778,
+    "truth": 0.4880902777777778,
+    "contexts": {
+     "created": 3,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 2,
+    "firstRender": {
+     "nav": 2,
+     "f": 322,
+     "exact": 0.48833333333333334,
+     "smooth": 0.4877369083261154,
+     "y": 1500,
+     "truth": 0.4880902777777778,
+     "connected": true,
+     "visible": true
+    },
+    "rendersLogged": 91,
+    "smoothOffByMoreThan001": 0,
+    "rehydrates": [
+     {
+      "nav": 2,
+      "f": 322,
+      "reason": "mount",
+      "p": 0.4880902777777778
+     },
+     {
+      "nav": 2,
+      "f": 323,
+      "reason": "wake",
+      "p": 0.4880902777777778
+     }
+    ]
+   },
+   "after20": {
+    "renders": 746,
+    "glFrames": 1124,
+    "frameloop": "always",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": true,
+    "y": 1500,
+    "exact": 0.4880902777777778,
+    "smooth": 0.4880902777777778,
+    "truth": 0.4880902777777778,
+    "contexts": {
+     "created": 23,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 22,
+    "rendersPerSecond": {
+     "useFrame": 60,
+     "glRender": 60
+    }
+   },
+   "warnings": []
+  },
+  {
+   "params": "keep=activity&loop=advance",
+   "onA": {
+    "renders": 103,
+    "glFrames": 118,
+    "frameloop": "never",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": true,
+    "y": 1500,
+    "exact": 0.48833333333333334,
+    "smooth": 0.48833333333333334,
+    "truth": 0.4880902777777778,
+    "contexts": {
+     "created": 2,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 1
+   },
+   "onB": {
+    "renders": 104,
+    "glFrames": 119,
+    "frameloop": "never",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": false,
+    "y": 0,
+    "exact": 0.48833333333333334,
+    "smooth": 0.48833333333333334,
+    "truth": null,
+    "contexts": {
+     "created": 2,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 1,
+    "rendersPerSecond": {
+     "useFrame": 0,
+     "glRender": 0
+    },
+    "rendersWhileScrollingB": {
+     "useFrame": 0,
+     "glRender": 0
+    }
+   },
+   "backOnA": {
+    "renders": 194,
+    "glFrames": 210,
+    "frameloop": "never",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": true,
+    "y": 1500,
+    "exact": 0.4880902777777778,
+    "smooth": 0.4880902777777778,
+    "truth": 0.4880902777777778,
+    "contexts": {
+     "created": 3,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 2,
+    "firstRender": {
+     "nav": 2,
+     "f": 323,
+     "exact": 0.4880902777777778,
+     "smooth": 0.4880902777777778,
+     "y": 1500,
+     "truth": 0.4880902777777778,
+     "connected": true,
+     "visible": true
+    },
+    "rendersLogged": 90,
+    "smoothOffByMoreThan001": 0,
+    "rehydrates": [
+     {
+      "nav": 2,
+      "f": 322,
+      "reason": "mount",
+      "p": 0.4880902777777778
+     },
+     {
+      "nav": 2,
+      "f": 323,
+      "reason": "wake",
+      "p": 0.4880902777777778
+     }
+    ]
+   },
+   "after20": {
+    "renders": 748,
+    "glFrames": 765,
+    "frameloop": "never",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": true,
+    "y": 1500,
+    "exact": 0.4880902777777778,
+    "smooth": 0.4880902777777778,
+    "truth": 0.4880902777777778,
+    "contexts": {
+     "created": 23,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 22,
+    "rendersPerSecond": {
+     "useFrame": 60,
+     "glRender": 60
+    }
+   },
+   "warnings": []
+  },
+  {
+   "params": "keep=activity&loop=demand&bridgeRefresh=1",
+   "onA": {
+    "renders": 73,
+    "glFrames": 74,
+    "frameloop": "demand",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": true,
+    "y": 1500,
+    "exact": 0.48833333333333334,
+    "smooth": 0.4877274301693417,
+    "truth": 0.4880902777777778,
+    "contexts": {
+     "created": 2,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 1
+   },
+   "onB": {
+    "renders": 73,
+    "glFrames": 75,
+    "frameloop": "demand",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": false,
+    "y": 0,
+    "exact": 0.48833333333333334,
+    "smooth": 0.4877274301693417,
+    "truth": null,
+    "contexts": {
+     "created": 2,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 1,
+    "rendersPerSecond": {
+     "useFrame": 0,
+     "glRender": 0
+    },
+    "rendersWhileScrollingB": {
+     "useFrame": 0,
+     "glRender": 0
+    }
+   },
+   "backOnA": {
+    "renders": 74,
+    "glFrames": 76,
+    "frameloop": "demand",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": true,
+    "y": 1500,
+    "exact": 0.4880902777777778,
+    "smooth": 0.4880902777777778,
+    "truth": 0.4880902777777778,
+    "contexts": {
+     "created": 3,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 2,
+    "firstRender": {
+     "nav": 2,
+     "f": 324,
+     "exact": 0.4880902777777778,
+     "smooth": 0.4880902777777778,
+     "y": 1500,
+     "truth": 0.4880902777777778,
+     "connected": true,
+     "visible": true
+    },
+    "rendersLogged": 1,
+    "smoothOffByMoreThan001": 0,
+    "rehydrates": [
+     {
+      "nav": 2,
+      "f": 324,
+      "reason": "mount",
+      "p": 0.4880902777777778
+     },
+     {
+      "nav": 2,
+      "f": 325,
+      "reason": "wake",
+      "p": 0.4880902777777778
+     }
+    ]
+   },
+   "after20": {
+    "renders": 94,
+    "glFrames": 116,
+    "frameloop": "demand",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": true,
+    "y": 1500,
+    "exact": 0.4880902777777778,
+    "smooth": 0.4880902777777778,
+    "truth": 0.4880902777777778,
+    "contexts": {
+     "created": 23,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 22,
+    "rendersPerSecond": {
+     "useFrame": 0,
+     "glRender": 0
+    }
+   },
+   "warnings": []
+  },
+  {
+   "params": "keep=unmount&loop=demand&vt=1",
+   "onA": {
+    "renders": 72,
+    "glFrames": 73,
+    "frameloop": "demand",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": true,
+    "y": 1500,
+    "exact": 0.48833333333333334,
+    "smooth": 0.48766841104217157,
+    "truth": 0.4880902777777778,
+    "contexts": {
+     "created": 2,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 1
+   },
+   "vt": {
+    "canvasCorner": [
+     32,
+     48,
+     64
+    ],
+    "canvasCentre": [
+     241,
+     131,
+     33
+    ],
+    "oldSnapshotCorner": [
+     32,
+     48,
+     64
+    ],
+    "oldSnapshotCentre": [
+     241,
+     131,
+     33
+    ],
+    "stateDuringTransition": {
+     "renders": 77,
+     "glFrames": 78,
+     "frameloop": "demand",
+     "sceneMode": null,
+     "sceneReady": null,
+     "canvasDisplayed": false,
+     "y": 0,
+     "exact": 0.48833333333333334,
+     "smooth": 0.48791257014467637,
+     "truth": null,
+     "contexts": {
+      "created": 2,
+      "live": 0,
+      "liveInDocument": 0,
+      "liveDetached": 0,
+      "canvasesInDocument": 0
+     },
+     "mounts": 1
+    },
+    "afterCorner": [
+     238,
+     238,
+     238
+    ]
+   },
+   "onB": {
+    "renders": 77,
+    "glFrames": 78,
+    "frameloop": "demand",
+    "sceneMode": null,
+    "sceneReady": null,
+    "canvasDisplayed": false,
+    "y": 0,
+    "exact": 0.48833333333333334,
+    "smooth": 0.48791257014467637,
+    "truth": null,
+    "contexts": {
+     "created": 2,
+     "live": 0,
+     "liveInDocument": 0,
+     "liveDetached": 0,
+     "canvasesInDocument": 0
+    },
+    "mounts": 1,
+    "rendersPerSecond": {
+     "useFrame": 0,
+     "glRender": 0
+    },
+    "rendersWhileScrollingB": {
+     "useFrame": 0,
+     "glRender": 0
+    }
+   },
+   "backOnA": {
+    "renders": 78,
+    "glFrames": 1,
+    "frameloop": "demand",
+    "sceneMode": "live",
+    "sceneReady": "true",
+    "canvasDisplayed": true,
+    "y": 1500,
+    "exact": 0.4880902777777778,
+    "smooth": 0.4880902777777778,
+    "truth": 0.4880902777777778,
+    "contexts": {
+     "created": 4,
+     "live": 1,
+     "liveInDocument": 1,
+     "liveDetached": 0,
+     "canvasesInDocument": 1
+    },
+    "mounts": 2,
+    "firstRender": {
+     "nav": 2,
+     "f": 549,
+     "exact": 0.4880902777777778,
+     "smooth": 0.4880902777777778,
+     "y": 1500,
+     "truth": 0.4880902777777778,
+     "connected": true,
+     "visible": true
+    },
+    "rendersLogged": 1,
+    "smoothOffByMoreThan001": 0,
+    "rehydrates": [
+     {
+      "nav": 2,
+      "f": 546,
+      "reason": "wake",
+      "p": 0.4880902777777778
+     }
+    ]
+   },
+   "warnings": []
+  }
+ ]
+}
