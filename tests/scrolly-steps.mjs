@@ -551,9 +551,13 @@ const CHECKS = {
       const [anchored] = await activeBecomes(p2, 4)
       await p2.waitForTimeout(600)
       const a = await p2.evaluate(() => ({ active: window.__t.active(), expected: window.__t.expected(), y: Math.round(scrollY), events: window.__t.events() }))
+      // Under ScrollSmoother the authority can move the page more than once on load (CI's WebKit: to the hash, then
+      // back to the top), and the block reports each move: only its agreement with the screen is the block's.
       out.push([
-        `loading with #step-4: ${lands ? 'step 4, ' : ''}the step on screen, reported as a landing (previous null), never the steps before it`,
-        (!lands || anchored) && a.active === a.expected && a.events.length <= 2 && a.events.every((e) => e.previous === null && (e.index === 0 || e.index === a.active)),
+        `loading with #step-4: ${lands ? 'step 4, ' : ''}the step on screen${lands ? ', reported as a landing (previous null), never the steps before it' : ''}`,
+        (!lands || anchored) &&
+          a.active === a.expected &&
+          (!lands || (a.events.length <= 2 && a.events.every((e) => e.previous === null && (e.index === 0 || e.index === a.active)))),
         `active ${a.active}, on screen ${a.expected}, scrollY ${a.y} · ${fmt(a.events)}`,
       ])
       return out
