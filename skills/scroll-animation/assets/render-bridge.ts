@@ -6,7 +6,8 @@
  *
  *   const bridge = createRenderBridge(scene, conductor, { render: (ms) => advance(ms / 1000) })
  *   onProgress: bridge.onProgress     onRehydrate: bridge.onRehydrate      the scene's two events
- *   tick: bridge.frame(ms)            once per frame, AFTER the authority's driver, on the same clock
+ *   tick: bridge.frame(ms)            once per frame, AFTER the authority's driver, on the same clock (the
+ *                                     adapters keep that order whatever the mount order)
  *   bridge.requestRender()            a canvas created later (lazy three, a remount): render until it ticks
  *   bridge.destroy()                  idempotent; the bridge is inert afterwards
  *
@@ -25,6 +26,8 @@
  * - No sweep: progress that arrives before the scene's first rehydrate or while the bridge is gated lands settled
  *   (smooth = exact), so a reload, a wake or a tab return draws the scroll position, never a glide from 0 or from
  *   where the scene was left: a reload's first progress event can reach the bridge before the scene's mount rehydrate.
+ *   Nothing renders before that rehydrate: that event can carry the position from before the browser restored the
+ *   scroll (Firefox, Lenis started in a layout: one frame drawn at 0 on a reload mid-scene).
  * - Priming: a canvas can render before the conductor's driver (ConductorDriver, lazy) has subscribed, which presents
  *   the scene's default pose. So after a mount, a resume (the gate opening again), a rehydrate or requestRender() the
  *   bridge keeps rendering until one render has ticked the conductor (its `subscribe` fired), PRIME_FRAMES at most:
@@ -32,7 +35,8 @@
  *   calls requestRender() once it exists.
  * - Reduced motion, live: the bridge follows the SCENE's reduced state (bindReducedMotion's snap would be overwritten
  *   by the next setExact): setReduced(true), the hold (`hold`, default 0), settle(), one render, scroll ignored.
- *   Turning it off rehydrates from scroll. css/scene.css shows the poster in its place.
+ *   Turning it off rehydrates from scroll. Unmount the canvas meanwhile (no context, no work) and let the poster be
+ *   the scene; css/scene.css hides a canvas that stays mounted.
  * - Routes: while it lives the bridge registers `onRouteRefresh(() => scene.rehydrate('route'))` (a layout shift
  *   above the range on a Motion route is otherwise missed until the next scroll); destroy() unregisters it.
  *   ScrollTrigger.refresh stays the GSAP route's own registration.
@@ -87,7 +91,7 @@ export interface RenderBridge {
   onProgress(p: number): void
   /** The scene's onRehydrate: setExact + settle (or the reduced-motion hold), then render once. */
   onRehydrate(state: Pick<SceneRehydrate, 'p' | 'reduced'>): void
-  /** Call once per frame from the authority's tick. Renders only when awake, visible and dirty. */
+  /** Call once per frame from the authority's tick. Renders only after the first rehydrate, awake, visible, dirty. */
   frame(ms: number): void
   /** Render until the conductor ticks (a canvas that exists only now). */
   requestRender(): void
@@ -150,7 +154,8 @@ export function createRenderBridge(
     },
     frame(ms) {
       if (destroyed) return
-      if (!scene.awake() || pageHidden()) {
+      // Before the scene's first rehydrate the progress may predate the browser's scroll restoration: draw nothing.
+      if (fresh || !scene.awake() || pageHidden()) {
         gated = true
         return
       }

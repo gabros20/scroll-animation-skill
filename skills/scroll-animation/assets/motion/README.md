@@ -27,6 +27,8 @@ React 19 and Motion 13 (`motion/react`). `scroll-animation add <block>` copies a
 | `ScrubVideo.tsx` | `scrub-video` | a scrubbed all-intra video on `PinnedScene`, with loops or holds, a camera and a backdrop | `references/video.md` |
 | `FrameSequence.tsx` | `frame-sequence` | an image sequence on a canvas, fed a MotionValue or a number | `references/sequences.md` |
 | `LoopVideo.tsx` | `loop-video` | an in-view background loop with a WCAG 2.2.2 pause control | `references/video.md` |
+| `usePinnedSceneRender.ts` | `render-bridge` | `usePinnedSceneRender(conductor, { render })`: a real-time canvas in a `PinnedScene`, fed the scene's exact progress and drawn in Motion's `frame.render` step, only when dirty; pass its `onProgress`/`onRehydrate` to the scene | `references/webgl.md` |
+| `ScrollySteps.tsx` | `scrolly-steps` | a sticky graphic beside natively scrolling steps that changes once per step: the last step whose top reached the line wins, `onStep` and optional `--step-p`; stacked on phones, without JavaScript and in print | `references/scrollytelling.md` |
 
 The engine-agnostic cores they drive sit one level up: `scene.ts`, `media/video-controller.ts`, `media/camera.ts` and
 `media/frame-sequence.ts`, shared with the GSAP blocks. Each of these blocks:
@@ -49,6 +51,7 @@ your own (`references/scenes.md` §7, `references/video.md` §15).
 | File | Block | What it is |
 | --- | --- | --- |
 | `Parallax.tsx` | `parallax` | `<Parallax speed>`: its children drift against the scroll by a fraction of their pass, written by hand from `useScroll` (never a bound `style`, spike S3); no drift under reduced motion. The GSAP version is `gsap/parallax.ts` |
+| `LayoutMorph.tsx`, `layout-features.ts` | `layout-morph` | a card that opens into a panel in one route with `layoutId`: a `LayoutGroup` plus a strict `LazyMotion` that fetches `domMax` (`layout-features.ts`) for that subtree only; a plain swap under reduced motion. `references/page-transitions.md` |
 | `ScrollWell.tsx` | `scroll-well` | `<ScrollWell />`: a client leaf that pulls the scroll to rest on its parent while the parent holds most of the view, released by scrolling away; native scrolling only. The engine-free core is `../scroll-well.ts`: read its warnings first |
 
 ## Styling

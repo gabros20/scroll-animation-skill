@@ -8,10 +8,11 @@
  *
  * With JavaScript and motion allowed the chapters are acts stacked in the
  * pin: the scene makes every one but the active act `inert`, and they are
- * hidden off that attribute. Until the scene's first rehydrate (a frame after
- * mount) only the first one shows, so a load never flashes all five at once,
- * and the acts cross-fade only from the frame after it: a reload or a return
- * mid-scene lands on its chapter instead of fading to it from the first.
+ * hidden off that attribute. Until the scene first places them (its first
+ * progress or rehydrate, data-lab-placed) only the first one shows, so a load
+ * never flashes all five at once; then the scene's act shows at once, and the
+ * acts cross-fade only from two frames later (data-lab-live): a reload or a
+ * return mid-scene lands on its chapter instead of fading it in.
  * Phones frame the object in the top 56svh with the act in the band below;
  * from 1024 px the frame fills the pin and the act sits in a left column (the
  * scene shifts the camera's subject right to clear it).
@@ -88,7 +89,7 @@
       visibility 400ms;
   }
   :root[data-animation] .lab-act[inert],
-  :root[data-animation] .lab-scene:not([data-lab-live]) .lab-act:not(:first-child) {
+  :root[data-animation] .lab-scene:not([data-lab-placed]) .lab-act:not(:first-child) {
     opacity: 0;
     visibility: hidden;
   }

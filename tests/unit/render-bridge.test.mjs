@@ -2,8 +2,8 @@
 // tests/fixtures/render-bridge), and `frame()` renders only when the scene is awake, the page visible and the bridge
 // dirty (input since the last render, smooth still settling after a render that ticked, or priming after a mount,
 // resume, rehydrate or requestRender, PRIME_FRAMES at most). Reduced motion holds; the route refresh is registered
-// while the bridge lives; destroy() is idempotent and leaves the bridge inert. The GSAP adapter owns one ticker
-// callback, and the Motion hook renders on the server. The browser half is tests/render-bridge.mjs.
+// while the bridge lives; destroy() is idempotent and leaves the bridge inert. The GSAP adapter draws last in each
+// tick, after a driver added after it, and the Motion hook renders on the server. The browser half is tests/render-bridge.mjs.
 
 import './load-ts.mjs'
 
@@ -50,7 +50,7 @@ function counted(conductor) {
  * A bridge whose render, like R3F's advance() with a ConductorDriver mounted, ticks the conductor (`canvas: true`),
  * or ticks nothing (`canvas: false`: no canvas yet, or never one).
  */
-function setup({ damping = null, canvas = true, scene = fakeScene(), hold } = {}) {
+function setup({ damping = null, canvas = true, scene = fakeScene(), hold, rehydrated = true } = {}) {
   const { conductor, live } = counted(createConductor({ chapters: CHAPTERS, damping }))
   const log = { renders: 0, canvas }
   const bridge = createRenderBridge(scene, conductor, {
@@ -60,6 +60,8 @@ function setup({ damping = null, canvas = true, scene = fakeScene(), hold } = {}
     },
     ...(hold === undefined ? {} : { hold }),
   })
+  // The scene's mount rehydrate: nothing renders before it.
+  if (rehydrated) bridge.onRehydrate({ p: 0, reduced: scene.isReduced })
   let ms = 0
   const frames = (n) => {
     const before = log.renders
@@ -68,6 +70,14 @@ function setup({ damping = null, canvas = true, scene = fakeScene(), hold } = {}
   }
   return { bridge, conductor, scene, log, live, frames }
 }
+
+test('fresh: nothing renders before the scene\'s first rehydrate, progress or not; the rehydrate primes', () => {
+  const { bridge, frames } = setup({ rehydrated: false })
+  bridge.onProgress(0)
+  assert.equal(frames(10), 0)
+  bridge.onRehydrate({ p: 0.5, reduced: false })
+  assert.equal(frames(1), 1)
+})
 
 test('primes once: the first awake frame renders, then nothing renders at rest', () => {
   const { frames } = setup()
@@ -151,7 +161,7 @@ test('rehydrate: setExact + settle (smooth lands on exact, no sweep), then one r
 
 test('no sweep: progress before the first rehydrate, or while gated, lands settled; live progress is damped', () => {
   const scene = fakeScene({ awake: false })
-  const { bridge, conductor, frames } = setup({ damping: 5.5, scene })
+  const { bridge, conductor, frames } = setup({ damping: 5.5, scene, rehydrated: false })
   bridge.onProgress(0.5)
   assert.equal(conductor.state.smooth, 0.5, 'a reload\'s first progress event, before the mount rehydrate')
   bridge.onRehydrate({ p: 0.5, reduced: false })
@@ -239,48 +249,44 @@ test('the 3d conductor fits the structural type: listeners get the state, the br
   assert.equal(frames(1), 1)
 })
 
-test('GSAP adapter: one ticker callback after the ones already added, the handle from the callbacks, removed on destroy', async () => {
+test('GSAP adapter: draws last in the tick, after a driver added later; the handle from the callbacks; removed on destroy', async () => {
   const { gsap } = await import('../../skills/scroll-animation/assets/gsap/setup.ts')
   const { pinnedSceneRender } = await import('../../skills/scroll-animation/assets/gsap/pinned-scene-render.ts')
-  const added = []
-  const add = gsap.ticker.add
-  const remove = gsap.ticker.remove
-  // The ticker's own add() removes the callback first, so the spy records it after the real add.
-  gsap.ticker.add = (cb, ...rest) => {
-    const out = add.call(gsap.ticker, cb, ...rest)
-    added.push(cb)
-    return out
-  }
-  gsap.ticker.remove = (cb) => {
-    if (added.includes(cb)) added.splice(added.indexOf(cb), 1)
-    return remove.call(gsap.ticker, cb)
-  }
+  const before = gsap.ticker._listeners.length
+  const order = []
+  const conductor = createConductor({ chapters: CHAPTERS, damping: null })
+  let renders = 0
+  const render = pinnedSceneRender(conductor, { render: () => (renders++, order.push('render'), conductor.tick(0)) })
+  // An authority started after the bridge (a layout's <SmoothScroll>, or Lenis re-created when reduced motion is
+  // turned off) adds its driver behind the bridge's callback.
+  const driver = () => order.push('driver')
+  gsap.ticker.add(driver)
   try {
-    const conductor = createConductor({ chapters: CHAPTERS, damping: null })
-    let renders = 0
-    const render = pinnedSceneRender(conductor, { render: () => (renders++, conductor.tick(0)) })
-    assert.equal(added.length, 1)
-    const [tick] = added
-    tick(1)
+    assert.equal(gsap.ticker._listeners.length, before + 2, 'one ticker callback of its own')
+    gsap.ticker.tick()
     assert.equal(renders, 0, 'gated until the scene has called back')
     const handle = { awake: true, reduced: false, rehydrate() {} }
     render.onRehydrate({ p: 0.5, reduced: false }, handle)
     assert.equal(conductor.state.exact, 0.5)
-    tick(1.016)
+    order.length = 0
+    gsap.ticker.tick()
     assert.equal(renders, 1)
+    assert.deepEqual(order, ['driver', 'render'], 'the render comes after the driver added later, in the same tick')
+    assert.equal(gsap.ticker._listeners.length, before + 2, 'the draw removed itself')
     render.onProgress(0.6, handle)
-    tick(1.033)
+    gsap.ticker.tick()
     assert.equal(renders, 2)
     handle.awake = false
     render.onProgress(0.7, handle)
-    tick(1.05)
+    gsap.ticker.tick()
     assert.equal(renders, 2, 'awake is read as a property on the GSAP handle')
     render.destroy()
     render.destroy()
-    assert.equal(added.length, 0)
+    assert.equal(gsap.ticker._listeners.length, before + 1, 'only the driver is left')
   } finally {
-    gsap.ticker.add = add
-    gsap.ticker.remove = remove
+    // A failed assertion must not leave a callback keeping the ticker (and the test process) alive.
+    render.destroy()
+    gsap.ticker.remove(driver)
   }
 })
 

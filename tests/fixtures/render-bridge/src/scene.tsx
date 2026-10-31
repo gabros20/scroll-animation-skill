@@ -62,6 +62,8 @@ export interface SceneProps {
   canvas: 'webgl' | 'dom'
   /** Receives the scene's normalised handle and the bridge's requestRender once they exist. */
   expose(probe: SceneProbe, requestRender: () => void): void
+  /** GSAP: 'gsap' under ScrollSmoother, where sticky can't pin (ScrollTrigger pins instead). */
+  pin?: 'sticky' | 'gsap'
 }
 
 function truthNow(root: HTMLElement | null) {
@@ -187,7 +189,7 @@ export function MotionScene({ conductor, log, canvas, expose }: SceneProps) {
   )
 }
 
-export function GsapScene({ conductor, log, canvas, expose }: SceneProps) {
+export function GsapScene({ conductor, log, canvas, expose, pin = 'sticky' }: SceneProps) {
   const el = useRef<HTMLDivElement>(null)
   const request = useRef<() => void>(() => {})
   const root = useRef(() => el.current).current
@@ -196,6 +198,7 @@ export function GsapScene({ conductor, log, canvas, expose }: SceneProps) {
     if (!node) return
     const render = pinnedSceneRender(conductor, { render: renderFor(canvas, conductor, log, root) })
     const scene = pinnedScene(node, {
+      pin,
       onProgress: render.onProgress,
       onRehydrate: (s, h) => {
         logRehydrate(log, s)
@@ -214,10 +217,10 @@ export function GsapScene({ conductor, log, canvas, expose }: SceneProps) {
       scene.destroy()
       request.current = () => {}
     }
-  }, [canvas, conductor, expose, log, root])
+  }, [canvas, conductor, expose, log, pin, root])
   return (
     <div ref={el} data-scene-root="">
-      <div data-scene-pin="">
+      <div data-scene-pin={pin === 'gsap' ? 'gsap' : ''}>
         <Pinned canvas={canvas} conductor={conductor} log={log} root={root} requestRender={() => request.current()} />
       </div>
       <div data-scene-content="">

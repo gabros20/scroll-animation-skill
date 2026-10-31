@@ -1,11 +1,15 @@
 "use client";
 
+import { useGSAP } from "@gsap/react";
 import { lazy, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { pinnedScene, type PinnedSceneHandle } from "@/animation/gsap/pinned-scene";
+import { setupGsap } from "@/animation/gsap/setup";
 import { pinnedSceneRender, type PinnedSceneRender } from "@/animation/gsap/pinned-scene-render";
 import { useReducedMotionLive } from "@/animation/motion/useReducedMotionLive";
 import { createConductor, type Conductor, type ConductorState } from "@/three/conductor";
 import { SceneCanvas } from "@/three/r3f/SceneCanvas";
+
+if (typeof window !== "undefined") setupGsap({ plugins: [useGSAP] });
 
 // three, R3F and drei come with this chunk, and SceneCanvas asks for it only
 // once its gate has decided the canvas should exist (WebGL, motion allowed).
@@ -16,6 +20,8 @@ const CHAPTERS = [{ id: "body" }, { id: "bellows" }, { id: "lens" }, { id: "trip
 
 type LabDebug = {
   renders: number;
+  /** The exact progress the last render drew (verify-scenes' in-frame check). */
+  exact: number | null;
   draws: number;
   ticks: number;
   drawnAt: number | null;
@@ -73,75 +79,86 @@ export function LabScene({ poster, children }: { poster: ReactNode; children: Re
   const [posterReady, setPosterReady] = useState(false);
   const [drawn, setDrawn] = useState(false);
 
-  // The scene's two callbacks go to whichever bridge is current.
-  const bridge = useRef<PinnedSceneRender | null>(null);
   const scene = useRef<PinnedSceneHandle | null>(null);
+  const bridge = useRef<PinnedSceneRender | null>(null);
   const draw = useRef<((ms: number) => void) | null>(null);
   const debug = useRef<LabDebug | null>(null);
 
-  useEffect(() => {
-    const el = root.current;
-    if (!el) return;
-    const handle = pinnedScene(el, {
-      onProgress: (p, s) => bridge.current?.onProgress(p, s),
-      onRehydrate: (state, s) => {
-        // lab.css: the acts cross-fade from the frame after the scene first placed them.
-        if (!("labLive" in el.dataset)) requestAnimationFrame(() => (el.dataset.labLive = ""));
-        bridge.current?.onRehydrate(state, s);
-      },
-      onWarm: () => setWarm(true),
-    });
-    scene.current = handle;
-    if (debugEnabled()) {
-      debug.current = {
-        renders: 0,
-        draws: 0,
-        ticks: 0,
-        drawnAt: null,
-        posterAt: null,
-        mountedAt: null,
-        lost: 0,
-        state: () => conductor.state,
-        scene: () => scene.current,
-        sample: () => {
-          const canvas = el.querySelector<HTMLCanvasElement>("[data-scene-canvas] canvas");
-          if (!canvas || !draw.current) return null;
-          // The drawing buffer is only readable in the task that drew it.
-          draw.current(performance.now());
-          return inkShare(canvas);
+  // The documented wiring: the bridge, then the scene, in one useGSAP. It
+  // runs before the layout's SmoothScroll starts Lenis (a child's layout
+  // effect comes first) and Lenis restarts on a reduced-motion change; the
+  // bridge draws last in every tick of the ticker all the same.
+  useGSAP(
+    () => {
+      const el = root.current;
+      if (!el) return;
+      const render = pinnedSceneRender(conductor, {
+        render: (ms) => {
+          const stats = debug.current;
+          if (stats) {
+            stats.renders++;
+            stats.exact = conductor.state.exact;
+          }
+          if (!draw.current) return;
+          draw.current(ms);
+          if (stats) stats.draws++;
         },
+      });
+      // lab.css: the act the scene first placed (its first progress or
+      // rehydrate) shows at once, with no fade on a reload or a return
+      // mid-scene; the acts cross-fade from two frames later, once that state
+      // has been styled without a transition.
+      const place = () => {
+        if ("labPlaced" in el.dataset) return;
+        el.dataset.labPlaced = "";
+        requestAnimationFrame(() => requestAnimationFrame(() => (el.dataset.labLive = "")));
       };
-      (window as Window & { __lab?: LabDebug }).__lab = debug.current;
-    }
-    return () => {
-      handle.destroy();
-      scene.current = null;
-      delete el.dataset.labLive;
-    };
-  }, [conductor]);
-
-  // The bridge's ticker callback must run after the authority's (Lenis's
-  // tick, then ScrollTrigger's update): created in a passive effect, after
-  // the layout's SmoothScroll has started Lenis. A reduced-motion change
-  // restarts Lenis (smooth/lenis.ts), which puts its tick behind this one,
-  // so the bridge is made again with it, and asks the scene for its state.
-  useEffect(() => {
-    const render = pinnedSceneRender(conductor, {
-      render: (ms) => {
-        const stats = debug.current;
-        if (stats) stats.renders++;
-        if (!draw.current) return;
-        draw.current(ms);
-        if (stats) stats.draws++;
-      },
-    });
-    bridge.current = render;
-    scene.current?.rehydrate("render");
-    return () => {
-      render.destroy();
-      if (bridge.current === render) bridge.current = null;
-    };
-  }, [conductor, reduced]);
+      const handle = pinnedScene(el, {
+        onProgress: (p, s) => {
+          place();
+          render.onProgress(p, s);
+        },
+        onRehydrate: (state, s) => {
+          place();
+          render.onRehydrate(state, s);
+        },
+        onWarm: () => setWarm(true),
+      });
+      bridge.current = render;
+      scene.current = handle;
+      if (debugEnabled()) {
+        debug.current = {
+          renders: 0,
+          exact: null,
+          draws: 0,
+          ticks: 0,
+          drawnAt: null,
+          posterAt: null,
+          mountedAt: null,
+          lost: 0,
+          state: () => conductor.state,
+          scene: () => scene.current,
+          sample: () => {
+            const canvas = el.querySelector<HTMLCanvasElement>("[data-scene-canvas] canvas");
+            if (!canvas || !draw.current) return null;
+            // The drawing buffer is only readable in the task that drew it.
+            draw.current(performance.now());
+            return inkShare(canvas);
+          },
+        };
+        (window as Window & { __lab?: LabDebug }).__lab = debug.current;
+      }
+      return () => {
+        render.destroy();
+        handle.destroy();
+        bridge.current = null;
+        scene.current = null;
+        delete el.dataset.labPlaced;
+        delete el.dataset.labLive;
+      };
+    },
+    { dependencies: [conductor], scope: root },
+  );
 
   // Three waits for the poster: it is the LCP element, and its bytes come first.
   useEffect(() => {

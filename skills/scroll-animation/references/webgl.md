@@ -43,7 +43,9 @@ as three.js, or a three.js scene as a video.
 
 ## 2. Who owns what
 
-This is the 3d skill's table (its `scroll-conductor.md`) seen from this side:
+The 3d skill's `scroll-conductor.md` and `scroll-adapters.md` give the feed to the 3d skill ("adapt only the feed")
+inside our scene; this table gives it to the scene, measured (S11 Q1, §3). The edit on the 3d side is queued for the
+user; until it lands, follow this table inside our pin:
 
 | `scroll-animation` owns | The 3d skill owns |
 |---|---|
@@ -93,20 +95,26 @@ and the engine has read it. Frames late, over moving frames (S11):
 
 | Page | Render from | Late |
 |---|---|---|
-| GSAP, native or Lenis on `gsapDriver` | `pinnedSceneRender`: `gsap.ticker`, added after the driver | 0 |
+| GSAP: native, Lenis on `gsapDriver`, ScrollSmoother | `pinnedSceneRender`: last in each `gsap.ticker` tick | 0 |
 | Motion, native or Lenis on `motionDriver` | `usePinnedSceneRender`: Motion's `frame.render` | 0 |
 | GSAP + Lenis | R3F `demand` + `ConductorDriver` (`SceneCanvas`'s default) | 1 on every other frame |
 | Motion native | `demand`, `always`, a page rAF or a `scroll` listener | 1 on every frame: a DOM label driven by `exact` sits 100 px off |
 | Motion + Lenis | `demand` + `ConductorDriver` | 1 on every frame (10 px median, 23 px p95) |
 | GSAP native | a `scroll` listener | 0, but smooth stalls 99 to 136 px behind |
 
+The two adapters are 0 frames late in any mount order. `gsap.ticker` runs callbacks in the order they were added,
+and Lenis's can come after the bridge's: a layout's `<SmoothScroll>` starts after the page's `useGSAP` (a child's
+layout effect runs first), and Lenis is re-created when reduced motion is turned off. So `pinnedSceneRender` appends
+its draw to the end of every tick. Added once instead, the bridge drew 6 of 170 moving frames in their own frame
+(24.6 px off) in both cases. Under ScrollSmoother the update is GSAP's root render, the ticker's first callback:
+137/137. Motion orders by step: 170/170.
+
 Rendering on every tick costs 60 renders/s at rest; the bridge renders only when dirty (input since the last render,
-the conductor still settling, or priming) and costs 0 at rest, off screen and in a hidden tab. ScrollSmoother runs on
-`gsap.ticker` too but wasn't measured.
+the conductor still settling, or priming) and costs 0 at rest, off screen and in a hidden tab. On Motion its
+keep-alive `frame.render` step still runs Motion's frameloop at rest: one call a frame that returns at once.
 
 ```ts
-// GSAP: the authority first, then the bridge, then the scene
-createSmoothScroll({ driver: gsapDriver(gsap, ScrollTrigger) })      // native: nothing to add
+// GSAP: in one useGSAP (or a vanilla route's mount()), whenever the authority starts
 const render = pinnedSceneRender(conductor, { render: (ms) => advance(ms / 1000) })
 const scene = pinnedScene(root, { onProgress: render.onProgress, onRehydrate: render.onRehydrate })
 // cleanup: render.destroy(); scene.destroy()
@@ -121,7 +129,7 @@ const bridge = usePinnedSceneRender(conductor, { render: (ms) => advance(ms / 10
 - `advance` takes seconds. With more than one canvas on the page, advance this one's root:
   `advance(ms / 1000, true, store.getState())`.
 - Pass the two callbacks as they are; don't spread the hook's result (`requestRender` isn't a div prop).
-- Never `prioritize` the ticker callback: added after the driver is what puts it in the same tick.
+- Never `prioritize` the ticker callbacks.
 - There is no ambient mode: at rest nothing draws, so an idle turn or a shader's clock stops with the scroll. To keep
   one moving, call `requestRender()` once per frame while it plays (not measured), and give it a pause control
   ([accessibility.md](accessibility.md) §3).
@@ -129,25 +137,34 @@ const bridge = usePinnedSceneRender(conductor, { render: (ms) => advance(ms / 10
 ## 5. The canvas slot
 
 ```tsx
-const Stage = () => (                                  // PinnedScene's `pinned`, inside [data-scene-pin]
-  <>
-    <img data-scene-poster src="/media/hero-poster.avif" alt="…" width={1600} height={900} />
-    <div data-scene-canvas>
-      <SceneCanvas frameloop="never">…<ConductorDriver conductor={conductor} onFrame={pose} /></SceneCanvas>
+const Stage = () => {                                  // PinnedScene's `pinned`, inside [data-scene-pin]
+  const reduced = useReducedMotionLive()               // motion/useReducedMotionLive.ts
+  return (
+    <div data-scene-frame>                             {/* only with acts stacked in the pin */}
+      <img data-scene-poster src="/media/hero-poster.avif" alt="…" width={1600} height={900} />
+      <div data-scene-canvas>
+        {reduced ? null : (
+          // SceneCanvas types frameloop as 'always' | 'demand'; 'never' passes through to R3F
+          <SceneCanvas frameloop={'never' as 'demand'}>…<ConductorDriver conductor={conductor} onFrame={pose} /></SceneCanvas>
+        )}
+      </div>
     </div>
-  </>
-)
+  )
+}
 ```
 
 - `css/scene.css`: both slots fill the pin (`position: absolute; inset: 0`), the poster first, the canvas over it by
   source order. No `z-index`: it would lift the canvas over acts stacked in the pin.
-- Without JavaScript (`@media (scripting: none)`) and in print the canvas slot is `display: none` and the poster is
-  the scene. Under reduced motion it is `visibility: hidden`, so it keeps its size and shows its frame again without a
-  resize when the setting is turned off.
+- Under reduced motion unmount the canvas: no context, no work, and the poster is the scene. Without JavaScript
+  (`@media (scripting: none)`) and in print the slot is `display: none`; under reduced motion a canvas left mounted is
+  `visibility: hidden`, a backstop.
+- Acts stacked in the pin flow under reduced motion and the pin grows to hold them (1000×600 → 1000×1763 with three 400 px
+  acts); slots that fill the pin grow with it. Wrap both in `[data-scene-frame]`: it fills the pin while the scene
+  runs and stays a `--scene-poster-ratio` (16 / 9) picture above the acts.
 - The poster is server-rendered, sized and designed: it is the LCP element. Leave `SceneCanvas`'s own `poster` unset;
   the slot's poster sits under it.
-- `SceneCanvas` types `frameloop` as `'always' | 'demand'` today; `'never'` passes through to R3F. Cast it until the
-  3d skill accepts it. Its own off-screen pause does nothing under `never`: the bridge gates.
+- Cast `frameloop` as above until the 3d skill accepts `'never'` (or widen the copy's type, marked). Its own off-screen
+  pause does nothing under `never`: the bridge gates.
 - The pin has `pointer-events: none`; give the canvas slot `pointer-events: auto` only when the reader interacts with
   the canvas.
 
@@ -157,8 +174,8 @@ const Stage = () => (                                  // PinnedScene's `pinned`
 |---|---|
 | Off screen | the bridge stops when `scene.awake()` is false (200 px wake margin): 0 renders, against 60/s ungated |
 | Hidden tab | `visibilityState` gates the same way. A real hidden tab also stops rAF (headless can't hide one) |
-| Reduced motion, live | the bridge follows the scene: `setReduced(true)`, `setExact(hold ?? 0)`, `settle()`, one render, scroll ignored; the slot hides and the poster shows. Turning it off rehydrates from scroll. `SceneCanvas` checks the query only at mount, and `bindReducedMotion`'s snap is overwritten by the next `setExact`, so neither covers the switch |
-| Reload, `pageshow`, wake | progress that arrives before the first rehydrate or while gated lands settled (smooth = exact): the first frame is the scroll position, never a glide from 0. Real bfcache returns are unmeasured |
+| Reduced motion, live | the bridge follows the scene: `setReduced(true)`, `setExact(hold ?? 0)`, `settle()`, one render, scroll ignored; the canvas unmounts (§5) and the poster shows. Turning it off rehydrates from scroll. `SceneCanvas` checks the query only at mount, and `bindReducedMotion`'s snap is overwritten by the next `setExact`, so neither covers the switch |
+| Reload, `pageshow`, wake | nothing renders before the scene's first rehydrate (a reload's first progress can predate the restored scroll), and progress while gated lands settled (smooth = exact): the first frame is the scroll position, never a glide from 0. Real bfcache returns are unmeasured |
 | First frames | `ConductorDriver` subscribes lazily, so the bridge keeps rendering after a mount, resume or rehydrate until the conductor has ticked (`PRIME_FRAMES`, 120, at most). Set the mesh's pose from `conductor.state` when it mounts, not only in `onFrame`. A canvas that mounts later (a lazy three chunk) calls `requestRender()` from an effect inside it |
 | Route change | a canvas route unmounts its canvas: 1 live context after 10 round trips. Under `<Activity>` (Next's Cache Components) a hidden route keeps its context, so budget one per kept route; the bridge's effect cleanup stops its tick, but a `frameloop="always"` canvas keeps rendering at 61/s while hidden |
 | View transition | the old snapshot shows the canvas's last frame pixel for pixel, even after its context is released: nothing to do |
@@ -171,7 +188,8 @@ A canvas that persists across routes (one context for the whole site) has no blo
 `verify-motion.mjs` checks the scene's states; check the canvas from read state (a counter in `render`, the
 rendered `exact`, `getContext` wrapped before load), never from screenshots alone:
 
-- **Lag.** Over a wheel run, every frame drawn while the range moves uses that frame's progress: 0 frames late.
+- **Lag.** Over a wheel run, every frame drawn while the range moves uses that frame's progress: 0 frames late. Run
+  it again after reduced motion on and off and after a remount, with the authority started in the layout.
 - **Rest.** 0 renders/s once settled, off screen and in a hidden tab; rendering resumes on return.
 - **Reload.** A mid-page reload draws the scroll position first: no sweep from 0, no default pose.
 - **Reduced.** A live switch holds, shows the poster and ignores scroll; switching back rehydrates.
@@ -190,9 +208,9 @@ a real hidden tab, a real bfcache return, and iOS with the toolbars shown, where
 - [ ] The canvas is fed by the scene; no 3d scroll adapter on the same wrapper (§3).
 - [ ] `frameloop="never"`, rendered by `pinnedSceneRender` or `usePinnedSceneRender`; never `demand` + `invalidate()`,
   a page rAF or a `scroll` listener (§4).
-- [ ] The GSAP authority is created before `pinnedSceneRender`; the ticker callback isn't prioritised (§4).
+- [ ] No ticker callback is prioritised; lag is checked after a reduced-motion round trip (§4, §7).
 - [ ] One smoother: the conductor's damping is `null` under Lenis or ScrollSmoother (§3).
-- [ ] A designed poster sits first in the pin; the canvas slot carries no `z-index` (§5).
+- [ ] A designed poster sits first in the pin; the slot has no `z-index`; the canvas unmounts under reduced motion (§5).
 - [ ] The mesh takes its pose from `conductor.state` on mount; a late canvas calls `requestRender()` (§6).
 - [ ] No `frameloop="always"` on a route Cache Components may keep; one context per kept route (§6).
 - [ ] Ambient WebGL that moves by itself for more than 5 s has a pause control ([accessibility.md](accessibility.md) §3).

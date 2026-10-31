@@ -5,23 +5,28 @@
 // its provenance line) in our pinned scene under our authority, frameloop="never", advanced by the bridge.
 //
 // Chromium with SwiftShader (WebGL in a headless browser), per engine and authority (Motion native, Motion + Lenis
-// on motionDriver, GSAP native, GSAP + Lenis on gsap.ticker):
+// on motionDriver, GSAP native, GSAP + Lenis on gsap.ticker, GSAP + ScrollSmoother; and both Lenis drivers started
+// in a parent's layout effect, after the scene's, without StrictMode: `-late`):
 //   load       the first frames drawn on load and on a mid-page reload are at the scene's progress (±1 px): no sweep
 //              from 0, no default pose, and nothing drawn before the conductor's pose
 //   lag        over a wheel run, every frame the canvas draws while the range moves is drawn in that frame, with that
-//              frame's scrollTop: 0 frames late
+//              frame's scrollTop: 0 frames late; on load, after reduced motion on and off (the authority restarts)
+//              and after a remount
 //   rest       0 renders/s at rest once settled, off-screen and while hidden; renders again on return
 //   reduced    a live switch to reduced motion holds (exact = 0, settled), renders at most a couple of frames, ignores
 //              scroll, and css/scene.css shows the poster; switching back rehydrates from scroll
 //   lost       WEBGL_lose_context: the poster shows (no canvas left in the slot), nothing is thrown, scrolling on is
 //              harmless
-//   destroy    unmounting the scene leaves no conductor listener, no ticker callback, no live context; renders stop
+//   destroy    unmounting the scene leaves no conductor listener, no ticker callback, no keep-alive `frame.render`
+//              step, no live context; renders stop
 // and on routes.html (Motion, native): 10 round trips between the canvas route and a plain one end with one live
 // context, none detached, every mount's listeners released, and only the shown mount answers routeChanged().
 // WebKit, Firefox (and Chromium): the core's gating and timing with the `dom` stand-in (no WebGL needed): load, lag,
 // rest, reduced, destroy; `nowebgl`: getContext('webgl') returns null, so SceneCanvas takes its poster path and the
 // poster shows, nothing thrown; and the canvas slot's CSS alone on static.html: the poster without JavaScript, under
-// reduced motion and in print, the canvas slot over it otherwise.
+// reduced motion and in print, the canvas slot over it otherwise, and with acts stacked in the pin a
+// [data-scene-frame] that keeps poster and slot 16:9 when reduced motion collapses the pin.
+// First, the fixture's TSX is typechecked (tsconfig.json beside it, against Folio's pinned types).
 //
 // three and @react-three/fiber are the fixture's only extra dependencies, resolved from examples/folio's node_modules
 // (pinned there: three 0.186.1, @react-three/fiber 9.8.1); exits 2 without them (`pnpm install` in examples/folio).
@@ -30,6 +35,7 @@
 //
 //   node tests/render-bridge.mjs [--browsers chromium,webkit,firefox] [--only load,lag,…]
 
+import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -211,6 +217,27 @@ const VARIANTS = {
   'motion-lenis': 'engine=motion&auth=lenis',
   'gsap-native': 'engine=gsap&auth=native',
   'gsap-lenis': 'engine=gsap&auth=lenis',
+  // The authority started in a parent's layout effect (a layout's <SmoothScroll>), after the scene's, without
+  // StrictMode (production's single effects): the bridge exists before the authority's driver does.
+  'motion-lenis-late': 'engine=motion&auth=lenis&late=1&strict=0',
+  'gsap-lenis-late': 'engine=gsap&auth=lenis&late=1&strict=0',
+  'gsap-smoother': 'engine=gsap&auth=smoother',
+}
+
+/** A wheel run down and back up the range, recorded at the end of every frame. */
+async function lagRun(t, page, g, push, when) {
+  await jump(page, Math.round(g.top - 100))
+  await sleep(800)
+  await page.evaluate(() => window.__rb.rec.start())
+  await wheel(page, 14, 100)
+  await sleep(1400)
+  await wheel(page, 7, -100)
+  await sleep(1400)
+  const lag = analyseLag(await page.evaluate(() => window.__rb.rec.stop()))
+  // Native wheel scrolling in a headless browser jumps per notch: few moving frames, each one counted.
+  const ok = lag.moving >= 10 && lag.inFrame === lag.moving
+  t.num(`lag ${when}: frames drawn in their own frame`, `${lag.inFrame}/${lag.moving}`, `worst ${lag.worstPx} px; ~${lag.rendersPerSecond} renders/s scrolling`)
+  if (t.gateLag) push(`lag ${when}: every frame drawn while scrolling is drawn in that frame, at its scrollTop (0 frames late)`, ok, `${lag.inFrame}/${lag.moving} in frame, worst ${lag.worstPx} px${lag.late.length ? `, late: ${JSON.stringify(lag.late)}` : ''}`)
 }
 
 /** One scene page through load, lag, rest, reduced, destroy and (WebGL) lost. Returns [check, ok, detail] rows. */
@@ -244,20 +271,7 @@ async function sceneSequence(t, variant, webgl) {
     push('load: a mid-page reload draws its position from the first frame (no sweep, no default pose)', ok2 && Math.abs(y - mid) < 2, `${how}: y=${y} of ${mid}; ${detail2}`)
   }
 
-  if (want('lag')) {
-    await jump(page, Math.round(g.top - 100))
-    await sleep(800)
-    await page.evaluate(() => window.__rb.rec.start())
-    await wheel(page, 14, 100)
-    await sleep(1400)
-    await wheel(page, 7, -100)
-    await sleep(1400)
-    const lag = analyseLag(await page.evaluate(() => window.__rb.rec.stop()))
-    // Native wheel scrolling in a headless browser jumps per notch: few moving frames, each one counted.
-    const ok = lag.moving >= 10 && lag.inFrame === lag.moving
-    t.num(`lag: frames drawn in their own frame`, `${lag.inFrame}/${lag.moving}`, `worst ${lag.worstPx} px; ~${lag.rendersPerSecond} renders/s scrolling`)
-    if (t.gateLag) push('lag: every frame drawn while scrolling is drawn in that frame, at its scrollTop (0 frames late)', ok, `${lag.inFrame}/${lag.moving} in frame, worst ${lag.worstPx} px${lag.late.length ? `, late: ${JSON.stringify(lag.late)}` : ''}`)
-  }
+  if (want('lag')) await lagRun(t, page, g, push, 'on load')
 
   if (want('rest')) {
     await jump(page, Math.round(g.top + range * 0.4))
@@ -310,6 +324,8 @@ async function sceneSequence(t, variant, webgl) {
     const drawn = await lastDrawn(page)
     const slotBack = await slotState(page)
     push('reduced: switched off, it rehydrates from scroll and draws there', !live.reduced && drawn.errPx <= TOL_PX && slotBack.slotShown, `exact ${live.exact.toFixed(4)}, drawn ${r1(drawn.errPx)} px off, slot shown ${slotBack.slotShown}`)
+    // The authority restarts on the switch (Lenis is re-created, ScrollSmoother too): the bridge stays after it.
+    if (want('lag')) await lagRun(t, page, g, push, 'after reduced motion on and off')
   }
 
   if (want('destroy')) {
@@ -330,15 +346,18 @@ async function sceneSequence(t, variant, webgl) {
       left.listeners.input === 0 &&
       left.listeners.tick === 0 &&
       left.ticker.live === left.ticker.baseline &&
+      left.ticker.render === left.ticker.renderBaseline &&
       left.contexts.liveInDocument === 0 &&
       left.contexts.liveDetached === 0
-    push('destroy: unmounted, no conductor listener, ticker callback or live context is left', clean, JSON.stringify(left))
+    push('destroy: unmounted, no conductor listener, ticker callback, frame.render step or live context is left', clean, JSON.stringify(left))
     push('destroy: nothing renders or rehydrates after it (scroll, routeChanged)', stray === 0 && after === rehydrates, `${stray} renders, ${after - rehydrates} rehydrates`)
     await page.evaluate(() => window.__rb.remount())
     if (webgl) await page.waitForSelector('[data-scene-ready="true"]', { timeout: 20000 })
     await sleep(1500)
     const again = await lastDrawn(page)
     push('destroy: mounted again, the new bridge draws the scroll position', again.errPx <= TOL_PX && again.sErrPx <= TOL_PX, `${r1(again.errPx)} px`)
+    // A remount adds the bridge's tick after the authority's driver has been running for a while.
+    if (want('lag')) await lagRun(t, page, g, push, 'after a remount')
   }
 
   if (webgl && want('lost')) {
@@ -386,9 +405,22 @@ async function staticSequence(t) {
       }
     })
     out.push(['css: the poster and the canvas slot both fill the pin, the slot over the poster', s.fills && s.posterFirst && s.slotShown, JSON.stringify(s)])
+    const frame = () =>
+      page.evaluate(() => {
+        const box = (sel) => {
+          const r = document.querySelector(`#stacked ${sel}`).getBoundingClientRect()
+          return `${Math.round(r.width)}x${Math.round(r.height)}`
+        }
+        return { pin: box('[data-scene-pin]'), poster: box('[data-scene-poster]'), slot: box('[data-scene-canvas]') }
+      })
+    const framed = await frame()
+    out.push(['css: acts stacked in the pin, the frame\'s poster and slot fill the pin', framed.poster === framed.pin && framed.slot === framed.pin, JSON.stringify(framed)])
     await page.emulateMedia({ reducedMotion: 'reduce' })
     const reduced = await slotState(page)
     out.push(['css: reduced motion shows the poster (the slot hidden, kept in layout)', posterVisible(reduced) && !reduced.slotShown, JSON.stringify(reduced)])
+    // 1000 px wide: a 16:9 frame is 1000x563 however tall the collapsed pin grows.
+    const collapsed = await frame()
+    out.push(['css: reduced motion, acts stacked in the pin: the poster and slot stay a 16:9 frame, not the grown pin', collapsed.poster === '1000x563' && collapsed.slot === '1000x563' && collapsed.pin !== collapsed.poster, JSON.stringify(collapsed)])
     await page.emulateMedia({ reducedMotion: 'no-preference', media: 'print' })
     const print = await page.evaluate(() => {
       const poster = document.querySelector('[data-scene-poster]')
@@ -487,10 +519,14 @@ async function main() {
     }
     deps[name] = found
   }
+  // The fixture's TSX against the block's types and the pinned three/R3F/React types (tsconfig.json beside it).
+  const tsc = spawnSync(process.execPath, [join(repo, 'node_modules', 'typescript', 'bin', 'tsc'), '--noEmit', '-p', join(fixtureRoot, 'tsconfig.json')], { encoding: 'utf8' })
+  const typed = tsc.status === 0
+  console.log(`${typed ? 'PASS' : 'FAIL'}  types     fixture           the fixture typechecks against the block and the pinned three/R3F types${typed ? '' : `  (${(tsc.stdout + tsc.stderr).trim().split('\n').slice(0, 3).join(' | ')})`}`)
   open.server = await serve(deps)
   const base = `http://127.0.0.1:${open.server.httpServer.address().port}`
 
-  let failures = 0
+  let failures = typed ? 0 : 1
   const counts = {}
   const line = (ok, browser, pageName, name, detail) => {
     counts[browser] ??= { pass: 0, fail: 0 }

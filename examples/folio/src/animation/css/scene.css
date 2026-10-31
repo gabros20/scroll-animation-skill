@@ -7,7 +7,8 @@
  *       <div data-scene-gutter></div>            optional backdrop ramp, painted by media/camera.ts
  *       <video data-scene-media …></video>       the pinned media
  *       <img data-scene-poster …>                or a real-time canvas (render-bridge.ts): its poster first,
- *       <div data-scene-canvas>…</div>           then the canvas slot over it (SceneCanvas, frameloop="never")
+ *       <div data-scene-canvas>…</div>           then the canvas slot over it (SceneCanvas, frameloop="never");
+ *                                                with acts stacked in the pin, both inside <div data-scene-frame>
  *     </div>
  *     <div data-scene-content>                   pulled back over the pin; the acts ride over it
  *       <section>…</section>
@@ -84,7 +85,12 @@
    transparent until the canvas presents its first frame, and empty once a lost context or a missing WebGL has removed
    the canvas (the 3d skill's SceneCanvas does), so the poster shows through in every one of those cases. Without
    JavaScript, under reduced motion and in print the canvas is hidden outright and the poster is the scene. Like the
-   pin, the slot takes no pointer events; give it `pointer-events: auto` for a canvas the reader interacts with. */
+   pin, the slot takes no pointer events; give it `pointer-events: auto` for a canvas the reader interacts with.
+   Acts stacked in the pin flow under reduced motion and the pin grows to hold them; a poster and slot that fill the
+   pin would grow with it (a 16:9 poster cropped into a strip as tall as every act). So with stacked acts, wrap the two
+   in [data-scene-frame]: it fills the pin while the scene runs and, under reduced motion, stays a picture
+   (--scene-poster-ratio, 16 / 9) above the acts. */
+[data-scene-frame],
 [data-scene-poster],
 [data-scene-canvas] {
   position: absolute;
@@ -143,8 +149,14 @@
   [data-scene-spacer] {
     height: 0 !important;
   }
-  /* The bridge holds the canvas still (render-bridge.ts); hidden rather than removed, so it keeps its size and
-     shows its live frame again, without a resize, when reduced motion is turned off. */
+  [data-scene-pin]:has([data-scene-act]) [data-scene-frame] {
+    position: relative !important;
+    inset: auto !important;
+    height: auto !important;
+    aspect-ratio: var(--scene-poster-ratio, 16 / 9);
+  }
+  /* A backstop: unmount the canvas under reduced motion (webgl.md §5), so it holds no context and does no work. One
+     still mounted is held by the bridge (render-bridge.ts) and hidden here. */
   [data-scene-canvas] {
     visibility: hidden !important;
   }
@@ -166,6 +178,7 @@
     height: auto !important;
     transform: none !important;
   }
+  [data-scene-frame],
   [data-scene-poster] {
     position: static !important;
     width: 100% !important;

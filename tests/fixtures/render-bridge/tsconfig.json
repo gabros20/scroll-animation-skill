@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "paths": {
+      "three": ["../../../examples/folio/node_modules/@types/three"],
+      "@react-three/fiber": ["../../../examples/folio/node_modules/@react-three/fiber"],
+      "react": ["../../../examples/folio/node_modules/@types/react"],
+      "react/*": ["../../../examples/folio/node_modules/@types/react/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}

@@ -40,6 +40,10 @@
 //                  article's "Journal" breadcrumb (a "back" transition: the cover morphs back, vt-back slides) -> /, the live
 //                  ScrollTriggers back to their first count (window.__triggers under ?motion-debug), one authority
 //                  at every step.
+//   lab            /lab's real-time scene (Chromium + SwiftShader; WebKit and Firefox without WebGL): the poster as
+//                  LCP and three after it, the chapters on the scroll, every frame that moves the scene drawn in that
+//                  frame (on load, and after reduced motion on and off re-creates Lenis), 0 renders at rest, off
+//                  screen and hidden, back/forward and reload, reduced motion live, a lost context, no WebGL.
 //
 // Pages are prerendered, so a build made before `pnpm media` holds placeholders: missing media is fetched first,
 // and the build is made when there is none or the media just arrived. Starts `next start` on a free port and always
@@ -1144,6 +1148,75 @@ async function labWheel(page, notches, dy = 100) {
   }
 }
 
+/** From the scene's first placement, the lowest opacity the shown act has over 12 frames (1: it landed, no fade). */
+async function labLanding(page) {
+  await page.waitForSelector(".lab-scene[data-lab-placed]", { timeout: 30000 });
+  return page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        let low = 1;
+        let n = 0;
+        const sample = () => {
+          const act = [...document.querySelectorAll(".lab-scene [data-scene-act]")].find((a) => !a.inert);
+          low = Math.min(low, act ? +getComputedStyle(act).opacity : 0);
+          if (++n < 12) requestAnimationFrame(sample);
+          else resolve(Math.round(low * 100) / 100);
+        };
+        sample();
+      }),
+  );
+}
+
+/**
+ * A wheel run through the scene, recorded at the end of every frame (a ResizeObserver callback is the last script
+ * before paint): over the frames where the scene moves inside its range, did the bridge render in that frame, with
+ * that frame's progress (the rect's, within 1 px of the range)? Lenis glides, so the scroll moves for many frames.
+ */
+async function labLag(page) {
+  await page.evaluate(() => {
+    const rows = [];
+    const root = document.querySelector(".lab-scene");
+    const probe = document.createElement("div");
+    probe.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;pointer-events:none;opacity:0;contain:strict";
+    document.body.appendChild(probe);
+    let on = true;
+    let flip = false;
+    new ResizeObserver(() => {
+      if (!on) return;
+      const r = root.getBoundingClientRect();
+      const range = r.height - innerHeight;
+      rows.push({ y: scrollY, truth: range > 0 ? Math.min(1, Math.max(0, -r.top / range)) : null, range, rn: window.__lab.renders, e: window.__lab.exact });
+    }).observe(probe);
+    const tick = () => {
+      if (!on) return probe.remove();
+      flip = !flip;
+      probe.style.width = flip ? "2px" : "1px";
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    window.__labLagStop = () => ((on = false), rows);
+  });
+  await labWheel(page, 12);
+  await sleep(1200);
+  await labWheel(page, 6, -100);
+  await sleep(1200);
+  const rows = await page.evaluate(() => window.__labLagStop());
+  let moving = 0;
+  let inFrame = 0;
+  let worst = 0;
+  const late = [];
+  for (let n = 1; n < rows.length; n++) {
+    const r = rows[n];
+    if (Math.abs(r.y - rows[n - 1].y) <= 0.5 || r.truth === null || r.truth <= 0 || r.truth >= 1) continue;
+    moving++;
+    const err = r.e === null ? Infinity : Math.abs(r.e - r.truth) * r.range;
+    worst = Math.max(worst, err);
+    if (r.rn > rows[n - 1].rn && err <= 1.01) inFrame++;
+    else if (late.length < 2) late.push({ n, errPx: Math.round(err * 10) / 10 });
+  }
+  return { moving, inFrame, worstPx: Math.round(worst * 10) / 10, late };
+}
+
 /** Headless pages are never hidden: override the visibility getters and fire the event (the bridge's gate reads them). */
 const fakeHidden = (page, hidden) =>
   page.evaluate((hidden) => {
@@ -1237,6 +1310,16 @@ async function checkLabWebgl(browser, base, vp, line) {
       `at rest ${rest.renders}/s · scrolling ${scrolling.renders} renders/s, ${scrolling.draws} draws/s · settled again ${after.renders}/s`,
     );
 
+    // The bridge draws after Lenis and ScrollTrigger in every tick, though its useGSAP ran before the layout started
+    // Lenis: every frame that moves the scene draws that frame's progress.
+    await labJump(page, 0.1);
+    const lag = await labLag(page);
+    line(
+      lag.moving >= 20 && lag.inFrame === lag.moving,
+      `${at} every frame that moves the scene draws in that frame, at its progress (0 frames late)`,
+      `${lag.inFrame}/${lag.moving} in frame, worst ${lag.worstPx} px${lag.late.length ? `, late: ${JSON.stringify(lag.late)}` : ""}`,
+    );
+
     // Off-screen: two viewports of page appended after the scene, scrolled to.
     await page.evaluate(() => {
       const tail = document.createElement("div");
@@ -1282,28 +1365,26 @@ async function checkLabWebgl(browser, base, vp, line) {
     const gone = await page.evaluate(() => window.__liveGl());
     await page.goBack();
     await page.waitForURL(/\/lab/);
+    const backLow = await labLanding(page);
     await page.waitForFunction(() => window.__lab?.drawnAt, null, { timeout: 30000 });
-    // The scene mounts before Next restores the scroll, so the chapter can cross-fade in once the route settles.
-    let returned = await labState(page);
-    for (let waited = 0; waited < 3000 && !onlyAct(returned, 2); waited += 200) {
-      await sleep(200);
-      returned = await labState(page);
-    }
+    await sleep(800);
+    const returned = await labState(page);
     line(
-      gone === 0 && returned.liveGl === 1 && onlyAct(returned, 2) && nearly(returned.exact, 0.5, 0.02),
-      `${at} leaving releases the WebGL context; back/forward lands on the same chapter`,
-      `${gone} live context(s) on /journal · back on /lab: act ${returned.act}, chapter ${returned.index}, exact ${returned.exact}, ${returned.liveGl} live context(s)`,
+      gone === 0 && returned.liveGl === 1 && onlyAct(returned, 2) && nearly(returned.exact, 0.5, 0.02) && backLow === 1,
+      `${at} leaving releases the WebGL context; back/forward lands on the same chapter, shown at once (no fade in)`,
+      `${gone} live context(s) on /journal · back on /lab: act ${returned.act}, chapter ${returned.index}, exact ${returned.exact}, lowest opacity ${backLow}, ${returned.liveGl} live context(s)`,
     );
 
     await labJump(page, 0.75);
     await page.reload({ waitUntil: "load" });
+    const reloadLow = await labLanding(page);
     await page.waitForFunction(() => window.__lab?.drawnAt, null, { timeout: 30000 });
     await sleep(800);
     const reloaded = await labState(page);
     line(
-      onlyAct(reloaded, 3) && nearly(reloaded.exact, 0.75, 0.02),
-      `${at} a reload mid-scene draws the same chapter`,
-      `act ${reloaded.act}, chapter ${reloaded.index}, exact ${reloaded.exact}`,
+      onlyAct(reloaded, 3) && nearly(reloaded.exact, 0.75, 0.02) && reloadLow === 1,
+      `${at} a reload mid-scene draws the same chapter, shown at once (no fade in)`,
+      `act ${reloaded.act}, chapter ${reloaded.index}, exact ${reloaded.exact}, lowest opacity ${reloadLow}`,
     );
 
     // Reduced motion, switched on live: the canvas goes, the poster and every chapter stay.
@@ -1321,6 +1402,15 @@ async function checkLabWebgl(browser, base, vp, line) {
         motion.canvas && onlyAct(motion, 2),
       `${at} reduced motion, live: the canvas unmounts, the poster and all five chapters show; off again, the canvas returns on the chapter`,
       `reduced: canvas ${reduced.canvas}, poster ${reduced.posterShown}, ${reduced.visible.filter(Boolean).length}/5 chapters shown, ${reducedDraws.draws} draws/s scrolling · motion: canvas ${motion.canvas}, chapter ${motion.index}`,
+    );
+
+    // Lenis was re-created behind the bridge's ticker callback: still drawn in the frame.
+    await labJump(page, 0.1);
+    const lagBack = await labLag(page);
+    line(
+      lagBack.moving >= 20 && lagBack.inFrame === lagBack.moving,
+      `${at} after reduced motion on and off, every frame that moves the scene still draws in that frame`,
+      `${lagBack.inFrame}/${lagBack.moving} in frame, worst ${lagBack.worstPx} px${lagBack.late.length ? `, late: ${JSON.stringify(lagBack.late)}` : ""}`,
     );
 
     // A lost context: the poster takes over and nothing draws. (SceneCanvas also reports the context it drops itself

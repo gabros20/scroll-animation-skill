@@ -9,9 +9,13 @@
  *     pinned={<div data-scene-canvas><SceneCanvas frameloop="never">…<ConductorDriver …/></SceneCanvas></div>}>
  *
  * - One tick: the bridge's frame runs in Motion's `frame.render` step, after `useScroll` has read and written this
- *   frame's progress (and after Lenis, which motionDriver runs in `frame.setup`): 0 frames late, native or Lenis
- *   (spike S11). No rAF of its own: on a Motion page a separate rAF loop renders 1 frame late. The registration is
- *   keep-alive; the step returns at once unless the scene is awake, the page visible and the bridge dirty.
+ *   frame's progress (and after Lenis, which motionDriver runs in `frame.setup`): 0 frames late, native or Lenis, in
+ *   any mount order and after a reduced-motion round trip (Motion orders by step, not by registration). No rAF of its
+ *   own: on a Motion page a separate rAF loop renders 1 frame late. The registration is keep-alive, so Motion's
+ *   frameloop requests a frame for the bridge's whole life, at rest too: one call per frame that returns at once
+ *   unless the scene is awake, the page visible and the bridge dirty (0 renders at rest).
+ * - Reduced motion: mount the canvas only while motion is allowed (`useReducedMotionLive()`); the bridge holds, and
+ *   the poster is the scene.
  * - The scene is the one the callbacks hand over (their second argument), so the hook takes no ref: until the scene
  *   has called one, the bridge is gated (asleep). Pass the two callbacks as they are; the hook keeps them stable.
  * - `render` and `hold` are read at call time (the latest props), without re-creating the bridge; a new `conductor`

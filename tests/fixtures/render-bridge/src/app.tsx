@@ -1,7 +1,12 @@
-// scene.html: one pinned scene with a canvas, under StrictMode (double effects), on one authority.
+// scene.html: one pinned scene with a canvas, under StrictMode (double effects) unless &strict=0, on one authority.
 //
 //   ?engine=motion|gsap      our <PinnedScene> + usePinnedSceneRender, or pinnedScene() + pinnedSceneRender
-//   &auth=native|lenis       nativeHandle, or Lenis on the engine's clock (gsapDriver / motionDriver)
+//   &auth=native|lenis|smoother
+//                            nativeHandle, Lenis on the engine's clock (gsapDriver / motionDriver), or ScrollSmoother
+//                            (GSAP only: #smooth-wrapper around the page, the pin pinned by ScrollTrigger)
+//   &late=1                  the authority starts in a parent's layout effect, as a layout's <SmoothScroll> does:
+//                            after the scene's own effects (React runs a child's first); default: before React mounts
+//   &strict=0                no StrictMode: effects run once, in mount order, as in production
 //   &canvas=webgl|dom        the 3d skill's SceneCanvas (frameloop="never"), or the no-WebGL stand-in
 //   &nowebgl=1               getContext('webgl*') returns null (probe.ts): SceneCanvas's poster path
 //   &damping=5.5|null        the conductor's damping (default: 5.5 native, null under Lenis, the 3d skill's rule)
@@ -11,14 +16,16 @@
 // window.__rb is what tests/render-bridge.mjs reads and drives.
 import './probe'
 
-import { cancelFrame, frame as motionFrame } from 'motion/react'
-import { StrictMode, useCallback, useEffect, useLayoutEffect, useState } from 'react'
+import { ScrollSmoother } from 'gsap/ScrollSmoother'
+import { cancelFrame, frameSteps, frame as motionFrame } from 'motion/react'
+import { Fragment, StrictMode, useCallback, useEffect, useLayoutEffect, useState, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import { ScrollTrigger, gsap, setupGsap } from '../../../../skills/scroll-animation/assets/gsap/setup'
 import { progressFromRect } from '../../../../skills/scroll-animation/assets/scene'
 import { nativeHandle, registerHandle } from '../../../../skills/scroll-animation/assets/smooth/authority'
 import { createSmoothScroll, gsapDriver, motionDriver } from '../../../../skills/scroll-animation/assets/smooth/lenis'
+import { createSmoother } from '../../../../skills/scroll-animation/assets/smooth/smoother'
 import { routeChanged } from '../../../../skills/scroll-animation/assets/smooth/route'
 import type { SmoothScrollHandle } from '../../../../skills/scroll-animation/assets/smooth/authority'
 import { contextStats, countListeners, createRecorder, fakeHidden, frame, scrollTop } from './probe'
@@ -27,15 +34,18 @@ import { createConductor } from './vendor-3d/conductor'
 
 const q = new URLSearchParams(location.search)
 const engine = q.get('engine') === 'gsap' ? 'gsap' : 'motion'
-const auth = q.get('auth') === 'lenis' ? 'lenis' : 'native'
+const authParam = q.get('auth')
+const auth = authParam === 'lenis' ? 'lenis' : authParam === 'smoother' && engine === 'gsap' ? 'smoother' : 'native'
+const late = q.get('late') === '1'
+const strict = q.get('strict') !== '0'
 const canvas = q.get('canvas') === 'dom' ? 'dom' : 'webgl'
 const dampingParam = q.get('damping')
 const damping = dampingParam === null ? (auth === 'native' ? 5.5 : null) : dampingParam === 'null' ? null : Number(dampingParam)
 
-// GSAP's ticker callbacks, live: a destroyed bridge must leave none.
-const ticker = { live: 0 }
-if (engine === 'gsap' || auth === 'lenis') {
-  setupGsap()
+// GSAP's ticker callbacks and Motion's keep-alive `frame.render` steps, live: a destroyed bridge must leave none.
+const ticker = { live: 0, render: 0 }
+if (engine === 'gsap' || auth !== 'native') {
+  setupGsap(auth === 'smoother' ? { plugins: [ScrollSmoother] } : {})
   const add = gsap.ticker.add.bind(gsap.ticker)
   const remove = gsap.ticker.remove.bind(gsap.ticker)
   const seen = new Set<unknown>()
@@ -49,18 +59,62 @@ if (engine === 'gsap' || auth === 'lenis') {
     return remove(cb)
   }) as typeof gsap.ticker.remove
 }
-
-// The authority first: the bridge's tick is added after its driver.
-let handle: SmoothScrollHandle
-if (auth === 'lenis') {
-  handle = createSmoothScroll({
-    driver: engine === 'gsap' ? gsapDriver(gsap, ScrollTrigger) : motionDriver(motionFrame, cancelFrame),
-  })
-} else {
-  handle = nativeHandle()
-  registerHandle(handle)
+{
+  // cancelFrame cancels in every step through these methods, so a registration it misses stays counted.
+  const step = frameSteps.render
+  const schedule = step.schedule.bind(step)
+  const cancel = step.cancel.bind(step)
+  const kept = new Set<unknown>()
+  step.schedule = ((cb: Parameters<typeof schedule>[0], keepAlive?: boolean, immediate?: boolean) => {
+    if (keepAlive && !kept.has(cb)) (kept.add(cb), ticker.render++)
+    return schedule(cb, keepAlive, immediate)
+  }) as typeof step.schedule
+  step.cancel = ((cb: Parameters<typeof cancel>[0]) => {
+    if (kept.delete(cb)) ticker.render--
+    return cancel(cb)
+  }) as typeof step.cancel
 }
-const tickerBaseline = ticker.live
+
+if (auth === 'smoother') {
+  // ScrollSmoother moves #smooth-content inside a fixed #smooth-wrapper: the page goes inside both.
+  const wrapper = document.createElement('div')
+  wrapper.id = 'smooth-wrapper'
+  const content = document.createElement('div')
+  content.id = 'smooth-content'
+  wrapper.appendChild(content)
+  document.body.prepend(wrapper)
+  content.appendChild(document.getElementById('root')!)
+}
+
+// The registrations that aren't the bridge's: what is there before React mounts, plus the authority's own.
+const preMount = { ...ticker }
+const baseline = { ...ticker }
+let handle: SmoothScrollHandle | null = null
+function startAuthority() {
+  const before = { ...ticker }
+  if (auth === 'lenis') {
+    handle = createSmoothScroll({
+      driver: engine === 'gsap' ? gsapDriver(gsap, ScrollTrigger) : motionDriver(motionFrame, cancelFrame),
+    })
+  } else if (auth === 'smoother') {
+    handle = createSmoother(ScrollSmoother, { smooth: 1 })
+  } else {
+    handle = nativeHandle()
+    registerHandle(handle)
+  }
+  baseline.live = preMount.live + ticker.live - before.live
+  baseline.render = preMount.render + ticker.render - before.render
+  const started = handle
+  return () => started.destroy()
+}
+// Default: the authority first, before React mounts.
+if (!late) startAuthority()
+
+/** `late`: the authority in a parent's layout effect, which React runs after the scene's (a child's) own. */
+function Authority({ children }: { children: ReactNode }) {
+  useLayoutEffect(() => (late ? startAuthority() : undefined), [])
+  return children
+}
 
 const conductor = createConductor({ chapters: Array.from({ length: ACTS }, (_, i) => ({ id: `c${i}` })), damping })
 const listeners = countListeners(conductor)
@@ -91,19 +145,21 @@ function App() {
           render-bridge: {engine} · {auth} · {canvas}
         </h1>
       </div>
-      {mounted && <Scene conductor={conductor} log={log} canvas={canvas} expose={expose} />}
+      {mounted && <Scene conductor={conductor} log={log} canvas={canvas} expose={expose} pin={auth === 'smoother' ? 'gsap' : 'sticky'} />}
       <div id="outro" />
     </>
   )
 }
 
 const root = () => probe.scene?.root() ?? null
+// Under ScrollSmoother the page moves with the content's transform, behind window.scrollY: what moves on screen.
+const visualTop = () => (auth === 'smoother' ? (ScrollSmoother.get()?.scrollTop() ?? scrollTop()) : scrollTop())
 const rec = createRecorder(() => {
   const el = root()
   const r = el?.getBoundingClientRect()
   return {
     t: performance.now(),
-    y: scrollTop(),
+    y: visualTop(),
     truth: r ? progressFromRect(r.top, r.height, innerHeight) : null,
     range: probe.scene?.rangePx() ?? 1,
     rf: log.last?.f ?? null,
@@ -125,26 +181,26 @@ declare global {
 
 let lose: { loseContext(): void; restoreContext(): void } | null = null
 window.__rb = {
-  params: { engine, auth, canvas, damping },
+  params: { engine, auth, canvas, damping, late, strict },
   ready: false,
   log,
   rec,
   frame,
   conductor: () => ({ ...conductor.state }),
   listeners,
-  ticker: () => ({ live: ticker.live, baseline: tickerBaseline }),
+  ticker: () => ({ live: ticker.live, baseline: baseline.live, render: ticker.render, renderBaseline: baseline.render }),
   contexts: contextStats,
   scene: () =>
     probe.scene && { awake: probe.scene.awake(), reduced: probe.scene.reduced(), p: probe.scene.progress(), rangePx: probe.scene.rangePx() },
   geometry: () => {
     const r = root()!.getBoundingClientRect()
-    return { top: r.top + scrollTop(), height: r.height, vh: innerHeight, rangePx: probe.scene!.rangePx() }
+    return { top: r.top + visualTop(), height: r.height, vh: innerHeight, rangePx: probe.scene!.rangePx() }
   },
   truth: () => {
     const r = root()?.getBoundingClientRect()
     return r ? progressFromRect(r.top, r.height, innerHeight) : null
   },
-  jump: (y: number) => handle.scrollTo(y, { immediate: true }),
+  jump: (y: number) => handle?.scrollTo(y, { immediate: true }),
   shiftAbove: (px: number) => {
     document.getElementById('shift')!.style.height = `${px}px`
   },
@@ -161,8 +217,11 @@ window.__rb = {
   },
 }
 
+const Strict = strict ? StrictMode : Fragment
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
+  <Strict>
+    <Authority>
+      <App />
+    </Authority>
+  </Strict>,
 )

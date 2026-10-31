@@ -157,7 +157,8 @@
   {
     "id": "scroll-3d-model-turn",
     "prompt": "As the reader scrolls through the pinned product section, our three.js headphones model should turn and the camera should move in close, in step with the copy riding over it.",
-    "should_trigger": true
+    "should_trigger": true,
+    "note": "The 3d skill (which claims scroll 3D) is expected to fire too: the split is references/webgl.md §2 (the pin, feed and tick here; the model and camera path there). A co-activation is not a failure; this skill not firing is."
   },
   {
     "id": "glb-model-shader",

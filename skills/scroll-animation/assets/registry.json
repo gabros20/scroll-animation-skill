@@ -834,7 +834,7 @@
       "reference": "references/scenes.md"
     },
     "scene-css": {
-      "summary": "Pinned scene geometry for both engines (data-scene-root/pin/content/spacer/media/gutter/act): sticky 100lvh pin, the content pulled back over it, a poster and canvas slot (data-scene-poster/canvas), the reduced-motion collapse and print",
+      "summary": "Pinned scene geometry for both engines (data-scene-root/pin/content/spacer/media/gutter/act): sticky 100lvh pin, the content pulled back over it, a poster and canvas slot (data-scene-poster/canvas, in a data-scene-frame when acts share the pin), the reduced-motion collapse and print",
       "clock": "scroll",
       "tier": "primitive",
       "profiles": [

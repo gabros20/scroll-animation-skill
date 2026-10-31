@@ -28,6 +28,11 @@ html {
   padding: 4px 8px;
   background: rgb(255 255 255 / 0.7);
 }
+.stacked-act {
+  position: absolute;
+  inset: auto 0 0;
+  height: 400px;
+}
 .poster {
   background: #2a6f4e;
 }
