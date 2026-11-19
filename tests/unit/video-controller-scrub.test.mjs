@@ -350,3 +350,30 @@ describe('priming', () => {
     controller.destroy()
   })
 })
+
+describe('a first seek sent from a scroll event', () => {
+  // setBand() can send the first seek before any tick has seen the frame; it drops readyState to 1, so the source
+  // must already count as framed there, or a hang on that seek is never re-sent.
+  test('is re-sent when it hangs, though no tick saw a frame before it', () => {
+    const realNow = performance.now
+    let now = 0
+    performance.now = () => now
+    try {
+      frames.length = 0
+      const video = fakeVideo(1)
+      const controller = createVideoController(video, { fps: FPS })
+      controller.setAwake(true)
+      video.hang = true
+      scene.band = 0.5
+      controller.setBand(0.5)
+      assert.equal(video.seeks.length, 1, 'the scroll event sends the first seek')
+      now += STUCK_SEEK_MS + 100
+      crank(video, 2)
+      assert.equal(video.seeks.length, 2, 're-sent from the tick')
+      assert.equal(video.plays, 0, 'and never primed mid-seek')
+      controller.destroy()
+    } finally {
+      performance.now = realNow
+    }
+  })
+})

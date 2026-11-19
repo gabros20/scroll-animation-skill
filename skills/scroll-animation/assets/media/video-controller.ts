@@ -431,6 +431,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       handoverFrom = null
     }
     if (resendStuck() || seeking || !hasFrame()) return
+    // A frame exists: count it now, since this seek drops readyState before any tick can see it.
+    framed = true
     const frame = wanted()
     if (frame === frameOf(video.currentTime, fps)) return
     seeking = true

@@ -97,8 +97,9 @@ pass by accident:
   scene's sequence. A `<video>` in the scene with a source that never reaches
   `readyState` 2 at any step fails it too (a missing file, no `206`, or a codec
   the browser lacks), unless it is still `preload="none"` (never asked to load);
-  so does a decoding video whose time is the same at every `scrub` step (a
-  frozen clip). Then it samples the two slides (the pin ¾ on screen
+  so does a decoding video whose time moves somewhere in the sweep but is
+  the same at every `scrub` step (a frozen clip; an undriven video is left
+  alone). Then it samples the two slides (the pin ¾ on screen
   entering and leaving, `scene-<i>-enter.png` / `-leave.png`) and prints each
   one's state and video time, informational: a clip with no head or tail loop
   holds its end frames there.

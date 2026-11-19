@@ -107,8 +107,8 @@ has), with the subject between mid and foreground so the foreground overtakes it
   Recompose phones; type may sit above the subject there.
 - **Pointer depth** is optional, on a fine pointer only: one `pointermove` listener per section, a `quickTo` per plane
   (about 0.8 s), offset = the pointer's distance from centre × a small depth (0.02–0.05), back to rest on
-  `pointerleave`, `pointercancel` and window `blur`. It writes a wrapper of its own (the drift and the entrance own the plane's
-  transform), stops under reduced motion, and nothing is visible only through it.
+  `pointerleave`, `pointercancel` and window `blur`. It writes a wrapper of its own (the drift and the entrance own
+  the plane's transform), stops under reduced motion, and nothing is visible only through it.
 
 ## 3. Clip, mask and scale reveals
 

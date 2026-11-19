@@ -40,8 +40,8 @@ scroll authority per route, the profile from `ANIMATION.md`.
 
 Barba, Taxi and swup are legacy vanilla routers: where one already runs, keep it and give it §4's hygiene after
 its swap; never add one to a new project. **One driver per navigation**: a custom curtain and React's
-`<ViewTransition>` never drive the same one, and under a curtain a route-level `loading.tsx` lifts the route onto its
-skeleton. A canvas that persists across routes (Immersive, [preflight.md](preflight.md)
+`<ViewTransition>` never drive the same one, and no route-level `loading.tsx` sits under a curtain: the curtain
+lifts onto its skeleton. A canvas that persists across routes (Immersive, [preflight.md](preflight.md)
 §3.1) has no block yet: a canvas route unmounts its canvas on leave, and a view transition's old snapshot keeps its
 last frame ([webgl.md](webgl.md) §6).
 
@@ -98,10 +98,11 @@ const PAGE_SLIDE = {
 
 Browsers that take only an update callback (Safari 18.0–18.1, Firefox 144–146) still transition, without the types.
 
-**Verify on sampled frames**, with motion and reduced: through a crossfade old and new opacity sum to about 1 (a dip or
-a flash otherwise), no entrance replays on content that persists, no old- or new-only layer outlives the transition,
-and nothing swaps paint or snaps a `box-shadow` at either end. During a transition judge the captured layers, not the
-live DOM.
+**Verify on sampled frames**, with motion and reduced: through a crossfade old and new opacity sum to about 1 (a dip
+or a flash otherwise; a sum of 1 means no dip only under the default `plus-lighter` pairing, never once a group is
+restyled to blend normally), no entrance replays on content that persists, no old- or new-only layer outlives the
+transition, and nothing swaps paint or snaps a `box-shadow` at either end. During a transition judge the captured
+layers, not the live DOM.
 
 ## 3. Vanilla and multi-page sites
 

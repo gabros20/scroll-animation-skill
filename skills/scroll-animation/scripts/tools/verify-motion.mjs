@@ -55,7 +55,8 @@ Options:
                        check the states run head > scrub > tail in order, never step
                        back, and have left head by progress 1; a video in the scene
                        that never decodes a frame (unless still preload="none"), or
-                       whose playhead never moves while scrubbing, fails it. Also samples the two
+                       one that moves elsewhere but holds still through every scrub
+                       step, fails it. Also samples the two
                        slides (the pin 3/4 on screen entering and leaving), where a
                        held clip shows a still sliding past
   --anchors           delegate to anchor-check.mjs (a REAL smooth scroll
@@ -336,14 +337,25 @@ async function checkScenes(page, opts) {
     // (decoration the page doesn't drive; the controller sets preload="auto" at its warm margin): skipped.
     // A frozen clip: one that decodes, but whose playhead never moves across the scrub steps.
     else {
-      const videos = scene.steps[0].videos.map((_, k) => scene.steps.map((st) => st.videos[k]).filter(Boolean))
+      // One run per video, indexed by step; a video missing at any step is left out of both checks.
+      const videos = scene.steps[0].videos
+        .map((_, k) => scene.steps.map((st) => st.videos[k]))
+        .map((runs) => (runs.every(Boolean) ? runs : null))
       const dead = videos.findIndex(
-        (runs) => runs.some((v) => v.src) && runs.at(-1).preload !== 'none' && runs.every((v) => v.readyState < 2)
+        (runs) => runs && runs.some((v) => v.src) && runs.at(-1).preload !== 'none' && runs.every((v) => v.readyState < 2)
       )
+      // Frozen only if something drives it: its time moved somewhere in the sweep (a head loop, the tail), never
+      // through the scrub. An undriven decorative video that never moves is not this check's business.
       const scrubbing = scene.steps.map((st, k) => (st.motionState === 'scrub' ? k : -1)).filter((k) => k >= 0)
       const frozen =
         scrubbing.length >= 2
-          ? videos.findIndex((runs) => runs.every((v) => v.readyState >= 2) && new Set(scrubbing.map((k) => runs[k].time)).size === 1)
+          ? videos.findIndex(
+              (runs) =>
+                runs &&
+                runs.every((v) => v.readyState >= 2) &&
+                new Set(runs.map((v) => v.time)).size > 1 &&
+                new Set(scrubbing.map((k) => runs[k].time)).size === 1
+            )
           : -1
       if (dead >= 0) {
         scene.problem =
