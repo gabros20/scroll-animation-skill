@@ -2,7 +2,8 @@
 //
 //   [data-probe="id"]   an element to read: its layout box (docTop + height, the box the spec's view-progress maths
 //                       uses, taken while nothing is stuck or transformed), its computed opacity, translate, scale,
-//                       transform-origin, position and top, and the animations attached to it
+//                       transform, transform-origin, position and top, and the animations attached to it (each with
+//                       its effect's composite operation)
 //
 // Plus the page's pause buttons: <button aria-controls="id" aria-pressed="false"> toggles data-marquee-paused on the
 // marquee it controls, the pattern css/scroll-effects.css §5 documents.
@@ -35,6 +36,7 @@ function describe(a: Animation) {
     duration: typeof timing?.duration === 'number' ? timing.duration : String(timing?.duration ?? ''),
     iterations: timing?.iterations === Infinity ? 'infinite' : (timing?.iterations ?? null),
     direction: timing?.direction ?? null,
+    composite: (a.effect as KeyframeEffect | null)?.composite ?? null,
   }
 }
 
@@ -45,6 +47,7 @@ function readOne(el: HTMLElement) {
     opacity: Number(cs.opacity),
     translate: cs.translate,
     scale: cs.scale,
+    transform: cs.transform,
     origin: cs.transformOrigin,
     position: cs.position,
     top: cs.top,

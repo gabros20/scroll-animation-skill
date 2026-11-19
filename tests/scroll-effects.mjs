@@ -150,7 +150,7 @@ const EFFECTS = {
 const PROBES = {
   parallax: { fx: { parallax: 100 } },
   'parallax-default': { fx: { parallax: 60 } },
-  'parallax-own': { fx: { parallax: -80 }, own: [10, 20] },
+  'parallax-own': { fx: { parallax: -80 }, transform: 'matrix(1, 0, 0, 1, 10, 20)' },
   'fade-in': { fx: { 'fade-in': 0 } },
   'fade-in-tuned': { fx: { 'fade-in': 0.25 }, range: ['cover 0%', 'cover 50%'] },
   'exit-fade': { fx: { 'exit-fade': 0 } },
@@ -166,10 +166,14 @@ const PROBES = {
   'riding-copy': { fx: { 'exit-fade': 0 } },
 }
 
-/** Translates the page sets itself, which parallax adds to and every static state keeps. */
-const OWN = { 'parallax-own': [10, 20] }
+/**
+ * Transforms the page sets itself. Parallax replaces the element's translate (animation-composition: replace; an
+ * additive one flicks on iOS 26 at every change of direction), so an own offset sits on transform, which the effect
+ * must leave alone and every static state keeps.
+ */
+const OWN_TRANSFORM = { 'parallax-own': 'matrix(1, 0, 0, 1, 10, 20)' }
 
-/** What a probe must show at scroll offset S: its translate (its own plus parallax), opacity and scale. */
+/** What a probe must show at scroll offset S: its translate (its own plus parallax), opacity, scale and transform. */
 function expected(spec, box, H, p, S) {
   const progress = (effect) => {
     const [a, b] = (spec.range ?? EFFECTS[effect].range).map((s) => offsetOf(s, box, H, p))
@@ -188,6 +192,7 @@ function expected(spec, box, H, p, S) {
     if (k >= 0) out.opacity = lerp(out.opacity, fx['exit-fade'], Math.min(1, k))
   }
   out.scaleY = out.scale
+  out.transform = spec.transform ?? null
   return out
 }
 
@@ -242,6 +247,9 @@ function score(rows, id, offsets, want) {
       scale: Math.max(Math.abs(sx - w.scale), Math.abs(sy - w.scaleY)),
     }
     n++
+    if (w.transform && probe.transform !== w.transform && !miss) {
+      miss = `${id} at ${row.S}: transform ${probe.transform}; want ${w.transform}`
+    }
     for (const k of Object.keys(worst)) {
       worst[k] = Math.max(worst[k], err[k])
       if (err[k] > TOL[k] && !miss) {
@@ -267,13 +275,13 @@ function joined(name, scores, extra = '') {
   ]
 }
 
-/** A probe at rest: opacity 1, its own translate (or none), scale none (a progress bar: not drawn), nothing attached. */
+/** A probe at rest: opacity 1, translate none, scale none (a progress bar: not drawn), its own transform, nothing attached. */
 function atRest(id, probe) {
   const [x, y] = parseTranslate(probe.translate)
-  const [ownX, ownY] = OWN[id] ?? [0, 0]
   const [sx, sy] = parseScale(probe.scale)
   const scaleOk = id.startsWith('progress') ? sx === 0 && sy === 1 : sx === 1 && sy === 1
-  return probe.anims.length === 0 && probe.opacity === 1 && x === ownX && y === ownY && scaleOk
+  const transformOk = !(id in OWN_TRANSFORM) || probe.transform === OWN_TRANSFORM[id]
+  return probe.anims.length === 0 && probe.opacity === 1 && x === 0 && y === 0 && scaleOk && transformOk
 }
 
 /** Every listed probe at rest in every row: [ok, the first one that isn't]. */
@@ -283,7 +291,7 @@ function allAtRest(rows, ids) {
       const p = row.probes[id]
       if (!atRest(id, p)) {
         const anims = p.anims.map((a) => `${a.name} on ${a.timeline}`).join(', ') || 'none'
-        return [false, `${id} at ${row.S}: opacity ${p.opacity}, translate ${p.translate}, scale ${p.scale}, animations ${anims}`]
+        return [false, `${id} at ${row.S}: opacity ${p.opacity}, translate ${p.translate}, scale ${p.scale}, transform ${p.transform}, animations ${anims}`]
       }
     }
   }
@@ -291,6 +299,20 @@ function allAtRest(rows, ids) {
 }
 
 const isMarquee = (id) => /^m\d/.test(id)
+
+/**
+ * Every scroll-driven animation on the page composes with `replace`. On an iPhone (iOS 26.6.2) the parallax composed
+ * with `add` flicked at every change of scroll direction, and `replace` was smooth (device A/B, task 32).
+ */
+function compositeLine(probes) {
+  const anims = Object.values(probes).flatMap((p) => p.anims).filter((a) => a.timeline !== 'DocumentTimeline')
+  const bad = anims.filter((a) => a.composite !== 'replace')
+  return [
+    "every scroll-driven effect composes with replace, the parallax included (an additive one flicks on iOS 26)",
+    anims.length > 0 && bad.length === 0,
+    bad.length ? bad.map((a) => `${a.name}@${a.on}: ${a.composite}`).join(', ') : `${anims.length} animations, all replace`,
+  ]
+}
 
 // ── checks ──────────────────────────────────────────────────────────────
 // Each takes a `t` bound to one browser + one page and returns [[name, ok, detail], ...]. `t.supports` is what the
@@ -335,7 +357,7 @@ const CHECKS = {
       })
       return [
         joined('parallax: translate runs from -d to +d over cover 0–100%, 0 at the midpoint (100px, and the 60px default)', [s('parallax'), s('parallax-default')]),
-        joined("parallax adds to the element's own translate (10px 20px), and a negative distance drifts the other way", [s('parallax-own')]),
+        joined("parallax replaces the element's translate and leaves its own transform (10px 20px) applied, and a negative distance drifts the other way", [s('parallax-own')]),
         joined('fade-in: opacity runs from --fx-fade-from to 1 over entry 0–100% (0), and over a tuned range (0.25, cover 0–50%)', [s('fade-in'), s('fade-in-tuned')]),
         joined("exit-fade: opacity runs from 1 to 0 over exit-crossing 10–35% (v1's exit fade defaults) and stays 0 past it", [s('exit-fade')]),
         joined('scale-in: scale runs from --fx-scale-from to 1 over entry 0–100% (0.5, and the 0.9 default)', [s('scale-in'), s('scale-in-default')]),
@@ -349,6 +371,7 @@ const CHECKS = {
             ? wrongSlots.map((id) => `${id}: ${first[id].anims.map((a) => `${a.name} on ${a.timeline}@${a.subject}`).join(', ')}`).join(' | ')
             : `${ids.length} elements, ${ids.reduce((n, id) => n + first[id].anims.length, 0)} animations`,
         ],
+        compositeLine(first),
       ]
     },
   },

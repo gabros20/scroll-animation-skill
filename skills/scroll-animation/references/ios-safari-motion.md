@@ -97,6 +97,10 @@ only on a resize that clearly isn't chrome (a width change, or a height change o
 quarter of the viewport): read live, a well scrolling up re-reveals the toolbar, which shrinks the
 viewport, which moves the target, a feedback loop (`scenes.md` §8).
 
+A scroll-driven transform composed with `animation-composition: add` flicks at every change of direction on iOS 26,
+even with the range steady. Compose with `replace` (`css-scroll-effects.md` §2, measured on a device; VERIFY the
+mechanism).
+
 ## 4. `@property` for a mask sweep
 
 A custom property that drives a continuously-interpolating paint input (a `mask-image` gradient
@@ -158,6 +162,7 @@ sets it: only a purely native page may add it, never one where ScrollTrigger or 
 - [ ] No more time spent chasing native glass through a pinned scene; check the iOS version (§1).
 - [ ] Every playing video has a watchdog for silent WebKit pauses (§2).
 - [ ] Scene geometry read on resize is deferred one animation frame (§3).
+- [ ] No scroll-driven transform composes with `add` (§3).
 - [ ] A custom property driving a mask or gradient is registered with `@property` (§4).
 - [ ] `overscroll-behavior: none` is on the root of any page with a scroll scene (§5).
 - [ ] The deployed build is confirmed to contain the fix before a device test (§6).

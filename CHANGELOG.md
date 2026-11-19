@@ -42,6 +42,11 @@ the newest release heading below, and the release tag.
 
 ### Fixed
 
+- `css/scroll-effects.css`: the parallax composes with `replace`, not `add`. On an iPhone (iOS 26.6, Low Power
+  Mode on or off) an additive scroll-driven translate flicked vertically at every change of scroll direction, while
+  `replace` was smooth (device A/B). The drift now owns the element's `translate`: put an element's own offset on
+  `transform`, which still applies, or on a wrapper. `tests/scroll-effects.mjs` checks that every scroll-driven effect
+  composes with `replace`.
 - `media/video-controller.ts`: a prime refused in Low Power Mode retries inside the reader's next
   `touchend`, `pointerup`, `click` or key press while the scene runs, on every one of them until a frame
   shows (a tap's pointerup no longer uses up the touchend or click that carries the gesture, and a refusal

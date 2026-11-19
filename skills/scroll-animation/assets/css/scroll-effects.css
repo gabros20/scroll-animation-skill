@@ -79,7 +79,9 @@
  * One rule declares all four as a single animation list, one slot per effect, and each effect puts its keyframes'
  * name in its slot. A `none` slot leaves nothing attached, so any combination runs together on one element.
  *   parallax   translate from -d to +d over cover 0% → 100%: the whole pass. It sits at its layout position when
- *              centred in the viewport, and it adds to the element's own translate (animation-composition: add).
+ *              centred in the viewport. It owns the element's translate and replaces it, so an offset of the
+ *              element's own (centring, a nudge) goes on `transform`, which applies after it and still stacks, or on
+ *              a wrapper. Tailwind v4's translate-* utilities set `translate`: put them on a wrapper.
  *   fade-in    opacity from --fx-fade-from over entry 0% → 100%. The fade completes once the element is fully in
  *              view, or once its top reaches the top if it's taller than the viewport.
  *   exit-fade  opacity to --fx-fade-from over exit-crossing 10% → 35% (v1's exit fade defaults). The range measures
@@ -90,7 +92,10 @@
  * or scale (a shape at opacity 0.6 fades in to 0.6), or, for exit-fade, whatever fade-in left. That, and exit-fade's
  * slot after fade-in's, is what lets the two fades share an element. fill: forwards keeps exit-fade off the element
  * before its range, where it has nothing to do. The ranges use the untransformed box, so the drift and the scale never
- * move them (S7a). */
+ * move them (S7a).
+ * Every slot composes with `replace`. On iPhone (iOS 26.6, with Low Power Mode on and off), the parallax composed with
+ * `add` flicked vertically at every change of scroll direction, and `replace` was smooth. The comparison was a device
+ * A/B, task 32, 2026-11-19 (the cause inside WebKit is unconfirmed, see references/css-scroll-effects.md §2). */
 @keyframes fx-parallax {
   from {
     translate: 0 calc(var(--fx-parallax, 60px) * -1);
@@ -148,7 +153,7 @@
         var(--_fx-fade-in) linear both,
         var(--_fx-exit-fade) linear forwards,
         var(--_fx-scale-in) linear both;
-      animation-composition: add, replace, replace, replace;
+      animation-composition: replace;
       animation-timeline:
         view(block auto max(0px, 100% - 100svh)), view(block auto max(0px, 100% - 100svh)),
         view(block auto max(0px, 100% - 100svh)), view(block auto max(0px, 100% - 100svh));

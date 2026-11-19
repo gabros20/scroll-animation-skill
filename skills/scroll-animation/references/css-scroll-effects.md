@@ -52,8 +52,9 @@ without it.
   never on `:root`. The effect properties don't inherit, so a range tuned on a section never leaks into an effect
   nested in it. The marquee's two do inherit. A scaled length works.
 - **One range per element**: nest elements for effects that need different ranges.
-- **Only `translate`, `scale` and `opacity` move**, so the element's own `transform` stays free. Parallax adds to its
-  `translate`.
+- **Only `translate`, `scale` and `opacity` move**, so the element's own `transform` stays free. Parallax owns its
+  `translate` and replaces it. Put an element's own offset on `transform`, which applies after it, or on a wrapper.
+  Tailwind v4's `translate-*` utilities set `translate`.
 
 ## 2. Timelines and ranges
 
@@ -79,6 +80,19 @@ without it.
 - **One clock per property group on an element.** In Safari 26.4–26.6 a time-based animation (a transition, a Motion
   reveal) beside a scroll-driven one on the same group (`opacity`; `transform`, `translate`, `scale`, `rotate`;
   `filter`) puts both on the main thread while both run. Put the entrance on a wrapper.
+- **Compose with `replace`, never `add`.** On an iPhone (iOS 26.6.2, with Low Power Mode on and off), the parallax
+  with `animation-composition: add` flicked vertically at every change of scroll direction. A device A/B (task 32,
+  2026-11-19) changed one thing per variant, and only `replace` and a sticky version with no animation were smooth.
+  These all still flicked:
+  - a promoted wrapper;
+  - a promoted image;
+  - a timeline on the frame;
+  - `scroll(root)` with px ranges that never changed;
+  - a third of the drift (the flick only shrank a little).
+
+  The page's geometry stayed steady: the main-thread translate matched the range maths to 0.0 px. So the fault is in
+  how Safari runs an additive scroll-driven transform off the main thread (VERIFY: the mechanism inside WebKit is
+  unconfirmed). Compose your own scroll-driven transforms with `replace` too.
 - **`timeline-scope`** lets a named `view-timeline` drive an element outside its own subtree. Declare it on a common
   ancestor, once per component instance. Chromium requires it: without it the animation has no timeline and holds its
   last keyframe. Safari 26 and Firefox bind an unscoped name to another instance's timeline, so a missing scope passes
@@ -222,6 +236,8 @@ has passed under the header, while most of it is still on screen. `--fx-range-st
 - [ ] Your own `view()` ranges end at the small viewport, `view(block auto max(0px, 100% - 100svh))`, or an iPhone's
       toolbar moves them at every change of direction (§2).
 - [ ] No time-based animation or transition shares a property group with a scroll effect on one element (§2).
+- [ ] Scroll-driven transforms compose with `replace`. An element's own offset sits on `transform` or a wrapper (§1,
+      §2).
 - [ ] Every named timeline has a `timeline-scope` per instance, checked in Chromium (§2).
 - [ ] No `overflow: hidden` or `overflow-x: hidden` between an effect and the scroller (§6).
 - [ ] Reduced motion resets with `animation: none` (§5).

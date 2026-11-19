@@ -38,9 +38,9 @@ body {
 .row.tall .box {
   height: 900px;
 }
-/* A translate of its own, which parallax adds to. */
+/* An offset of its own, on transform: parallax owns translate and replaces it, and transform applies after it. */
 .box.own {
-  translate: 10px 20px;
+  transform: translate(10px, 20px);
 }
 .chip {
   width: 30px;
