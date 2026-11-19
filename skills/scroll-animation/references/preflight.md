@@ -147,7 +147,9 @@ beat is the one idea the section tells; a narrative page gets one row per beat, 
 
 ## 5. Asking the questions
 
-One batch, each with its default, only what detection couldn't settle:
+One batch, each with its default, only what detection couldn't settle. These technical items are stated
+defaults the user can veto, not owner questions; the owner's own round (SKILL.md "Standalone context
+check") stays at four:
 
 > Before I set this up: (1) profile: Expressive (pinned film, rail, inertial scroll) with the journal kept as a plain
 > reading page? (2) smoothing on the home page: Lenis, driven by GSAP's ticker; the journal stays native. (3) I found

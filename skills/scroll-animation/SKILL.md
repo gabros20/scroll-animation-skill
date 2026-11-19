@@ -39,16 +39,17 @@ Before producing anything the user will have to live with:
    answers that would change it most.
 6. **Write it down.** Answers and assumptions go to the LEDGER's Context block.
 
-This pack's questions:
-1. What should the scroll reveal — the story, in order? (Propose the beats from the content when it
-   exists.)
+This pack's questions (a pool — ask the top four that step 1 left open):
+1. What should the scroll reveal — the story, in order? (Narrative briefs; otherwise propose the
+   beats from the content.)
 2. Which assets exist: video, 3D, stills, copy? (Detect first.)
 3. How much motion: a calm reading page, an expressive one, or an immersive world? (Recommended:
    Reading, unless the brief asks for pinned storytelling, inertial scroll or 3D.)
 4. What is the weakest device it must run well on? (Recommended: a mid-range phone in iOS Safari.)
 
-Technical choices (smoothing, engines, existing motion) join the same single round:
-[Preflight](references/preflight.md) "5. Asking the questions".
+Technical choices (smoothing, engines, existing motion) are detected, or stated as defaults to veto in
+the same message, never counted among the four: [Preflight](references/preflight.md) "5. Asking the
+questions".
 
 ## Route before acting
 

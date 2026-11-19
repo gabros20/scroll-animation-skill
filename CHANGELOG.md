@@ -30,8 +30,9 @@ the newest release heading below, and the release tag.
 - SKILL.md **Standalone context check** (before routing): the family's common core (look first,
   size it, ask at most four owner-only questions with recommended answers, decide as the expert,
   never block, record in the LEDGER) and four scroll-animation questions (the story in order, assets
-  on hand, how much motion, the weakest device); technical choices stay in `preflight.md` "5. Asking
-  the questions", in the same single round. Output eval `standalone-context-check`.
+  on hand, how much motion, the weakest device); technical choices are detected or stated as
+  defaults to veto, never counted among the four (`preflight.md` "5. Asking the questions" now says
+  so). Output eval `standalone-context-check`.
 
 - `scrolly-steps`: `data-scrolly-fade="cover"` fades an opaque state in over the held outgoing one;
   a symmetric crossfade measured 0.52/0.48 midway, a quarter of the page showing through.
