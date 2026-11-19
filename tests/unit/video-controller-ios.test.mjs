@@ -22,6 +22,10 @@ function listeners() {
 }
 
 globalThis.window = globalThis
+// The window's listeners: a refused prime waits on the reader's next activation there.
+const win = listeners()
+globalThis.addEventListener = win.addEventListener
+globalThis.removeEventListener = win.removeEventListener
 globalThis.document = { visibilityState: 'visible', documentElement: { dataset: {} }, ...listeners() }
 globalThis.location = { search: '' }
 globalThis.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} })
@@ -145,4 +149,51 @@ test('a refused prime (Low Power Mode) keeps the poster: still no seek', async (
   assert.deepEqual(video.seeks, [], 'the poster stays: no seek without a frame')
   assert.equal(controller.debug().video?.rejections ?? controller.debug().rejections, 1, 'the refusal is counted')
   controller.destroy()
+})
+
+/** A controller whose prime iOS refuses (Low Power Mode) until `allow()`. */
+function refusing() {
+  const video = fakeVideo()
+  let refuse = true
+  video.play = () => {
+    video.plays++
+    if (refuse) return Promise.reject(Object.assign(new Error('refused'), { name: 'NotAllowedError' }))
+    video.paused = false
+    return Promise.resolve()
+  }
+  const controller = createVideoController(video, { fps: 30, src: '/clip.mp4' })
+  crank(1)
+  Object.assign(video, { readyState: 1, networkState: 1, duration: 8 })
+  video.dispatch('loadedmetadata')
+  controller.setMode('scrub')
+  controller.setBand(0.5)
+  controller.setAwake(true)
+  return { video, controller, allow: () => (refuse = false) }
+}
+
+test('a refused prime retries inside the reader\'s next activation: touchend or a click, never touchstart', async () => {
+  const { video, controller, allow } = refusing()
+  crank(30)
+  await settle()
+  assert.equal(video.plays, 1, 'the refused prime')
+  win.dispatch('touchstart')
+  assert.equal(video.plays, 1, 'touchstart grants no activation: no retry')
+  allow()
+  win.dispatch('touchend')
+  assert.equal(video.plays, 2, 'the lift retries the prime, inside the event')
+  await settle()
+  win.dispatch('click')
+  crank(30)
+  assert.equal(video.plays, 2, 'one retry per refusal, and no retry loop')
+  controller.destroy()
+})
+
+test('destroy drops a pending activation retry', async () => {
+  const { video, controller } = refusing()
+  crank(30)
+  await settle()
+  controller.destroy()
+  win.dispatch('touchend')
+  win.dispatch('click')
+  assert.equal(video.plays, 1, 'no prime after destroy')
 })

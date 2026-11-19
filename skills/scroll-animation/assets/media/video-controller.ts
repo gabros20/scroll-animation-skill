@@ -31,7 +31,9 @@
  *   they keep coming), where WebKit and Chromium hold the newest behind the running one. The moment one lands
  *   (`seeked`) the frame the band wants THEN is sent, so a slow decoder shows fewer frames, never older ones. Each
  *   seek lands a quarter frame into its frame, so float rounding can't show the frame before. A loop wrap and a snap
- *   skip the queue: behind a stale seek they would land a frame late.
+ *   skip the queue: behind a stale seek they would land a frame late. A band seek still unanswered after
+ *   `STUCK_SEEK_MS` is sent again: iOS has been seen to leave one `seeking` for good, and the one-in-flight guard
+ *   would then hold the frame for the rest of the visit.
  * - The tail's wrap sits one frame before the clip's end, and WebKit runs frame callbacks about 0.8 of a frame after
  *   presentation: a busy main thread let the tail run out, stop (`ended`) and sit paused until the watchdog. So a
  *   late callback wraps as soon as the loop's last frame is DUE (`wrapDue`), a rAF backstop wraps once it is half
@@ -263,6 +265,12 @@ const NETWORK_IDLE = 1
 const NETWORK_LOADING = 2
 const HAVE_CURRENT_DATA = 2
 
+/** A band seek with no `seeked` after this long, in ms, is sent again. */
+export const STUCK_SEEK_MS = 700
+
+/** The events that grant user activation (HTML: `touchend`, never `touchstart`), on which a refused prime retries. */
+const ACTIVATION_EVENTS = ['touchend', 'pointerup', 'click', 'keydown'] as const
+
 export function createVideoController(video: HTMLVideoElement, options: VideoControllerOptions = {}): VideoController {
   const fps = options.fps ?? 30
   const glide = options.glide ?? 0.18
@@ -296,6 +304,10 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   let frameHandle = 0
   let seeking = false
   let pending: number | null = null
+  // When the band's seek in flight was sent (performance.now()): one past STUCK_SEEK_MS is sent again.
+  let seekSentAt = 0
+  // A refused prime waits for the reader's next activation.
+  let activationArmed = false
   // A handover out of a loop: where the loop left the playhead (both adapters step the mode before they hand over the
   // event's band, so it is measured at the next drive), then its distance from the band in seconds, decaying to 0.
   let handoverFrom: number | null = null
@@ -318,6 +330,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     kicks: 0,
     primes: 0,
     snaps: 0,
+    reseeks: 0,
     lastRehydrate: null as null | Record<string, unknown>,
   }
 
@@ -386,6 +399,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     if (pending !== null) {
       const next = pending
       pending = null
+      seekSentAt = performance.now()
       video.currentTime = next
     } else {
       seeking = false
@@ -412,10 +426,17 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       handover = handoverFrom - bandTarget()
       handoverFrom = null
     }
-    if (seeking || !hasFrame()) return
+    // A seek that never answered: re-send the band's frame, even if it is the one already asked for.
+    const stuck = seeking && performance.now() - seekSentAt > STUCK_SEEK_MS
+    if (stuck) {
+      stats.reseeks++
+      pending = null
+    }
+    if ((seeking && !stuck) || !hasFrame()) return
     const frame = wanted()
-    if (frame === frameOf(video.currentTime, fps)) return
+    if (!stuck && frame === frameOf(video.currentTime, fps)) return
     seeking = true
+    seekSentAt = performance.now()
     video.currentTime = frameTime(frame, fps)
   }
 
@@ -482,7 +503,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
    * iOS loads only metadata for a video that has never played, then idles (preload is a hint it ignores), so a scene
    * of holds would never get a frame: seeks go nowhere and the poster is all there is. A muted, inline play() is
    * allowed and starts the data; it pauses again at once unless a loop owns the mode, and the band's first seek takes
-   * the playhead where the scroll wants it. Once per source. Refused (Low Power Mode), the poster simply stays.
+   * the playhead where the scroll wants it. Once per source. Refused (Low Power Mode), the poster stays until the
+   * reader's next activation (`ACTIVATION_EVENTS`), which retries it inside the event, where the play is allowed.
    */
   function prime() {
     primed = true
@@ -494,9 +516,28 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       },
       (error: unknown) => {
         // An AbortError is the scene's own pause landing first: the load has started all the same.
-        if ((error as { name?: string } | null)?.name === 'NotAllowedError') stats.rejections++
+        if ((error as { name?: string } | null)?.name !== 'NotAllowedError') return
+        stats.rejections++
+        armActivation()
       },
     )
+  }
+
+  function onActivation() {
+    disarmActivation()
+    if (!destroyed && !reduced && hasSource && !hasFrame() && video.paused) prime()
+  }
+
+  function armActivation() {
+    if (activationArmed || destroyed) return
+    activationArmed = true
+    for (const type of ACTIVATION_EVENTS) window.addEventListener(type, onActivation, { capture: true, passive: true })
+  }
+
+  function disarmActivation() {
+    if (!activationArmed) return
+    activationArmed = false
+    for (const type of ACTIVATION_EVENTS) window.removeEventListener(type, onActivation, { capture: true })
   }
 
   // ── the per-frame loop, only while awake ─────────────────────────────
@@ -784,6 +825,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       if (destroyed) return
       destroyed = true
       stop()
+      disarmActivation()
       cancelAnimationFrame(tierFrame)
       query?.removeEventListener('change', syncSource)
       network?.removeEventListener?.('change', syncSource)

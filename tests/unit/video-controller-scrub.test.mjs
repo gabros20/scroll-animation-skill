@@ -31,7 +31,7 @@ globalThis.document = { visibilityState: 'visible', documentElement: { dataset: 
 globalThis.location = { search: '' }
 globalThis.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} })
 
-const { createVideoController, frameOf, frameTime, wantedFrame, FRAME_BIAS } = await import(
+const { createVideoController, frameOf, frameTime, wantedFrame, FRAME_BIAS, STUCK_SEEK_MS } = await import(
   '../../skills/scroll-animation/assets/media/video-controller.ts'
 )
 
@@ -72,7 +72,7 @@ function fakeVideo(latency) {
       time = t
       video.seeks.push({ frame: frameOf(t, FPS), time: t, band: scene.band, busy: video.seeking, at: clock })
       video.seeking = true
-      video.landAt = clock + latency
+      video.landAt = video.hang ? Infinity : clock + latency
     },
     /** Playback moving the playhead (a loop), not a seek. */
     playTo(t) {
@@ -292,5 +292,37 @@ describe('a resume mid-scroll', () => {
     // 4 frames of band per display frame, and one of rounding.
     assert.ok(biggest <= 5, `the frame on screen stepped ${biggest} frames in one display frame`)
     controller.destroy()
+  })
+})
+
+describe('a seek that never answers', () => {
+  // iOS has been seen to leave a seek `seeking` for good: with one seek in flight, that froze the frame for the visit.
+  test('is sent again once STUCK_SEEK_MS passes without `seeked`, and not before', () => {
+    const realNow = performance.now
+    let now = 0
+    performance.now = () => now
+    try {
+      const { video, controller } = setup()
+      video.hang = true
+      progress(controller, 0.5)
+      crank(video, 1)
+      const sent = video.seeks.length
+      assert.equal(sent, 1, 'the band sends its frame')
+      now += STUCK_SEEK_MS - 100
+      crank(video, 10)
+      assert.equal(video.seeks.length, sent, 'still waiting: a slow seek is not a hung one')
+      now += 200
+      crank(video, 1)
+      assert.equal(video.seeks.length, sent + 1, 're-sent once past the threshold')
+      assert.equal(video.seeks.at(-1).frame, frameAt(0.5), 'the band\'s frame again')
+      assert.equal(controller.debug().reseeks, 1)
+      video.hang = false
+      now += STUCK_SEEK_MS + 100
+      crank(video, 3)
+      assert.equal(video.shown, frameAt(0.5), 'the re-sent seek lands the band\'s frame')
+      controller.destroy()
+    } finally {
+      performance.now = realNow
+    }
   })
 })
