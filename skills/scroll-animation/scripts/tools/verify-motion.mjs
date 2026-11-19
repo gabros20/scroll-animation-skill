@@ -14,7 +14,7 @@
 //
 // Usage:
 //   node verify-motion.mjs <url> [--out dir] [--viewports 1440x900,390x844]
-//     [--reveal] [--scenes] [--anchors]
+//     [--browser chromium|webkit|firefox] [--channel chrome] [--reveal] [--scenes] [--anchors]
 //   node verify-motion.mjs --help
 //
 // With none of --reveal/--scenes/--anchors given, all three run.
@@ -36,13 +36,16 @@ scene state and anchor landings.
 
 Usage:
   node verify-motion.mjs <url> [--out dir] [--viewports 1440x900,390x844]
-    [--browser chromium|webkit|firefox] [--reveal] [--scenes] [--anchors]
+    [--browser chromium|webkit|firefox] [--channel chrome] [--reveal] [--scenes] [--anchors]
 
 Options:
   --out <dir>         output directory for report.json / screenshots (default: verify-motion-out)
   --viewports <list>  comma-separated WxH pairs (default: 1440x900,390x844).
                        A width <= 480 is emulated as touch/mobile.
   --browser <name>    the Playwright engine for --reveal/--scenes (default chromium)
+  --channel <name>    with chromium, a branded build instead of Playwright's own (chrome, msedge):
+                       before Playwright 1.57 the bundled Chromium decodes no H.264, so a scrub
+                       never paints there
   --reveal            step-scroll (scroll-behavior forced to auto) and check every
                        [data-reveal-item] reaches data-reveal-state="shown" and ends opaque;
                        an item of a data-reveal-replay group has to be shown once (it
@@ -50,7 +53,10 @@ Options:
   --scenes            for each scene ([data-scene-root]), scroll to progress
                        0/.25/.5/.75/1, record its data-scene-state + a screenshot, and
                        check the states run head > scrub > tail in order, never step
-                       back, and have left head by progress 1
+                       back, and have left head by progress 1; a video in the scene
+                       that never decodes a frame fails it. Also samples the two
+                       slides (the pin 3/4 on screen entering and leaving), where a
+                       held clip shows a still sliding past
   --anchors           delegate to anchor-check.mjs (a REAL smooth scroll
                        through the page's own scroll-behavior/scroll well)
   -h, --help          print this message and exit
@@ -68,6 +74,7 @@ function parseArgs(argv) {
     out: 'verify-motion-out',
     viewports: '1440x900,390x844',
     browser: 'chromium',
+    channel: null,
     reveal: false,
     scenes: false,
     anchors: false,
@@ -79,6 +86,7 @@ function parseArgs(argv) {
     else if (a === '--out') out.out = argv[++i]
     else if (a === '--viewports') out.viewports = argv[++i]
     else if (a === '--browser') out.browser = argv[++i]
+    else if (a === '--channel') out.channel = argv[++i]
     else if (a === '--reveal') out.reveal = true
     else if (a === '--scenes') out.scenes = true
     else if (a === '--anchors') out.anchors = true
@@ -87,6 +95,10 @@ function parseArgs(argv) {
   }
   if (!['chromium', 'webkit', 'firefox'].includes(out.browser)) {
     console.error(`[verify-motion] --browser must be chromium, webkit or firefox (got ${out.browser})`)
+    process.exit(2)
+  }
+  if (out.channel && out.browser !== 'chromium') {
+    console.error(`[verify-motion] --channel needs --browser chromium (got ${out.browser})`)
     process.exit(2)
   }
   if (!out.reveal && !out.scenes && !out.anchors) {
@@ -263,7 +275,7 @@ async function checkScenes(page, opts) {
   for (let i = 0; i < stages; i++) {
     const base = await page.evaluate((index) => {
       const s = document.querySelectorAll('[data-scene-root]')[index]
-      return { top: s.getBoundingClientRect().top + scrollY, range: s.offsetHeight - innerHeight }
+      return { top: s.getBoundingClientRect().top + scrollY, range: s.offsetHeight - innerHeight, vh: innerHeight }
     }, i)
 
     const steps = []
@@ -275,11 +287,7 @@ async function checkScenes(page, opts) {
       // toward its target would otherwise be read mid-flight.
       await page.waitForTimeout(2500)
 
-      // The scene's mode (data-scene-state on its root), reported as `motionState`.
-      const state = await page.evaluate((index) => {
-        const s = document.querySelectorAll('[data-scene-root]')[index]
-        return { motionState: s.getAttribute('data-scene-state'), scrollY: window.scrollY }
-      }, i)
+      const state = await readScene(page, i)
 
       let screenshot
       if (opts.out) {
@@ -290,7 +298,26 @@ async function checkScenes(page, opts) {
 
       steps.push({ progress, ...state, screenshot })
     }
-    scenes.push({ index: i, base, steps })
+
+    // The slides: a sticky pin is on screen for a viewport before progress leaves 0 and after it reaches 1. A clip
+    // held there (no head or tail loop) is a still sliding in and out of a scene the reader was scrubbing: recorded,
+    // with a screenshot, so the contact sheet shows it (references/video.md §14). Informational, not a verdict.
+    const slides = []
+    for (const [at, y] of [
+      ['enter', base.top - 0.75 * base.vh],
+      ['leave', base.top + base.range + 0.25 * base.vh]
+    ]) {
+      await page.evaluate((y) => window.scrollTo(0, Math.max(0, y)), y)
+      await page.waitForTimeout(1500)
+      const state = await readScene(page, i)
+      let screenshot
+      if (opts.out) {
+        screenshot = `scene-${i}-${at}.png`
+        await page.screenshot({ path: join(opts.out, screenshot) })
+      }
+      slides.push({ at, ...state, screenshot })
+    }
+    scenes.push({ index: i, base, steps, slides })
   }
   // Where a mode flips is scene-specific (holds, lead-ins), but the order isn't: scrolling forward, every step has a
   // state, the states only ever move head > scrub > tail, and the scene has left head by progress 1. A machine that
@@ -302,9 +329,34 @@ async function checkScenes(page, opts) {
     if (ranks.some((r) => r === undefined)) scene.problem = 'a step has no head/scrub/tail state'
     else if (ranks.some((r, k) => k > 0 && r < ranks[k - 1])) scene.problem = 'the state steps backwards while scrolling forward'
     else if (ranks[ranks.length - 1] === 0) scene.problem = 'still in head at progress 1'
+    // A video with a source that never had a frame to show across the sweep: the reader saw the poster all along.
+    // A missing file, a server without 206, or a codec this browser lacks (Playwright's own Chromium before 1.57 has
+    // no H.264): --channel chrome.
+    else {
+      const videos = scene.steps[0].videos.map((_, k) => scene.steps.map((st) => st.videos[k]).filter(Boolean))
+      const dead = videos.findIndex((runs) => runs.some((v) => v.src) && runs.every((v) => v.readyState < 2))
+      if (dead >= 0) {
+        scene.problem =
+          `video ${dead} never decoded a frame (readyState ${videos[dead].at(-1).readyState}): a missing file, no 206 ` +
+          'from the server, or a codec this browser lacks (try --channel chrome or --browser webkit)'
+      }
+    }
   }
   const verdict = stages === 0 ? 'skip' : scenes.some((s) => s.problem) ? 'fail' : 'pass'
   return { verdict, total: stages, scenes }
+}
+
+/** One scene's mode (data-scene-state on its root, as `motionState`) and each of its videos' decode state. */
+function readScene(page, index) {
+  return page.evaluate((index) => {
+    const s = document.querySelectorAll('[data-scene-root]')[index]
+    const videos = [...s.querySelectorAll('video')].map((v) => ({
+      src: !!v.currentSrc,
+      readyState: v.readyState,
+      time: Math.round(v.currentTime * 1000) / 1000
+    }))
+    return { motionState: s.getAttribute('data-scene-state'), scrollY: window.scrollY, videos }
+  }, index)
 }
 
 // ── one viewport ────────────────────────────────────────────────────────
@@ -355,7 +407,13 @@ function printSummary(viewports) {
     for (const [name, c] of Object.entries(v.checks)) {
       if (c.verdict === 'skip') console.log(`SKIP ${name} at ${at}: nothing to check (${name === 'reveal' ? 'no [data-reveal-item]' : 'no [data-scene-root]'})`)
     }
-    if (v.checks.scenes) for (const s of v.checks.scenes.scenes) console.log(`scene ${s.index} at ${at}: ${s.sequence}${s.problem ? `  FAIL: ${s.problem}` : ''}`)
+    if (v.checks.scenes) {
+      for (const s of v.checks.scenes.scenes) {
+        console.log(`scene ${s.index} at ${at}: ${s.sequence}${s.problem ? `  FAIL: ${s.problem}` : ''}`)
+        const slide = (sl) => `${sl.at} ${sl.motionState ?? '(none)'}${sl.videos.length ? ` t=${sl.videos.map((x) => x.time).join('/')}` : ''}`
+        console.log(`  slides: ${s.slides.map(slide).join(' · ')}`)
+      }
+    }
     if (viewportVerdict(v) !== 'fail') continue
     console.log(`FAIL at ${at}:`)
     if (v.checks.reveal?.verdict === 'fail') {
@@ -391,7 +449,7 @@ async function main() {
   }
   const url = args._[0]
   if (!url) {
-    console.error('usage: node verify-motion.mjs <url> [--out dir] [--viewports W1xH1,W2xH2] [--browser chromium|webkit|firefox] [--reveal] [--scenes] [--anchors]')
+    console.error('usage: node verify-motion.mjs <url> [--out dir] [--viewports W1xH1,W2xH2] [--browser chromium|webkit|firefox] [--channel chrome] [--reveal] [--scenes] [--anchors]')
     console.error('       node verify-motion.mjs --help')
     process.exit(2)
   }
@@ -420,9 +478,9 @@ async function main() {
       console.error(`[verify-motion] this playwright has no ${args.browser}`)
       process.exit(2)
     }
-    console.log(`[verify-motion] browser: ${args.browser}`)
+    console.log(`[verify-motion] browser: ${args.browser}${args.channel ? ` (${args.channel})` : ''}`)
 
-    const browser = await engine.launch()
+    const browser = await engine.launch(args.channel ? { channel: args.channel } : {})
     try {
       for (const vp of viewports) {
         results.push(await runViewport(browser, url, args, vp))

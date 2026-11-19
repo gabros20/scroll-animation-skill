@@ -59,7 +59,7 @@ finding, `2` usage error. `--selftest` exits `0`/`1` on pass/fail.
 
 ```
 node verify-motion.mjs <url> [--out dir] [--viewports 1440x900,390x844]
-  [--browser chromium|webkit|firefox] [--reveal] [--scenes] [--anchors]
+  [--browser chromium|webkit|firefox] [--channel chrome] [--reveal] [--scenes] [--anchors]
 node verify-motion.mjs --help
 ```
 
@@ -94,7 +94,16 @@ pass by accident:
   step must have a state, the states only move `head > scrub > tail`, and the
   scene must have left `head` by progress 1. A scene that never transitions,
   steps backwards or skips writing fails the run, and the report prints each
-  scene's sequence.
+  scene's sequence. A `<video>` in the scene with a source that never reaches
+  `readyState` 2 at any step fails it too: a missing file, no `206`, or a codec
+  the browser lacks. Then it samples the two slides (the pin ¾ on screen
+  entering and leaving, `scene-<i>-enter.png` / `-leave.png`) and prints each
+  one's state and video time, informational: a clip with no head or tail loop
+  holds its end frames there.
+- **`--channel <name>`** — with `chromium`, launch a branded build (`chrome`,
+  `msedge`). Before Playwright 1.57 the bundled Chromium has no H.264, so a
+  scrub never paints and every screenshot shows the poster; 1.57 and later run
+  Chrome for Testing, which decodes it.
 - **`--anchors`** — delegates to `anchor-check.mjs` with the same
   `--viewports` list (see below); its own exit code folds into this run's.
 
