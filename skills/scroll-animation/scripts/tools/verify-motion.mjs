@@ -44,8 +44,8 @@ Options:
                        A width <= 480 is emulated as touch/mobile.
   --browser <name>    the Playwright engine for --reveal/--scenes (default chromium)
   --channel <name>    with chromium, a branded build instead of Playwright's own (chrome, msedge):
-                       before Playwright 1.57 the bundled Chromium decodes no H.264, so a scrub
-                       never paints there
+                       before Playwright 1.57 (1.63 on Linux arm64) the bundled Chromium decodes
+                       no H.264, so a scrub never paints there
   --reveal            step-scroll (scroll-behavior forced to auto) and check every
                        [data-reveal-item] reaches data-reveal-state="shown" and ends opaque;
                        an item of a data-reveal-replay group has to be shown once (it
@@ -54,7 +54,8 @@ Options:
                        0/.25/.5/.75/1, record its data-scene-state + a screenshot, and
                        check the states run head > scrub > tail in order, never step
                        back, and have left head by progress 1; a video in the scene
-                       that never decodes a frame fails it. Also samples the two
+                       that never decodes a frame (unless still preload="none"), or
+                       whose playhead never moves while scrubbing, fails it. Also samples the two
                        slides (the pin 3/4 on screen entering and leaving), where a
                        held clip shows a still sliding past
   --anchors           delegate to anchor-check.mjs (a REAL smooth scroll
@@ -304,7 +305,7 @@ async function checkScenes(page, opts) {
     // with a screenshot, so the contact sheet shows it (references/video.md §14). Informational, not a verdict.
     const slides = []
     for (const [at, y] of [
-      ['enter', base.top - 0.75 * base.vh],
+      ['enter', base.top - 0.25 * base.vh],
       ['leave', base.top + base.range + 0.25 * base.vh]
     ]) {
       await page.evaluate((y) => window.scrollTo(0, Math.max(0, y)), y)
@@ -330,15 +331,26 @@ async function checkScenes(page, opts) {
     else if (ranks.some((r, k) => k > 0 && r < ranks[k - 1])) scene.problem = 'the state steps backwards while scrolling forward'
     else if (ranks[ranks.length - 1] === 0) scene.problem = 'still in head at progress 1'
     // A video with a source that never had a frame to show across the sweep: the reader saw the poster all along.
-    // A missing file, a server without 206, or a codec this browser lacks (Playwright's own Chromium before 1.57 has
-    // no H.264): --channel chrome.
+    // A missing file, a server without 206, or a codec this browser lacks (Playwright's own Chromium before 1.57, or
+    // 1.63 on Linux arm64, has no H.264): --channel chrome. A video still preload="none" was never asked to load
+    // (decoration the page doesn't drive; the controller sets preload="auto" at its warm margin): skipped.
+    // A frozen clip: one that decodes, but whose playhead never moves across the scrub steps.
     else {
       const videos = scene.steps[0].videos.map((_, k) => scene.steps.map((st) => st.videos[k]).filter(Boolean))
-      const dead = videos.findIndex((runs) => runs.some((v) => v.src) && runs.every((v) => v.readyState < 2))
+      const dead = videos.findIndex(
+        (runs) => runs.some((v) => v.src) && runs.at(-1).preload !== 'none' && runs.every((v) => v.readyState < 2)
+      )
+      const scrubbing = scene.steps.map((st, k) => (st.motionState === 'scrub' ? k : -1)).filter((k) => k >= 0)
+      const frozen =
+        scrubbing.length >= 2
+          ? videos.findIndex((runs) => runs.every((v) => v.readyState >= 2) && new Set(scrubbing.map((k) => runs[k].time)).size === 1)
+          : -1
       if (dead >= 0) {
         scene.problem =
           `video ${dead} never decoded a frame (readyState ${videos[dead].at(-1).readyState}): a missing file, no 206 ` +
           'from the server, or a codec this browser lacks (try --channel chrome or --browser webkit)'
+      } else if (frozen >= 0) {
+        scene.problem = `video ${frozen} is frozen: its playhead sat at ${videos[frozen][scrubbing[0]].time}s through every scrub step`
       }
     }
   }
@@ -352,6 +364,7 @@ function readScene(page, index) {
     const s = document.querySelectorAll('[data-scene-root]')[index]
     const videos = [...s.querySelectorAll('video')].map((v) => ({
       src: !!v.currentSrc,
+      preload: v.preload,
       readyState: v.readyState,
       time: Math.round(v.currentTime * 1000) / 1000
     }))

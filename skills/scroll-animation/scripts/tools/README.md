@@ -95,15 +95,17 @@ pass by accident:
   scene must have left `head` by progress 1. A scene that never transitions,
   steps backwards or skips writing fails the run, and the report prints each
   scene's sequence. A `<video>` in the scene with a source that never reaches
-  `readyState` 2 at any step fails it too: a missing file, no `206`, or a codec
-  the browser lacks. Then it samples the two slides (the pin ¾ on screen
+  `readyState` 2 at any step fails it too (a missing file, no `206`, or a codec
+  the browser lacks), unless it is still `preload="none"` (never asked to load);
+  so does a decoding video whose time is the same at every `scrub` step (a
+  frozen clip). Then it samples the two slides (the pin ¾ on screen
   entering and leaving, `scene-<i>-enter.png` / `-leave.png`) and prints each
   one's state and video time, informational: a clip with no head or tail loop
   holds its end frames there.
 - **`--channel <name>`** — with `chromium`, launch a branded build (`chrome`,
   `msedge`). Before Playwright 1.57 the bundled Chromium has no H.264, so a
   scrub never paints and every screenshot shows the poster; 1.57 and later run
-  Chrome for Testing, which decodes it.
+  Chrome for Testing, which decodes it (on Linux arm64, from 1.63).
 - **`--anchors`** — delegates to `anchor-check.mjs` with the same
   `--viewports` list (see below); its own exit code folds into this run's.
 
