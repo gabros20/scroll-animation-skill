@@ -27,8 +27,9 @@
 //   list       a plain frame-URL list learns the frame size from the first decode
 //   react      <FrameSequence> on useScroll: role/label, the five stops, an <Activity> hide destroys it, a show
 //              rebuilds it, unmount closes everything
-//   gsap       frameSequence() with its own trigger and with a polled getter: the five stops; reverting the
-//              gsap.context destroys it and removes its ticker listener
+//   gsap       frameSequence() with its own trigger and with a polled getter: the five stops; with its own trigger,
+//              a refresh while the iOS toolbar shows (emulated: innerHeight 86 px short, the pin's box fixed) keeps
+//              the range and the frame; reverting the gsap.context destroys it and removes its ticker listener
 //   scene      PinnedScene hands FrameSequence its band through the `pinned` render function: data-frame follows
 //              the band, and after new holds plus a rehydrate (focus), with no scroll; reduced motion shows frame 0
 
@@ -584,6 +585,56 @@ const GROUPS = {
       const ready = await whenReady(page)
       t.check(`gsap (${mode}): ready`, () => [ready.result === 'ready', ready.result])
       await stops(t, page, `gsap (${mode})`)
+      if (mode === 'trigger') {
+        // iOS's shape: the pin's box stays put while innerHeight follows the toolbar, and a refresh while it shows (a
+        // late image, a rotation) must keep the range and the frame. (GSAP 3.15 measures 'bottom bottom' with a 100vh
+        // probe, so this held before the pin-box end too; under normalizeScroll it reads innerHeight.)
+        await jump(page, 0.5)
+        const toolbar = await page.evaluate(async (T) => {
+          const st = window.__fx.handle().scrollTrigger
+          const read = () => ({ travel: Math.round(st.end - st.start), p: +st.progress.toFixed(4), frame: window.__fx.frame() })
+          const full = window.innerHeight
+          const settle = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+          const hidden = read()
+          Object.defineProperty(window, 'innerHeight', { get: () => full - T, configurable: true })
+          window.dispatchEvent(new Event('resize'))
+          st.refresh()
+          await settle()
+          const shown = read()
+          Object.defineProperty(window, 'innerHeight', { get: () => full, configurable: true })
+          window.dispatchEvent(new Event('resize'))
+          st.refresh()
+          await settle()
+          return { hidden, shown, back: read() }
+        }, 86)
+        t.check('gsap (trigger): a refresh with the iOS toolbar shown keeps the range (the pin\'s box) and the frame', () => [
+          toolbar.shown.travel === toolbar.hidden.travel &&
+            toolbar.shown.p === toolbar.hidden.p &&
+            toolbar.shown.frame === toolbar.hidden.frame &&
+            toolbar.back.travel === toolbar.hidden.travel,
+          `travel ${toolbar.hidden.travel} → ${toolbar.shown.travel} → ${toolbar.back.travel} · p ${toolbar.hidden.p} → ${toolbar.shown.p} · frame ${toolbar.hidden.frame} → ${toolbar.shown.frame}`,
+        ])
+      }
+      if (mode === 'trigger') {
+        // The end is where the sticky box releases: its own travel, not the viewport's. A 70vh box travels 30vh further
+        // than a 100vh one; 'bottom bottom' kept the viewport's travel and hit 1 before the box let go.
+        const release = await page.evaluate(async () => {
+          const st = window.__fx.handle().scrollTrigger
+          const range = document.getElementById('range')
+          const pin = document.getElementById('pin')
+          pin.style.height = '70vh'
+          st.refresh()
+          const out = { travel: Math.round(st.end - st.start), want: range.offsetHeight - pin.offsetHeight }
+          pin.style.height = ''
+          st.refresh()
+          out.back = Math.round(st.end - st.start)
+          return out
+        })
+        t.check('gsap (trigger): the end is the sticky box\'s travel (range − box), so a shorter box runs longer', () => [
+          release.travel === release.want && release.back === 2360,
+          `70vh box: travel ${release.travel}, range − box ${release.want} · back to 100vh: ${release.back}`,
+        ])
+      }
       const before = await page.evaluate(() => ({ triggers: window.__fx.triggers(), ticker: window.__fx.tickerListeners() }))
       await page.evaluate(() => window.__fx.revert())
       await sleep(300)

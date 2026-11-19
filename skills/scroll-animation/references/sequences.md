@@ -64,7 +64,7 @@ content, so an inline object doesn't rebuild it. The page provides any poster be
 before `ready`: the block renders only the canvas.
 
 ```ts
-frameSequence(canvas, { manifest, mobile: true, trigger: '#turn' })   // its own ScrollTrigger: 'top top' to 'bottom bottom'
+frameSequence(canvas, { manifest, mobile: true, trigger: '#turn' })   // its own ScrollTrigger: 'top top', over the pin's box
 frameSequence(canvas, { manifest, progress: () => scene.band() })    // any getter, polled on gsap.ticker
 ```
 

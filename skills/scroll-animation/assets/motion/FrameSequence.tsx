@@ -14,7 +14,10 @@
  *     <Acts />
  *   </PinnedScene>
  *
- * Any other exact progress works too: `useScroll({ target, offset: ['start start', 'end end'] }).scrollYProgress`.
+ * Any other exact progress works too. Over a pinned range, use a scene's (`usePinnedScene().progress` or `band`): its
+ * ruler is the pin's 100lvh box. `useScroll({ target, offset: ['start start', 'end end'] }).scrollYProgress` only
+ * for a range nothing pins: its offsets measure the scroll container's height (`documentElement.clientHeight`), not
+ * the pin's 100lvh, so over a pin on iOS it can end up to one toolbar off (references/scenes.md §1).
  *
  * - `progress` is read by hand (useMotionValueEvent) and never bound to a style: it only picks a frame, and a bound
  *   scroll-linked style can be handed to a native timeline that disagrees with the value (spike S3). Pass EXACT

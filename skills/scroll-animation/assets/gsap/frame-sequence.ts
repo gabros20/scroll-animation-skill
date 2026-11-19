@@ -8,7 +8,10 @@
  *     </div>
  *   </section>
  *
- *   // Its own ScrollTrigger on the range (start 'top top', end 'bottom bottom' by default; page order):
+ *   // Its own ScrollTrigger on the range (start 'top top', page order). The end is the range's travel over the sticky
+ *   // box holding the canvas (a pinned scene's ruler, references/scenes.md §1), so it ends where the box releases
+ *   // whatever measures the viewport ('bottom bottom' is GSAP's 100vh probe in 3.15, innerHeight under
+ *   // normalizeScroll); with no sticky box between them, 'bottom bottom':
  *   frameSequence(canvas, { manifest: '/media/hero/manifest.json', mobile: true, trigger: '#hero-range' })
  *
  *   // Or any progress getter, read on gsap.ticker. In a pinned scene, its band (the scrub span as 0..1):
@@ -65,10 +68,15 @@ export function frameSequence(canvas: HTMLCanvasElement, options: FrameSequenceG
     gsap.ticker.add(tick)
     tick()
   } else {
+    const range = gsap.utils.toArray<HTMLElement>(trigger)[0] ?? null
     st = ScrollTrigger.create({
       trigger,
       start: 'top top',
-      end: 'bottom bottom',
+      // A function, so every refresh re-reads the pin's box.
+      end: () => {
+        const pin = range ? stickyBox(canvas, range) : null
+        return range && pin ? `+=${Math.max(1, range.offsetHeight - pin.offsetHeight)}` : 'bottom bottom'
+      },
       ...vars,
       onUpdate(self) {
         seq.setProgress(self.progress)
@@ -101,4 +109,14 @@ export function frameSequence(canvas: HTMLCanvasElement, options: FrameSequenceG
     destroy,
     scrollTrigger: st,
   }
+}
+
+/** The sticky box holding the canvas inside the range (the canvas itself included): the pin whose height is the
+ * ruler. Null when the canvas isn't pinned inside it. */
+function stickyBox(canvas: HTMLCanvasElement, range: HTMLElement): HTMLElement | null {
+  if (!range.contains(canvas)) return null
+  for (let el: HTMLElement | null = canvas; el && el !== range; el = el.parentElement) {
+    if (getComputedStyle(el).position === 'sticky') return el
+  }
+  return null
 }

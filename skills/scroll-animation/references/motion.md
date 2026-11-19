@@ -65,11 +65,17 @@ tree that uses Motion blocks:
 ## 3. Scroll values
 
 ```tsx
+const { progress, band } = usePinnedScene()   // a pinned range: the scene measures it over the pin's box
 const RANGE = ['start start', 'end end'] as const satisfies [string, string]   // module scope, or it resubscribes
-const { scrollYProgress } = useScroll({ target: wrapperRef, offset: RANGE })
+const { scrollYProgress } = useScroll({ target: wrapperRef, offset: RANGE })    // a range nothing pins
 ```
 
-- **Measure the range wrapper, never a sticky element.** A sticky element stops moving, so its own box is no ruler.
+- **A pinned range takes the scene's progress.** Its ruler is the wrapper's travel over the pin's `100lvh` box
+  ([scenes.md](scenes.md) §1). `useScroll`'s offsets measure the scroll container's height
+  (`documentElement.clientHeight`), not the pin's `100lvh`, so over a pin on iOS `['start start', 'end end']` can be up
+  to one toolbar off; keep it for ranges nothing pins.
+- **Measure the range wrapper, never a sticky element.** A sticky element stops moving, so its own rect gives no
+  position.
 - **Map progress linearly.** A scroll value is already eased by the reader's hand; shape it with `useTransform`'s
   input range, never with an ease ([craft.md](craft.md) §4).
 - **Smooth once.** On a native route, a `useSpring` on the visual consumer is the smoothing; keep it over-damped.
