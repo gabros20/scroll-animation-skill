@@ -171,6 +171,10 @@ frames, and the mismatch flashes when decoding starts (worse under a blend mode)
   and under reduced motion. `media scrub` writes frame 0, so for a head loop run
   `media poster out.mp4 --at <fromFrame / fps>`.
 - **A poster is a frame of the same asset.** An art-directed still no frame matches is a `<picture>` under the video.
+- **ScrubVideo's poster is its own image** (`<img data-scene-poster>` right after the video, in its box and camera),
+  never the `poster` attribute, which the first `play()` clears before any frame decodes: a blank, then frame 0, then
+  the scroll's frame. The prime plays, then seeks to the scroll's frame before anything decodes, and the video turns
+  `data-scene-media="live"` (the poster lifts in 120 ms) only once it presents that frame.
 
 ## 10. Keyframes at loop seams
 
@@ -198,16 +202,24 @@ spare (`tpad=stop_mode=clone:stop=1`) and keyframe.
 - **The element is the source of truth**: playback acts on the element, and the UI mirrors its `play` and `pause`
   events, never the code's intent.
 
-**iOS loads only metadata for a video that has never played** (`preload` is a hint it ignores): a scene of holds
-never gets a frame, and its first seek clears the poster (measured on the device pass). The controller primes each
-source once (a muted `play()`, paused at once), only while it has never shown a frame (primed mid-seek, a held tail
-played to the clip's end), and seeks only once a frame exists. Refused in Low Power Mode, the
-poster stays, and every `touchend`, `pointerup`, `click` or key press retries the prime inside the event until a frame
-shows: WebKit grants the play only in the event that carries the gesture (a tap's touchend or click, not the
-pointerup before them), `touchstart` grants none, and a refusal may settle late or never, so the listener is armed
-before the play, not after the refusal. A source that later loses its data (iOS drops a sleeping clip's) is primed,
-and waits for a gesture, again (measured on an iPhone in Low Power Mode: every prime refused until this). Primed, the simulator fetched the whole clip in one request,
-paused; the prime runs in the awake tick, so on iOS data starts at the wake margin, not the warm one.
+**iOS caps preload at metadata on every page**, so a video that has never played has no frame, and seeks paint
+nothing. The controller primes each source (a muted `play()`, paused at once) when the network idles without a frame:
+at the warm margin, so a refusal is known about 400 px before the scene wakes, and again if iOS later drops a sleeping
+clip's data; never under a pending seek (that ran a held tail to the clip's end).
+
+**Low Power Mode makes it impossible without a tap.** WebKit gives every video created in Low Power Mode (and under
+thermal mitigation, the same rule) a restriction that refuses playback outside a user gesture, `muted` and
+`playsinline` or not. So nothing scrubs until the reader taps; the block makes that tap count and the wait honest:
+
+- The video reads `data-scene-media="blocked"` while refused: the page may style a "tap to play" hint on it. The
+  pin stays: collapsing it would pull the runway from under the reader's thumb.
+- Listeners on `touchend`, `click`, `pointerup` and keys are armed from creation and retry inside the event, where
+  the play is allowed: a tap's `pointerup` comes first and doesn't count, `touchstart` and the touch that ends a
+  scroll never do, and a refusal may settle late or never, so nothing waits for it. Before the scene runs, a tap
+  anywhere calls `load()` inside the gesture, which lifts the restriction for that element: a reader who tapped a
+  link on the way down arrives at an unlocked scene. One gesture unlocks the element for the page in WebKit's source;
+  the tests run both that and a forgetting model.
+- Measured on an iPhone in Low Power Mode: every prime refused, taps included, until these.
 
 ## 12. Tab-sleep rehydrate
 
@@ -291,8 +303,9 @@ on every progress event.
 
 ScrubVideo takes every PinnedScene prop and event ([scenes.md](scenes.md)), plus `glide`, `loopSeconds`, `camera`,
 `backdrop`, `videoClassName` and `pinned` (more of the pin, above the video); its `ref` gets
-`{ scene, video, debug() }`. GSAP reads the same markup, with the sources on the video as `data-src`, `data-mobile-src`,
-`poster` and `data-mobile-poster`, and `preload="none"` kept on it, or the picked source fetches at page load.
+`{ scene, video, debug() }`. GSAP reads the same markup, with the sources on the video as `data-src`, `data-mobile-src`
+and `data-mobile-poster`, the poster as `<img data-scene-poster>` after it (a `poster` attribute is turned into one),
+and `preload="none"` kept on the video, or the picked source fetches at page load.
 `scrubVideo(root, { fps: 30, headLoop, tailLoop })` returns the scene handle plus `video` and `controller`, or `null`
 without a video.
 

@@ -104,7 +104,17 @@ export interface VideoControllerOptions extends VideoSources {
   /** The playhead as a band position, every tick while awake: the backdrop follows the render, not the scroll. */
   onPlayhead?: (band: number) => void
   onTier?: (tier: MediaTier) => void
+  /**
+   * The poster as its own image over the video (`<img data-scene-poster>` after it): the controller sets its source per
+   * tier and lifts it only once the video presents the frame the scroll wants. Without it the poster is the video's
+   * `poster` attribute, which a `play()` clears before any frame decodes: a blank, then frame 0, then the right frame.
+   */
+  posterElement?: HTMLImageElement | null
 }
+
+/** `data-scene-media` on the video: `blocked` while a play is refused (Low Power Mode), `live` once it shows the
+ * scroll's frame (the poster lifts), empty otherwise. */
+export type MediaState = '' | 'blocked' | 'live'
 
 export interface VideoRehydrateState {
   mode: SceneMode
@@ -307,10 +317,17 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   let pending: number | null = null
   // When the band's seek in flight was sent (performance.now()): one past STUCK_SEEK_MS is sent again.
   let seekSentAt = 0
-  // A refused prime waits for the reader's next activation.
+  // A refused prime waits for the reader's next activation; `activating` is true inside that event.
   let activationArmed = false
+  let activating = false
   // This source has shown a frame: from then on a pending seek, not a missing frame, explains a low readyState.
   let framed = false
+  // data-scene-media on the video, and how the element was unlocked (a gesture's play() or load()).
+  let media: MediaState = ''
+  let unlockedBy: 'play' | 'load' | null = null
+  // Ticks the playhead has sat on the wanted frame with no seek pending: the reveal's fallback without frame callbacks.
+  let settledTicks = 0
+  const posterEl = options.posterElement ?? null
   // A handover out of a loop: where the loop left the playhead (both adapters step the mode before they hand over the
   // event's band, so it is measured at the next drive), then its distance from the band in seconds, decaying to 0.
   let handoverFrom: number | null = null
@@ -334,6 +351,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     primes: 0,
     snaps: 0,
     reseeks: 0,
+    unlocks: 0,
     lastRehydrate: null as null | Record<string, unknown>,
   }
 
@@ -342,6 +360,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   video.muted = true
   // The attribute too: React sets `muted` as a property only, and the markup is what an autoplay policy may read first.
   video.defaultMuted = true
+  // A poster image owns the cover: the attribute would vanish on the first play() and show the gap under it.
+  if (posterEl) video.removeAttribute('poster')
   video.playsInline = true
   video.loop = false
 
@@ -531,27 +551,82 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     // good, so a retry can never wait for the refusal to settle.
     armActivation()
     const token = playToken
+    const gesture = activating
     video.play().then(
       () => {
+        if (gesture) unlockedBy = 'play'
+        if (media === 'blocked') setMedia('')
         if (token === playToken && !(running && loops(mode) && !capped)) video.pause()
       },
       (error: unknown) => {
         // An AbortError is the scene's own pause landing first: the load has started all the same.
-        if ((error as { name?: string } | null)?.name === 'NotAllowedError') stats.rejections++
+        if ((error as { name?: string } | null)?.name !== 'NotAllowedError') return
+        stats.rejections++
+        if (media !== 'live') setMedia('blocked')
       },
     )
+    // Then straight to the scroll's frame, before anything decodes: the clip is all-intra, so the first frame it
+    // presents is that one, never frame 0. After the play(), not before: Safari drops a play() issued mid-seek. Only
+    // under a poster image: a seek clears the poster attribute, and with nothing decoded there is nothing to show.
+    if (posterEl && validDuration()) {
+      try {
+        video.currentTime = loops(mode) ? targetTime(mode, band, tl) : frameTime(wanted(), fps)
+      } catch {
+        // Not seekable yet: the poster still covers.
+      }
+    }
+  }
+
+  /** `data-scene-media` on the video, written on change only. */
+  function setMedia(next: MediaState) {
+    if (next === media) return
+    media = next
+    video.setAttribute('data-scene-media', next)
+    if (next !== 'live') settledTicks = 0
+  }
+
+  /** The frame on screen is the one the scroll wants (a loop: any frame of it): the poster may lift. */
+  function onWantedFrame(time: number) {
+    return loops(mode) || Math.abs(frameOf(time, fps) - wanted()) <= 1
+  }
+
+  /** Whether a prime would help now: no frame, nothing playing, nothing seeking, the network idle (iOS's cap). */
+  function needsPrime() {
+    return !reduced && hasSource && !primed && !hasFrame() && video.paused && !video.seeking
   }
 
   /**
    * Every activation event retries the prime synchronously, inside the event, while the source has no frame: the one
    * the browser honours is the one that plays. Asleep, it waits armed; once a frame shows, it disarms.
    */
-  function onActivation() {
+  function onActivation(event: Event) {
     if (destroyed || framed) {
       disarmActivation()
       return
     }
-    if (running && !reduced && hasSource && !hasFrame() && video.paused) prime()
+    if (reduced || !hasSource || hasFrame() || !video.paused) return
+    activating = true
+    try {
+      if (running) prime()
+      else if (
+        event.type !== 'pointerup' &&
+        !unlockedBy &&
+        (media === 'blocked' || !primed) &&
+        video.networkState !== NETWORK_LOADING
+      ) {
+        // Not running: a load() inside the gesture lifts WebKit's gesture restriction for this element, so a tap
+        // anywhere on the way down (or after a refusal, away from the scene) unlocks it before it arrives. Only on the
+        // events WebKit counts (a tap's touchend or click, a key), never the pointerup before them, since the load
+        // runs once. Never with a frame or a download in flight, which it would restart; with preload="none" it
+        // fetches nothing. The next wake primes again, now allowed.
+        stats.unlocks++
+        video.load()
+        unlockedBy = 'load'
+        primed = false
+      }
+    } finally {
+      activating = false
+    }
   }
 
   /** The source has shown a frame: the prime did its job. */
@@ -581,6 +656,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     const onFrame: VideoFrameRequestCallback = (_now, meta) => {
       if (id !== chain) return
       stats.vframes++
+      // The frame the scroll wants is on screen: lift the poster, in this callback, with nothing in between.
+      if (media !== 'live' && !video.seeking && onWantedFrame(meta.mediaTime)) setMedia('live')
       if (loops(mode) && !capped && !wrapInFlight() && wrapDue(meta.mediaTime, video.currentTime, matchFrame(mode), wrapFrom(mode), fps)) {
         seam(false)
       }
@@ -612,12 +689,20 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       if (framed) {
         framed = false
         primed = false
+        // The cover goes back over the hole.
+        if (media === 'live') setMedia('')
       }
       if (!primed && video.paused && video.networkState === NETWORK_IDLE) prime()
       return
     }
     markFramed()
     const time = video.currentTime
+    // Without frame callbacks (or before one fires): two settled ticks on the wanted frame, no seek pending.
+    if (media !== 'live') {
+      if (!seeking && !video.seeking && onWantedFrame(time)) {
+        if (++settledTicks >= 3) setMedia('live')
+      } else settledTicks = 0
+    }
 
     if (loops(mode) && !capped) {
       const match = matchFrame(mode)
@@ -699,6 +784,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     recovering = true
     primed = false
     framed = false
+    setMedia('')
     stats.kicks++
     video.preload = 'auto'
     try {
@@ -717,6 +803,15 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     else rehydrate({ mode, band, awake, reason: 'metadata' })
   }
 
+  /**
+   * The network went idle with no frame (iOS caps preload at metadata): prime here, at the warm margin, so a refusal
+   * is known (and `data-scene-media="blocked"` set) about 400 px before the scene wakes, and an allowed prime starts
+   * the data that early. Desktop engines keep loading to a frame, so this never runs there.
+   */
+  const onSuspend = () => {
+    if (warmed && !running && needsPrime() && validDuration() && video.networkState === NETWORK_IDLE) prime()
+  }
+
   const onEnded = () => {
     if (!running || !loops(mode) || capped) return
     stats.recoveries++
@@ -729,6 +824,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   }
 
   video.addEventListener('loadedmetadata', onMetadata)
+  video.addEventListener('suspend', onSuspend)
   video.addEventListener('ended', onEnded)
   document.addEventListener('visibilitychange', onVisibility)
 
@@ -746,13 +842,18 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     const next = sourceTier(options)
     const src = reduced ? null : next === 'mobile' ? options.mobileSrc : (options.src ?? options.mobileSrc)
     const poster = next === 'mobile' ? (options.mobilePoster ?? options.poster) : options.poster
-    if (poster && video.getAttribute('poster') !== poster) video.poster = poster
+    if (poster) {
+      if (posterEl) {
+        if (posterEl.getAttribute('src') !== poster) posterEl.src = poster
+      } else if (video.getAttribute('poster') !== poster) video.poster = poster
+    }
     const current = video.getAttribute('src')
     if (src ? current !== src : current) {
       hadMetadata = false
       recovering = false
       primed = false
       framed = false
+      setMedia('')
       if (src) video.src = src
       else {
         video.removeAttribute('src')
@@ -766,6 +867,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     if (changed) options.onTier?.(next)
   }
   const tierFrame = managed ? requestAnimationFrame(syncSource) : 0
+  // Armed from the start, so a tap anywhere before the scene arrives unlocks it (onActivation).
+  armActivation()
   query?.addEventListener('change', syncSource)
   network?.addEventListener?.('change', syncSource)
 
@@ -842,6 +945,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     warm() {
       warmed = true
       if (!reduced && video.preload !== 'auto') video.preload = 'auto'
+      onSuspend()
     },
     tier: () => tier,
     timeline: () => tl,
@@ -863,6 +967,10 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
         time: +video.currentTime.toFixed(3),
         paused: video.paused,
         ready: video.readyState,
+        media,
+        blocked: media === 'blocked',
+        live: media === 'live',
+        unlockedBy,
         duration: validDuration() ? +video.duration.toFixed(3) : null,
       }
     },
@@ -871,10 +979,12 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       destroyed = true
       stop()
       disarmActivation()
+      video.setAttribute('data-scene-media', '')
       cancelAnimationFrame(tierFrame)
       query?.removeEventListener('change', syncSource)
       network?.removeEventListener?.('change', syncSource)
       video.removeEventListener('loadedmetadata', onMetadata)
+      video.removeEventListener('suspend', onSuspend)
       video.removeEventListener('ended', onEnded)
       document.removeEventListener('visibilitychange', onVisibility)
     },

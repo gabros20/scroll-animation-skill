@@ -5,7 +5,8 @@
  *   <div data-scene-root>                        the range wrapper: the scene measures THIS, never the pin
  *     <div data-scene-pin>                       sticky, 100lvh (data-scene-pin="gsap": ScrollTrigger pins it)
  *       <div data-scene-gutter></div>            optional backdrop ramp, painted by media/camera.ts
- *       <video data-scene-media …></video>       the pinned media
+ *       <video data-scene-media …></video>       the pinned media, and its poster right after it:
+ *       <img data-scene-poster …>                in the video's box, lifted on data-scene-media="live"
  *       <img data-scene-poster …>                or a real-time canvas (render-bridge.ts): its poster first,
  *       <div data-scene-canvas>…</div>           then the canvas slot over it (SceneCanvas, frameloop="never");
  *                                                with acts stacked in the pin, both inside <div data-scene-still>
@@ -111,6 +112,33 @@
   }
 }
 
+/* A video's poster, its own image right after it (ScrubVideo, both engines): the video's box and camera, so it covers
+   exactly what the video will show, and painted over it by source order. The controller writes
+   data-scene-media="live" on the video only once it presents the frame the scroll wants, so the poster lifts onto
+   that frame, never onto a blank or frame 0 (a `poster` attribute vanishes on the first play(), before any frame).
+   Lifting fades 120 ms: between identical frames a fade is invisible, between a head poster and a frame mid-scene it
+   is the honest join. Keep the video itself visible: hidden, WebKit may stop presenting its frames.
+   data-scene-media="blocked" means the play is refused (iOS Low Power Mode): style a hint on it if the page wants one. */
+[data-scene-media] + [data-scene-poster] {
+  inset: auto;
+  top: 0;
+  left: 0;
+  width: var(--scene-frame-w, 100%);
+  height: var(--scene-frame-h, 100%);
+  transform: translateZ(0);
+  transform-origin: top left;
+}
+
+[data-scene-media='live'] + [data-scene-poster] {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-scene-media] + [data-scene-poster] {
+    transition: opacity 0.12s linear;
+  }
+}
+
 /* Acts stacked in the pin take clicks again; inactive ones are inert, which removes them from hit testing too. */
 [data-scene-pin] [data-scene-act] {
   pointer-events: auto;
@@ -183,6 +211,12 @@
     position: static !important;
     width: 100% !important;
     height: auto !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  /* A video with its own poster prints as the poster alone. */
+  [data-scene-media]:has(+ [data-scene-poster]) {
+    display: none !important;
   }
   [data-scene-gutter],
   [data-scene-spacer],

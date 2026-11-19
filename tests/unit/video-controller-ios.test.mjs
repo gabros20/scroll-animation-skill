@@ -287,3 +287,28 @@ test('a tap while the scene sleeps fetches nothing; the retry waits for the scen
   assert.equal(video.plays, 2, 'running again: the next activation retries')
   controller.destroy()
 })
+
+test('a tap before the scene runs unlocks it with load(), on the event that carries the gesture, never the pointerup', async () => {
+  const video = fakeVideo()
+  let loads = 0
+  video.load = () => loads++
+  video.play = () => {
+    video.plays++
+    return Promise.reject(Object.assign(new Error('refused'), { name: 'NotAllowedError' }))
+  }
+  const controller = createVideoController(video, { fps: 30, src: '/clip.mp4' })
+  crank(1)
+  Object.assign(video, { readyState: 1, networkState: 1, duration: 8 })
+  video.dispatch('loadedmetadata')
+  controller.setMode('scrub')
+  controller.setBand(0.5)
+  // Never awake: the reader taps somewhere above the scene.
+  win.dispatch('pointerup')
+  assert.equal(loads, 0, 'not on the pointerup, which no browser counts as the gesture')
+  win.dispatch('click')
+  assert.equal(loads, 1, 'load() inside the click: WebKit lifts the gesture restriction for the element')
+  win.dispatch('touchend')
+  assert.equal(loads, 1, 'once')
+  assert.equal(controller.debug().unlockedBy, 'load')
+  controller.destroy()
+})

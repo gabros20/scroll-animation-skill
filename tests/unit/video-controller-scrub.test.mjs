@@ -27,6 +27,10 @@ function listeners() {
 }
 
 globalThis.window = globalThis
+// The window's listeners: the controller arms its activation retry from creation.
+const win = listeners()
+globalThis.addEventListener = win.addEventListener
+globalThis.removeEventListener = win.removeEventListener
 globalThis.document = { visibilityState: 'visible', documentElement: { dataset: {} }, ...listeners() }
 globalThis.location = { search: '' }
 globalThis.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} })

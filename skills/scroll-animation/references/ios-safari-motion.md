@@ -67,9 +67,14 @@ hidden tab stops the tick until its return rehydrates the scene.
 
 Two related WebKit behaviours: Safari silently drops a `play()` issued while a seek is resolving
 (the controller waits for `seeked`, with a 150ms fallback), and iOS loads nothing past the metadata
-of a video that has never played, so its seeks paint nothing and clear the poster. The controller
-primes a scrub video once (a muted `play()`, paused at once) and seeks only once a frame exists
-(`video.md` §11). `scene.css` gives every scene video a `translateZ(0)` anchor,
+of a video that has never played, so its seeks paint nothing and clear a `poster` attribute. The
+controller primes a scrub video (a muted `play()`, paused at once) behind a poster image of its own
+(`video.md` §9, §11).
+
+**Low Power Mode refuses video playback without a gesture**, muted or not, and throttles rendering
+to about 30 fps. A scrubbed video therefore holds its poster until the reader taps (the block makes
+any tap count, `video.md` §11); canvas paths (`frame-sequence`) are not gated and keep scrubbing.
+Test every video scene with the mode on: it is a device setting no emulator has. `scene.css` gives every scene video a `translateZ(0)` anchor,
 and the camera's `translate3d(…)` keeps it (`video.md` §6): it is what keeps the layer from being
 demoted in the first place.
 

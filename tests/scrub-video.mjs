@@ -195,7 +195,9 @@ function helpersInit(fps) {
     video,
     ready: () => !!root()?.getAttribute('data-scene-state') && (video()?.readyState ?? 0) >= 2,
     /** The scene is up without any video data: its state is written and the controller has set the poster. */
-    painted: () => !!root()?.getAttribute('data-scene-state') && !!video()?.getAttribute('poster'),
+    painted: () =>
+      !!root()?.getAttribute('data-scene-state') &&
+      !!(root()?.querySelector('[data-scene-poster]')?.getAttribute('src') || video()?.getAttribute('poster')),
     still() {
       const v = video()
       return { mode: root().getAttribute('data-scene-state'), src: v.getAttribute('src'), readyState: v.readyState, paused: v.paused }
@@ -293,10 +295,12 @@ const withinBudget = (ran) => ran >= BUDGET_MS - SLACK_MS / 3 && ran <= BUDGET_M
  * iOS in Low Power Mode, modelled strictly: play() is granted only when called synchronously inside a trusted
  * gesture event (a tap's touchend or click, a key), never from a timer, a promise or a pointerup; a refusal settles
  * late (100 ms here; on the device some never did), after the rest of the tap's events; a never-played video loads
- * metadata only (`readyState` held at 1); and `load()` (iOS dropping a sleeping clip's data) forgets the unlock, so
- * the clip needs a fresh gesture.
+ * metadata only (`readyState` held at 1); a play() or a load() inside the gesture unlocks the element (WebKit's
+ * removeBehaviorRestrictionsAfterFirstUserGesture). Whether a later load() outside a gesture (iOS dropping a sleeping
+ * clip's data) forgets the unlock, WebKit's source doesn't say it does: `loadForgets` runs both, and the block must
+ * work either way.
  */
-function lowPowerInit() {
+function lowPowerInit(loadForgets) {
   window.__plays = { refused: 0, allowed: 0 }
   const unlocked = new WeakSet()
   const gesture = () => {
@@ -321,11 +325,102 @@ function lowPowerInit() {
     unlocked.add(this)
     return play.apply(this, args)
   }
+  // Nothing is presented before the unlock (desktop engines decode a first frame unasked; iOS doesn't): frame callbacks
+  // wait for it.
+  const rvfc = HTMLVideoElement.prototype.requestVideoFrameCallback
+  if (rvfc) {
+    HTMLVideoElement.prototype.requestVideoFrameCallback = function (callback) {
+      const el = this
+      const wrapped = (now, meta) => (unlocked.has(el) ? callback(now, meta) : rvfc.call(el, wrapped))
+      return rvfc.call(this, wrapped)
+    }
+  }
   const load = HTMLMediaElement.prototype.load
   HTMLMediaElement.prototype.load = function (...args) {
-    unlocked.delete(this)
+    if (gesture()) unlocked.add(this)
+    else if (loadForgets) unlocked.delete(this)
     return load.apply(this, args)
   }
+}
+
+/**
+ * Samples every animation frame from now: the poster's opacity, the video's last presented frame (its frame
+ * callbacks) and the band's frame. `window.__reveal.stop()` returns the rows.
+ */
+function startRevealSampler(fps) {
+  const root = document.querySelector('[data-scene-root]')
+  const video = root.querySelector('video')
+  const poster = root.querySelector('[data-scene-poster]')
+  const rows = []
+  const presented = []
+  let last = null
+  let on = true
+  const onFrame = (_now, meta) => {
+    last = Math.floor(meta.mediaTime * fps + 1e-6)
+    presented.push(last)
+    if (on) video.requestVideoFrameCallback(onFrame)
+  }
+  video.requestVideoFrameCallback(onFrame)
+  const step = () => {
+    if (!on) return
+    // The frame on screen: the last presented one where frame callbacks fire for a paused seek, else the settled
+    // playhead (readyState goes through the model's gate).
+    const settled = video.readyState >= 2 && !video.seeking ? Math.floor(video.currentTime * fps + 1e-6) : null
+    rows.push({ poster: Number(getComputedStyle(poster).opacity), presented: presented.length ? last : settled, want: Math.round(window.__t.expected().frame), media: video.getAttribute('data-scene-media') })
+    requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+  window.__reveal = {
+    stop() {
+      on = false
+      return { rows, presented }
+    }
+  }
+}
+
+/** One Low Power run (see lowPowerInit), with a later load() forgetting the unlock or keeping it. */
+async function lowPowerRun(t, loadForgets) {
+  // No frame until a gesture's play, so the page is ready once the scene is painted, not once video data is in.
+  const { page } = await t.open([[lowPowerInit, loadForgets]], { holds: true, painted: true })
+  const modes = []
+  for (const p of [0, 0.5, 1]) {
+    await page.evaluate((at) => window.__t.to(at), p)
+    await page.waitForTimeout(400)
+    modes.push(await page.evaluate(() => window.__t.read().mode))
+  }
+  const readyState = () => page.evaluate(() => window.__t.video().readyState)
+  const settle = () => page.waitForFunction(() => window.__t.video().readyState >= 2, null, { timeout: 4000 }).catch(() => {})
+  const before = await readyState()
+  await page.evaluate(() => window.__t.to(0.5))
+  await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
+  await settle()
+  await page.waitForTimeout(500)
+  const after = await page.evaluate(() => ({ ...window.__t.read(), shown: window.__t.shown(), want: window.__t.expected(), readyState: window.__t.video().readyState }))
+  // The clip's data dropped (as iOS does to a sleeping clip). If the unlock survived, it recovers on its own; if not,
+  // the poster covers again and the next click unlocks it.
+  await page.evaluate(() => window.__t.video().load())
+  await page.waitForTimeout(800)
+  const dropped = await readyState()
+  if (!loadForgets) await settle()
+  const recovered = await readyState()
+  if (loadForgets) {
+    await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
+    await settle()
+  }
+  const again = await readyState()
+  const plays = await page.evaluate(() => window.__plays)
+  return [
+    [
+      `Low Power Mode (load() ${loadForgets ? 'forgets' : 'keeps'} the unlock): the scene runs on the poster with play() refused, and a click unlocks the clip where the reader is`,
+      modes.join() === 'head,scrub,tail' && before <= 1 && after.readyState >= 2 && after.mode === 'scrub' && Math.abs(after.shown - after.want.frame) <= 1,
+      `modes ${modes.join(' > ')} · readyState ${before} before the click · after ${JSON.stringify(after)} · plays ${JSON.stringify(plays)}`
+    ],
+    [
+      `Low Power Mode (load() ${loadForgets ? 'forgets' : 'keeps'} the unlock): a clip whose data was dropped is primed again, and the next click unlocks it if it has to`,
+      loadForgets ? dropped <= 1 && again >= 2 : recovered >= 2,
+      `readyState ${dropped} after the drop, ${recovered} with no click, ${again} at the end · plays ${JSON.stringify(plays)}`
+    ]
+  ]
 }
 
 const CHECKS = {
@@ -334,40 +429,52 @@ const CHECKS = {
   // clip that lost its data was never primed again. The scene runs on the poster, a click unlocks the clip where the
   // reader is, and after the clip's data is dropped the next click unlocks it again.
   async lowPower(t) {
-    // No frame until a gesture's play, so the page is ready once the scene is painted, not once video data is in.
-    const { page } = await t.open([[lowPowerInit]], { holds: true, painted: true })
-    const modes = []
-    for (const p of [0, 0.5, 1]) {
-      await page.evaluate((at) => window.__t.to(at), p)
-      await page.waitForTimeout(400)
-      modes.push(await page.evaluate(() => window.__t.read().mode))
-    }
-    const readyState = () => page.evaluate(() => window.__t.video().readyState)
-    const settle = () => page.waitForFunction(() => window.__t.video().readyState >= 2, null, { timeout: 4000 }).catch(() => {})
-    const before = await readyState()
+    const out = []
+    for (const loadForgets of [false, true]) out.push(...(await lowPowerRun(t, loadForgets)))
+    return out
+  },
+
+  // The tap's reveal: the poster stays over the video until it presents the band's frame, so a reader never sees a
+  // blank or frame 0 between them, whatever the clip decodes first.
+  async flashFree(t) {
+    const { page } = await t.open([[lowPowerInit, false]], { holds: true, painted: true })
     await page.evaluate(() => window.__t.to(0.5))
+    await page.waitForTimeout(600)
+    await page.evaluate(startRevealSampler, FPS)
     await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
-    await settle()
-    await page.waitForTimeout(500)
-    const after = await page.evaluate(() => ({ ...window.__t.read(), shown: window.__t.shown(), want: window.__t.expected(), readyState: window.__t.video().readyState }))
-    // The clip's data dropped (as iOS does to a sleeping clip): the poster again, and a fresh gesture needed.
-    await page.evaluate(() => window.__t.video().load())
-    await page.waitForTimeout(800)
-    const dropped = await readyState()
-    await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
-    await settle()
-    const again = await readyState()
-    const plays = await page.evaluate(() => window.__plays)
+    await page.waitForTimeout(1500)
+    const { rows, presented } = await page.evaluate(() => window.__reveal.stop())
+    const uncovered = rows.filter((r) => r.poster < 0.999)
+    const wrong = uncovered.filter((r) => r.presented === null || Math.abs(r.presented - r.want) > 1)
+    const end = rows[rows.length - 1]
     return [
       [
-        'Low Power Mode: the scene runs on the poster with play() refused, and a click unlocks the clip where the reader is',
-        modes.join() === 'head,scrub,tail' && before <= 1 && after.readyState >= 2 && after.mode === 'scrub' && Math.abs(after.shown - after.want.frame) <= 1,
-        `modes ${modes.join(' > ')} · readyState ${before} before the click · after ${JSON.stringify(after)} · plays ${JSON.stringify(plays)}`
-      ],
+        'the reveal: the poster covers until the video presents the band frame, never a blank or frame 0 in between',
+        uncovered.length > 0 && wrong.length === 0 && end.poster === 0 && end.media === 'live',
+        `${rows.length} frames, ${uncovered.length} uncovered, ${wrong.length} wrong ${JSON.stringify(wrong.slice(0, 3))} · presented ${[...new Set(presented)].join(',')} · end ${JSON.stringify(end)}`
+      ]
+    ]
+  },
+
+  // A tap anywhere before the scene runs (here: with the scene asleep, after its load-time prime was refused) unlocks
+  // it through load() inside the gesture, so it plays when the reader arrives with no second tap.
+  async earlierTap(t) {
+    const { page } = await t.open([[lowPowerInit, false]], { holds: true, painted: true })
+    await page.waitForTimeout(400)
+    const blocked = await page.evaluate(() => window.__t.video().getAttribute('data-scene-media'))
+    await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }))
+    await page.waitForTimeout(800)
+    await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
+    await page.waitForTimeout(300)
+    await page.evaluate(() => window.__t.to(0.5))
+    await page.waitForFunction(() => window.__t.video().readyState >= 2, null, { timeout: 5000 }).catch(() => {})
+    await page.waitForTimeout(600)
+    const after = await page.evaluate(() => ({ ...window.__t.read(), readyState: window.__t.video().readyState, media: window.__t.video().getAttribute('data-scene-media'), plays: { ...window.__plays } }))
+    return [
       [
-        'Low Power Mode: a clip whose data was dropped is primed again and the next click unlocks it',
-        dropped <= 1 && again >= 2,
-        `readyState ${dropped} after the drop, ${again} after the click · plays ${JSON.stringify(plays)}`
+        'a tap away from the scene, before it runs, unlocks it: it plays on arrival with no second tap',
+        blocked === 'blocked' && after.readyState >= 2 && after.media === 'live',
+        `before: data-scene-media=${blocked} · on arrival ${JSON.stringify(after)}`
       ]
     ]
   },

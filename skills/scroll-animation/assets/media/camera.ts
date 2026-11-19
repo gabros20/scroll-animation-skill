@@ -137,7 +137,7 @@ export interface CameraWriter {
   reset(): void
 }
 
-export function createCameraWriter(media: HTMLElement): CameraWriter {
+export function createCameraWriter(...media: HTMLElement[]): CameraWriter {
   let last = ''
   return {
     write(frame) {
@@ -145,7 +145,8 @@ export function createCameraWriter(media: HTMLElement): CameraWriter {
       const next = cameraTransform(frame)
       if (next === last) return
       last = next
-      media.style.transform = next
+      // The video and the poster over it share one box and one transform, so the cover frames what the video will.
+      for (const el of media) el.style.transform = next
     },
     reset() {
       last = ''

@@ -23,6 +23,10 @@
  *   the source is picked, the size follows the source's tier (Save-Data can put the mobile crop on a desktop).
  * - `backdrop` paints a gradient behind the video that follows the playhead: a backstop for the paint before the
  *   camera's first frame. Sample your own clip's top and bottom edges.
+ * - The poster is its own image over the video (`<img data-scene-poster>`, server-rendered: the LCP element), in the
+ *   video's box and camera. It lifts only once the video presents the frame the scroll wants
+ *   (`data-scene-media="live"` on the video), so the reveal never shows a blank or frame 0. While iOS refuses the
+ *   play (Low Power Mode) the video reads `data-scene-media="blocked"`: style a hint on it; the first tap unlocks it.
  * - Reduced motion (live) fetches no video: the poster, in the head shot, is the scene, and css/scene.css releases
  *   the pin. Lifted mid-visit, the source loads and the scene runs from where the reader is.
  * - `?motion-debug` (or `html[data-motion-debug]`) exposes `window.__scrub()`: which layer of a frozen scene died.
@@ -121,6 +125,7 @@ export function ScrubVideo({
 }: ScrubVideoProps) {
   const sceneRef = useRef<PinnedSceneHandle>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const posterRef = useRef<HTMLImageElement>(null)
   const gutterRef = useRef<HTMLDivElement>(null)
   const controllerRef = useRef<VideoController | null>(null)
   const cameraRef = useRef<CameraWriter | null>(null)
@@ -149,12 +154,16 @@ export function ScrubVideo({
     const video = videoRef.current
     if (!video) return
     const size = config ? cameraTier(config, tier).frameSize : null
-    if (size) {
-      video.style.setProperty('--scene-frame-w', `${size.w}svh`)
-      video.style.setProperty('--scene-frame-h', `${size.h}svh`)
-    } else {
-      video.style.removeProperty('--scene-frame-w')
-      video.style.removeProperty('--scene-frame-h')
+    // The poster shares the video's box, so it covers exactly what the video will show.
+    for (const el of [video, posterRef.current]) {
+      if (!el) continue
+      if (size) {
+        el.style.setProperty('--scene-frame-w', `${size.w}svh`)
+        el.style.setProperty('--scene-frame-h', `${size.h}svh`)
+      } else {
+        el.style.removeProperty('--scene-frame-w')
+        el.style.removeProperty('--scene-frame-h')
+      }
     }
   }
 
@@ -164,8 +173,10 @@ export function ScrubVideo({
   useIsomorphicLayoutEffect(() => {
     const video = videoRef.current
     if (!video) return
-    cameraRef.current = createCameraWriter(video)
+    const posterImage = posterRef.current
+    cameraRef.current = posterImage ? createCameraWriter(video, posterImage) : createCameraWriter(video)
     const controller = createVideoController(video, {
+      posterElement: posterImage,
       fps,
       glide,
       loopSeconds,
@@ -243,7 +254,6 @@ export function ScrubVideo({
             ref={videoRef}
             data-scene-media=""
             data-scene-frame={frameCss ? scopeId : undefined}
-            poster={poster}
             muted
             playsInline
             preload="none"
@@ -252,6 +262,17 @@ export function ScrubVideo({
             aria-hidden="true"
             className={videoClassName}
           />
+          {poster ? (
+            <img
+              ref={posterRef}
+              data-scene-poster=""
+              data-scene-frame={frameCss ? scopeId : undefined}
+              src={poster}
+              alt=""
+              aria-hidden="true"
+              className={videoClassName}
+            />
+          ) : null}
           {pinned}
         </>
       }

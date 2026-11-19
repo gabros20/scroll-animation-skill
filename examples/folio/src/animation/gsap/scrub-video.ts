@@ -8,7 +8,8 @@
  *       <div data-scene-gutter aria-hidden="true"></div>                        (optional: a backdrop ramp)
  *       <video data-scene-media muted playsinline preload="none" disablepictureinpicture disableremoteplayback
  *              aria-hidden="true" data-src="orbit-1920.mp4" data-mobile-src="orbit-960.mp4"
- *              poster="orbit.avif" data-mobile-poster="orbit-mobile.avif"></video>
+ *              data-mobile-poster="orbit-mobile.avif"></video>
+ *       <img data-scene-poster src="orbit.avif" alt="" aria-hidden="true">          the cover, right after the video
  *     </div>
  *     <div data-scene-content>…acts…</div>
  *   </div>
@@ -23,6 +24,10 @@
  * - A head or tail loop runs at most `loopSeconds` (5, WCAG 2.2.2) per visit to its region, then holds a frame of it.
  * - `camera` pans and zooms a subject across the band (frameSize becomes --scene-frame-w/h on the video, per tier);
  *   omit it for a plain covering frame. `backdrop` paints [data-scene-gutter] from the playhead.
+ * - The poster is an image over the video, in its box and camera, lifted only once the video presents the frame the
+ *   scroll wants (`data-scene-media="live"` on the video): no blank, no frame 0. Markup with only a `poster`
+ *   attribute gets the image created from it (and both put back by destroy()). While iOS refuses the play (Low Power
+ *   Mode) the video reads `data-scene-media="blocked"`; the first tap anywhere unlocks it.
  * - Reduced motion (live, through the scene's matchMedia build) fetches no video: the poster, in the head shot, is
  *   the scene. Lifted mid-visit, the source loads and the scene runs from where the reader is.
  */
@@ -79,12 +84,28 @@ export function scrubVideo(root: HTMLElement, options: ScrubVideoOptions = {}): 
   const gutter = root.querySelector<HTMLElement>('[data-scene-gutter]')
   const { camera, backdrop } = options
 
+  // The poster image over the video: the page's own, or one made from the poster attribute (or option).
+  const posterAttribute = video.getAttribute('poster')
+  const sibling = video.nextElementSibling
+  let posterImage = sibling instanceof HTMLImageElement && sibling.hasAttribute('data-scene-poster') ? sibling : null
+  const posterUrl = options.poster ?? posterAttribute ?? posterImage?.getAttribute('src') ?? undefined
+  const madePoster = !posterImage && !!posterUrl
+  if (!posterImage && posterUrl) {
+    posterImage = document.createElement('img')
+    posterImage.setAttribute('data-scene-poster', '')
+    posterImage.alt = ''
+    posterImage.setAttribute('aria-hidden', 'true')
+    posterImage.src = posterUrl
+    video.after(posterImage)
+  }
+  const boxes = posterImage ? [video, posterImage] : [video]
+
   // What the page wrote itself on the video and the gutter, put back by destroy().
   const authored = [
-    ...['transform', '--scene-frame-w', '--scene-frame-h'].map((property) => [video, property] as const),
+    ...boxes.flatMap((box) => ['transform', '--scene-frame-w', '--scene-frame-h'].map((property) => [box, property] as const)),
     ...(gutter ? ['--scene-g-top', '--scene-g-bottom'].map((property) => [gutter, property] as const) : []),
   ].map(([el, property]) => ({ el, property, value: el.style.getPropertyValue(property), styled: el.hasAttribute('style') }))
-  const cameraWriter = camera ? createCameraWriter(video) : null
+  const cameraWriter = camera ? createCameraWriter(...boxes) : null
   const backdropWriter = gutter && backdrop?.length ? createBackdropWriter(gutter, backdrop) : null
   let geometry: FrameGeometry = { pw: 0, ph: 0, bw: 0, bh: 0 }
   let scene: PinnedSceneHandle | null = null
@@ -100,18 +121,20 @@ export function scrubVideo(root: HTMLElement, options: ScrubVideoOptions = {}): 
   /** The base size per tier, as the custom properties css/scene.css reads. */
   const sizeFrame = (tier: MediaTier) => {
     const size = camera ? cameraTier(camera, tier).frameSize : null
-    if (size) {
-      video.style.setProperty('--scene-frame-w', `${size.w}svh`)
-      video.style.setProperty('--scene-frame-h', `${size.h}svh`)
-    } else {
-      video.style.removeProperty('--scene-frame-w')
-      video.style.removeProperty('--scene-frame-h')
+    for (const box of boxes) {
+      if (size) {
+        box.style.setProperty('--scene-frame-w', `${size.w}svh`)
+        box.style.setProperty('--scene-frame-h', `${size.h}svh`)
+      } else {
+        box.style.removeProperty('--scene-frame-w')
+        box.style.removeProperty('--scene-frame-h')
+      }
     }
   }
   const sources = {
     src: options.src ?? video.dataset.src,
     mobileSrc: options.mobileSrc ?? video.dataset.mobileSrc,
-    poster: options.poster ?? video.getAttribute('poster') ?? undefined,
+    poster: posterUrl,
     mobilePoster: options.mobilePoster ?? video.dataset.mobilePoster,
   }
   // The tier the controller is about to pick, so the first paint already has its size.
@@ -124,6 +147,7 @@ export function scrubVideo(root: HTMLElement, options: ScrubVideoOptions = {}): 
     headLoop: options.headLoop ?? null,
     tailLoop: options.tailLoop ?? null,
     ...sources,
+    posterElement: posterImage,
     onRehydrate: () => scene?.rehydrate('metadata'),
     onPlayhead: (band) => backdropWriter?.paint(band),
     onTier: (tier) => {
@@ -186,6 +210,9 @@ export function scrubVideo(root: HTMLElement, options: ScrubVideoOptions = {}): 
         else el.style.removeProperty(property)
         if (!styled && el.getAttribute('style') === '') el.removeAttribute('style')
       }
+      // The markup as the page wrote it: the made image gone, the poster attribute back.
+      if (madePoster) posterImage?.remove()
+      if (posterAttribute !== null) video.setAttribute('poster', posterAttribute)
     },
   })
 }

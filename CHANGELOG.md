@@ -50,6 +50,11 @@ the newest release heading below, and the release tag.
   band seek the element still reports `seeking` after 700 ms (`STUCK_SEEK_MS`) is sent again instead
   of freezing the frame for the visit; a source that has shown a frame is never primed mid-seek (it
   played a held tail to the clip's end: the `holds` flake, 3 of 6 runs in Chrome, now 16 of 16).
+- ScrubVideo (both engines): the poster is its own image (`<img data-scene-poster>`, in the video's box and camera),
+  lifted only once the video presents the scroll's frame (`data-scene-media="live"` on the video), so the unlock no
+  longer flashes a blank and frame 0; a refused play reads `data-scene-media="blocked"`; the prime runs at the warm
+  margin where the network idles without a frame; and a tap anywhere before the scene runs unlocks it with `load()`
+  inside the gesture. Under iOS Low Power Mode a video still can't move before a tap: WebKit refuses it by design.
 - `verify-motion.mjs`: the entry slide is sampled ¾ visible, a `preload="none"` video never asked to
   load no longer fails the decode check, and a clip frozen through the scrub steps fails.
 

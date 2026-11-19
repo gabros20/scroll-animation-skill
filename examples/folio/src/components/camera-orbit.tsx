@@ -91,18 +91,23 @@ export function CameraOrbit({ media }: { media: OrbitMedia | null }) {
           className="absolute inset-x-0 top-[calc(var(--header-h)+2.5rem)] h-[56svh] motion-reduce:h-[calc(100svh-var(--header-h)-2.5rem)] lg:top-(--header-h) lg:bottom-0 lg:h-auto print:static print:h-auto"
         >
           {media ? (
-            <video
-              data-scene-media=""
-              data-src={media.src}
-              data-mobile-src={media.mobileSrc}
-              poster={media.poster}
-              muted
-              playsInline
-              preload="none"
-              disablePictureInPicture
-              disableRemotePlayback
-              aria-hidden="true"
-            />
+            <>
+              <video
+                data-scene-media=""
+                data-src={media.src}
+                data-mobile-src={media.mobileSrc}
+                muted
+                playsInline
+                preload="none"
+                disablePictureInPicture
+                disableRemotePlayback
+                aria-hidden="true"
+              />
+              {/* The poster as its own image over the video: scrubVideo lifts
+                  it only once the video shows the scroll's frame. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img data-scene-poster="" src={media.poster} alt="" aria-hidden="true" />
+            </>
           ) : (
             <div className="media-placeholder h-full w-full" />
           )}
