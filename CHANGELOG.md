@@ -60,6 +60,13 @@ the newest release heading below, and the release tag.
   re-prime, a source still claiming data is primed once to prove it, a refusal reads `blocked` with the tap retry
   re-armed, and the retry runs until the video is live rather than until any frame exists. `debug()` adds `vis`,
   `wakes` and `lost`.
+- ScrubVideo after a short lock (iPhone, a 1-2 s lock: the picture stopped following the scroll while `readyState`,
+  `currentTime` and frame callbacks all read healthy). WebKit keeps the layer on its old frame until the element
+  plays, and no page-visible signal reports it, so every return from hidden now runs a kick behind the poster: two
+  frames, `play()`, the `playing` event as proof, `pause()`, a seek to the band's frame, the lift when it lands plus a
+  frame. With no `playing` in 300 ms (`KICK_PLAYING_MS`) it retries once, then `load()` and a fresh prime, then
+  `blocked` with the tap armed. It never clones the element and never plays mid-scrub. The load recovery's counter is
+  now `loads`, and `debug()` adds `kicks`, `kickOk`, `kickFail` and `kicking`.
 - `verify-motion.mjs`: the entry slide is sampled ¾ visible, a `preload="none"` video never asked to
   load no longer fails the decode check, and a clip frozen through the scrub steps fails.
 

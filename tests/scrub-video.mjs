@@ -301,8 +301,18 @@ const withinBudget = (ran) => ran >= BUDGET_MS - SLACK_MS / 3 && ran <= BUDGET_M
  * work either way.
  */
 function lowPowerInit(loadForgets) {
-  window.__plays = { refused: 0, allowed: 0 }
+  window.__plays = { refused: 0, allowed: 0, dropped: 0, calls: 0 }
   const unlocked = new WeakSet()
+  // A short lock (WebKit, read in its source; see references/video.md): the data stays, seeks land, currentTime and
+  // frame callbacks follow them, and the layer on screen keeps the frame it had until the element plays (a `playing`
+  // event) or reloads. Page code can't see it; only the reveal sampler reads it, through `__layer`.
+  const stale = new WeakMap()
+  window.__layer = (el) => (stale.has(el) ? stale.get(el) : null)
+  document.addEventListener('playing', (event) => stale.delete(event.target), true)
+  // The lock's media interruption ending after the wake: a play() issued before it ends is dropped, never settling
+  // and never playing. `interruption` is 'frame' (it ends one animation frame after the return) or 'first' (the
+  // first play() after the return is dropped, whenever it comes).
+  let interrupted = null
   const gesture = () => {
     const e = window.event
     return !!e && e.isTrusted && (e.type === 'touchend' || e.type === 'click' || e.type === 'keydown')
@@ -317,6 +327,12 @@ function lowPowerInit(loadForgets) {
   })
   const play = HTMLMediaElement.prototype.play
   HTMLMediaElement.prototype.play = function (...args) {
+    window.__plays.calls++
+    if (interrupted) {
+      window.__plays.dropped++
+      if (interrupted === 'first') interrupted = null
+      return new Promise(() => {})
+    }
     if (!unlocked.has(this) && !gesture()) {
       window.__plays.refused++
       return new Promise((resolve, reject) => setTimeout(() => reject(new DOMException('refused', 'NotAllowedError')), 100))
@@ -337,6 +353,7 @@ function lowPowerInit(loadForgets) {
   }
   const load = HTMLMediaElement.prototype.load
   HTMLMediaElement.prototype.load = function (...args) {
+    stale.delete(this)
     if (gesture()) unlocked.add(this)
     else if (loadForgets) unlocked.delete(this)
     return load.apply(this, args)
@@ -373,19 +390,26 @@ function lowPowerInit(loadForgets) {
     if (hung === this) hung = null
     return playGate.apply(this, args)
   }
-  window.__lock = ({ evict = true, hang = false } = {}) => {
+  // `staleLayer`: the short lock, data kept and the layer frozen on the frame showing; `forget` drops the unlock too.
+  let interruption = null
+  window.__lock = ({ evict = true, hang = false, staleLayer = false, forget = false, interrupt = null } = {}) => {
     const v = document.querySelector('[data-scene-root] video')
     hidden = true
     document.dispatchEvent(new Event('visibilitychange'))
     v.pause()
     if (evict) load.call(v)
     if (evict && loadForgets) unlocked.delete(v)
+    if (forget) unlocked.delete(v)
+    if (staleLayer) stale.set(v, Math.floor(v.currentTime * 30 + 1e-6))
     if (hang) hung = v
+    interruption = interrupt
   }
   window.__wake = () => {
+    interrupted = interruption
     hidden = false
     document.dispatchEvent(new Event('visibilitychange'))
     window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }))
+    if (interrupted === 'frame') requestAnimationFrame(() => (interrupted = null))
   }
 }
 
@@ -412,7 +436,9 @@ function startRevealSampler(fps) {
     // The frame on screen: the last presented one where frame callbacks fire for a paused seek, else the settled
     // playhead (readyState goes through the model's gate).
     const settled = video.readyState >= 2 && !video.seeking ? Math.floor(video.currentTime * fps + 1e-6) : null
-    rows.push({ poster: Number(getComputedStyle(poster).opacity), presented: presented.length ? last : settled, want: Math.round(window.__t.expected().frame), media: video.getAttribute('data-scene-media') })
+    // A frozen layer (the Low Power model's short lock) shows its old frame whatever the element reports.
+    const frozen = window.__layer?.(video) ?? null
+    rows.push({ poster: Number(getComputedStyle(poster).opacity), presented: frozen ?? (presented.length ? last : settled), want: Math.round(window.__t.expected().frame), media: video.getAttribute('data-scene-media') })
     requestAnimationFrame(step)
   }
   requestAnimationFrame(step)
@@ -522,6 +548,94 @@ const CHECKS = {
       await page.context().close()
     }
     return out
+  },
+
+  // Found on the device pass (iPhone, Low Power Mode, after 0f6fe7c): a 1-2 s lock, and scrolling no longer moved the
+  // picture while the readout said healthy (readyState 4, currentTime following the scroll, frame callbacks firing).
+  // WebKit leaves the layer stale until the element plays, and a play() issued while the lock's interruption is still
+  // ending is dropped. Modelled with the data kept, the layer frozen and that interruption: the scene kicks behind
+  // the poster on the return, never uncovers the frozen frame, scrolls on with no play(), and with the unlock lost
+  // reads blocked until the next tap.
+  async staleLayer(t) {
+    const out = []
+    const cases = [
+      { interrupt: 'frame', forget: false, says: 'the interruption ends a frame after the return: one kick' },
+      { interrupt: 'first', forget: false, says: 'the first play after the return is dropped: the retry recovers' },
+      { interrupt: null, forget: true, says: 'the unlock lost: blocked, then the next tap' }
+    ]
+    for (const c of cases) {
+      const { page } = await t.open([[lowPowerInit, false]], { holds: true, painted: true })
+      await page.evaluate(() => window.__t.to(0.5))
+      await page.waitForTimeout(400)
+      await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
+      await page.waitForFunction(() => window.__t.video().getAttribute('data-scene-media') === 'live', null, { timeout: 5000 }).catch(() => {})
+      const before = await page.evaluate(() => window.__t.video().getAttribute('data-scene-media'))
+      await page.waitForTimeout(400) // the first reveal's fade is over
+      await page.evaluate(startRevealSampler, FPS)
+      await page.evaluate(({ interrupt, forget }) => window.__lock({ evict: false, staleLayer: true, interrupt, forget }), c)
+      await page.waitForTimeout(1200)
+      await page.evaluate(() => window.__wake())
+      await page.evaluate(() => window.__t.to(0.56))
+      await page.waitForTimeout(1500)
+      const woke = await page.evaluate(() => window.__t.video().getAttribute('data-scene-media'))
+      if (c.forget) {
+        await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
+        await page.waitForTimeout(1500)
+      }
+      // Before scrolling on: past this, the picture trails a moving band by a seek, which is the scrub, not a flash.
+      const { rows } = await page.evaluate(() => window.__reveal.stop())
+      const end = rows[rows.length - 1]
+      const wrong = rows.filter((r) => r.poster < 0.999 && (r.presented === null || Math.abs(r.presented - r.want) > 1))
+      // Then a scrub: seeks only, and the picture on screen follows it.
+      const calls = await page.evaluate(() => window.__plays.calls)
+      for (const p of [0.6, 0.64, 0.68, 0.72]) {
+        await page.evaluate((at) => window.__t.to(at), p)
+        await page.waitForTimeout(250)
+      }
+      await page.waitForTimeout(400)
+      const after = await page.evaluate(() => {
+        const v = window.__t.video()
+        return { calls: window.__plays.calls, plays: { ...window.__plays }, layer: window.__layer(v) ?? window.__t.shown(), want: Math.round(window.__t.expected().frame), media: v.getAttribute('data-scene-media') }
+      })
+      out.push([
+        `a short lock, the layer stale until a play (${c.says}): ${c.forget ? 'blocked until the tap' : 'the kick recovers it behind the poster'}, no frozen frame uncovered, no play() mid-scrub`,
+        before === 'live' &&
+          (c.forget ? woke === 'blocked' : woke === 'live') &&
+          end.media === 'live' &&
+          end.poster === 0 &&
+          Math.abs(end.presented - end.want) <= 1 &&
+          wrong.length === 0 &&
+          after.calls === calls &&
+          after.media === 'live' &&
+          Math.abs(after.layer - after.want) <= 1,
+        `before ${before} · after wake ${woke} · end ${JSON.stringify(end)} · ${wrong.length} wrong ${JSON.stringify(wrong.slice(0, 3))} · scrubbed on: layer ${after.layer} want ${after.want} ${after.media}, play() mid-scrub ${after.calls - calls} · plays ${JSON.stringify(after.plays)}`
+      ])
+      await page.context().close()
+    }
+    return out
+  },
+
+  // Refreshed in view under Low Power Mode: the first refused prime reads blocked at once (the tap hint's hook).
+  async refreshInView(t) {
+    const { page } = await t.open([[lowPowerInit, false]], { holds: true, painted: true })
+    await page.evaluate(() => window.__t.to(0.5))
+    await page.waitForTimeout(400)
+    await page.reload({ waitUntil: 'load' })
+    const t0 = Date.now()
+    // Playwright's WebKit doesn't always restore the scroll on reload: put the reader back where they were.
+    await page.evaluate(() => scrollY < 10 && window.__t.to(0.5))
+    const ok = await page
+      .waitForFunction(() => window.__t.video()?.getAttribute('data-scene-media') === 'blocked', null, { timeout: 3000 })
+      .then(() => true, () => false)
+    const ms = Date.now() - t0
+    const state = await page.evaluate(() => ({ y: Math.round(scrollY), want: window.__t.expected(), plays: { ...window.__plays } }))
+    return [
+      [
+        'refreshed in view under Low Power Mode: blocked on the first refusal, within 1.5 s of load',
+        ok && ms <= 1500 && state.want.mode === 'scrub',
+        `${ok ? `blocked after ${ms} ms` : 'never blocked'} · ${JSON.stringify(state)}`
+      ]
+    ]
   },
 
   // The tap's reveal: the poster stays over the video until it presents the band's frame, so a reader never sees a

@@ -35,7 +35,7 @@ globalThis.document = { visibilityState: 'visible', documentElement: { dataset: 
 globalThis.location = { search: '' }
 globalThis.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} })
 
-const { createVideoController, frameOf, frameTime, wantedFrame, FRAME_BIAS, STUCK_SEEK_MS } = await import(
+const { createVideoController, frameOf, frameTime, wantedFrame, FRAME_BIAS, STUCK_SEEK_MS, KICK_PLAYING_MS } = await import(
   '../../skills/scroll-animation/assets/media/video-controller.ts'
 )
 
@@ -379,5 +379,149 @@ describe('a first seek sent from a scroll event', () => {
     } finally {
       performance.now = realNow
     }
+  })
+})
+
+describe('the kick after a hide', () => {
+  // Found on the device (iPhone, Low Power Mode, a 1-2 s lock): seeks land, currentTime follows the scroll at
+  // readyState 4, frame callbacks fire, and the picture stays on the old frame until the element plays. Nothing a page
+  // reads reports it, so every return from hidden kicks unconditionally, behind the cover: two frames, play(), the
+  // `playing` event, pause(), the band's frame. No `playing`: one retry, then load() and a fresh prime, then blocked.
+  // Never a clone (a new element loses the unlock) and never a play() mid-scrub.
+
+  /** play() as the element answers it: 'ok' plays and fires `playing`, 'refuse' rejects, 'hang' never settles. */
+  function scripted(video, answers) {
+    video.play = () => {
+      video.plays++
+      const answer = answers.length ? answers.shift() : 'ok'
+      if (answer === 'refuse') return Promise.reject(new DOMException('refused', 'NotAllowedError'))
+      if (answer === 'hang') return new Promise(() => {})
+      video.paused = false
+      return Promise.resolve().then(() => video.dispatch('playing'))
+    }
+    video.loads = 0
+    video.load = () => video.loads++
+    video.cloneNode = () => assert.fail('the ladder never clones the element')
+  }
+
+  function hideAndReturn() {
+    document.visibilityState = 'hidden'
+    document.dispatch('visibilitychange')
+    document.visibilityState = 'visible'
+    document.dispatch('visibilitychange')
+  }
+
+  const settle = () => new Promise((resolve) => setImmediate(resolve))
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+  test('every return kicks behind the cover, lifts on the band frame, and never plays mid-scrub after', async () => {
+    const { video, controller } = setup({ band: 0.4 })
+    scripted(video, [])
+    crank(video, 4)
+    assert.equal(controller.debug().media, 'live')
+    for (let round = 1; round <= 2; round++) {
+      document.visibilityState = 'hidden'
+      document.dispatch('visibilitychange')
+      assert.equal(controller.debug().media, '', 'the cover goes up on the hide')
+      document.visibilityState = 'visible'
+      document.dispatch('visibilitychange')
+      const plays = video.plays
+      crank(video, 2)
+      assert.equal(video.plays, plays, 'two frames pass before the play')
+      crank(video, 1)
+      assert.equal(video.plays, plays + 1, 'then one play()')
+      await settle()
+      assert.equal(video.paused, true, 'paused on `playing`')
+      assert.equal(controller.debug().media, '', 'still covered while the band seek is in flight')
+      crank(video, 3)
+      const d = controller.debug()
+      assert.equal(d.media, 'live', 'lifted once the seek landed, plus a frame')
+      assert.equal(d.kicks, round)
+      assert.equal(d.kickOk, round)
+      assert.equal(d.kickFail, 0)
+      assert.equal(video.shown, frameAt(0.4), 'on the band frame')
+    }
+    // The scrub after it: seeks only.
+    const plays = video.plays
+    for (const band of [0.45, 0.5, 0.55, 0.6]) {
+      progress(controller, band)
+      crank(video, 3)
+    }
+    assert.equal(video.plays, plays, 'no play() mid-scrub')
+    assert.equal(video.shown, frameAt(0.6))
+    controller.destroy()
+  })
+
+  test('refused on every rung: a retry, then load() and a fresh prime, then blocked with the tap armed', async () => {
+    const { video, controller } = setup({ band: 0.4 })
+    scripted(video, ['refuse', 'refuse', 'refuse'])
+    crank(video, 4)
+    hideAndReturn()
+    crank(video, 3)
+    await settle()
+    let d = controller.debug()
+    assert.equal(d.kickFail, 1)
+    assert.equal(d.kicking, '2:wait', 'the retry waits its two frames')
+    assert.equal(video.loads, 0)
+    crank(video, 2)
+    // The retry refused, the load() and its prime go out at once, and that refusal reads blocked.
+    await settle()
+    d = controller.debug()
+    assert.equal(d.kickFail, 3, 'the retry and the fresh prime were refused too')
+    assert.equal(video.loads, 1, 'one load()')
+    assert.equal(d.loads, 1)
+    assert.equal(d.media, 'blocked')
+    assert.equal(d.kicking, null)
+    assert.equal(video.plays, 3, 'no fourth play until a tap')
+    crank(video, 6)
+    await settle()
+    assert.equal(video.plays, 3, 'nor from the tick')
+    // The tap: the prime inside it plays, and the band frame lifts the cover.
+    scripted(video, [])
+    win.dispatch('touchend')
+    await settle()
+    crank(video, 6)
+    assert.equal(controller.debug().media, 'live')
+    assert.equal(video.shown, frameAt(0.4))
+    controller.destroy()
+  })
+
+  test('a play that never starts times out and the retry recovers', async () => {
+    const { video, controller } = setup({ band: 0.4 })
+    scripted(video, ['hang'])
+    crank(video, 4)
+    hideAndReturn()
+    crank(video, 3)
+    assert.equal(controller.debug().kicking, '1:play')
+    await wait(KICK_PLAYING_MS + 50)
+    assert.equal(controller.debug().kickFail, 1)
+    crank(video, 2)
+    await settle()
+    crank(video, 3)
+    const d = controller.debug()
+    assert.equal(d.kickOk, 1)
+    assert.equal(d.loads, 0, 'no load() when the retry plays')
+    assert.equal(d.media, 'live')
+    controller.destroy()
+  })
+
+  test('focus kicks only after a hide, and takes a visible return that went unreported', async () => {
+    const { video, controller } = setup({ band: 0.4 })
+    scripted(video, [])
+    crank(video, 4)
+    win.dispatch('focus')
+    crank(video, 4)
+    assert.equal(controller.debug().kicks, 0, 'a focus with no hide is not a return from hidden')
+    assert.equal(controller.debug().media, 'live')
+    document.visibilityState = 'hidden'
+    document.dispatch('visibilitychange')
+    document.visibilityState = 'visible'
+    win.dispatch('focus')
+    crank(video, 3)
+    await settle()
+    crank(video, 3)
+    assert.equal(controller.debug().kicks, 1)
+    assert.equal(controller.debug().media, 'live')
+    controller.destroy()
   })
 })

@@ -50,6 +50,13 @@
  * - Scroll is durable truth; the playhead is derived. On resume (`rehydrate`) the playhead snaps with no glide, and a
  *   media element that lost its data after a long sleep gets ONE soft `load()`; the scene is asked to rehydrate
  *   again when metadata returns. A first load is never aborted, and a far-away scene never fetches before `warm()`.
+ * - After every hide (a lock, a hidden tab, a bfcache stay) WebKit can leave the picture stale: seeks land, the time
+ *   follows the scroll at `readyState` 4, frame callbacks fire, and the layer on screen keeps the old frame until the
+ *   element plays. Nothing a page can read reports it, so it is not detected but prevented: the poster covers on the
+ *   hide, and on the return the KICK runs unconditionally behind it (two frames, `play()`, the `playing` event as
+ *   proof, `pause()`, a seek to the band's frame, the lift once it lands plus a frame). No `playing` within
+ *   `KICK_PLAYING_MS`: one retry, then `load()` and a fresh prime (a load keeps the unlock), then `blocked` with the
+ *   tap retry armed. Never a clone (a new element loses the unlock), and never a `play()` mid-scrub.
  * - Tiers: with `mobileSrc`, the desktop query picks the source one frame after mount (never in the hydrating
  *   commit), so only one tier is fetched. `onTier` tells the camera which crop is on screen.
  * - Reduced motion fetches no video: the poster is the scene. A managed source (`src`/`mobileSrc`) is not set, or is
@@ -279,8 +286,23 @@ const HAVE_CURRENT_DATA = 2
 /** A band seek with no `seeked` after this long, in ms, is sent again. */
 export const STUCK_SEEK_MS = 700
 
+/** A kick's `play()` with no `playing` event after this long, in ms, failed: the next rung of the ladder runs. */
+export const KICK_PLAYING_MS = 300
+
+/** The ladder's last rung, `load()` and a fresh prime, waits this long, in ms, for `playing` before reading blocked. */
+export const KICK_LOAD_MS = 2000
+
 /** The events that grant user activation (HTML: `touchend`, never `touchstart`), on which a refused prime retries. */
 const ACTIVATION_EVENTS = ['touchend', 'pointerup', 'click', 'keydown'] as const
+
+/** A kick in flight (see `createVideoController`). */
+interface KickRun {
+  rung: 1 | 2 | 3
+  phase: 'wait' | 'play' | 'seek'
+  timer: number
+  raf: number
+  off: (() => void) | null
+}
 
 export function createVideoController(video: HTMLVideoElement, options: VideoControllerOptions = {}): VideoController {
   const fps = options.fps ?? 30
@@ -327,10 +349,12 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   let unlockedBy: 'play' | 'load' | null = null
   // Ticks the playhead has sat on the wanted frame with no seek pending: the reveal's fallback without frame callbacks.
   let settledTicks = 0
-  // Back from a lock, a hidden tab or the bfcache with data the element still claims: prime it again, once.
-  let reprime = false
-  // That re-prime is in flight: a refusal means the frame on screen can't be trusted, so the cover goes back up.
-  let confirming = false
+  // The page hid since the element last played: the layer on screen may be stale (WebKit), so a kick is owed before
+  // the cover lifts again. Cleared by the kick, or by any play honoured while visible.
+  let needsKick = false
+  // The kick in flight: its rung (1 and 2 play and pause, 3 is load() and a fresh prime), what it waits on, and its
+  // timers and listener, released by endKick().
+  let kickRun: KickRun | null = null
   const posterEl = options.posterElement ?? null
   // A handover out of a loop: where the loop left the playhead (both adapters step the mode before they hand over the
   // event's band, so it is measured at the next drive), then its distance from the band in seconds, decaying to 0.
@@ -352,6 +376,9 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     holds: 0,
     recoveries: 0,
     kicks: 0,
+    kickOk: 0,
+    kickFail: 0,
+    loads: 0,
     primes: 0,
     snaps: 0,
     reseeks: 0,
@@ -454,7 +481,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
 
   /** The band's frame to the decoder: a seek only for a new frame, and none while one is in flight. */
   function drive() {
-    if (!running || loops(mode)) return
+    // Never during a kick: it seeks the band's frame itself once the play has run, and a seek would drop the play.
+    if (!running || loops(mode) || kickRun) return
     if (handoverFrom !== null) {
       handover = handoverFrom - bandTarget()
       handoverFrom = null
@@ -563,7 +591,6 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     video.play().then(
       () => {
         if (gesture) unlockedBy = 'play'
-        confirming = false
         if (media === 'blocked') setMedia('')
         if (token === playToken && !(running && loops(mode) && !capped)) video.pause()
       },
@@ -571,8 +598,9 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
         // An AbortError is the scene's own pause landing first: the load has started all the same.
         if ((error as { name?: string } | null)?.name !== 'NotAllowedError') return
         stats.rejections++
-        if (media !== 'live' || confirming) setMedia('blocked')
-        confirming = false
+        if (media !== 'live') setMedia('blocked')
+        // The ladder's last rung was this prime: refused, the scene reads blocked now, not at the rung's timeout.
+        if (kickRun?.rung === 3) kickFailed(kickRun)
       },
     )
     // Then straight to the scroll's frame, before anything decodes: the clip is all-intra, so the first frame it
@@ -672,7 +700,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       if (id !== chain) return
       stats.vframes++
       // The frame the scroll wants is on screen: lift the poster, in this callback, with nothing in between.
-      if (media !== 'live' && !video.seeking && onWantedFrame(meta.mediaTime)) setMedia('live')
+      // Never while a kick is owed: after a hide this callback reports a frame the layer may not show.
+      if (media !== 'live' && !kickOwed() && !video.seeking && onWantedFrame(meta.mediaTime)) setMedia('live')
       if (loops(mode) && !capped && !wrapInFlight() && wrapDue(meta.mediaTime, video.currentTime, matchFrame(mode), wrapFrom(mode), fps)) {
         seam(false)
       }
@@ -689,20 +718,20 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     if (!validDuration()) {
       if (++badTicks > 45) {
         badTicks = 0
-        if (needsKick()) kick()
+        if (needsReload()) reload()
       }
       return
     }
     badTicks = 0
     stats.ticks++
-    if (reprime && video.paused && !loops(mode)) {
-      // Back from a hide with data the element still claims: one fresh prime at the band's frame, behind the cover
-      // if the frame is gone. Refused (the unlock didn't survive), it reads blocked and the next tap retries.
-      reprime = false
-      primed = false
-      confirming = true
-      prime()
+    if (needsKick && !kickRun && hasFrame()) {
+      // Back from a hide with data the element still claims: kick it behind the cover. Already blocked, the tap's
+      // prime plays it, which is the same cure.
+      if (media === 'blocked') needsKick = false
+      else startKick(1)
     }
+    // The kick's last rung owns the prime: no second one from here.
+    if (kickRun) return
     if (!hasFrame()) {
       // A pending seek holds readyState at HAVE_METADATA: a hung one is re-sent here, or the tick would never see it.
       // Never prime under a recent pending seek: a play() there ran a held tail to its end. One older than
@@ -723,7 +752,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     markFramed()
     const time = video.currentTime
     // Without frame callbacks (or before one fires): two settled ticks on the wanted frame, no seek pending.
-    if (media !== 'live') {
+    if (media !== 'live' && !kickOwed()) {
       if (!seeking && !video.seeking && onWantedFrame(time)) {
         if (++settledTicks >= 3) setMedia('live')
       } else settledTicks = 0
@@ -783,6 +812,11 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
 
   function stop() {
     running = false
+    // Still owed: it runs again when the scene does.
+    if (kickRun) {
+      endKick(kickRun)
+      needsKick = true
+    }
     chain++
     if (frameHandle) video.cancelVideoFrameCallback?.(frameHandle)
     frameHandle = 0
@@ -801,16 +835,16 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
 
   /** Never abort a first load in flight, never fetch a far-away scene before its warm margin, never under reduced
    * motion. */
-  function needsKick() {
+  function needsReload() {
     return hasSource && !reduced && !recovering && (hadMetadata || (awake && video.networkState !== NETWORK_LOADING))
   }
 
-  function kick() {
+  function reload() {
     recovering = true
     primed = false
     framed = false
     setMedia('')
-    stats.kicks++
+    stats.loads++
     video.preload = 'auto'
     try {
       video.load()
@@ -858,12 +892,136 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     seeking = false
     primed = false
     unlockedBy = null
+    if (hidden) onHide()
     if (!hasFrame()) {
       if (framed) stats.lost++
       framed = false
       setMedia('')
-    } else if (hidden) reprime = true
+    }
     armActivation()
+  }
+
+  /** The page hid: a kick is owed, and the cover goes up now, while nothing can be seen anyway. */
+  function onHide() {
+    needsKick = true
+    if (kickRun) endKick(kickRun)
+    if (media === 'live') setMedia('')
+  }
+
+  const kickOwed = () => needsKick || kickRun !== null
+
+  /** The frame the kick ends on: the band's, or a held loop's seam. */
+  const kickTarget = () => (capped && loops(mode) ? loopHoldTime(mode, tl) : frameTime(wanted(), fps))
+
+  /**
+   * One rung of the kick ladder, behind the cover. Rungs 1 and 2: wait two frames (WebKit may drop a play() issued
+   * while the lock's interruption is still ending), then play(); the `playing` event is the proof it ran. Rung 3:
+   * load() (it keeps the unlock) and a fresh prime at the band's frame.
+   */
+  function startKick(rung: 1 | 2 | 3) {
+    if (media === 'live') setMedia('')
+    seeking = false
+    pending = null
+    const run: KickRun = { rung, phase: 'wait', timer: 0, raf: 0, off: null }
+    kickRun = run
+    if (rung === 1) stats.kicks++
+    if (rung === 3) {
+      stats.loads++
+      run.phase = 'play'
+      run.timer = window.setTimeout(() => kickFailed(run), KICK_LOAD_MS)
+      framed = false
+      try {
+        video.load()
+      } catch {
+        // The timeout reads blocked.
+      }
+      prime()
+      return
+    }
+    run.raf = requestAnimationFrame(() => {
+      run.raf = requestAnimationFrame(() => {
+        run.raf = 0
+        if (kickRun !== run) return
+        run.phase = 'play'
+        run.timer = window.setTimeout(() => kickFailed(run), KICK_PLAYING_MS)
+        stats.plays++
+        video.play().catch((error: unknown) => {
+          // An AbortError is a pause landing first (a hide, the scene sleeping): its own path takes over.
+          if ((error as { name?: string } | null)?.name !== 'NotAllowedError') return
+          stats.rejections++
+          kickFailed(run)
+        })
+      })
+    })
+  }
+
+  /** No `playing` in time, or refused: the next rung, and past the last one blocked, with the tap retry armed. */
+  function kickFailed(run: KickRun) {
+    if (kickRun !== run || run.phase !== 'play') return
+    stats.kickFail++
+    endKick(run)
+    if (run.rung === 3) {
+      needsKick = false
+      setMedia('blocked')
+      return
+    }
+    // A play still pending must not start later, under the scrub.
+    pause()
+    startKick(run.rung === 1 ? 2 : 3)
+  }
+
+  /** The kick's play ran (or any play while one is owed): pause, seek the band's frame, lift once it lands. */
+  const onPlaying = () => {
+    const run = kickRun
+    if (!run) {
+      // An honoured play resets what the hide left behind: the kick is no longer owed.
+      if (visible) needsKick = false
+      return
+    }
+    if (run.phase !== 'play') return
+    window.clearTimeout(run.timer)
+    stats.kickOk++
+    // The last rung's prime pauses itself; a loop that owns the mode keeps playing. Either way the usual reveal lifts.
+    if (run.rung === 3 || (running && loops(mode) && !capped)) {
+      endKick(run)
+      needsKick = false
+      return
+    }
+    pause()
+    run.phase = 'seek'
+    const landed = () => {
+      run.raf = requestAnimationFrame(() => {
+        run.raf = 0
+        if (kickRun !== run) return
+        endKick(run)
+        needsKick = false
+        // The lift: the seek landed and a frame has passed. Scrolled on meanwhile, the usual reveal takes it.
+        if (media !== 'live' && !video.seeking && onWantedFrame(video.currentTime)) setMedia('live')
+      })
+    }
+    video.addEventListener('seeked', landed, { once: true })
+    run.off = () => video.removeEventListener('seeked', landed)
+    // A seek that never answers: lift nothing, and leave it to the stuck-seek resend.
+    run.timer = window.setTimeout(() => {
+      if (kickRun !== run) return
+      endKick(run)
+      needsKick = false
+    }, STUCK_SEEK_MS)
+    try {
+      seekSentAt = performance.now()
+      video.currentTime = kickTarget()
+    } catch {
+      endKick(run)
+      needsKick = false
+    }
+  }
+
+  /** Releases the kick's timers and listener; whether the kick is still owed is the caller's. */
+  function endKick(run: KickRun) {
+    window.clearTimeout(run.timer)
+    if (run.raf) cancelAnimationFrame(run.raf)
+    run.off?.()
+    if (kickRun === run) kickRun = null
   }
 
   /** The element dropped its data (a load(), iOS evicting a hidden page's media): it will show frame 0 next, so the
@@ -879,8 +1037,10 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   const onVisibility = () => {
     visible = document.visibilityState !== 'hidden'
     stats.vis = document.visibilityState
-    if (!visible) wasHidden = true
-    else if (wasHidden) {
+    if (!visible) {
+      wasHidden = true
+      onHide()
+    } else if (wasHidden) {
       wasHidden = false
       onReturn(true)
     }
@@ -889,14 +1049,21 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   const onPageShow = (event: PageTransitionEvent) => {
     if (event.persisted) onReturn(true)
   }
-  const onFocus = () => onReturn(false)
+  const onPageHide = () => onHide()
+  // Focus after a hide whose visible return went unreported: take the return from here.
+  const onFocus = () => {
+    if (!visible && document.visibilityState !== 'hidden') onVisibility()
+    onReturn(false)
+  }
 
   video.addEventListener('loadedmetadata', onMetadata)
   video.addEventListener('suspend', onSuspend)
   video.addEventListener('emptied', onEmptied)
   video.addEventListener('ended', onEnded)
+  video.addEventListener('playing', onPlaying)
   document.addEventListener('visibilitychange', onVisibility)
   window.addEventListener('pageshow', onPageShow)
+  window.addEventListener('pagehide', onPageHide)
   window.addEventListener('focus', onFocus)
 
   // ── tiers ───────────────────────────────────────────────────────────
@@ -959,12 +1126,16 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       // kicked here: networkState turns LOADING a task after `src`/`preload` change, so a rehydrate right after the
       // warm margin reads "idle" and a load() would restart that download (measured: 1.76x the clip in Chromium).
       // A load that never starts (iOS ignoring preload) is the tick's to kick, 45 idle frames on.
-      if (hadMetadata && needsKick()) kick()
+      if (hadMetadata && needsReload()) reload()
       return
     }
     if (reduced) holdHead()
     else if (!running) pause()
-    else {
+    else if (kickRun) {
+      // A snap would pause the kick's play: the kick ends on the band's frame itself.
+      handoverFrom = null
+      handover = 0
+    } else {
       // A resume snaps: no frame between a stale playhead and the right one is worth showing, not even a handover's.
       handoverFrom = null
       handover = 0
@@ -1042,6 +1213,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
         blocked: media === 'blocked',
         live: media === 'live',
         unlockedBy,
+        kicking: kickRun ? `${kickRun.rung}:${kickRun.phase}` : needsKick ? 'owed' : null,
         duration: validDuration() ? +video.duration.toFixed(3) : null,
       }
     },
@@ -1058,8 +1230,10 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       video.removeEventListener('suspend', onSuspend)
       video.removeEventListener('emptied', onEmptied)
       video.removeEventListener('ended', onEnded)
+      video.removeEventListener('playing', onPlaying)
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('pageshow', onPageShow)
+      window.removeEventListener('pagehide', onPageHide)
       window.removeEventListener('focus', onFocus)
     },
   }

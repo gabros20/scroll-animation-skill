@@ -74,6 +74,9 @@ controller primes a scrub video (a muted `play()`, paused at once) behind a post
 **Low Power Mode refuses video playback without a gesture**, muted or not, and throttles rendering
 to about 30 fps. A scrubbed video therefore holds its poster until the reader taps (the block makes
 any tap count, `video.md` §11); canvas paths (`frame-sequence`) are not gated and keep scrubbing.
+Only a tap or a key unlocks it: in WebKit a gesture is a `touchend`, `click` or key event, so **a scroll or a pan
+never unlocks media**, however long the reader scrolls. A short lock can also leave a scrubbed video's picture stale
+while every readable property says it is fine; the controller kicks it on every return (`video.md` §12).
 Test every video scene with the mode on: it is a device setting no emulator has. `scene.css` gives every scene video a `translateZ(0)` anchor,
 and the camera's `translate3d(…)` keeps it (`video.md` §6): it is what keeps the layer from being
 demoted in the first place.

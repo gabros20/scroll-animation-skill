@@ -237,9 +237,41 @@ A hidden tab stops the controller and pauses the video. **A lock or a hidden pag
 a pending seek and, under Low Power Mode, its unlock** (seen on an iPhone: the frame stopped following the scroll after
 a wake). So the moment the data goes (`emptied`) the poster covers again, at once; on the return (`visibilitychange`,
 a bfcache `pageshow`, `focus`) a seek left from before no longer holds anything back, a source without a frame is
-primed at the band's frame behind the cover, one that still claims data is primed once to prove it, a refusal reads
-`blocked` with the tap retry re-armed, and `debug()` counts `wakes` and `lost`. LoopVideo re-checks on `visibilitychange`, `pageshow` and
-`focus`, with the same single `load()`. Never scroll the reader back, reload on focus or store the playhead in
+primed at the band's frame behind the cover, a refusal reads `blocked` with the tap retry re-armed, and `debug()`
+counts `wakes` and `lost`. LoopVideo re-checks on `visibilitychange`, `pageshow` and `focus`, with the same single
+`load()`.
+
+**A short lock leaves the picture stale, and nothing reports it.** Seen on an iPhone after a 1-2 s lock: seeks land,
+`currentTime` follows the scroll at `readyState` 4, frame callbacks fire, and the screen keeps the old frame. In
+WebKit's source the lock interrupts the media session, which marks the paused player's resources purgeable until it
+*plays* again, and the video layer is detached while hidden. `requestVideoFrameCallback` reads a separate video
+output, not the layer, so it can't tell either. A longer lock (about 10 s) evicts the data, and the re-prime's play
+cures it, which is why only the short one stuck. So the controller doesn't try to detect it; it prevents it:
+
+1. On the hide (`visibilitychange` to hidden, `pagehide`) the poster covers.
+2. On every return (`visibilitychange` to visible, a bfcache `pageshow`, and `focus` when it follows a hide) the
+   **kick** runs behind the poster, unconditionally: two animation frames (a `play()` issued while the interruption
+   is still ending can be dropped), `play()`, the `playing` event as the proof, `pause()`, a seek to the band's frame,
+   and the lift once that seek lands, plus a frame.
+3. No `playing` within 300 ms (`KICK_PLAYING_MS`), or refused: one retry; then `load()` and a fresh prime (a load
+   keeps the unlock); then `data-scene-media="blocked"`, with the tap retry re-armed. Never a cloned element: a new
+   element is created locked under Low Power Mode, so it needs the tap the ladder is trying to avoid.
+4. Never gate the scrub on a frame callback per seek (coalesced seeks skip callbacks legitimately), and never
+   `play()` mid-scrub: the band only seeks. The kick runs on returns only.
+
+`debug()` counts `kicks`, `kickOk`, `kickFail` and `loads` (every `load()` the controller issues), and `kicking`
+shows the rung in flight; the frame-callback count (`vframes`) is information, never a health signal. A refresh with
+the scene in view under Low Power Mode reads `blocked` on the first refused prime, so a hint shows at once.
+
+**The hint is the page's.** The asset styles nothing on `blocked`. A quiet line in the pin is enough, for example
+`[data-scene-pin]:has([data-scene-media='blocked'])::after { content: 'Tap to play'; … }` (Folio's `globals.css` has
+one); keep it out of the way of the acts and give it no role, since any tap unlocks, not just one on it. A scroll or a
+pan never unlocks media in WebKit (`ios-safari-motion.md` §2).
+
+**Plan B, if the kick proves unreliable on devices:** stop showing the video layer at all. Keep the `<video>` as a
+decoder and draw each decoded frame to a `<canvas>` in the pin with `drawImage`, from its frame callback. A canvas
+keeps its pixels through a hide, so nothing goes stale. It still needs the unlock, and it moves the camera's transform
+to the canvas, so it is a larger change, not yet built. Never scroll the reader back, reload on focus or store the playhead in
 `sessionStorage`: each fights a scroll position that is already right. A scene frozen after a sleep: scenes.md §13.
 
 ## 13. Encoding with `scroll-animation media`
