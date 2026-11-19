@@ -200,8 +200,12 @@ section. The header's opt-in is `data-header-blend` (`css/header-theme.css`).
 ```
 
 - **The target** (`<body>` by default) gets `--track-a`, `--track-b` and `--track-p`, and its `background-color`
-  becomes `color-mix(in oklch, var(--track-a), var(--track-b) calc(var(--track-p) * 100%))`. OKLCH keeps the
-  midpoints' lightness and chroma, where an RGB mix goes muddy. `property: null` writes only the variables.
+  becomes `color-mix(in oklch, var(--track-a), var(--track-b) calc(var(--track-p) * 100%))`. `property: null` writes
+  only the variables.
+- **Why OKLCH, not the family's OKLab default**: sections hand over between distant brand hues, where OKLab greys out
+  mid-way, which is design's `in oklch shorter hue` exception (`design` `color.md` "Palette construction"; shorter hue
+  is `color-mix()`'s default). A polar space can pass through a hue you didn't pick, so check the midpoint of each
+  handover, near-neutral pairs especially.
 - **A handover runs while the next section's top travels** from 'top 75%' to 'top 25%'; between handovers the colour
   holds. The variables don't inherit, so a write on `<body>` restyles `<body>` alone.
 - **Cost:** `background-color` repaints the target on every frame of a handover. Budget it

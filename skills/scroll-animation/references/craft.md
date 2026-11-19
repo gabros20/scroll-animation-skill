@@ -58,11 +58,9 @@ defaults, not measurements:
 
 - **Media, headline, supporting copy, then the call to action**, a short beat between each, never all at once. One
   focal point moves at a time: competing entrances read as noise, not energy.
-- **The beat is between starts.** Each block starts while the one before is still settling (the entrance curve covers
-  three quarters of its move in the first third of a second); blocks that each come to rest before the next starts
-  read as stall, then lurch.
-- **One entrance per container.** A section that enters doesn't also stagger its children: two layers of entrance.
-  Vary the move by role instead: the lead travels furthest, supporting items less, decoration only fades.
+- **Overlap the beats, one entrance per container, the move varied by role**: `design` `choreography.md` "Cast and
+  relate" and "Timing family, overlap and interruptibility". Here the overlap is cheap: the entrance curve covers three
+  quarters of its move in the first third of a second.
 - Every block staggers in document order, so write the markup in reading order. `SplitWords`' `delay` places the
   headline after the hero media, and a lede's `delay` after the headline.
 - **Converge on the design.** Two elements that meet, such as a header that drops and a button that rises, take
@@ -72,6 +70,9 @@ defaults, not measurements:
 - A wipe between scenes enters from the side the incoming headline sits on, so it uncovers the title first.
 
 ## 3. Durations
+
+UI and component durations are design's tiers (`design` `motion.md` "Canonical scale"); this table covers editorial
+entrances only, on the measured long-tail curve, judged by when they read as arrived.
 
 | Motion | Duration |
 |---|---|

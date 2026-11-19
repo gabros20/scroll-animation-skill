@@ -34,7 +34,7 @@ scroll authority per route, the profile from `ANIMATION.md`.
 | A route change in React (Next App Router) | React's `<ViewTransition>` with the block's classes; Next 16.3.6 needs no flag (S9) | `view-transitions` (`--engine css`) |
 | A same-document change on a vanilla page (a client router, a view swap) | `await transition(update, { types })` | `view-transitions` (agnostic) |
 | A multi-page site: every navigation loads a document | cross-document `@view-transition`, opted in inline on every page; Firefox 155 has none and just loads | `view-transitions` (agnostic) |
-| A grid opening into a detail, a reorder, a filter, inside one route; the same node must survive (a playing video, focus, an input) | GSAP Flip | `flip-transition` (gsap) |
+| An editorial grid opening into a detail inside one route; the same node must survive (a playing video, focus, an input). A product-UI list reorder or filter is `frontend` `ui-motion.md` "Height and layout changes" | GSAP Flip | `flip-transition` (gsap) |
 | A card opening into a panel inside one React route | Motion `layoutId` | `layout-morph` (motion) |
 | An Immersive first screen that can't work until its assets arrive | real loading progress | `preloader` |
 
@@ -98,11 +98,9 @@ const PAGE_SLIDE = {
 
 Browsers that take only an update callback (Safari 18.0–18.1, Firefox 144–146) still transition, without the types.
 
-**Verify on sampled frames**, with motion and reduced: through a crossfade old and new opacity sum to about 1 (a dip
-or a flash otherwise; a sum of 1 means no dip only under the default `plus-lighter` pairing, never once a group is
-restyled to blend normally), no entrance replays on content that persists, no old- or new-only layer outlives the
-transition, and nothing swaps paint or snaps a `box-shadow` at either end. During a transition judge the captured
-layers, not the live DOM.
+**Verify on sampled frames** as `design` `choreography.md` "Reviewing motion on frames" lists, judging the captured
+layers, not the live DOM. The crossfade's opacity sum of about 1 means no dip only under the default `plus-lighter`
+pairing, never once a group is restyled to blend normally.
 
 ## 3. Vanilla and multi-page sites
 
@@ -234,6 +232,9 @@ placed the scroll, then mount the new route.
 
 ## 6. Inside one route: Flip and layoutId
 
+Editorial view-to-view morphs (a grid opening into a detail, a card into a panel) are this skill's; a product-UI
+reorder, filter or component layout change is `frontend` `ui-motion.md` "Height and layout changes".
+
 - **`flip-transition`** (GSAP): `await flipTransition(root, { change })` records every `[data-flip-id]`, runs
   `change()`, and lands each element from its old box. Use it instead of a view transition when the same node must
   survive (a playing video, focus, an input), inside one route, inside a scroll container (view-transition snapshots
@@ -257,7 +258,8 @@ Both run `MOTION.route`, the route morph's timing, so an in-route change and a p
   (or `progressOn`), only upwards. Never a timer. No `loading="lazy"` image in the list: it never loads off screen.
 - A video still without a frame 200 ms after its metadata is primed once (a muted `play()`, paused at once): iOS
   loads only metadata otherwise. Give it `muted playsinline`, or it waits out the 4 s maximum.
-- A 300 ms minimum (keep it at or under that), a 4 s maximum that shows the page anyway. Start the first screen's
+- A 300 ms minimum (keep it at or under that), a 4 s maximum that shows the page anyway. The 4 s cap is the failsafe;
+  the budget is about 2.6 s including the exit (`design` `choreography.md` "Continuity: loaders and page transitions"). Start the first screen's
   entrances on `html[data-preloader-state="done"]`.
 - Show the overlay only behind `GATE_SCRIPT`, with its own CSS failsafe (the snippet is in `preloader.ts`'s header),
   so a page whose script never runs never stays covered.

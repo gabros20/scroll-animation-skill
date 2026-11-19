@@ -11,7 +11,7 @@ A motion system for editorial and creative pages. Every animation runs on a cloc
 content arrives), **scroll** (a function of the reader's position in a range), **media** (follows what a video
 decoder presents), **render** (a render loop) or **route** (once per navigation or page load). Name the clock first;
 it decides the cost, the engine and which traps apply. Each job goes to the engine that does it best: CSS for
-decoration, Motion for React component and section motion, GSAP for timelines and its plugins.
+decoration, Motion for React section and scroll motion, GSAP for timelines and its plugins.
 
 The skill ships tested, copy-and-own blocks (`scroll-animation list`), the references that explain every decision,
 and a CLI that copies blocks, prepares media and checks the result. It was extracted from a production site whose

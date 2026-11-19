@@ -81,7 +81,7 @@ Motion's `x`/`y`/`scale` props are separate values composed into `transform`. Fr
 of them is hardware-accelerated. A value driven every frame by a motion value (`useTransform`, `useScroll`: every
 scroll-linked value) runs on the main thread from 13.5; 12.34–13.4 could hand some to a native timeline instead, the
 drift below. On any full-screen or pinned path that is measurable frame loss under load. Binding a composed
-`transform` to Motion's `style` is no fix on a scroll path: Motion can hand it to a native timeline that drifts back
+`transform` to Motion's `style` is no fix on a scroll path: Motion 12.34–13.4 can hand it to a native timeline that drifts back
 outside the input range ([motion.md](motion.md) §4). Write one composed transform string by hand, with the
 reduced-motion state as in [motion.md](motion.md) §5:
 
