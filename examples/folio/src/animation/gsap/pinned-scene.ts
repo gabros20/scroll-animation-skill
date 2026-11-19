@@ -260,7 +260,8 @@ export function pinnedScene(root: HTMLElement, options: PinnedSceneOptions = {})
     return ScrollTrigger.create({
       trigger: root,
       start: 'top top',
-      // A function, so every refresh re-reads it; 'bottom bottom' would follow innerHeight, one toolbar too long.
+      // A function, so every refresh re-reads it: the rehydrate's ruler. 'bottom bottom' measures the viewport however
+      // the GSAP version does (3.15: a 100vh probe; innerHeight under normalizeScroll), a second ruler.
       end: () => `+=${travelPx()}`,
       pin: pinned && pin ? pin : false,
       pinSpacing: false,

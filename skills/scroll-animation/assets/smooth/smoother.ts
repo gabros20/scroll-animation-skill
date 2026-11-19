@@ -31,6 +31,9 @@
  */
 // gsap's index declares its plugin modules: 'gsap/ScrollTrigger' has no types of its own.
 /// <reference types="gsap" />
+// No new bytes: ScrollSmoother runs only with ScrollTrigger registered, and this is the specifier gsap/setup.ts and
+// the usage above register. Register it from `gsap/ScrollTrigger` too: another path (`gsap/dist/…`) is a second copy,
+// whose `refresh` never fires here, and the hash landing silently never happens.
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 import { REDUCED_MOTION_QUERY } from '../config'

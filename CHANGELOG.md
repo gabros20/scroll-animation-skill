@@ -11,6 +11,13 @@ the newest release heading below, and the release tag.
 
 ### Changed
 
+- `usePinnedScene().progress` and `PinnedScene`'s `progress` render argument are the scene's own MotionValue, no longer
+  `useScroll`'s `scrollYProgress`: progress over the pin's box, set by hand on the main thread (never handed to a
+  native timeline), 0 until the scene mounts, with `getVelocity()` following the scene's writes. Read it in an event
+  as before; a value bound through `style` now updates on the main thread (`scenes.md` §1).
+- `gsap/frame-sequence.ts` with its own `trigger` ends its ScrollTrigger at the range's travel over the sticky box
+  holding the canvas, not `'bottom bottom'`; with no sticky box between them, `'bottom bottom'` as before. A caller's
+  `scrollTrigger.end` still wins. `motion.md` §3 and `FrameSequence` point a pinned range at the scene's progress.
 - The repository moved onto the skill template: the runtime pack is `skills/scroll-animation/`,
   with the gate scripts, evaluation layers, installer and CI around it. v2 (a multi-engine rebuild
   for editorial and creative sites) is in progress on this line.
@@ -44,7 +51,8 @@ the newest release heading below, and the release tag.
 
 - Pinned scenes (both engines) measure progress against the pin's own box: wrapper height minus the pin's `100lvh`,
   never `innerHeight`. On iOS `innerHeight` follows the toolbar, so the range was one toolbar longer while it showed,
-  and on a GSAP page ScrollTrigger's cached `'bottom bottom'` and the live rehydrate used two rulers at once: each
+  and on a GSAP page ScrollTrigger's cached `'bottom bottom'` (a `100vh` probe in 3.15) and the live rehydrate
+  (`innerHeight`) used two rulers at once: each
   toolbar step rewrote a rail's `--rail-from`/`--rail-to` and moved its cards 4.5–10.3 px (50–120 px toolbar). The
   ScrollTrigger `end` is `+=` that range; Motion's scene takes `scrollY` as its tick and computes progress over a
   cached wrapper top (re-measured on a resize of the wrapper or `<body>`), and its `progress` is that value, not a

@@ -45,16 +45,24 @@ and reduced-motion collapse, checked in a browser.
 
 `css/scene.css` gives both engines this geometry (import it after `animation.css`). Motion renders it with
 `<PinnedScene pinned={…}>{acts}</PinnedScene>`, where `pinned` may also be a function of
-`{ band, progress, mode, reduced }` (`band` and `progress` are exact MotionValues, §3).
+`{ band, progress, mode, reduced }` (`band` and `progress` are exact MotionValues, §3). Since v2 `progress` is the
+scene's own value, not `useScroll`'s `scrollYProgress`: set by hand on the main thread (never handed to a native
+timeline), 0 until the scene mounts, and its `getVelocity()` follows the scene's writes. Read it in an event, as
+before; code that bound it through `style` now gets main-thread updates.
 `usePinnedScene()` lets you render the markup yourself (`rootRef`, `pinRef`) and keeps `data-scene-state` current. GSAP takes the markup with `pinnedScene(root, options)`. The maths is
 `assets/scene.ts`.
 
 - **Measure the wrapper's travel against the pin's box.** A sticky element stops moving, so the wrapper's rect gives
   the position; the pin's own height (its `100lvh`) is the ruler. Progress is `-rect.top / (height − pin height)`,
-  which a ScrollTrigger from `'top top'` to `+=` that range matches once refreshed (S5). Never `innerHeight`,
-  `'bottom bottom'` or `['start start', 'end end']`: on iOS they follow the toolbar, so the range is one toolbar
-  longer while it shows, and each toolbar step moved a rail's cards 4–10 px (the `3d` skill measures the same pin the
-  same way).
+  which a ScrollTrigger from `'top top'` to `+=` that range matches once refreshed (S5). Never `innerHeight`: on iOS
+  it follows the toolbar, so the range is one toolbar longer while it shows. Nor a ruler that measures the viewport
+  its own way: `['start start', 'end end']` (`documentElement.clientHeight`) or `'bottom bottom'` (a `100vh` probe in
+  GSAP 3.15, `innerHeight` under `normalizeScroll`). Two rulers at once (ScrollTrigger's and the rehydrate's
+  `innerHeight`) moved a rail's cards 4–10 px per toolbar step. The `3d` skill measures the same pin the same way. A scene without a `[data-scene-pin]` falls back to the viewport as its ruler: give every scene a pin.
+- **Motion caches the wrapper's top and height** (no layout read per scroll), re-measured when the wrapper or
+  `<body>` resizes, on a real window resize, a wake, a rehydrate and, if the box moved, at `scrollend`. So let
+  `<body>` grow with the document (no `html, body { height: 100% }` around a scene), and never transform an ancestor
+  (the pin rule below).
 - **The pin is `100lvh`**: a scene is read while scrolling, when iOS collapses its toolbars. An `svh` pin falls short
   and shows the page along the bottom; `dvh` resizes the pin, and every framing read, on each toolbar animation.
   A sticky graphic beside scrolling steps is `scrolly-steps`, in `svh` ([scrollytelling.md](scrollytelling.md) §5).

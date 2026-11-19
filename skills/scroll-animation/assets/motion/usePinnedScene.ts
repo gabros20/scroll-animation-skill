@@ -5,9 +5,10 @@
  *
  * - Progress is the RANGE WRAPPER's travel over the pin's own box (scene.ts): `(scrollY − wrapper top) / (wrapper
  *   height − pin height)`, the distance a 100lvh pin travels. Not `useScroll`'s target progress: its offsets measure
- *   against the viewport, which on iOS follows the toolbar, so its ruler is one toolbar too long while the toolbar
- *   shows. Motion's `scrollY` is the tick; the wrapper's top and height are cached, re-measured on a resize of the
- *   wrapper or <body>, a real window resize, a wake and every rehydrate. `progress` is a MotionValue of that value,
+ *   the scroll container's height (`documentElement.clientHeight`), not the pin's 100lvh, so on iOS its ruler can be
+ *   up to one toolbar off. Motion's `scrollY` is the tick; the wrapper's top and height are cached, re-measured on a resize of the
+ *   wrapper or <body>, a real window resize, a wake and every rehydrate, and checked once per `scrollend` (a shift
+ *   above the range that resized neither, under `html, body { height: 100% }`). `progress` is a MotionValue of that value,
  *   read in `useMotionValueEvent`, and every scroll-linked style is written by hand. Bound through `style`, Motion
  *   hands opacity, clipPath, filter, backgroundColor and transform to a native timeline whose keyframes stop at the
  *   input range, and past it the element drifts back to its first-render value (spike S3), pinned or not.
@@ -218,6 +219,10 @@ function createCore(
     if (next) rehydrate('wake')
   }
 
+  /** The ruler: the pin's own box (100lvh), never `innerHeight`, which follows the iOS toolbar. No pin: the viewport.
+   * Fractional, like the wrapper's rect, so a fractional lvh (zoom, an odd device pixel ratio) rounds neither. */
+  const rulerPx = () => (pin ? pin.getBoundingClientRect().height : window.innerHeight)
+
   /** Progress at a scroll position, from the cached geometry. */
   const progressAt = (scrollY: number) => progressFromRect(geometry.top - scrollY, geometry.height, geometry.ruler)
 
@@ -227,8 +232,7 @@ function createCore(
     const r = el.getBoundingClientRect()
     geometry.top = r.top + window.scrollY
     geometry.height = r.height
-    // The ruler: the pin's own box (100lvh), never `innerHeight`, which follows the iOS toolbar. No pin: the viewport.
-    geometry.ruler = pin ? pin.offsetHeight : window.innerHeight
+    geometry.ruler = rulerPx()
     state.rangePx = rangeFromHeight(geometry.height, geometry.ruler)
     acts = Array.from(el.querySelectorAll<HTMLElement>('[data-scene-act]')).filter(
       (act) => act.closest('[data-scene-root]') === el,
@@ -351,6 +355,16 @@ function createCore(
       // written from that read draws one wrong frame. The rehydrate measures a frame later.
       rehydrate('resize')
     }
+    // Once the scroll rests, one rect read: a cached top that moved without a resize the observers saw is measured
+    // again, and the next tick reads it.
+    const onScrollEnd = () => {
+      const r = el.getBoundingClientRect()
+      const moved =
+        Math.abs(r.top + window.scrollY - geometry.top) > 0.5 ||
+        Math.abs(r.height - geometry.height) > 0.5 ||
+        Math.abs(rulerPx() - geometry.ruler) > 0.5
+      if (moved) scheduleMeasure()
+    }
     const onVisibility = () => {
       if (document.visibilityState === 'visible') rehydrate('visibility')
     }
@@ -359,6 +373,7 @@ function createCore(
     }
     const onFocus = () => rehydrate('focus')
     window.addEventListener('resize', onResize)
+    window.addEventListener('scrollend', onScrollEnd)
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('pageshow', onPageShow)
     window.addEventListener('focus', onFocus)
@@ -372,6 +387,7 @@ function createCore(
       warm.disconnect()
       awakeObserver.disconnect()
       window.removeEventListener('resize', onResize)
+      window.removeEventListener('scrollend', onScrollEnd)
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('pageshow', onPageShow)
       window.removeEventListener('focus', onFocus)
