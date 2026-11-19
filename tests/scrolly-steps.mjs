@@ -688,6 +688,42 @@ const CHECKS = {
           restored.duration === wantDuration,
         `fade ${fade.map((o) => o.toFixed(2)).join(' ')} · reduced: active ${reduced.active}, ${reduced.mode}, ${reduced.style.duration}, swap ${swap.join('/')} · back: active ${restored.active}, ${restored.duration}`,
       ])
+
+      // data-scrolly-fade="cover", for opaque states: the incoming state fades in on top while the outgoing one holds
+      // at full strength, and drops only once covered (a symmetric crossfade shows the page through the middle).
+      const outgoing = await page.evaluate(() => {
+        document.querySelector('[data-scrolly]').setAttribute('data-scrolly-fade', 'cover')
+        return document.querySelector('[data-scrolly-state][data-state-active]').id
+      })
+      const back4 = await lineAt(page, 4, 150)
+      const rows = await page.evaluate(
+        async ({ y, out }) => {
+          window.__fx.scrollTo(y, true)
+          const rows = []
+          for (let i = 0; i < 45; i++) {
+            await window.__t.frames(1)
+            const inc = document.querySelector('[data-scrolly-state][data-state-active]')
+            const cs = getComputedStyle(inc)
+            rows.push({ id: inc.id, op: Number(cs.opacity), z: cs.zIndex, out: Number(getComputedStyle(document.getElementById(out)).opacity) })
+          }
+          return rows
+        },
+        { y: back4, out: outgoing },
+      )
+      const swapped = rows.filter((r) => r.id !== outgoing)
+      const midFade = swapped.filter((r) => r.op > 0.02 && r.op < 0.98)
+      const last = rows[rows.length - 1]
+      out.push([
+        'data-scrolly-fade="cover": the incoming state fades in on top while the outgoing one holds at full opacity, then drops',
+        swapped.length > 0 &&
+          midFade.length > 0 &&
+          midFade.every((r) => r.out > 0.999) &&
+          swapped.every((r) => r.z === '1') &&
+          last.op === 1 &&
+          last.out === 0,
+        `out ${outgoing} → in ${swapped[0]?.id} · ${midFade.map((r) => `${r.op.toFixed(2)}/${r.out.toFixed(2)}`).join(' ')} · last ${last.op}/${last.out} · z ${swapped[0]?.z}`,
+      ])
+      await page.evaluate(() => document.querySelector('[data-scrolly]').removeAttribute('data-scrolly-fade'))
       return out
     },
   },
