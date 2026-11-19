@@ -68,7 +68,8 @@ export interface HorizontalRailHandle extends PinnedSceneHandle {
   refresh(): void
 }
 
-/** A content resize (a late font or image) asks for one ScrollTrigger refresh, this long after the last. */
+/** A content resize (a late font or image) asks for one safe ScrollTrigger refresh (it waits for the scroll to end),
+ * this long after the last. */
 const REFRESH_DELAY_MS = 150
 
 /** What the rail writes for css/rail.css's timeline: the band's scroll offsets and the signed travel. */
@@ -171,7 +172,8 @@ export function horizontalRail(root: HTMLElement, options: HorizontalRailOptions
    * The timeline's range and target: the band's own scroll offsets, from the scene's trigger, so the timeline and the
    * script map every scroll offset to the same translate; the travel as the script's end value. Offsets, not a view()
    * range: on iOS the viewport grows and shrinks with the toolbar as the scroll changes direction, and a range measured
-   * from it would move the track with it.
+   * from it would move the track with it. The scene's ruler is the pin's own box (scene.ts), so these offsets don't
+   * move with the toolbar either.
    */
   const writeTimeline = (s: PinnedSceneHandle) => {
     const t = s.trigger
@@ -270,7 +272,9 @@ export function horizontalRail(root: HTMLElement, options: HorizontalRailOptions
       }
       if (!changed) return
       window.clearTimeout(refreshTimer)
-      refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), REFRESH_DELAY_MS)
+      // Safe: mid-scroll it waits for the scroll to end, never re-measuring (and in `pin: 'gsap'`, re-pinning) under the
+      // reader's finger.
+      refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(true), REFRESH_DELAY_MS)
     })
     observePanels = () => [track, ...panels()].forEach((el) => resizeObserver.observe(el))
     observePanels()

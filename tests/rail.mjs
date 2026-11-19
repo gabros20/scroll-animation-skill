@@ -2,7 +2,8 @@
 // rail.mjs — the GSAP horizontal rail (assets/gsap/horizontal-rail.ts + css/rail.css) in Chromium, WebKit and
 // Firefox: measured travel and runway, the band-to-translate writers and their holds (the CSS scroll timeline where it
 // runs, the script elsewhere, and the two agreeing at every scroll offset), the handover to the script while Lenis
-// smooths, RTL, re-measuring after a resize and a late image, keyboard focus following into off-screen panels through
+// smooths, RTL, re-measuring after a resize and a late image, the iOS toolbar (emulated) never moving the track and,
+// on touch, never rehydrating the scene, keyboard focus following into off-screen panels through
 // each scroll authority, the reduced-motion native scroller (at load and switched live), destroy() and re-creation,
 // and no uncaught errors.
 // Builds tests/fixtures/rail with Vite, serves the build with `vite preview`, prints one PASS/FAIL line per
@@ -36,6 +37,8 @@ const IMAGE_W = 600
 const PANELS = 5
 /** A smooth scroll (native, Lenis, ScrollSmoother) settles well inside this. */
 const SETTLE_MS = 6000
+/** The emulated iOS toolbar, px: the height `innerHeight` loses while it shows (the jump scales with it). */
+const TOOLBAR_PX = 86
 
 // ── args ────────────────────────────────────────────────────────────────
 
@@ -283,6 +286,87 @@ const CHECKS = {
             `(inline '${flip.during.inline}') → timeline ${flip.after.translate}`
         ]
       ]
+    }
+  },
+
+  toolbar: {
+    pages: ['native', 'lenis', 'smoother'],
+    async run(t) {
+      // iOS's shape: CSS lvh stays the viewport while window.innerHeight follows the toolbar, with a resize event on
+      // every change. The scene's ruler is the pin's 100lvh box, so nothing on the track may move: with an innerHeight
+      // ruler the band's offsets were rewritten and the cards jumped 7.6 px at the band's start (86 px toolbar).
+      const out = []
+      for (const touch of [false, true]) {
+        const { page } = await t.open({ touch })
+        const coarse = await page.evaluate(() => matchMedia('(pointer: coarse)').matches)
+        await page.evaluate((T) => {
+          const full = window.innerHeight
+          let height = full
+          Object.defineProperty(window, 'innerHeight', { get: () => height, configurable: true })
+          window.__toolbar = (shown) => {
+            height = shown ? full - T : full
+            window.dispatchEvent(new Event('resize'))
+          }
+        }, TOOLBAR_PX)
+        const read = () =>
+          page.evaluate(() => {
+            const track = document.querySelector('[data-rail-track]')
+            const computed = getComputedStyle(track).translate
+            return {
+              y: Math.round(scrollY),
+              x: computed === 'none' ? 0 : parseFloat(computed),
+              range: `${track.style.getPropertyValue('--rail-from')}..${track.style.getPropertyValue('--rail-to')}`,
+              rehydrates: window.__t.rehydrates().filter((r) => r === 'resize').length,
+            }
+          })
+        const s = await state(page)
+        const stops = [
+          ['band start + 20', s.bandFrom + 20],
+          ['mid band', (s.bandFrom + s.bandTo) / 2],
+          ['band end − 20', s.bandTo - 20],
+        ]
+        const start = await read()
+        let worst = 0
+        let ranges = true
+        const rows = []
+        for (const [name, y] of stops) {
+          await page.evaluate((v) => window.__t.toScroll(v), y)
+          const hidden = await read()
+          await page.evaluate(() => window.__toolbar(true))
+          await page.evaluate(() => window.__t.frames(6))
+          const shown = await read()
+          await page.evaluate(() => window.__toolbar(false))
+          await page.evaluate(() => window.__t.frames(6))
+          const back = await read()
+          const jump = Math.max(Math.abs(shown.x - hidden.x), Math.abs(back.x - hidden.x))
+          worst = Math.max(worst, jump)
+          ranges &&= shown.range === hidden.range && back.range === hidden.range && shown.y === hidden.y
+          rows.push(`${name}: ${hidden.x} → ${shown.x} → ${back.x} (${hidden.range} → ${shown.range})`)
+        }
+        const end = await read()
+        const toolbarRehydrates = end.rehydrates - start.rehydrates
+        if (!touch) {
+          out.push([
+            `the toolbar showing and hiding (innerHeight ±${TOOLBAR_PX} px, lvh fixed) moves the track by under 0.5 px and never rewrites its range`,
+            worst < 0.5 && ranges,
+            `worst ${Math.round(worst * 100) / 100} px · ${rows.join(' · ')}`,
+          ])
+          continue
+        }
+        if (!coarse) {
+          out.push(['touch emulation reports (pointer: coarse)', false, 'matchMedia says fine: the touch case did not run'])
+          continue
+        }
+        // A real resize on touch (a rotation: the width changes) still rehydrates.
+        await page.setViewportSize(NARROW)
+        const rotated = await until(page, (n) => window.__t.rehydrates().filter((r) => r === 'resize').length > n, end.rehydrates, 3000)
+        out.push([
+          'on touch a toolbar step is no layout change: the track holds, and no step rehydrates the scene; a width change still does',
+          worst < 0.5 && ranges && toolbarRehydrates === 0 && rotated !== null,
+          `worst ${Math.round(worst * 100) / 100} px · ${toolbarRehydrates} rehydrates over ${stops.length * 2} toolbar steps · width change: ${rotated === null ? 'no rehydrate' : `rehydrated in ${rotated} ms`}`,
+        ])
+      }
+      return out
     }
   },
 
@@ -732,8 +816,8 @@ async function main() {
           page: pageName,
           tab: browserName === 'webkit' ? 'Alt+Tab' : 'Tab',
           /** A fresh context on this page, the rail built and its first translate written (or none, reduced). */
-          async open({ reducedMotion = 'no-preference', query = '' } = {}) {
-            const context = await open.browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion })
+          async open({ reducedMotion = 'no-preference', query = '', touch = false } = {}) {
+            const context = await open.browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion, hasTouch: touch })
             contexts.push(context)
             const page = await context.newPage()
             page.on('pageerror', (err) => errors.push(`${id}: ${err.message.split('\n')[0]}`))

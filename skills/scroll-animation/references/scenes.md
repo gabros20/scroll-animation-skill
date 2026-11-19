@@ -49,9 +49,12 @@ and reduced-motion collapse, checked in a browser.
 `usePinnedScene()` lets you render the markup yourself (`rootRef`, `pinRef`) and keeps `data-scene-state` current. GSAP takes the markup with `pinnedScene(root, options)`. The maths is
 `assets/scene.ts`.
 
-- **Measure the wrapper, never the pin.** A sticky element stops moving, so its rect is no ruler. Progress is
-  `-rect.top / (height − innerHeight)`, which a ScrollTrigger from `'top top'` to `'bottom bottom'` matches once
-  refreshed (S5).
+- **Measure the wrapper's travel against the pin's box.** A sticky element stops moving, so the wrapper's rect gives
+  the position; the pin's own height (its `100lvh`) is the ruler. Progress is `-rect.top / (height − pin height)`,
+  which a ScrollTrigger from `'top top'` to `+=` that range matches once refreshed (S5). Never `innerHeight`,
+  `'bottom bottom'` or `['start start', 'end end']`: on iOS they follow the toolbar, so the range is one toolbar
+  longer while it shows, and each toolbar step moved a rail's cards 4–10 px (the `3d` skill measures the same pin the
+  same way).
 - **The pin is `100lvh`**: a scene is read while scrolling, when iOS collapses its toolbars. An `svh` pin falls short
   and shows the page along the bottom; `dvh` resizes the pin, and every framing read, on each toolbar animation.
   A sticky graphic beside scrolling steps is `scrolly-steps`, in `svh` ([scrollytelling.md](scrollytelling.md) §5).
@@ -66,7 +69,9 @@ Both engines take the holds (§3), `actHysteresis` (§2), `warmMarginPx` (600) a
 `onProgress(p, scene)`, `onMode`, `onAct`, `onAwake` (start or stop per-frame work), `onWarm` (media may fetch),
 `onMeasure` (re-read cached geometry) and `onRehydrate(state, scene)`. A rehydrate re-derives mode, acts and band from
 the wrapper's rect on mount, wake, resize, tab return, bfcache restore, focus and a reduced-motion change, coalesced to
-one frame, so a resume never waits for a scroll event. GSAP adds `pin`, `refreshPriority` and `onBuild`.
+one frame, so a resume never waits for a scroll event. A toolbar step on touch (the same width, the height moved by
+under a quarter) is no resize: no geometry depends on it, so nothing rehydrates. GSAP adds `pin`, `refreshPriority`
+and `onBuild`.
 
 The handle's `mode`, `act`, `awake` and `reduced` are methods in Motion and getters in GSAP. Both have `progress()`,
 `band()`, `bounds()`, `rangePx()` and `rehydrate()`; GSAP adds `refresh()`, `debug()` and `destroy()`.
@@ -129,12 +134,13 @@ picture, which glides and loops while scroll stands still.
 |---|---|---|
 | Routes | native and Lenis | ScrollSmoother: sticky never sticks inside `#smooth-content` (S2) |
 | The pin | CSS sticky | ScrollTrigger pins `[data-scene-pin]` with `pinSpacing: false` (the content margin already cancels it); the scene sets `data-scene-pin="gsap"` |
-| Progress | GSAP: a ScrollTrigger with no pin; Motion: `useScroll` | the pinning ScrollTrigger |
+| Progress | GSAP: a ScrollTrigger with no pin; Motion: `scrollY` over the cached wrapper | the pinning ScrollTrigger |
 | Reduced motion | CSS releases the pin | the trigger is rebuilt without a pin, scroll kept |
 
 Sticky has no pin-spacer and no reparenting, keeps the CSS collapse and shares Motion's geometry. Never nest a scene in
 a GSAP `pin: true`: the spacer is fixed or transformed while pinned, and sticky resolves against it. Build no Motion
-scene on a ScrollSmoother route: `useScroll` reads the unsmoothed scroll there, up to 244 px ahead of the page (S2).
+scene on a ScrollSmoother route: Motion reads the unsmoothed scroll there, up to 244 px ahead of the page (S2). Both
+modes measure the pin's box: a `'gsap'` pin keeps its CSS `100lvh` while pinned.
 
 ## 6. Scroll-linked writes
 
@@ -145,7 +151,7 @@ Write scroll-linked styles by hand in `onProgress`, never bound through Motion's
 ```
 
 Motion 13.4 can hand a bound style to a native timeline that drifts back to its first-render value past the input
-range, and the scene's `['start start', 'end end']` is one of the offsets it hands over (S3,
+range, and `['start start', 'end end']` on a scene's wrapper is one of the offsets it hands over (S3,
 [motion.md](motion.md) §4). Padding the input range to 0 and 1 fixes the ends, not the size mismatch: a fallback only.
 
 - Write the first value too: Motion's `onProgress` fires on change, and `onRehydrate` (with `p` and `band`) runs on
@@ -217,8 +223,10 @@ GSAP only (the page-wide rules are in [gsap.md](gsap.md) §5–§7):
 - **Create scenes in page order** (or set `refreshPriority`: higher refreshes earlier), so ScrollTrigger refreshes them
   top to bottom.
 - **Keep ScrollTrigger fresh**: a layout change above a range with no resize (a late image, a font, an accordion)
-  leaves it stale. `pinnedScene` shares one ResizeObserver on `<body>` and refreshes 150 ms after the last change;
-  call `scene.refresh()` after changing a scene's own content. Resumes read the rect, never the trigger.
+  leaves it stale. `pinnedScene` shares one ResizeObserver on `<body>` and asks for a safe refresh
+  (`ScrollTrigger.refresh(true)`) 150 ms after the last change: mid-scroll it waits for the scroll to end, so a lazy
+  image decoding under the finger never re-measures, or re-pins a `'gsap'` pin, while the reader scrolls. Call
+  `scene.refresh()` after changing a scene's own content. Resumes read the rect, never the trigger.
 - **Build only on `MOTION_CONDITIONS`**, outside your own `matchMedia` callbacks, and branch on `isDesktop()` inside a
   build: a breakpoint condition throws a rotating iPad to the top (GSAP 3.15).
 
@@ -360,7 +368,8 @@ const rail = horizontalRail(el)   // .travel() .rtl() .scrollToPanel(i) .refresh
 
 ## Traps
 
-- [ ] The wrapper is measured, never the pin; the pin is `lvh`, the content margin matches; no transform or
+- [ ] Progress is the wrapper's travel over the pin's box, never `innerHeight`; the pin is `lvh`, the content margin
+  matches; no transform or
   `overflow: hidden` (`-x` included) on the root, pin or an ancestor (§1).
 - [ ] Three one-viewport acts give halves, not thirds; a pin has 1.2 viewports of runway or more; only stacked acts
   carry `data-scene-act`, hidden off `[inert]` (§2).

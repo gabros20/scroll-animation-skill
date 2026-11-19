@@ -3,11 +3,14 @@
  * motion/usePinnedScene.ts — the pinned scene core for Motion (React) routes. PinnedScene.tsx renders the markup;
  * use the hook directly only for markup of your own (the same data-scene-* contract, css/scene.css).
  *
- * - Progress is Motion's `useScroll` on the RANGE WRAPPER (never the pin: a sticky element stops moving, so its own
- *   rect is no ruler), offset ['start start', 'end end']. It is read in `useMotionValueEvent` and every scroll-linked
- *   style is written by hand. Bound through `style`, Motion hands opacity, clipPath, filter, backgroundColor and
- *   transform to a native timeline whose keyframes stop at the input range, and past it the element drifts back to its
- *   first-render value (spike S3), pinned or not.
+ * - Progress is the RANGE WRAPPER's travel over the pin's own box (scene.ts): `(scrollY − wrapper top) / (wrapper
+ *   height − pin height)`, the distance a 100lvh pin travels. Not `useScroll`'s target progress: its offsets measure
+ *   against the viewport, which on iOS follows the toolbar, so its ruler is one toolbar too long while the toolbar
+ *   shows. Motion's `scrollY` is the tick; the wrapper's top and height are cached, re-measured on a resize of the
+ *   wrapper or <body>, a real window resize, a wake and every rehydrate. `progress` is a MotionValue of that value,
+ *   read in `useMotionValueEvent`, and every scroll-linked style is written by hand. Bound through `style`, Motion
+ *   hands opacity, clipPath, filter, backgroundColor and transform to a native timeline whose keyframes stop at the
+ *   input range, and past it the element drifts back to its first-render value (spike S3), pinned or not.
  * - `band` is a MotionValue of the exact band (scene.ts: the scrub span as 0..1, 0 under reduced motion), written
  *   wherever the scene computes it, rehydrate included: hand it straight to media that scrubs,
  *   `<FrameSequence progress={band} />`, instead of bridging `onProgress` and `onRehydrate` by hand.
@@ -18,6 +21,7 @@
  * - Gating: a warm margin (media may start fetching) and a wake margin (per-frame work may run). Safari can report a
  *   stale `isIntersecting: false` around a resize for elements much taller than the viewport, so the resize path
  *   computes nearness from the rect, and any progress strictly between 0 and 1 proves the range straddles the view.
+ *   A height-only, toolbar-sized resize on touch is ignored: no scene geometry depends on it.
  * - Rehydrate: on mount, wake, resize, tab return, bfcache restore, focus and reduced-motion changes the scene
  *   re-derives mode, acts and band from scroll, coalesced to one frame, and hands the result to `onRehydrate`.
  * - Reduced motion (live, motion/useReducedMotionLive.ts) holds the head; css/scene.css collapses the runway.
@@ -32,7 +36,7 @@ import {
   SCENE_MARGINS,
   actFromProgress,
   bandProgress,
-  clamp01,
+  isChromeResize,
   isNear,
   progressFromRect,
   rangeFromHeight,
@@ -48,9 +52,6 @@ import {
 import { useReducedMotionLive } from './useReducedMotionLive'
 
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect
-
-/** Module constant: a fresh array each render would resubscribe the scroll listener. */
-const PIN_OFFSET = ['start start', 'end end'] as const satisfies [string, string]
 
 export interface PinnedSceneHandle {
   readonly root: HTMLDivElement | null
@@ -110,25 +111,27 @@ export function usePinnedScene(options: PinnedSceneOptions = {}): PinnedSceneSta
   const rootRef = useRef<HTMLDivElement>(null)
   const pinRef = useRef<HTMLDivElement>(null)
   const reduced = useReducedMotionLive()
-  const { scrollYProgress } = useScroll({ target: rootRef, offset: PIN_OFFSET })
+  // The tick only: progress is computed from it over the pin's box, never read from a useScroll offset.
+  const { scrollY } = useScroll()
+  const progress = useMotionValue(0)
   const band = useMotionValue(0)
   const [mode, setMode] = useState<SceneMode>('head')
 
   // The core never sees a ref: render hands it values only, and effects hand it the elements and the latest options.
-  const [core] = useState(() => createCore(scrollYProgress, band, setMode, options))
+  const [core] = useState(() => createCore(progress, band, setMode, options))
   // A layout effect, so the elements are there as early as refs are: a consumer's layout effect may rehydrate.
   useIsomorphicLayoutEffect(() => {
     core.attach(rootRef.current, pinRef.current, options)
   })
 
   useIsomorphicLayoutEffect(() => core.setReduced(reduced), [core, reduced])
-  useMotionValueEvent(scrollYProgress, 'change', core.onProgress)
+  useMotionValueEvent(scrollY, 'change', core.onScroll)
 
   const warmMarginPx = options.warmMarginPx ?? SCENE_MARGINS.warmMarginPx
   const wakeMarginPx = options.wakeMarginPx ?? SCENE_MARGINS.wakeMarginPx
   useEffect(() => core.mount(warmMarginPx, wakeMarginPx), [core, warmMarginPx, wakeMarginPx])
 
-  return { rootRef, pinRef, progress: scrollYProgress, band, mode, reduced, scene: core.handle }
+  return { rootRef, pinRef, progress, band, mode, reduced, scene: core.handle }
 }
 
 function createCore(
@@ -143,6 +146,9 @@ function createCore(
   let options = initialOptions
   let acts: HTMLElement[] = []
   let rehydrateFrame = 0
+  // The wrapper's document top and height and the ruler (the pin's height), cached by `measure()`: the tick reads no
+  // layout.
+  const geometry = { top: 0, height: 0, ruler: 0 }
 
   const o = () => options
   const holds = (): SceneHolds => ({
@@ -212,10 +218,18 @@ function createCore(
     if (next) rehydrate('wake')
   }
 
+  /** Progress at a scroll position, from the cached geometry. */
+  const progressAt = (scrollY: number) => progressFromRect(geometry.top - scrollY, geometry.height, geometry.ruler)
+
   function measure() {
     const el = root
     if (!el) return
-    state.rangePx = rangeFromHeight(el.offsetHeight, window.innerHeight)
+    const r = el.getBoundingClientRect()
+    geometry.top = r.top + window.scrollY
+    geometry.height = r.height
+    // The ruler: the pin's own box (100lvh), never `innerHeight`, which follows the iOS toolbar. No pin: the viewport.
+    geometry.ruler = pin ? pin.offsetHeight : window.innerHeight
+    state.rangePx = rangeFromHeight(geometry.height, geometry.ruler)
     acts = Array.from(el.querySelectorAll<HTMLElement>('[data-scene-act]')).filter(
       (act) => act.closest('[data-scene-root]') === el,
     )
@@ -223,8 +237,16 @@ function createCore(
     o().onMeasure?.(handle)
   }
 
+  /** The tick: every scroll moves progress only where the range is. */
+  function onScroll(scrollY: number) {
+    if (!root) return
+    const p = progressAt(scrollY)
+    if (p !== state.p) onProgress(p)
+  }
+
   function onProgress(p: number) {
     state.p = p
+    progress.set(p)
     writeBand()
     if (!state.reduced) {
       if (p > 0 && p < 1) wake(true)
@@ -240,12 +262,13 @@ function createCore(
       rehydrateFrame = 0
       if (!root) return
       measure()
-      // Fresh rect maths, not the last scroll event's value: a resume must not wait for one. Equal to useScroll's
-      // progress at rest.
-      const r = root.getBoundingClientRect()
-      if (isNear(r.top, r.bottom, window.innerHeight, state.wakeMarginPx)) wake(true)
-      const p = progressFromRect(r.top, r.height, window.innerHeight)
+      // Fresh rect maths (measure() just read the rect), not the last scroll event's value: a resume must not wait for
+      // one. Equal to the tick's progress at rest.
+      const top = geometry.top - window.scrollY
+      if (isNear(top, top + geometry.height, window.innerHeight, state.wakeMarginPx)) wake(true)
+      const p = progressAt(window.scrollY)
       state.p = p
+      progress.set(p)
       if (p > 0 && p < 1) wake(true)
       const at = sceneAt(p, state.rangePx, holds(), state.reduced)
       state.act = state.reduced ? 0 : actFromProgress(p, acts.length)
@@ -277,8 +300,9 @@ function createCore(
     const el = root
     if (!el) return
     state.wakeMarginPx = wakeMarginPx
-    state.p = clamp01(progress.get())
     measure()
+    state.p = progressAt(window.scrollY)
+    progress.set(state.p)
 
     // Deferred a frame: Safari can service `resize` with the new innerHeight while layout still holds the old
     // viewport units, which reads back as a range far shorter than it is. Coalesced to one read per frame.
@@ -289,6 +313,8 @@ function createCore(
     }
     const resizeObserver = new ResizeObserver(scheduleMeasure)
     resizeObserver.observe(el)
+    // A layout change above the range (a late image or font) moves the cached top without resizing the wrapper.
+    resizeObserver.observe(document.body)
 
     const warm = new IntersectionObserver(
       ([entry]) => {
@@ -311,11 +337,18 @@ function createCore(
     )
     awakeObserver.observe(el)
 
+    // The iOS toolbar showing or hiding resizes the window on every step. With the pin as the ruler nothing in the
+    // scene depends on it, so it is ignored, never a rehydrate per step (media snaps, a canvas re-primes).
+    let viewport = { width: window.innerWidth, height: window.innerHeight }
+    const coarse = window.matchMedia('(pointer: coarse)')
     const onResize = () => {
-      scheduleMeasure()
+      const next = { width: window.innerWidth, height: window.innerHeight }
+      if (isChromeResize(viewport, next, coarse.matches)) return
+      viewport = next
       const r = el.getBoundingClientRect()
       wake(isNear(r.top, r.bottom, window.innerHeight, wakeMarginPx))
-      measure()
+      // No measure here: Safari can service `resize` while layout still holds the old viewport units, and a band
+      // written from that read draws one wrong frame. The rehydrate measures a frame later.
       rehydrate('resize')
     }
     const onVisibility = () => {
@@ -348,5 +381,5 @@ function createCore(
     }
   }
 
-  return { handle, onProgress, setReduced, attach, mount }
+  return { handle, onScroll, setReduced, attach, mount }
 }

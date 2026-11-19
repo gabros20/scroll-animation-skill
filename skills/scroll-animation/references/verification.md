@@ -41,7 +41,8 @@ stays meaningful regardless of what's above it:
 ```js
 const base = await page.evaluate(() => {
   const s = document.querySelector('[data-scene-root]')
-  return { top: s.getBoundingClientRect().top + scrollY, range: s.offsetHeight - innerHeight }
+  const pin = s.querySelector('[data-scene-pin]')
+  return { top: s.getBoundingClientRect().top + scrollY, range: s.offsetHeight - (pin?.offsetHeight ?? innerHeight) }
 })
 for (const progress of [0, 0.25, 0.5, 0.75, 1]) {
   await page.evaluate(y => scrollTo(0, y), base.top + base.range * progress)

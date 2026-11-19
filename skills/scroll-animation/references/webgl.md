@@ -203,8 +203,8 @@ rendered `exact`, `getContext` wrapped before load), never from screenshots alon
   capture.
 
 Headless WebGL needs Chromium's SwiftShader (`--enable-unsafe-swiftshader`). A real device still owes three checks:
-a real hidden tab, a real bfcache return, and iOS with the toolbars shown, where the scene's range uses
-`innerHeight` while the pin is `100lvh` (S5's caveat).
+a real hidden tab, a real bfcache return, and iOS with the toolbars shown, where the scene's range is the pin's
+`100lvh` box ([scenes.md](scenes.md) §1) and a toolbar step must leave the canvas's frame where it was.
 
 ## Traps
 

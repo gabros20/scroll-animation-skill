@@ -248,7 +248,7 @@ re-derives everything, coalesced to one frame:
 1. re-measure the range and read the wrapper's rect;
 2. derive mode, band and act **absolutely** (`sceneAt`), not through the live stepper;
 3. snap the playhead, no glide, if awake (no frame between a stale time and the right one is worth playing), or pause.
-   iOS fires `resize` on each step of its toolbar animation, and each rehydrates: a tracked playhead is already there;
+   A toolbar step on touch is no resize (scenes.md §1): the range is the pin's box, so the playhead stays put;
 4. if `duration` is invalid (an evicted decoder), issue **one** soft `load()`; metadata rehydrates the scene again.
 
 A hidden tab stops the controller and pauses the video. **A lock or a hidden page can cost the element its data,

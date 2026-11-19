@@ -10,10 +10,12 @@
  *   scene.onMode((mode) => …)   scene.progress()   scene.mode   scene.refresh()   scene.destroy()
  *
  * - `pin: 'sticky'` (default): CSS sticky geometry, identical to the React engine's, and a ScrollTrigger WITHOUT a pin
- *   on the range wrapper (start 'top top', end 'bottom bottom') as the progress source: no pin-spacer, no
- *   reparenting, the CSS reduced-motion collapse. Once refreshed its progress equals the wrapper's rect maths at every
- *   viewport, native or under Lenis (spike S5). This scene owns that freshness: a ResizeObserver on <body> refreshes
- *   ScrollTrigger after a layout change above the range, and a resume re-derives from the rect, never a stale value.
+ *   on the range wrapper (start 'top top', end '+=' the range) as the progress source: no pin-spacer, no reparenting,
+ *   the CSS reduced-motion collapse. The range is the pin's own box (scene.ts): wrapper height minus pin height, the
+ *   distance a 100lvh pin travels, so the iOS toolbar never moves it. Once refreshed its progress equals the wrapper's
+ *   rect maths at every viewport, native or under Lenis (spike S5). This scene owns that freshness: a ResizeObserver
+ *   on <body> asks for a safe refresh (one that waits for the scroll to end) after a layout change above the range, and
+ *   a resume re-derives from the rect, never a stale value. A height-only, toolbar-sized resize on touch is ignored.
  * - `pin: 'gsap'`: ScrollTrigger pins the pin element (`pinSpacing: false`; the content's negative margin already
  *   cancels its height). For ScrollSmoother pages, where sticky can't work (spike S2).
  * - Reduced motion is live: the scene builds inside `gsap.matchMedia(MOTION_CONDITIONS)` (gsap/setup.ts), and a
@@ -33,6 +35,7 @@ import {
   SCENE_MARGINS,
   actFromProgress,
   bandProgress,
+  isChromeResize,
   isNear,
   progressFromRect,
   rangeFromHeight,
@@ -122,6 +125,10 @@ export function pinnedScene(root: HTMLElement, options: PinnedSceneOptions = {})
   const progressListeners = new Set<(p: number) => void>()
 
   const bounds = () => sceneBounds(state.rangePx, holds)
+  /** The ruler: the pin's own box (100lvh), never `innerHeight`, which follows the iOS toolbar. No pin: the viewport. */
+  const rulerPx = () => (pin ? pin.offsetHeight : window.innerHeight)
+  /** The distance the pin travels: ScrollTrigger's `end` reads it on every refresh, `measure()` caches it. */
+  const travelPx = () => rangeFromHeight(root.offsetHeight, rulerPx())
 
   const handle: PinnedSceneHandle = {
     root,
@@ -212,7 +219,7 @@ export function pinnedScene(root: HTMLElement, options: PinnedSceneOptions = {})
   }
 
   function measure() {
-    state.rangePx = rangeFromHeight(root.offsetHeight, window.innerHeight)
+    state.rangePx = travelPx()
     acts = Array.from(root.querySelectorAll<HTMLElement>('[data-scene-act]')).filter(own)
     options.onMeasure?.(handle)
   }
@@ -237,7 +244,7 @@ export function pinnedScene(root: HTMLElement, options: PinnedSceneOptions = {})
       // Fresh rect maths: a resume must not read a ScrollTrigger that hasn't refreshed yet (S5).
       const r = root.getBoundingClientRect()
       if (isNear(r.top, r.bottom, window.innerHeight, wakeMarginPx)) wake(true)
-      const p = progressFromRect(r.top, r.height, window.innerHeight)
+      const p = progressFromRect(r.top, r.height, rulerPx())
       state.p = p
       if (p > 0 && p < 1) wake(true)
       const at = sceneAt(p, state.rangePx, holds, state.reduced)
@@ -253,7 +260,8 @@ export function pinnedScene(root: HTMLElement, options: PinnedSceneOptions = {})
     return ScrollTrigger.create({
       trigger: root,
       start: 'top top',
-      end: 'bottom bottom',
+      // A function, so every refresh re-reads it; 'bottom bottom' would follow innerHeight, one toolbar too long.
+      end: () => `+=${travelPx()}`,
       pin: pinned && pin ? pin : false,
       pinSpacing: false,
       refreshPriority: options.refreshPriority,
@@ -320,11 +328,18 @@ export function pinnedScene(root: HTMLElement, options: PinnedSceneOptions = {})
     )
     awakeObserver.observe(root)
 
+    // The iOS toolbar showing or hiding resizes the window on every step. With the pin as the ruler nothing in the
+    // scene depends on it, so it is ignored, never a rehydrate per step (media snaps, a canvas re-primes).
+    let viewport = { width: window.innerWidth, height: window.innerHeight }
+    const coarse = window.matchMedia('(pointer: coarse)')
     const onResize = () => {
-      scheduleMeasure()
+      const next = { width: window.innerWidth, height: window.innerHeight }
+      if (isChromeResize(viewport, next, coarse.matches)) return
+      viewport = next
       const r = root.getBoundingClientRect()
       wake(isNear(r.top, r.bottom, window.innerHeight, wakeMarginPx))
-      measure()
+      // No measure here: Safari can service `resize` while layout still holds the old viewport units. The rehydrate
+      // measures a frame later.
       rehydrate('resize')
     }
     const onVisibility = () => {
@@ -384,7 +399,9 @@ function dropEmptyStyle(el: HTMLElement | null) {
 // ── ScrollTrigger freshness ─────────────────────────────────────────────
 // A layout change above a range (an image without dimensions, a late font, an accordion) moves the range without a
 // window resize, and ScrollTrigger keeps the old start and end until something refreshes it: 300 px stale in S5.
-// One observer on <body> serves every scene; a burst of changes is one refresh, 150 ms after the last.
+// One observer on <body> serves every scene; a burst of changes is one refresh, 150 ms after the last. A safe refresh
+// (`refresh(true)`): mid-scroll it waits for the scroll to end, so a lazy image decoding under the reader's finger
+// never re-measures, or reverts and re-applies a `pin: 'gsap'` pin, while they scroll.
 
 let layoutUsers = 0
 let layoutObserver: ResizeObserver | null = null
@@ -401,7 +418,7 @@ function watchLayout(): () => void {
       last = size
       if (first) return
       window.clearTimeout(refreshTimer)
-      refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), 150)
+      refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(true), 150)
     })
     layoutObserver.observe(document.body)
   }

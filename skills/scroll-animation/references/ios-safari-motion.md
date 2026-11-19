@@ -90,7 +90,9 @@ service a `resize` event carrying the *new* `innerHeight` while layout still hol
 children at their *old* size, and reading geometry synchronously inside that event reads back a
 range far shorter than reality. One `requestAnimationFrame` deferral (coalesced, so a drag produces
 one measurement per frame rather than one per event) puts the read after layout has actually settled
-to the new toolbar state.
+to the new toolbar state. A scene's range never reads `innerHeight` at all: it is the pin's `100lvh` box, so a
+toolbar step changes nothing in it, and on touch a resize with the same width and a height step under a quarter is
+ignored outright (`scenes.md` §1).
 
 The same toolbar is why a scroll well captures the viewport height as a snapshot and refreshes it
 only on a resize that clearly isn't chrome (a width change, or a height change over roughly a

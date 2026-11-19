@@ -13,7 +13,10 @@
 //          --out <file>           also write the fresh traces
 //
 // The baseline was recorded from v1's code, which is gone, so it can't be
-// recorded again: a reviewed change of behaviour goes in EXPECTED_DIFFS. It
+// recorded again: a reviewed change of behaviour goes in EXPECTED_DIFFS. The
+// pin-box ruler (v2) needed none: Playwright shows no toolbar, so a 100lvh
+// pin is exactly innerHeight tall and every traced p, mode and frame held;
+// the toolbar case is tests/rail.mjs's `toolbar` check. It
 // holds Chromium and WebKit traces (recorded with --browsers chromium,webkit
 // on macOS). `npm run test:traces` checks Chromium only, the one browser CI
 // installs; add --browsers chromium,webkit to check both.

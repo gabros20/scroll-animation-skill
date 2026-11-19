@@ -41,12 +41,23 @@ export function mount(options: HorizontalRailOptions = {}) {
   document.addEventListener('click', (event) => {
     if ((event.target as Element).closest('a')) event.preventDefault()
   })
-  const create = () => horizontalRail(root, { ...HOLDS, ...options })
+  // Every rehydrate's reason, in order: a toolbar step on touch must add none.
+  const rehydrates: string[] = []
+  const onRehydrate = options.onRehydrate
+  const create = () =>
+    horizontalRail(root, {
+      ...HOLDS,
+      ...options,
+      onRehydrate(state, scene) {
+        rehydrates.push(state.reason)
+        onRehydrate?.(state, scene)
+      },
+    })
   window.__rail = create()
-  window.__t = helpers(root, track, create)
+  window.__t = helpers(root, track, create, rehydrates)
 }
 
-function helpers(root: HTMLElement, track: HTMLElement, create: () => HorizontalRailHandle | null) {
+function helpers(root: HTMLElement, track: HTMLElement, create: () => HorizontalRailHandle | null, rehydrates: string[]) {
   const pin = root.querySelector<HTMLElement>('[data-scene-pin]')!
   const spacer = root.querySelector<HTMLElement>('[data-scene-spacer]')!
   const panels = () => Array.from(track.querySelectorAll<HTMLElement>('[data-rail-panel]'))
@@ -93,6 +104,8 @@ function helpers(root: HTMLElement, track: HTMLElement, create: () => Horizontal
 
   return {
     frames,
+    /** Every rehydrate's reason since the page loaded. */
+    rehydrates: () => [...rehydrates],
     toScroll,
     toProgress,
     toBand: (band: number) => toProgress(pOf(band)),

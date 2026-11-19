@@ -7,9 +7,11 @@ import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
 
 const {
+  CHROME_HEIGHT_RATIO,
   SCENE_HOLDS,
   actFromProgress,
   bandProgress,
+  isChromeResize,
   isNear,
   modeFromProgress,
   progressFromRect,
@@ -242,6 +244,23 @@ describe('geometry', () => {
     assert.equal(progressFromRect(-900, 2700, 900), 0.5)
     assert.equal(progressFromRect(-5000, 2700, 900), 1)
     assert.equal(progressFromRect(-100, 800, 900), 0)
+  })
+
+  test('the ruler is the pin: an innerHeight one toolbar short would make the range one toolbar long', () => {
+    // A 3-viewport scene on a 852 px phone: the pin is 852 (100lvh); innerHeight is 766 with an 86 px toolbar.
+    assert.equal(rangeFromHeight(3408, 852), 2556)
+    assert.equal(progressFromRect(-1278, 3408, 852), 0.5)
+    assert.notEqual(progressFromRect(-1278, 3408, 766), 0.5)
+  })
+
+  test('isChromeResize: same width, a height step under a quarter, on touch only', () => {
+    const last = { width: 393, height: 852 }
+    assert.equal(CHROME_HEIGHT_RATIO, 0.25)
+    assert.equal(isChromeResize(last, { width: 393, height: 766 }, true), true, 'the toolbar showing')
+    assert.equal(isChromeResize(last, { width: 393, height: 940 }, true), true, 'and hiding')
+    assert.equal(isChromeResize(last, { width: 393, height: 766 }, false), false, 'a mouse: any resize is real')
+    assert.equal(isChromeResize(last, { width: 852, height: 393 }, true), false, 'a rotation changes the width')
+    assert.equal(isChromeResize(last, { width: 393, height: 500 }, true), false, 'a quarter or more is layout (a keyboard)')
   })
 
   test('isNear: within the margin on either side', () => {

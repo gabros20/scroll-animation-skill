@@ -3,8 +3,10 @@
  * (motion/usePinnedScene.ts, gsap/pinned-scene.ts) and the unit tests share one copy.
  *
  * A pinned scene is a range wrapper holding a sticky pin (css/scene.css). Progress `p` runs 0 → 1 while the wrapper
- * scrolls past, over `rangePx = wrapper height − viewport height`: the distance the pin travels. Two holds, set in px
- * of that range, split it into three modes:
+ * scrolls past, over `rangePx = wrapper height − pin height`: the distance the pin travels. The pin's own box is the
+ * ruler, never `innerHeight`: the pin is 100lvh, and on iOS `innerHeight` follows the toolbar, so a ruler read from it
+ * is one toolbar height long while the toolbar shows and moves the scene each time it shows or hides. Two holds, set
+ * in px of that range, split it into three modes:
  *
  *   p = 0    headExit                                   tailEnter        1
  *   |- head -|------------------ scrub -------------------|---- tail ----|
@@ -57,16 +59,35 @@ export const clamp01 = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v)
 
 export const lerp = (a: number, b: number, t: number): number => a + (b - a) * t
 
-/** The distance the pin travels: wrapper height minus the viewport, never below 1 px. */
-export function rangeFromHeight(heightPx: number, viewportPx: number): number {
-  return Math.max(1, heightPx - viewportPx)
+/**
+ * The distance the pin travels: wrapper height minus the ruler, never below 1 px. The ruler is the pin's height (its
+ * 100lvh box); only a scene without a pin falls back to the viewport.
+ */
+export function rangeFromHeight(heightPx: number, rulerPx: number): number {
+  return Math.max(1, heightPx - rulerPx)
 }
 
-/** Progress from the wrapper's rect: 0 above the range, 1 past it. The rect maths ScrollTrigger and useScroll match. */
-export function progressFromRect(top: number, height: number, viewportPx: number): number {
-  const total = height - viewportPx
+/** Progress from the wrapper's rect over the same ruler: 0 above the range, 1 past it. */
+export function progressFromRect(top: number, height: number, rulerPx: number): number {
+  const total = height - rulerPx
   if (total <= 0) return 0
   return clamp01(-top / total)
+}
+
+/** A resize with the same width and a height change under this share of the height is browser chrome on touch. */
+export const CHROME_HEIGHT_RATIO = 0.25
+
+/**
+ * Whether a resize is only the browser's chrome (the iOS toolbar showing or hiding) on a touch screen: the same width
+ * and a height change under CHROME_HEIGHT_RATIO of the last height a scene accepted. With the pin as the ruler no
+ * scene geometry depends on it, so the scene ignores it rather than rehydrating media and canvases on every step.
+ */
+export function isChromeResize(
+  last: { width: number; height: number },
+  next: { width: number; height: number },
+  coarse: boolean,
+): boolean {
+  return coarse && next.width === last.width && Math.abs(next.height - last.height) < last.height * CHROME_HEIGHT_RATIO
 }
 
 /** Whether a rect lies within `marginPx` of the viewport: the wake test, computed instead of waited for. */
