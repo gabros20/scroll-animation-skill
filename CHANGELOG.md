@@ -17,7 +17,8 @@ the newest release heading below, and the release tag.
 - Design-fold: craft from outside motion skills folded into the references, each checked against
   the pack's code and measurements. Verification gains path independence, dead scroll, the slides,
   contrast over moving media, a route-cycle probe and a device diagnostic; layered visuals gain a
-  layered hero with pointer depth, particles and a progress line through steps; scenes gain the
+  layered hero with pointer depth, a particle layer's scroll budget (the renderer is the 3d skill's)
+  and a progress line through steps; scenes gain the
   runway floor, rail travel per width and jumps across scenes; video gains a portrait mobile tier
   and footage preparation; craft gains overlapping beats, one entrance per container, the peak and
   the ending. `performance.md` §4 now says what Motion 14.2 changed: time-based `x`/`y`/`scale`
