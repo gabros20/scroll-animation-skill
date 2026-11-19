@@ -486,6 +486,39 @@ describe('the kick after a hide', () => {
     controller.destroy()
   })
 
+  test('the last rung primes at the band frame: the time is read before its load() empties the duration', async () => {
+    // Under a poster image a prime starts where the scroll is. Worked out after the load(), the duration reads NaN,
+    // there is no time to start at, and the fresh prime plays from frame 0 (the leftover of the device pass's A fix).
+    frames.length = 0
+    const video = fakeVideo(1)
+    const controller = createVideoController(video, { fps: FPS, posterElement: { src: '', getAttribute: () => null } })
+    scene.band = 0.4
+    controller.setAwake(true)
+    controller.rehydrate({ mode: 'scrub', band: 0.4, awake: true })
+    crank(video, 4)
+    scripted(video, ['refuse', 'refuse', 'ok'])
+    let fromLoad = -1
+    video.load = () => {
+      video.loads++
+      // A load() empties the element: no duration, no data, the playhead back at 0.
+      Object.assign(video, { duration: Number.NaN, readyState: 0, seeking: false })
+      video.playTo(0)
+      fromLoad = video.seeks.length
+    }
+    hideAndReturn()
+    crank(video, 3)
+    await settle()
+    crank(video, 2)
+    await settle()
+    assert.equal(video.loads, 1, 'both plays refused: the last rung ran')
+    assert.deepEqual(
+      video.seeks.slice(fromLoad).map((s) => s.frame),
+      [frameAt(0.4)],
+      'the fresh prime sets the band frame as where playback starts, never frame 0',
+    )
+    controller.destroy()
+  })
+
   test('a play that never starts times out and the retry recovers', async () => {
     const { video, controller } = setup({ band: 0.4 })
     scripted(video, ['hang'])
