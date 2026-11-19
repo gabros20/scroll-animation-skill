@@ -198,6 +198,8 @@ It runs on time, not scroll, so Firefox runs it too.
   them elsewhere: a focused link can sit clipped.
 - Right to left, it runs rightward. A speed that follows the scroll is the `marquee-velocity` recipe on the same markup
   ([layered-visuals.md](layered-visuals.md) §5); never both on one row.
+- **Pace is width over duration.** `--fx-marquee-duration` (30 s) is one loop, so a longer copy runs faster at the
+  same value: derive it from a target speed (one copy's width ÷ px per second) so a page's marquees move alike.
 
 ## 9. Reading progress and the exit fade
 

@@ -77,6 +77,10 @@ Progress advances **1/(N−1) per viewport** of content, N being the content's h
 acts land at 0, ½ and 1: halves, not thirds. Thirds need N = 4, so one act is two viewports tall, or an empty
 `data-scene-spacer` act paces it.
 
+**A scene needs runway.** At one viewport of content or less the range has nothing to run over (`rangeFromHeight`
+floors it at 1 px): progress jumps from 0 to 1 in one wheel notch, or never leaves 0. Give a pin about 1.2 viewports
+or more; a beat shorter than that is a triggered reveal.
+
 Mark acts **stacked in the pin** with `data-scene-act`. Every act but the active one is `inert`, so a keyboard or
 screen reader never lands on hidden copy; the scene writes it a frame after mount, on resume and on transition. **Hide acts off that attribute**, `[data-scene-act][inert] { opacity: 0 }`, which is right from the
 scene's first frame and after a reload. `onAct` fires on transitions only, never on mount or resume, so a JS writer
@@ -151,6 +155,8 @@ range, and the scene's `['start start', 'end end']` is one of the offsets it han
 - Reduced motion is the writer's job, because `MotionConfig` never reaches a hand write: read `scene.reduced()` or
   `useReducedMotionLive()`, never Motion's `useReducedMotion()`, which reads once per mount
   ([motion.md](motion.md) §2).
+- **A zoom across a large ratio** (about 1.6× or more) maps the band geometrically, `from * (to / from) ** band`: equal
+  scroll then buys an equal ratio, where a linear scale visibly slows as it grows. It stays linear to the hand.
 
 A paused GSAP timeline is the same pattern, built in `onBuild` ([gsap.md](gsap.md) §4).
 
@@ -244,6 +250,10 @@ Sections in `data-scene-content` ride over the render:
 - **Sized in `svh`** (or fluid heights), so a one-screen section never resizes mid-scroll.
 - **Exits are an exit fade on the group**: `data-scroll-fx="exit-fade"` ([css-scroll-effects.md](css-scroll-effects.md)
   §9). Under ScrollSmoother, where `view()` doesn't run, write it in `onProgress` (§6). Entrances stay triggered reveals.
+  Keep the fade short: copy caught half-faded over a bright frame is what a reader resting there sees.
+- **Copy over the render passes contrast at its worst frame**, never just the poster ([verification.md](verification.md)
+  §1).
+- The section after a scene takes less top padding: the pin already spends a viewport leaving.
 
 ## 12. Travel on a scaled layout
 
@@ -304,6 +314,11 @@ const rail = horizontalRail(el)   // .travel() .rtl() .scrollToPanel(i) .refresh
 - **Travel is measured**: the track's exact scroll width minus the pin's width, already scaled (§12). The rail adds
   up the far panel's edge, margin and end padding itself: `scrollWidth` is whole pixels, and Chromium and WebKit leave
   a non-scrolling track's end padding and margins out (raw, it ended 50 px apart across engines).
+- **Check `rail.travel()` at every ledger width.** A track no wider than the pin travels 0, silently, and one rail can
+  pan on a phone and stand still on a desktop. Want half a viewport or more at each width; when panels run short, add
+  rail (the heading as the first panel, a closing note as the last) rather than widening cards.
+- **Panels are read half-clipped** at the pin's edges: keep a panel's heading to a word or two (two half-headings side
+  by side read as a new word), and use a rail for a range of equals, never a ranking.
 - **Gutters are track padding, never pin padding**: the track moves through the pin's padding box, so a padded pin
   cuts the last panel short.
 - **The runway is the travel**: the spacer takes its height, with no content layer, so `rangePx()` equals it. It exists
@@ -330,6 +345,10 @@ const rail = horizontalRail(el)   // .travel() .rtl() .scrollToPanel(i) .refresh
   element). A click moves nothing; panels are never `inert`.
 - **`rail.scrollToPanel(i)`** makes the same move for previous and next buttons, smooth unless `{ immediate: true }`.
   Focus jumps because a ScrollTrigger refresh stops a native smooth scroll part-way (observed on GSAP 3.15.0).
+- **A jump across several panels or scenes** (a chapter index) lands at once just before the target and glides only
+  the last step: gliding the whole way strobes everything between.
+- **A rail that rests on each panel** is a pinned scene with one act per panel (§2), not `horizontal-rail`, whose band
+  is one linear move.
 - **Reduced motion** (live): no pin, runway or translate. The track is a native horizontal scroller with mandatory
   snap and a focus ring, focusable (the rail adds `tabindex="0"`: Safari never focuses a scroller itself);
   `scrollToPanel()` scrolls it.
@@ -343,8 +362,8 @@ const rail = horizontalRail(el)   // .travel() .rtl() .scrollToPanel(i) .refresh
 
 - [ ] The wrapper is measured, never the pin; the pin is `lvh`, the content margin matches; no transform or
   `overflow: hidden` (`-x` included) on the root, pin or an ancestor (§1).
-- [ ] Three one-viewport acts give halves, not thirds; only stacked acts carry `data-scene-act`, hidden off `[inert]`
-  (§2).
+- [ ] Three one-viewport acts give halves, not thirds; a pin has 1.2 viewports of runway or more; only stacked acts
+  carry `data-scene-act`, hidden off `[inert]` (§2).
 - [ ] Hysteresis is a ratio of its hold; no spring or lerp feeds a mode, an act or `inert` (§3, §4).
 - [ ] ScrollSmoother routes use `pin: 'gsap'`; no scene sits in a GSAP pin (§5).
 - [ ] No scroll-linked value is bound to Motion's `style`; the first value is written on rehydrate (§6).
@@ -353,5 +372,6 @@ const rail = horizontalRail(el)   // .travel() .rtl() .scrollToPanel(i) .refresh
 - [ ] Empty pacing acts carry `data-scene-spacer`; riding sections paint no background (§10, §11).
 - [ ] Scaled travel goes through `--scene-p` or `scale.ts` (§12).
 - [ ] A rail's root carries `data-rail`, its gutters pad the track, `rail.refresh()` follows added panels, and a page
-  that scrolls through script (not Lenis) passes `timeline: false` (§14).
+  that scrolls through script (not Lenis) passes `timeline: false`; `rail.travel()` is half a viewport or more at
+  every ledger width (§14).
 - [ ] No `content-visibility: auto` in or around a runway: it zeroes the geometry the scene measures.

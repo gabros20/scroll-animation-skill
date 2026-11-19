@@ -30,11 +30,9 @@ should never wait for tier 3, because a real device is the scarcest resource in 
 
 ## 1. Tier 1: the scripted browser harness
 
-This is the tier that actually finds bugs. An earlier, more elaborate approach (hundreds of lines of
-in-browser dev tooling: a timeline scrubber panel, live spring sliders, a driver registry shipped to
-production to feed a debug UI) was built, shipped, and never caught a single bug before being
-deleted. What replaced it, and what does catch bugs, is much smaller: **driving a real headless
-browser from a script and reading numbers out of it.**
+This is the tier that finds bugs. An in-browser dev panel (a timeline scrubber, live spring sliders, a driver
+registry shipped to production) was built and caught nothing before it was deleted; what catches bugs is **a script
+driving a real headless browser and reading numbers out of it.**
 
 **Scroll to a scene's *progress*, never to a raw pixel offset.** Pixel offsets rot the moment
 content above the scene changes height, while progress (0→1 across the scene's own measured range)
@@ -52,15 +50,11 @@ for (const progress of [0, 0.25, 0.5, 0.75, 1]) {
 }
 ```
 
-The `waitForTimeout` matters: a value that's still gliding toward its target (a mode handoff, the
-video playhead glide) needs real time to settle before a screenshot means anything. A couple of
-seconds is enough for the exponential approaches this system uses, which converge to sub-visible
-error well before that.
+The wait matters: a value still gliding (a mode handoff, a loop's handover) needs real time to settle before a
+screenshot means anything; a couple of seconds covers the exponential approaches used here.
 
-**Then tile the screenshots into one contact sheet.** A composition problem that's arguable staring
-at one frame is obvious laid out across five or six side by side. This alone catches "the reveal
-plays too early relative to arrival" faster than stepping through individually, because the eye
-compares neighbours automatically.
+**Then tile the screenshots into one contact sheet**: a problem arguable on one frame is obvious across six side by
+side (it caught "the reveal plays too early" faster than stepping through).
 
 **Read state, not just pixels.** `getAnimations()`, a computed `style.transform`, `offsetWidth`,
 `getBoundingClientRect()`, a video's `currentTime`, `data-scene-state`: these turn "it looks a bit
@@ -85,6 +79,21 @@ sits on its boundary); only the active stacked act lacks `inert`; a reload or a 
 the state the scroll position implies without any scrolling; and under reduced motion the root is
 `height: auto`, no act is `inert` and the video holds its head frame (`scenes.md` §10).
 
+- **Path independence.** Record a signature (the moving parts' computed `transform` and `opacity`,
+  `data-scene-state`, `inert`, `currentTime`) at about 20 progress points scrolling down, again scrolling up, again
+  jumping straight to each, and after a reload at three depths. The four sets match; a mismatch is state kept in
+  JavaScript instead of derived from the scroll.
+- **Dead scroll.** Between neighbouring samples inside a scene something visible changes: copy, the playhead, a
+  rail's translate, a wipe, the camera. Sample at fractions of each scene, never evenly down the document (every
+  position moves when a section above changes height). An intended pause is a `data-scene-spacer` act named in the
+  ledger, so authored silence reads apart from a stall.
+- **The slides.** A sticky pin is on screen a viewport before progress leaves 0 and after it reaches 1; `--scenes`
+  shoots both, where a held clip is a still sliding past ([video.md](video.md) §14).
+- **Contrast over moving media.** Copy riding a scrub, loop or canvas is graded at every sample, not on the poster:
+  hide the copy and any fixed chrome, shoot the same frame, read the pixels under each line (clamped to the
+  viewport), and grade light ink against the brightest patch, dark ink against the darkest. The worst frame decides.
+  A stronger scrim that leaves the number unchanged isn't in the frame you measured.
+
 ## 2. The three bugs it caught
 
 Concrete, because "measure state, not pixels" is abstract until you see what it actually found:
@@ -102,9 +111,8 @@ minutes once the harness existed. (The second is now a static check: `scripts/to
 
 ## 3. Tier 2: marker CSS
 
-A small (on the order of ~90 lines), zero-JS stylesheet toggled by one attribute on the root
-element, so it works with no dev panel open, survives a plain screenshot, and works over a
-USB-connected real device with no extra tooling:
+A zero-JS stylesheet (about 90 lines) toggled by one attribute on the root: it needs no dev panel, survives a
+screenshot and works on a USB-connected device:
 
 ```css
 :root[data-motion-debug~='markers'] [data-scene-root]         { outline: 1px dashed #f59e0b; }
@@ -114,10 +122,8 @@ USB-connected real device with no extra tooling:
 :root[data-motion-debug~='markers'] [data-scene-media] *      { outline: 2px solid #ef4444; }
 ```
 
-A scene's mode attribute, `data-scene-state`, is written only **on
-transition**, not per frame, so a mode flipping is visible as a discrete colour change with nothing
-else open: exactly the observability this needs, at no extra cost, because the latch rule
-(`scenes.md` §3: state per transition, not per frame) already pays for it.
+`data-scene-state` is written only on transition (the latch rule, `scenes.md` §3), so a mode flip shows as a
+discrete colour change at no extra cost.
 
 **If this tier is ever extended, the rule that keeps it safe is: the tool must not change what it
 measures.** No `border` (it changes box size, which changes exactly the geometry being debugged), no
@@ -170,7 +176,8 @@ contract.
   in a `data-reveal-replay` group only has to have been shown once, because it resets out of view. Each
   failure names its group and reason. It drives each `[data-scene-root]` to progress
   `[0, 0.25, 0.5, 0.75, 1]`, records `data-scene-state` at each step, and checks the states run `head`,
-  `scrub`, `tail` without stepping back, leaving `head` by progress 1. A check with nothing to find
+  `scrub`, `tail` without stepping back, leaving `head` by progress 1; a scene video with a source that never reaches
+  `readyState` 2 fails it, and the two slides are shot and reported. A check with nothing to find
   reports SKIP, never PASS. **It forces
   `document.documentElement.style.scrollBehavior = 'auto'` for the duration of its stepped `scrollTo`
   calls and restores the old value afterwards.** A page with `html { scroll-behavior: smooth }` would
@@ -193,6 +200,12 @@ Both browser scripts resolve Playwright from the target project's `node_modules`
 inside the project), then a skill-local install, then print an install hint. Exit codes: `0` pass,
 `1` a check failed, `2` usage error or Playwright unavailable.
 
+- **The browser must decode the clip.** Before Playwright 1.57 its bundled Chromium has no H.264: a scrub never
+  paints, and every screenshot shows the poster. There, pass `verify-motion.mjs --channel chrome` or
+  `--browser webkit`; 1.57 and later bundle Chrome for Testing.
+- **The run tests this build.** A dev server that failed on a busy port leaves another project answering: check the
+  served `<title>` and that a known media URL answers `206` before trusting a clean report.
+
 **The blocks arrive tested.** In the skill's own repository, `npm run test:reveal`, `test:text`,
 `test:scroll-effects`, `test:header-theme`, `test:count-up`, `test:rail` and `test:recipes` drive each
 entrance, text and layered block, and each recipe, through its fixtures in Chromium, WebKit and
@@ -200,19 +213,18 @@ Firefox; in `site/`, `pnpm build && pnpm check` does the same for the storefront
 and ScrollSmoother example. Between them they cover the gate and the failsafe, reduced motion switched
 mid-play, hide and show, print, layout shift, and a `destroy()` that leaves nothing behind. A
 project's own checks cover what those suites can't: where the blocks sit, their trigger lines, and
-each ledger row's reduced-motion alternative.
+each ledger row's reduced-motion alternative. On a client-routed site add a **route-cycle probe**: count canvases,
+`<video>`s, running `getAnimations()` and `ScrollTrigger.getAll()`, navigate away and back five times, idle 20 s,
+and count again; every number returns to its baseline.
 
 ## 6. Tier 3: a real device
 
-Connect a physical phone, hit a dev server by local IP, use the browser's own remote-debugging
-console. Nothing substitutes for this (not device emulation, and not a simulator for the class of
-bug `ios-safari-motion.md` documents), and it remains, in practice, the least-frequently-done step
-of the three, precisely because it has the most friction. Budget for it deliberately rather than
-treating it as optional polish: video compositing demotion, the play watchdog, and toolbar feedback
-into scroll geometry were *only* ever reproducible this way.
+Connect a physical phone, hit a dev server by local IP and use the browser's remote-debugging console. Neither
+emulation nor a simulator reproduces the bugs `ios-safari-motion.md` documents, and this is the step most often
+skipped, so budget for it: video compositing demotion, the play watchdog and toolbar feedback into scroll geometry
+were only ever reproducible here.
 
-Two device-testing disciplines worth stating explicitly, because both have cost real cycles when
-skipped:
+Disciplines that cost real cycles when skipped:
 
 - **Confirm the deployed build actually contains the fix before asking for a device test.**
   Build/CDN propagation lag is enough for a device test to run against the previous deployment and
@@ -220,6 +232,11 @@ skipped:
 - **A result is only trustworthy from the device class and OS version it claims to fix.** A fix
   verified on one iOS version is not verified on another if the underlying WebKit behaviour changed
   between them (`ios-safari-motion.md` §1).
+- **Send a diagnostic with the first device round.** A standalone page beside the site that plays the suspect clip
+  next to a known-good one and prints, per pane, whether frames advance (painted frames, refused `play()`s, seeks)
+  answers in one screenshot what rounds of guessed fixes don't. When one clip works and another doesn't on the same
+  phone, list every way the two differ (which loaded first, while the reader's first touch was spent) before blaming
+  the platform.
 
 ## 7. Symptom index
 
@@ -250,4 +267,7 @@ skipped:
 - [ ] A green reveal run is not an anchor check; run `anchor-check.mjs` on pages with anchors or a
   scroll well (§5).
 - [ ] `audit-motion.mjs --selftest` is green before trusting the audit (§5).
+- [ ] State is path-independent (down, up, jumps, reloads agree); no dead scroll inside a scene; copy over media
+  passes contrast at its worst frame (§1).
+- [ ] Media checks ran in a browser that decodes the clip (§5).
 - [ ] The deployed build contains the fix before a device test (§6).

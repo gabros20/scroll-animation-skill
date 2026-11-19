@@ -52,7 +52,7 @@ keyboard and reduced-motion duties ([layered-visuals.md](layered-visuals.md) §1
 
 | Technique | What the reader sees | Clock | Block |
 |---|---|---|---|
-| Graphic sequence | the graphic swaps to a new state per step | trigger | `scrolly-steps`: its states crossfade, opacity only, on `MOTION.disclosure` (0.24 s) |
+| Graphic sequence | the graphic swaps to a new state per step | trigger | `scrolly-steps`: its states crossfade, opacity only, on `MOTION.disclosure` (0.24 s); opaque states (photographs, filled panels) take `data-scrolly-fade="cover"` on the root, so the new one fades in over the held old one instead of showing the page through the middle |
 | Animated transition | the graphic animates from one state to the next (bars grow, a line draws, points move) | trigger, once per transition | `scrolly-steps` `onStep` or `useScrollyActive()` driving the route's engine (§8) |
 | Pan and zoom | the camera moves across one picture or map | trigger per step, or scroll within a step | a per-step `animate` from `onStep` (§8); within a step, `progress: true` and `--step-p` writing a transform; a full-bleed version is `scrub-video`'s camera on `pinned-scene` ([scenes.md](scenes.md) §7) |
 | Moviescroller | video or frames scrubbed by scroll | media | `scrub-video` or `frame-sequence` on `pinned-scene` ([video.md](video.md), [sequences.md](sequences.md)) |

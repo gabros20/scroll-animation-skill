@@ -68,7 +68,7 @@ The default. Wheel scrolling on a mouse arrives in steps, so smooth the **consum
 - GSAP: `scrub: 0.3`–`1` (seconds of catch-up) on scrubbed timelines.
 - Motion: `useSpring` on a scroll value that feeds visuals only (never a latch or threshold).
 - Render loops: three's `MathUtils.damp(current, target, lambda, dt)` (frame-rate independent), never a constant
-  per-frame lerp.
+  per-frame lerp; a lerp `k` tuned at 60 Hz converts as `1 - (1 - k) ** (dt * 60)`, `dt` in seconds.
 
 Anchors: `html { scroll-padding-top: var(--header-h) }` keeps targets below a fixed header. Add
 `scroll-behavior: smooth` only when no ScrollTrigger runs on the page; Next.js also needs
@@ -113,6 +113,8 @@ React: `<SmoothScroll authority="lenis" driver={gsapDriver(gsap, ScrollTrigger)}
   Lenis there instead of jumping to 0.
 - **Velocity**: `lenis.velocity` is the smoothed velocity. Logic that branches on scroll speed sees the lerp's
   curve, not the reader's gesture.
+- **`lerp` or `duration`, never both.** In Lenis 1.3 a numeric `duration` (with or without `easing`) takes over and
+  `lerp` is ignored, whatever the README says.
 
 ## 5. ScrollSmoother
 

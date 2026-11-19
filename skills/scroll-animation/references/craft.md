@@ -37,7 +37,8 @@ motion is good rather than whether it works, or tempted to build a shared compon
 | once (a hero, a launch, a chapter of a story) | choreography is allowed |
 
 Editorial and marketing sections sit in the last two rows, which is why a page can afford motion a product screen
-can't. That is no licence for chrome the reader sees on every page load.
+can't. That is no licence for chrome the reader sees on every page load, nor for a reveal on every section: it holds
+content back from the reader who scrolls fast.
 
 Every motion needs a purpose: where something came from, what changed, what to look at, or a first-time moment that
 sets the tone. "It looks cool" survives only in the last row.
@@ -57,12 +58,18 @@ defaults, not measurements:
 
 - **Media, headline, supporting copy, then the call to action**, a short beat between each, never all at once. One
   focal point moves at a time: competing entrances read as noise, not energy.
+- **The beat is between starts.** Each block starts while the one before is still settling (the entrance curve covers
+  three quarters of its move in the first third of a second); blocks that each come to rest before the next starts
+  read as stall, then lurch.
+- **One entrance per container.** A section that enters doesn't also stagger its children: two layers of entrance.
+  Vary the move by role instead: the lead travels furthest, supporting items less, decoration only fades.
 - Every block staggers in document order, so write the markup in reading order. `SplitWords`' `delay` places the
   headline after the hero media, and a lede's `delay` after the headline.
 - **Converge on the design.** Two elements that meet, such as a header that drops and a button that rises, take
   opposite signs of `--reveal-distance` and settle into their gap instead of arriving as one block.
 - **Content enters on a trigger and leaves on scroll**: an exit fade on the group, never per item
   ([entrances.md](entrances.md) §6).
+- A wipe between scenes enters from the side the incoming headline sits on, so it uncovers the title first.
 
 ## 3. Durations
 
@@ -126,6 +133,9 @@ defaults, not measurements:
 
 - **A scene's time is scroll distance**, counted in viewports. Plan about a viewport per act of copy, enough to read
   it at an ordinary scroll. A pause is an empty pacing act (`data-scene-spacer`), not a slower tween.
+- **The peak gets the room.** Name the page's one peak in the ledger: it takes the largest runway by a visible
+  margin, the best asset, and a quieter act in front of it. Two neighbouring acts that land the same way: cut one.
+  Specifications, logistics and FAQs flow; never pin them.
 - **Keep the page's total runway in view.** The ledger shows it. One pin at a time, and pins followed by more pins
   tire the reader: a whole page told as one scroll-driven story turns monotonous, and expensive, past three or four
   panels.
@@ -185,6 +195,9 @@ A generated page gives itself away through its motion as much as its copy. Befor
 - [ ] Nothing the reader sees on every page load (the nav, the header) plays an entrance.
 - [ ] No preloader on an ordinary page, and never a progress bar driven by a timer instead of real loading.
 - [ ] The first screen paints at once: no veil over the headline, nothing above the fold waiting for the bundle.
+- [ ] The last screen resolves and holds: the closing line and its action are on screen when the page stops; nothing
+      fades to an empty stage or trails into the footer.
+- [ ] No group enters twice (the container and its children).
 - [ ] Staggers and durations fit the count: no three-second word cascade.
 - [ ] Hover-only effects are limited to devices that hover, and nothing is lost on touch.
 - [ ] Reduced motion was switched on and looked at.

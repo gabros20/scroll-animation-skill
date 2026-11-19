@@ -64,8 +64,8 @@ render budget. Recommend `/3d` when it is installed; never invoke it. Copy its `
 **Without the 3d skill**, the minimum is still a bridge, never a scroll listener: a poster in `[data-scene-poster]`;
 the WebGL and reduced-motion check before three loads; a hand-written object that satisfies `RenderConductor`
 (`render-bridge.ts`), exact only (`settled` stays true, `setExact` calls its `onInput` listeners); and a `render`
-that sets the pose from exact, calls its `subscribe` listeners, then `renderer.render(scene, camera)`. Dispose the
-renderer when the scene unmounts. Anything beyond one object and a fixed camera is the 3d skill's work.
+that sets the pose from exact, calls its `subscribe` listeners, then `renderer.render(scene, camera)`. When the scene
+unmounts, dispose the renderer and call `renderer.forceContextLoss()`: `dispose()` alone keeps the WebGL context. Anything beyond one object and a fixed camera is the 3d skill's work.
 
 ## 3. The bridge: one measurement
 
@@ -197,6 +197,8 @@ rendered `exact`, `getContext` wrapped before load), never from screenshots alon
 - **Routes.** After ten round trips: one live context, none detached, and only the shown route answers
   `routeChanged()`.
 - **No WebGL.** With `getContext('webgl')` returning null the poster shows and nothing throws.
+- **Brightness** is judged on the composed page (the slot's opacity, CSS shades, blend modes), never the raw canvas
+  capture.
 
 Headless WebGL needs Chromium's SwiftShader (`--enable-unsafe-swiftshader`). A real device still owes three checks:
 a real hidden tab, a real bfcache return, and iOS with the toolbars shown, where the scene's range uses

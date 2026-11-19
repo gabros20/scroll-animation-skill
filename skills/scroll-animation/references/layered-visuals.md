@@ -4,8 +4,8 @@
 clip and scale reveals, a sticky stack, marquees, cursor media, blend text, colour tracks, drawn lines, header ink per
 section and stepped sections.
 
-**Read when:** layers should drift at different depths; a colour should hand over between sections; a ticker, a
-preview that follows the pointer or lines that draw themselves are wanted; a fixed or sticky header's ink must follow
+**Read when:** layers should drift at different depths (a layered hero); a colour should hand over between sections;
+a ticker, a preview that follows the pointer, lines that draw themselves or a particle layer are wanted; a fixed or sticky header's ink must follow
 dark and light sections ("the nav disappears over the dark section"); or one of these misbehaves.
 **Skip when:** content only animates in ([entrances.md](entrances.md)), the section pins ([scenes.md](scenes.md)), or
 the effect is plain CSS decoration ([css-scroll-effects.md](css-scroll-effects.md)).
@@ -29,7 +29,8 @@ section's ink.
 10. [Header ink per section](#10-header-ink-per-section)
 11. [Stepped sections](#11-stepped-sections)
 12. [Horizontal rails](#12-horizontal-rails)
-13. [Traps](#traps)
+13. [Particles](#13-particles)
+14. [Traps](#traps)
 
 ## 1. Pick the cheapest layer
 
@@ -92,6 +93,22 @@ A layer that moves slower than the page reads as further away.
 - **Never a drift on an element something else moves** (a reveal, a pin, a scene): put it on a wrapper or the media
   inside.
 
+**A layered hero.** Plan the planes back to front (far, mid, subject, foreground, atmosphere: only those the picture
+has), with the subject between mid and foreground so the foreground overtakes it.
+
+- Neighbouring planes differ visibly in speed (about 0.1 apart, every one inside the ±0.2 cap); copy moves at the
+  page's speed. Cut the foreground to dip under the subject's call to action rather than cover it.
+- Each cutout is solid below its silhouette, a 200–300 px fade to the ground sits over every plane at the section's
+  floor (it hides the planes' bottom edges), and the background is a clean plate with the subject removed. Check alpha
+  over light and dark (a checkerboard is pixels, not transparency); a grounded subject pivots on its contact point.
+- Leave the poster only once every plane has decoded. Planes take `max-width: none` and a fixed width (a reset's
+  `img { max-width: 100% }` shrinks them on phones), never a `transition: transform` (it trails the thumb).
+  Recompose phones; type may sit above the subject there.
+- **Pointer depth** is optional, on a fine pointer only: one `pointermove` listener per section, a `quickTo` per plane
+  (about 0.8 s), offset = the pointer's distance from centre × a small depth (0.02–0.05), back to rest on
+  `pointerleave` and window `blur`. It writes a wrapper of its own (the drift and the entrance own the plane's
+  transform), stops under reduced motion, and nothing is visible only through it.
+
 ## 3. Clip, mask and scale reveals
 
 - **Content arrives by trigger.** A scroll-linked reveal leaves text half-shown when the reader stops, so copy uses
@@ -101,6 +118,11 @@ A layer that moves slower than the page reads as further away.
 - **A mask sweep runs on a registered number**, such as `--fill` from `css/animation.css`: WebKit steps an
   unregistered custom property, and the sweep jumps instead of wiping ([ios-safari-motion.md](ios-safari-motion.md)
   §4).
+- **A `clip-path` cuts at the border box, not the glyphs**: on display type set below `line-height: 1` it shaves
+  ascenders and descenders (a numeral becomes a bar). Clip a wrapper with room, or pad the type.
+- **Opaque layers swap one-sided**: the incoming one fades in on top while the outgoing one holds at full strength,
+  then drops. A symmetric crossfade shows the ground through the middle (a quarter of it at 50/50, measured);
+  `scrolly-steps` does it with `data-scrolly-fade="cover"` ([scrollytelling.md](scrollytelling.md) §3).
 
 ## 4. The sticky stack
 
@@ -205,6 +227,9 @@ section. The header's opt-in is `data-header-blend` (`css/header-theme.css`).
 - **Reduced motion, no JavaScript and print:** fully drawn.
 - **Without GSAP:** `pathLength="1"` on each shape and `stroke-dashoffset` from a registered `--draw` on a `view()`
   timeline; the recipe's header has the CSS.
+- **A progress line through steps** runs from the first marker's centre to the last's and fills with `scaleY`
+  (`transform-origin: top`); a step is reached when the same value passes its centre, so a dot never lights before
+  the line arrives. On phones an alternating timeline becomes one rail down the left.
 
 ## 10. Header ink per section
 
@@ -307,14 +332,26 @@ A rail is a pinned scene whose band slides a track of panels sideways: `horizont
 on `pinned-scene`). Its markup, measured travel, RTL, focus-follow and reduced-motion scroller are in
 [scenes.md](scenes.md) §14.
 
+## 13. Particles
+
+Pick the cheapest renderer: DOM or SVG for a few branded fragments, one 2D canvas for dozens to a few hundred simple
+motes, WebGL (the 3d skill's) only for thousands, depth or shaders.
+
+- **Density follows the container's area**, clamped on phones, never the viewport's width; keep a quiet zone behind
+  long copy. Two or three near pieces crossing in front of the type sell depth; a curtain of them hides it.
+- One canvas with `pointer-events: none`, one rAF gated like any loop ([performance.md](performance.md) §6) and damped
+  by elapsed time, one pointer listener per section, never one per particle.
+- **Name how they end**: recycle, leave, or settle with a cap on the pile. Reduced motion: a sparse static
+  arrangement.
+
 ## Traps
 
 - [ ] Each effect runs on the cheapest engine that does it right (§1).
 - [ ] Recipes start after the scroll authority (a ScrollSmoother through `createSmoother`), outside your
       `gsap.matchMedia()` callbacks (§1).
 - [ ] One writer per property: no drift on an element a reveal, pin or scene moves (§2).
-- [ ] Parallax speeds within ±0.2; `clamp()` on above-the-fold `data-speed`; no Motion `useScroll` under
-      ScrollSmoother (§2).
+- [ ] Parallax speeds within ±0.2; a layered hero leaves its poster only once every plane decodes; `clamp()` on
+      above-the-fold `data-speed`; no Motion `useScroll` under ScrollSmoother (§2).
 - [ ] Every marquee has its pause toggle (§5); cursor media never covers a focus ring (§6).
 - [ ] Blend text resets under forced colours (§7); a colour track's `var()` colours live on `:root` (§8).
 - [ ] The header is fixed or sticky (fixed under ScrollSmoother), every dark band is marked, no `color` transition

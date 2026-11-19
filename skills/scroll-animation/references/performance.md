@@ -23,7 +23,7 @@ order, is below.
 1. [The cost order](#1-the-cost-order)
 2. [Per-frame budgets](#2-per-frame-budgets)
 3. [Concurrent scroll scenes](#3-concurrent-scroll-scenes)
-4. [Transform shorthands are not accelerated](#4-transform-shorthands-are-not-accelerated)
+4. [Scroll-linked transform values run on the main thread](#4-scroll-linked-transform-values-run-on-the-main-thread)
 5. [No layout properties on scroll](#5-no-layout-properties-on-scroll)
 6. [IO-gate every rAF and video](#6-io-gate-every-raf-and-video)
 7. [`content-visibility` never touches a scene](#7-content-visibility-never-touches-a-scene)
@@ -75,12 +75,12 @@ the gating was built to survive. If a page seems to want two independent scrubbe
 acts usually belong on one shared range wrapper instead, with loops as sub-ranges of one continuous
 asset rather than separate clips.
 
-## 4. Transform shorthands are not accelerated
+## 4. Scroll-linked transform values run on the main thread
 
-A declarative animation library's `x`/`y`/`scale` convenience props are frequently implemented as
-individually-interpolated values applied via the main thread on every frame, **not** as a single
-hardware-accelerated `transform`. On any full-screen or pinned path this is measurable frame loss
-under load. Binding a composed `transform` to Motion's `style` is no fix on a scroll path: Motion
+Motion's `x`/`y`/`scale` props are separate values composed into `transform`. From Motion 14.2 a time-based animation
+of them is hardware-accelerated; a value driven every frame by a motion value (`useTransform`, `useScroll`: every
+scroll-linked value) still runs on the main thread, in every version. On any full-screen or pinned path that is
+measurable frame loss under load. Binding a composed `transform` to Motion's `style` is no fix on a scroll path: Motion
 can hand it to a native timeline that drifts back outside the input range ([motion.md](motion.md) §4).
 Write one composed transform string by hand, with the reduced-motion state as in
 [motion.md](motion.md) §5:
@@ -104,7 +104,9 @@ write; `transform`, `opacity` and `filter` trigger composite only (and `filter` 
 than the other two, §11). This is why a growing or filling bar animates `scaleY`/`scaleX` rather
 than `height`/`width`: on a plain filled rect with nothing else inside it, the two are
 pixel-identical, and one is free while the other reflows. It needs `transform-origin: bottom` (or
-`left`) or it grows from the middle.
+`left`) or it grows from the middle. A variable font's weight or width axis (`font-weight`,
+`font-variation-settings`) is layout too: each write re-lays out the line, so reserve its box or animate a display
+line that owns its row.
 
 **The one sanctioned exception is an accordion disclosure.** There is genuinely no transform that
 expresses "the content below me moves down by exactly the height of what just appeared": a `scaleY`
@@ -137,6 +139,11 @@ away from the viewport, each iteration performing layout reads that cost nothing
 compound relentlessly when the loop never stops. This gating is what makes even one scrubbed video
 scene affordable at all; without it, "decode only what's on screen" is a principle with no
 enforcement.
+
+**CSS loops are gated too.** An infinite keyframe loop (a glow, a shimmer, one on a pseudo-element) runs off screen
+until something pauses it: toggle a class from an `IntersectionObserver` that sets `animation-play-state: paused` on
+the animated element (it never stops a rAF loop). Check at the top, middle and foot of the page and on a phone:
+`document.getAnimations()` shows nothing running on an off-screen target.
 
 A real-time canvas in a pinned scene runs `frameloop="never"`, so its own pause no longer applies:
 `render-bridge` gates it on the scene's `awake`, the page's visibility and new input, which measured
@@ -246,7 +253,7 @@ mount them per route; a page with just count-up numbers has no reason to pull in
 - [ ] ★ No scroll-linked value bound through `style`, shorthand or not; write one composed `transform`
   string by hand (§4).
 - [ ] ★ No `content-visibility: auto` inside or around a scroll scene (§7).
-- [ ] ★ Every rAF loop and video is IO-gated with two margins (§6).
+- [ ] ★ Every rAF loop and video is IO-gated with two margins; infinite CSS loops pause off screen (§6).
 - [ ] No `width`/`height`/`top`/`padding` on any scroll-linked path; accordion disclosure excepted
   (§5).
 - [ ] A colour track's target is only the element that needs the colour; drawn shapes count toward the

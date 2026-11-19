@@ -2,7 +2,8 @@
 
 Read [AGENTS.md](AGENTS.md) before changing runtime behaviour and
 [CONTRIBUTING.md](CONTRIBUTING.md) before preparing a release. Keep `scroll-animation` focused on
-motion for editorial and creative sites; UI micro-interactions and layout scaling are out of scope.
+motion for editorial and creative sites; UI micro-interactions (the `frontend` skill's) and layout scaling are out of
+scope.
 
 The runtime pack is `skills/scroll-animation/`; everything else is repository tooling. Run
 `npm run verify` (`scripts/check-sync`, then `npm test`) after every runtime, routing, metadata,

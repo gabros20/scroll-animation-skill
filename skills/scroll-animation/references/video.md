@@ -102,7 +102,9 @@ scroll stopped.
 - **One seek in flight, the newest frame next.** Gecko aborts a seek that a newer one replaces (nothing paints while
   they keep coming). The controller keeps one in flight and on `seeked` sends the frame the band wants then: a slow
   decoder shows fewer frames, never stale ones. A seek lands a quarter frame into its
-  frame. Wraps and snaps skip the queue: behind a stale seek they land a frame late.
+  frame. Wraps and snaps skip the queue: behind a stale seek they land a frame late. A band seek with no `seeked`
+  after 700 ms (`STUCK_SEEK_MS`) is sent again (`debug().reseeks`): iOS can leave one `seeking` for good, and one in
+  flight would then hold that frame for the visit.
 - **The glide is only the handover out of a loop:** the playhead's distance from the band decays at `glide` (0.18) per
   60 Hz frame (`dt`-based) while the band moves on. Safari drops a `play()` issued mid-seek, so play waits for
   `seeked` (150 ms fallback).
@@ -142,6 +144,11 @@ breakpoint swaps the source, and `onTier` tells the camera which crop is on scre
 Hand-written `<source media>` tiers are chosen once, at resource selection (unlike `<picture>`), so a `<picture>` poster
 behind one drifts to another framing on resize: resync with `load()` on a real flip.
 
+**Cut the mobile tier for the phone's shape.** A landscape `mobileSrc` covering a portrait pin decodes the whole frame
+to show a third of it: soft and slow on the device least able to afford it. Crop the master near the pin's aspect
+before `media scrub` (`--mobile` only scales), or compose the master for both: subject in the middle third, copy in a
+bottom band. Never letterbox with `object-fit: contain`.
+
 ## 8. Serving: HTTP Range and caching
 
 - **Range requests.** Seeking fetches byte ranges: the server must answer `Range` with `206 Partial Content`: without
@@ -178,7 +185,9 @@ spare (`tpad=stop_mode=clone:stop=1`) and keyframe.
   grants behind it differ per engine and can be revoked mid-play.
 - **Decorative video is `muted playsinline`** (iOS plays inline only with both) and IO-gated (audit rule `video-attrs`).
 - **A refused `play()` stays refused until the reader asks** (Low Power Mode, autoplay policy). LoopVideo keeps the
-  poster and the control, and a sticky flag stops every retry until a click (a timer would hammer it every 2 s). ScrubVideo counts refusals in `debug().rejections`.
+  poster and the control, and a sticky flag stops every retry until a click (a timer would hammer it every 2 s).
+  ScrubVideo retries its prime once inside the reader's next activation (below) and counts refusals in
+  `debug().rejections`.
 - **Save-Data** (`navigator.connection.saveData`; Safari and Firefox don't expose it): LoopVideo shows the poster and
   fetches nothing until the control is pressed. ScrubVideo takes `mobileSrc` at every viewport.
   Both follow it live where `connection` fires `change`.
@@ -190,9 +199,10 @@ spare (`tpad=stop_mode=clone:stop=1`) and keyframe.
 
 **iOS loads only metadata for a video that has never played** (`preload` is a hint it ignores): a scene of holds
 never gets a frame, and its first seek clears the poster (measured on the device pass). The controller primes each
-source once (a muted `play()`, paused at once) and seeks only once a frame exists; refused in Low Power Mode, the
-poster stays. Primed, the simulator fetched the whole clip in one request, paused; the prime runs in the
-awake tick, so on iOS data starts at the wake margin, not the warm one.
+source once (a muted `play()`, paused at once) and seeks only once a frame exists. Refused in Low Power Mode, the
+poster stays until the reader's next `touchend`, `pointerup`, `click` or key press, inside which the prime is
+retried: those grant activation, `touchstart` doesn't. Primed, the simulator fetched the whole clip in one request,
+paused; the prime runs in the awake tick, so on iOS data starts at the wake margin, not the warm one.
 
 ## 12. Tab-sleep rehydrate
 
@@ -229,6 +239,11 @@ Every encode is yuv420p, faststart, silent and tagged BT.709, written beside the
   one loop measured about 32 dB apart. It costs bitrate, so raise the CRF a few points to hold a size.
 - **Budget texture before rendering**: all-intra re-pays background detail every frame (a textured ground: 37 MB at
   CRF 22, 9 MB softened), and flat fields band first, so spend CRF there.
+- **Prepare footage before encoding.** Flat camera footage gets its levels and saturation graded into an intermediate
+  file (measure with ffmpeg's `signalstats`), never a CSS filter over full-bleed media. Trim before anyone walks into
+  frame, bring 60 fps phone footage to 24–30 (`--fps`), and re-encode cuts rather than stream-copying them.
+- **A shot meant for scrubbing** is one continuous move in one direction, its subject in frame throughout, nothing
+  entering or leaving: the reader can rest on any frame.
 
 ## 14. The video controller
 
@@ -244,6 +259,9 @@ video.setReduced(r) · video.rehydrate({ mode, band, awake, reason }) · video.w
 ```
 
 - **Holds by default**: no `headLoop` holds frame 0, no `tailLoop` the last frame. `fps` must be the clip's exact rate.
+  A sticky pin is on screen a viewport before progress leaves 0 and after it reaches 1, so a held end is a still
+  sliding in and out of a scene the reader was scrubbing: give a full-bleed scrub head and tail loops, or accept the
+  hold knowingly (`verify-motion --scenes` shoots both slides).
 - **A hold follows the band**, clamped, in every mode: the scene leaves `tail` 0.7 × `tailLeadPx` past the band's end,
   and a hold parked on the last frame until then lagged that far on the way back (Folio: 280 px, 54 frames).
 - **It runs only while awake, visible and not reduced**; `destroy()` stops and pauses.
@@ -320,6 +338,7 @@ A scrubbed texture still seeks a `<video>`: the same encode and controller.
 - [ ] A scrub asset is all-intra (`scrub-ready`); a forward-only or looping clip is not (§1).
 - [ ] Seams are measured against the floor, on the encoded file; encodes use `qcomp=1` (§2, §13).
 - [ ] Loops wrap on rVFC, never by polling `currentTime`; the playhead tracks the band, one seek in flight (§3, §4).
+- [ ] A portrait pin's mobile tier is cut portrait, never a landscape clip under `cover` (§7).
 - [ ] No `load()` on the warm tier; the compositing anchor stays; an oversized video's `max-width: none` is scoped (§5, §6).
 - [ ] `Range` gets `206`; media is cached immutable under hashed names (§8).
 - [ ] Posters come from the encoded file at the resting frame; an intro-then-seam loop uses `media loop --loop-from` (§9, §10).

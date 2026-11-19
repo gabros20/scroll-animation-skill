@@ -1,6 +1,6 @@
 ---
 name: scroll-animation
-description: Build, fix and review scroll-driven animation for editorial and creative sites: reveals, split text, CSS scroll effects, pinned scenes, rails, scrubbed and looping video, scrollytelling, header ink, page transitions and smooth scroll (Lenis, ScrollSmoother), in CSS, Motion (React) and GSAP, with iOS Safari, accessibility and performance fixes. Use for "fade in on scroll", "pin this section", "scrub the video", "transitions between pages", GSAP, ScrollTrigger, Lenis or Motion questions, a scrub stuck on frame one, reveals that never fire, or scroll jank. Not for UI micro-interactions.
+description: Build, fix and review scroll-driven animation for editorial and creative sites: reveals, split text, CSS scroll effects, pinned scenes, rails, scrubbed and looping video, scrollytelling, header ink, page transitions and smooth scroll (Lenis, ScrollSmoother), in CSS, Motion and GSAP, with iOS Safari, accessibility and performance fixes. Use for "fade in on scroll", "pin this section", "scrub the video", "transitions between pages", GSAP, ScrollTrigger, Lenis or Motion questions, a scrub stuck on frame one, reveals that never fire, or scroll jank. Not for UI micro-interactions (→ frontend).
 ---
 
 # Scroll animation
@@ -18,8 +18,10 @@ and a CLI that copies blocks, prepares media and checks the result. It was extra
 motion layer was built three times: most rules were paid for by a real bug, and the references say which. Copy the
 prepared blocks; never rewrite them from memory.
 
-Not this skill: UI micro-interactions (buttons, toasts, menus, hovers), layout scaling and viewport-unit sizing
-(fluid-design's job; this skill reads its breakpoint, header height and units when a project uses it), colour systems.
+Not this skill: UI micro-interactions and component motion (buttons, toasts, menus, hovers, enter and exit, springs,
+gestures, layout animation: the `frontend` skill's, from `design`'s motion spec), layout scaling and viewport-unit
+sizing (fluid-design's job; this skill reads its breakpoint, header height and units when a project uses it), colour
+systems.
 
 ## Route before acting
 
@@ -44,7 +46,7 @@ First pick the lane, then the reference:
 | Choreography, timing and taste; motion that feels generic or busy | [craft.md](references/craft.md) | order, durations, eases, staggers, pacing, replay, one idea per viewport, anti-slop checks |
 | A pinned or scrubbed section, stacked acts, a horizontal rail, a scroll well, copy riding over a pin | [scenes.md](references/scenes.md) | range wrapper, sticky or GSAP pin, acts, latches, manual writes, camera, scaled travel, rails |
 | CSS decoration on scroll: parallax, fades, a sticky card stack, a marquee, a progress bar; `view()` or `timeline-scope` trouble | [css-scroll-effects.md](references/css-scroll-effects.md) | `data-scroll-fx`, ranges, the Firefox fallback, each authority, reduced motion, `overflow: clip` |
-| Layers: parallax in JS, colour tracks, a velocity marquee, cursor media, drawn lines, blend text, header ink per section, stepped sections | [layered-visuals.md](references/layered-visuals.md) | the cheapest engine per effect, the recipes, the header's IntersectionObserver probe |
+| Layers: a layered hero, parallax in JS, colour tracks, a velocity marquee, cursor media, drawn lines, blend text, header ink per section, stepped sections, particles | [layered-visuals.md](references/layered-visuals.md) | the cheapest engine per effect, the recipes, the header's IntersectionObserver probe |
 | Any `<video>`: scrub, loop, conditional autoplay | [video.md](references/video.md) | encoding, loop seams, seeks, preload tiers, posters, serving, pause controls, tab-sleep recovery |
 | An image sequence on scroll (Apple-style), or Lottie or Rive driven by scroll | [sequences.md](references/sequences.md) | sequence or video, the frame manifest, decode window, byte budgets |
 | A 3D model, camera or world (three.js, R3F) moving with scroll in a pinned section; a canvas that lags the copy, sweeps on reload or leaks contexts | [webgl.md](references/webgl.md) | real-time or rendered, the boundary with the 3d skill, `render-bridge` on the authority's tick, lifecycle, checks |
@@ -54,6 +56,7 @@ First pick the lane, then the reference:
 | Jank, budgets, before shipping | [performance.md](references/performance.md) | cost order, per-frame budgets, gating |
 | Proving it works; any "it doesn't fire / holds / snaps" | [verification.md](references/verification.md) | the harness, the scripts, device checks |
 | A viewport-scaled layout (fluid-design or similar) | [preflight.md](references/preflight.md) §3.6 | breakpoint, header and unit sources; scaled travel is `scenes.md` §12 |
+| Where a rule or number came from; whether a source's text may be reused | [SOURCES.md](references/SOURCES.md) | provenance and licence per outside source |
 
 ## Engine map
 

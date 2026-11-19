@@ -70,7 +70,8 @@ Each engine covers only its own animations. Anything you write by hand checks th
     // full motion; branch on isDesktop() inside if the layout differs
   })
   ```
-- **Motion.** `MotionConfig reducedMotion="user"` (in `MotionProvider`) drops transform and layout animation. A
+- **Motion.** `MotionConfig reducedMotion="user"` (in `MotionProvider`) drops transform and layout animation; opacity,
+  colour and `filter` still animate, so a blur entrance branches on the setting itself. A
   `useMotionValueEvent` writer, a typewriter or any timing-only sequence reads the setting itself, live, with
   `useReducedMotionLive()` (`motion/useReducedMotionLive.ts`): Motion 13.4's `useReducedMotion()` reads it once, at mount.
 - **View Transitions.** CSS can't stop `document.startViewTransition()`, so the `view-transitions` block's

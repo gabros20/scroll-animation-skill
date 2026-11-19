@@ -253,6 +253,11 @@ Both run `MOTION.route`, the route morph's timing, so an in-route change and a p
   entrances on `html[data-preloader-state="done"]`.
 - Show the overlay only behind `GATE_SCRIPT`, with its own CSS failsafe (the snippet is in `preloader.ts`'s header),
   so a page whose script never runs never stays covered.
+- **It keeps moving while the page builds.** Idle motion is a CSS animation on `transform` or `opacity`, which the
+  compositor runs while scripts block, never a rAF loop; a drawn loader runs in a Worker on an `OffscreenCanvas`.
+  Progress lands in lumps: ease what reads `--load-p` (a short transition on the bar's `scale`). On the way out stop
+  drawing and fade with CSS; terminate a worker or lose a GL context only once the overlay is gone (either held the
+  main thread 55–240 ms on screen).
 
 ## 8. Reduced motion and pointer events
 
