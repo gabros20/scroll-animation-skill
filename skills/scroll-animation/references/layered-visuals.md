@@ -334,15 +334,15 @@ on `pinned-scene`). Its markup, measured travel, RTL, focus-follow and reduced-m
 
 ## 13. Particles
 
-Pick the cheapest renderer: DOM or SVG for a few branded fragments, one 2D canvas for dozens to a few hundred simple
-motes, WebGL (the 3d skill's) only for thousands, depth or shaders.
+The renderer ladder and the recipe (which renderer for how many, density, how they end) are the 3d skill's:
+`3d` `shader-effects.md` "Particles". This skill owns the layer's place on a scrolling page:
 
-- **Density follows the container's area**, clamped on phones, never the viewport's width; keep a quiet zone behind
-  long copy. Two or three near pieces crossing in front of the type sell depth; a curtain of them hides it.
-- One canvas with `pointer-events: none`, one rAF gated like any loop ([performance.md](performance.md) §6) and damped
-  by elapsed time, one pointer listener per section, never one per particle.
-- **Name how they end**: recycle, leave, or settle with a cap on the pile. Reduced motion: a sparse static
-  arrangement.
+- **One loop, on the route's tick** (invariant 2), gated off screen and in hidden tabs like any loop
+  ([performance.md](performance.md) §6) and damped by elapsed time. Scroll reaches it as exact progress or the
+  authority's velocity, never through a `scroll` listener of its own.
+- **It counts against the scroll budget**: one of the 1–3 scroll-linked effects in view at once
+  ([performance.md](performance.md) §3), with a quiet zone behind copy that rides past it and `pointer-events: none`.
+- **Reduced motion:** a sparse static arrangement, no drift.
 
 ## Traps
 

@@ -18,7 +18,7 @@ code was copied. Permissive sources (MIT, Apache-2.0) were adapted; an unlicense
 | Source | Licence | What it informed |
 |---|---|---|
 | `nateherkai/scroll-craft` | MIT | dead scroll, contrast over moving media, the slides, the device diagnostic, the layered hero and pointer depth, rail travel and clipped headings, the one-sided crossfade, the prime retry on activation and the stuck seek, the portrait mobile tier, footage preparation, the peak and the ending, a clip on tight type |
-| `MengTo/skills` | MIT | path independence and jumps across scenes, gating CSS loops, the route-cycle probe, a preloader that keeps moving, the progress line through steps, wipe direction, particles, judging a canvas on the composed page, the per-frame lerp conversion |
+| `MengTo/skills` | MIT | path independence and jumps across scenes, gating CSS loops, the route-cycle probe, a preloader that keeps moving, the progress line through steps, wipe direction, a particle layer's place in the scroll budget, judging a canvas on the composed page, the per-frame lerp conversion |
 | `emilkowalski/skills` | MIT | one entrance per container, the move varied by role, the fast reader's cost of a reveal on every section, Motion's accelerated transforms |
 | `ibelick/motion-primitives` | MIT | a marquee's pace from a speed |
 | `Leonxlnx/cinetic` | MIT | beats that overlap, the geometric zoom |
