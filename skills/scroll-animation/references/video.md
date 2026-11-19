@@ -233,6 +233,10 @@ thermal mitigation, the same rule) a restriction that refuses playback outside a
   metadata's rehydrate snaps, so its pause cuts the tap's play before `playing`. Lifted then, the iPhone showed a white
   picture for about half a second, then a scrub that skipped frames through stuck seeks. The cover stays until the
   kick's `playing` and its landed seek, as after a hide. `debug()` gives `buf` (the buffered ranges) and `preload`.
+- After that reload a `playing` proves the layer only on the band's frame: a play from the head proves the head, and
+  the band's paused seek after it may paint late, so the reader watched it play its way there. The kick seeks the band
+  before it plays (one direct seek, no glide), and a scene no loop owns never plays while live: a play WebKit deferred
+  past an interruption (dropping the pause sent meanwhile) is paused the frame it shows.
 - Measured on an iPhone in Low Power Mode: every prime refused, taps included, until these.
 
 ## 12. Tab-sleep rehydrate

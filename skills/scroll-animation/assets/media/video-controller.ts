@@ -369,6 +369,9 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   // The page hid since the element last played: the layer on screen may be stale (WebKit), so a kick is owed before
   // the cover lifts again. Cleared by the kick, or by any play honoured while visible.
   let needsKick = false
+  // The kick is owed by a tap's reload: a `playing` proves the layer only on the band's frame (a play from the head
+  // proves the head, and the paused seek to the band after it may paint late: the reader saw it play its way there).
+  let reloaded = false
   // The kick in flight: its rung (1 and 2 play and pause, 3 is load() and a fresh prime), what it waits on, and its
   // timers and listener, released by endKick().
   let kickRun: KickRun | null = null
@@ -734,6 +737,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     // stays until a `playing` and the band's landed seek, as after a hide (iPhone, the tap after a refresh in view:
     // lifted onto an empty layer, a white flash, then a scrub that skipped frames through stuck seeks).
     needsKick = true
+    reloaded = true
     video.load()
     unlockedBy = 'load'
     if (media === 'blocked') setMedia('')
@@ -809,7 +813,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     if (needsKick && !kickRun && hasFrame()) {
       // Back from a hide with data the element still claims: kick it behind the cover. Already blocked, the tap's
       // prime plays it, which is the same cure.
-      if (media === 'blocked') needsKick = false
+      if (media === 'blocked') needsKick = reloaded = false
       else startKick(1)
     }
     // The kick's last rung owns the prime: no second one from here.
@@ -879,6 +883,9 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
         }
       }
     } else if (!loops(mode)) {
+      // The scrub never plays: a play that starts late (WebKit defers one issued under an interruption to its end, and
+      // drops a pause issued meanwhile) is paused the frame it shows, and the band's seek follows.
+      if (media === 'live' && !video.paused) pause()
       if (handover !== 0) {
         handover *= 1 - glideAlpha(glide, dt)
         if (Math.abs(handover) < tl.glideRest) handover = 0
@@ -1036,19 +1043,43 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       prime(at)
       return
     }
+    // From the band's frame: the frames the play shows before its pause are the band's, never the ones between where
+    // the element sat (the head, after a reload) and the band. One direct seek, landing during the two frames' wait.
+    const target = kickTarget()
+    if (hasFrame() && !video.seeking && frameOf(video.currentTime, fps) !== frameOf(target, fps)) {
+      try {
+        seekSentAt = performance.now()
+        video.currentTime = target
+      } catch {
+        // Not seekable: the play runs from where it is, under the cover.
+      }
+    }
+    const go = () => {
+      run.off?.()
+      run.off = null
+      if (kickRun !== run) return
+      run.phase = 'play'
+      run.timer = window.setTimeout(() => kickFailed(run), KICK_PLAYING_MS)
+      stats.plays++
+      video.play().catch((error: unknown) => {
+        // An AbortError is a pause landing first (a hide, the scene sleeping): its own path takes over.
+        if ((error as { name?: string } | null)?.name !== 'NotAllowedError') return
+        stats.rejections++
+        kickFailed(run)
+      })
+    }
     run.raf = requestAnimationFrame(() => {
       run.raf = requestAnimationFrame(() => {
         run.raf = 0
         if (kickRun !== run) return
-        run.phase = 'play'
-        run.timer = window.setTimeout(() => kickFailed(run), KICK_PLAYING_MS)
-        stats.plays++
-        video.play().catch((error: unknown) => {
-          // An AbortError is a pause landing first (a hide, the scene sleeping): its own path takes over.
-          if ((error as { name?: string } | null)?.name !== 'NotAllowedError') return
-          stats.rejections++
-          kickFailed(run)
-        })
+        if (!video.seeking) return go()
+        // Safari drops a play() issued mid-seek: after the band's seek lands (or 150 ms).
+        const timer = window.setTimeout(go, 150)
+        video.addEventListener('seeked', go, { once: true })
+        run.off = () => {
+          window.clearTimeout(timer)
+          video.removeEventListener('seeked', go)
+        }
       })
     })
   }
@@ -1059,7 +1090,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     stats.kickFail++
     endKick(run)
     if (run.rung === 3) {
-      needsKick = false
+      needsKick = reloaded = false
       setMedia('blocked')
       return
     }
@@ -1072,8 +1103,9 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   const onPlaying = () => {
     const run = kickRun
     if (!run) {
-      // An honoured play resets what the hide left behind: the kick is no longer owed.
-      if (visible) needsKick = false
+      // An honoured play resets what the hide left behind: the kick is no longer owed. After a tap's reload, only a
+      // play on the band's frame does (WebKit starts it at the time set before the data; an older build may not).
+      if (visible && (!reloaded || onWantedFrame(video.currentTime))) needsKick = reloaded = false
       return
     }
     if (run.phase !== 'play') return
@@ -1083,7 +1115,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     // (and the stall watchdog kicks if it never does).
     if (run.rung === 3 || (running && loops(mode) && !capped)) {
       endKick(run)
-      needsKick = false
+      needsKick = reloaded = false
       return
     }
     pause()
@@ -1093,7 +1125,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
         run.raf = 0
         if (kickRun !== run) return
         endKick(run)
-        needsKick = false
+        needsKick = reloaded = false
         // The lift: the seek landed and a frame has passed. Scrolled on meanwhile, the usual reveal takes it.
         if (media !== 'live' && !video.seeking && onWantedFrame(video.currentTime)) setMedia('live')
       })
@@ -1105,7 +1137,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     run.timer = window.setTimeout(() => {
       if (kickRun !== run) return
       endKick(run)
-      needsKick = false
+      needsKick = reloaded = false
       if (media !== 'live' && hasFrame() && !video.seeking && onWantedFrame(video.currentTime)) setMedia('live')
     }, STUCK_SEEK_MS)
     try {
@@ -1113,7 +1145,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       video.currentTime = kickTarget()
     } catch {
       endKick(run)
-      needsKick = false
+      needsKick = reloaded = false
     }
   }
 

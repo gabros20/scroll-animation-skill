@@ -186,14 +186,18 @@ test('a refused prime retries inside the reader\'s next activation: touchend or 
   await settle()
   crank(30)
   assert.equal(video.plays, 2, 'no retry loop: only activations retry')
-  // The played source loads: once it shows the scroll's frame (live) the listener is gone.
+  // The played source loads. The tap reloaded it and its play ran from 0, not the band's frame (no poster image, so no
+  // start time): the kick it owes plays once more, then the band's seek lands, and the scene is live.
   Object.assign(video, { readyState: 4 })
-  crank(2)
+  crank(3)
+  await settle()
+  assert.equal(controller.debug().kicking, '1:seek', 'the kick played and seeks the band')
   video.dispatch('seeked') // the band's seek lands (this fake never fires it by itself)
-  crank(5)
+  crank(2)
   assert.equal(video.getAttribute('data-scene-media'), 'live')
+  const plays = video.plays
   win.dispatch('click')
-  assert.equal(video.plays, 2, 'a live source never primes on a tap')
+  assert.equal(video.plays, plays, 'a live source never primes on a tap')
   controller.destroy()
 })
 
@@ -501,5 +505,21 @@ test('the tap\'s reload is never uncovered before the element plays: the metadat
   crank(2)
   assert.equal(video.getAttribute('data-scene-media'), 'live')
   assert.equal(controller.debug().kickOk, 1)
+  controller.destroy()
+})
+
+test('after the tap\'s reload, a play from the head proves nothing: the kick is still owed', async () => {
+  // iPhone, after the tap (11116d5): the video sometimes visibly played its way from the head to the parked frame.
+  const { video, controller, fire } = claimingToPlay()
+  crank(30)
+  await settle()
+  fire('touchend')
+  Object.assign(video, { readyState: 1, networkState: 1, duration: 8 })
+  video.currentTime = 0 // the start time set before the data was dropped: playback from the head
+  video.dispatch('playing')
+  assert.equal(controller.debug().kicking, 'owed', 'a play off the band frame proves only the head')
+  video.currentTime = video.seeks.at(-2) // on the band's frame this time
+  video.dispatch('playing')
+  assert.equal(controller.debug().kicking, null, 'a play on the band frame proves the layer')
   controller.destroy()
 })

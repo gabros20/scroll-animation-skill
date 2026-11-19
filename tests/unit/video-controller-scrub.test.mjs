@@ -564,6 +564,7 @@ describe('the kick after a hide', () => {
     assert.equal(d.stalls, 1)
     assert.equal(d.kicks, 1, 'the watchdog kicks')
     crank(video, 2)
+    await wait(160) // the kick's seek is wedged too: it plays after 150 ms without `seeked`
     await settle()
     crank(video, 4)
     d = controller.debug()
@@ -584,6 +585,7 @@ describe('the kick after a hide', () => {
     const { video, controller } = wedged({ unwedges: false })
     crank(video, stallFrames + 1)
     crank(video, 2)
+    await wait(160) // the kick's seek is wedged too: it plays after 150 ms without `seeked`
     await settle()
     // The kick's seek went out; the element lands it but never says so.
     assert.equal(controller.debug().kicking, '1:seek')
@@ -598,6 +600,7 @@ describe('the kick after a hide', () => {
     for (let kick = 1; kick <= 2; kick++) {
       crank(video, stallFrames)
       crank(video, 2)
+      await wait(160)
       await settle()
       assert.equal(controller.debug().kicks, kick)
       await wait(STUCK_SEEK_MS + 50)
@@ -608,6 +611,39 @@ describe('the kick after a hide', () => {
     assert.equal(d.media, 'blocked', 'the next tap reloads it')
     assert.equal(d.stalls, 3)
     assert.equal(d.kicks, 2)
+    controller.destroy()
+  })
+
+  test('the kick seeks the band before its play, so what it plays starts at the band (one direct seek)', async () => {
+    const { video, controller } = setup({ band: 0.4 })
+    scripted(video, [])
+    crank(video, 4)
+    assert.equal(controller.debug().media, 'live')
+    document.visibilityState = 'hidden'
+    document.dispatch('visibilitychange')
+    video.playTo(10 / FPS) // the playhead left at the head's side while hidden
+    document.visibilityState = 'visible'
+    document.dispatch('visibilitychange')
+    const seeks = video.seeks.length
+    const plays = video.plays
+    crank(video, 3)
+    assert.equal(video.plays, plays + 1, 'the kick played')
+    assert.equal(video.seeks.length, seeks + 1, 'after one seek')
+    assert.equal(video.seeks.at(-1).frame, frameAt(0.4), 'to the band frame, sent before the play')
+    await settle()
+    crank(video, 3)
+    assert.equal(controller.debug().media, 'live')
+    assert.equal(video.shown, frameAt(0.4))
+    controller.destroy()
+  })
+
+  test('the scrub never plays: a play that starts late, while live, is paused the next frame', () => {
+    const { video, controller } = setup({ band: 0.4 })
+    crank(video, 4)
+    assert.equal(controller.debug().media, 'live')
+    video.paused = false // a play WebKit deferred past its interruption, with the pause issued meanwhile dropped
+    crank(video, 1)
+    assert.equal(video.paused, true)
     controller.destroy()
   })
 })

@@ -311,10 +311,14 @@ const withinBudget = (ran) => ran >= BUDGET_MS - SLACK_MS / 3 && ran <= BUDGET_M
  * and buffered nothing until it plays (a `playing` event). From the third iPhone readout of that refresh (the tap
  * recovered it, the imagery went white for about 0.5 s as the poster lifted, then the scrub skipped frames through six
  * stuck-seek resends): the tap's play was cut before `playing`, and WebKit's layer follows only a play.
- * Takes `loadForgets` alone, or `{ loadForgets, stuck, wedge, blankLoad }`.
+ * `fromHead`: a start position set before any data (readyState 0) is dropped, so playback after a load() starts at the
+ * head (WebKit main honours it with a seek at HAVE_METADATA; an older iOS build may not). `layerLag`: after a paused
+ * seek lands, the layer keeps the frame it was paused on for 3 animation frames. From the fourth iPhone pass: after the
+ * tap the video sometimes visibly played its way from the head to the parked frame.
+ * Takes `loadForgets` alone, or `{ loadForgets, stuck, wedge, blankLoad, fromHead, layerLag }`.
  */
 function lowPowerInit(options) {
-  const { loadForgets = false, stuck = false, wedge = false, blankLoad = false } = typeof options === 'object' && options ? options : { loadForgets: !!options }
+  const { loadForgets = false, stuck = false, wedge = false, blankLoad = false, fromHead = false, layerLag = false } = typeof options === 'object' && options ? options : { loadForgets: !!options }
   window.__plays = { refused: 0, allowed: 0, dropped: 0, calls: 0 }
   const unlocked = new WeakSet()
   // A short lock (WebKit, read in its source; see references/video.md): the data stays, seeks land, currentTime and
@@ -350,6 +354,21 @@ function lowPowerInit(options) {
     }
     return pauseFn.apply(this, args)
   }
+  const pausedOn = new WeakMap()
+  window.addEventListener('pause', (e) => pausedOn.set(e.target, Math.floor(e.target.currentTime * 30 + 1e-6)), true)
+  window.addEventListener(
+    'seeked',
+    (e) => {
+      const el = e.target
+      if (!layerLag || stale.has(el) || !pausedOn.has(el)) return
+      const frame = pausedOn.get(el)
+      stale.set(el, frame)
+      let n = 0
+      const step = () => (++n >= 3 ? stale.get(el) === frame && stale.delete(el) : requestAnimationFrame(step))
+      requestAnimationFrame(step)
+    },
+    true
+  )
   const unplayed = new WeakSet()
   window.addEventListener('playing', (e) => unplayed.delete(e.target), true)
   const bufferedDesc = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'buffered')
@@ -440,6 +459,7 @@ function lowPowerInit(options) {
     },
     set(value) {
       if (hung === this) hung = null
+      if (fromHead && ready.get.call(this) === 0) return
       time.set.call(this, value)
     }
   })
@@ -710,10 +730,11 @@ const CHECKS = {
     const cases = [
       { stuck: false, wedge: false, says: '' },
       { stuck: true, wedge: false, says: ', the refused element claiming to play' },
-      { stuck: false, wedge: true, says: ', the unlocked element\'s seeks wedged until it plays again' }
+      { stuck: false, wedge: true, says: ', the unlocked element\'s seeks wedged until it plays again' },
+      { stuck: false, wedge: false, head: true, says: ', playback after the reload from the head and the layer a few frames behind a seek' }
     ]
-    for (const { stuck, wedge, says } of cases) {
-      const { page } = await t.open([[lowPowerInit, { loadForgets: false, stuck, wedge, blankLoad: true }]], { holds: true, painted: true, touch: true })
+    for (const { stuck, wedge, head = false, says } of cases) {
+      const { page } = await t.open([[lowPowerInit, { loadForgets: false, stuck, wedge, blankLoad: true, fromHead: head, layerLag: head }]], { holds: true, painted: true, touch: true })
       await page.evaluate(() => window.__t.to(0.5))
       await page.waitForTimeout(400)
       await page.reload({ waitUntil: 'load' })

@@ -84,6 +84,9 @@ the newest release heading below, and the release tag.
   element was lifted having painted and buffered nothing. A tap's `load()` now owes the kick: the cover stays until a
   `playing` and the band's landed seek. `debug()` adds `buf` (buffered ranges) and `preload`, and Folio's readout
   prints them.
+- ScrubVideo's catch-up after that tap (iPhone: slow, and sometimes the video visibly played its way from the head to
+  the parked frame). After the reload a `playing` proves the layer only on the band's frame; the kick seeks the band
+  before it plays, in one direct seek; and a scene no loop owns pauses any play that starts while it is live.
 - `verify-motion.mjs`: the entry slide is sampled ¾ visible, a `preload="none"` video never asked to
   load no longer fails the decode check, and a clip frozen through the scrub steps fails.
 
