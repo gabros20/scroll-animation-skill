@@ -67,14 +67,15 @@ body {
  * Tap to play (Folio's own; the scroll-animation asset styles nothing here):
  * ScrubVideo's video reads data-scene-media="blocked" while iOS Low Power
  * Mode refuses playback, and any tap anywhere unlocks it. A quiet line in the
- * pin, not a button: the tap doesn't have to land on it.
+ * pin, not a button: the tap doesn't have to land on it. Above everything else
+ * pinned (the fixtures' captions and ?motion-debug readout), so it always shows.
  */
 [data-scene-pin]:has([data-scene-media="blocked"])::after {
   content: "Tap to play";
   position: absolute;
   left: 50%;
   bottom: 1.5rem;
-  z-index: 1;
+  z-index: 20;
   transform: translateX(-50%);
   padding: 0.25rem 0.75rem;
   border-radius: 999px;

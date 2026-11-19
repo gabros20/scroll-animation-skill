@@ -17,7 +17,7 @@ function listeners() {
   return {
     addEventListener: (type, fn) => map.set(type, [...(map.get(type) ?? []), fn]),
     removeEventListener: (type, fn) => map.set(type, (map.get(type) ?? []).filter((g) => g !== fn)),
-    dispatch: (type) => (map.get(type) ?? []).forEach((fn) => fn({ type })),
+    dispatch: (type, init = {}) => (map.get(type) ?? []).forEach((fn) => fn({ type, ...init })),
   }
 }
 
@@ -352,5 +352,122 @@ test('back from a lock: data dropped and a seek left pending no longer block rec
   const before = video.plays
   win.dispatch('touchend')
   assert.equal(video.plays, before + 1, 'the next tap retries')
+  controller.destroy()
+})
+
+/**
+ * Refreshed in view under Low Power Mode (iPhone, after 351f08a): no tap ever unlocked the scene. WebKit unpauses on
+ * play() before its media session admits the play, and an interrupted session's pause() returns early, so a refused
+ * element can read `paused` false with no frame for good. This fake refuses every play outside a gesture and leaves
+ * the element claiming to play; load() resets it (paused, no data, no duration) and, inside a gesture, unlocks it.
+ */
+function claimingToPlay() {
+  const video = fakeVideo()
+  const log = []
+  let inGesture = false
+  let unlocked = false
+  video.play = () => {
+    video.plays++
+    log.push(`play:${inGesture}`)
+    if (!unlocked && !inGesture) {
+      video.paused = false
+      return Promise.reject(Object.assign(new Error('refused'), { name: 'NotAllowedError' }))
+    }
+    unlocked = true
+    video.paused = false
+    return new Promise(() => {}) // the data is on its way: no frame yet
+  }
+  video.load = () => {
+    log.push(`load:${inGesture}`)
+    if (inGesture) unlocked = true
+    Object.assign(video, { paused: true, readyState: 0, duration: NaN })
+  }
+  const controller = createVideoController(video, { fps: 30, src: '/clip.mp4', posterElement: { src: '', getAttribute: () => null } })
+  crank(1)
+  Object.assign(video, { readyState: 1, networkState: 1, duration: 8 })
+  video.dispatch('loadedmetadata')
+  controller.setMode('scrub')
+  controller.setBand(0.5)
+  controller.setAwake(true)
+  const fire = (type, init) => {
+    inGesture = type === 'click' || type === 'keydown' || (type === 'touchend' && !init?.panned)
+    win.dispatch(type, init)
+    inGesture = false
+  }
+  return { video, controller, log, fire }
+}
+
+test('refreshed in view: blocked with the element claiming to play, a tap loads and plays inside the touchend, at the band\'s frame', async () => {
+  const { video, controller, log, fire } = claimingToPlay()
+  crank(30)
+  await settle()
+  assert.equal(video.getAttribute('data-scene-media'), 'blocked', 'the prime was refused')
+  assert.equal(video.paused, false, 'the refused element claims to play')
+  log.length = 0
+  const seeks = video.seeks.length
+  fire('touchend')
+  assert.deepEqual(log, ['load:true', 'play:true'], 'load(), then play(), both inside the touchend')
+  assert.equal(video.seeks.length, seeks + 1, 'then the band\'s time, where playback starts once the data is back')
+  assert.ok(Math.abs(video.seeks.at(-1) - (Math.round(0.5 * 239) + 0.25) / 30) < 0.05, `the band's frame, not 0: ${video.seeks.at(-1)}`)
+  assert.equal(video.getAttribute('data-scene-media'), '', 'no longer blocked; the poster stays until the frame is live')
+  assert.equal(controller.debug().unlockedBy, 'load')
+  controller.destroy()
+})
+
+test('one tap, one load(): the pointerup before the touchend and the click after it don\'t load again, and the pointerup\'s refusal doesn\'t read blocked', async () => {
+  const { video, controller, log, fire } = claimingToPlay()
+  video.paused = true // the plain refusal: the retry on the pointerup runs too
+  crank(30)
+  await settle()
+  video.paused = true
+  assert.equal(video.getAttribute('data-scene-media'), 'blocked')
+  log.length = 0
+  fire('pointerup')
+  fire('touchend')
+  fire('click')
+  assert.deepEqual(log, ['play:false', 'load:true', 'play:true'], 'the pointerup retries and is refused; the touchend loads and plays; the click finds the play running')
+  await settle()
+  assert.notEqual(video.getAttribute('data-scene-media'), 'blocked', 'the pointerup\'s refusal settles after the touchend\'s play: stale')
+  controller.destroy()
+})
+
+test('a pan (a scroll, a pull to refresh) is no tap: its touchend neither loads nor primes, and the next tap does', async () => {
+  const { video, controller, log, fire } = claimingToPlay()
+  crank(30)
+  await settle()
+  log.length = 0
+  fire('touchstart', { touches: [{ clientX: 100, clientY: 300 }] })
+  fire('touchend', { panned: true, changedTouches: [{ clientX: 104, clientY: 260 }] })
+  assert.deepEqual(log, [], 'a touch that moved 40 px: nothing')
+  assert.equal(video.getAttribute('data-scene-media'), 'blocked')
+  fire('touchstart', { touches: [{ clientX: 100, clientY: 300 }] })
+  fire('touchend', { changedTouches: [{ clientX: 103, clientY: 302 }] })
+  assert.deepEqual(log, ['load:true', 'play:true'], 'a touch that stayed within the slop is a tap')
+  controller.destroy()
+})
+
+test('blocked while the scene sleeps: every tap loads, not only the first', async () => {
+  const { video, controller, log, fire } = claimingToPlay()
+  crank(30)
+  await settle()
+  controller.setAwake(false)
+  log.length = 0
+  fire('click')
+  assert.deepEqual(log, ['load:true'], 'asleep: load() only; the wake primes')
+  // The unlock didn't take (the wake's prime refused again): blocked once more, asleep, and the next tap loads again.
+  controller.setAwake(true)
+  Object.assign(video, { readyState: 1, networkState: 1, duration: 8 })
+  video.dispatch('loadedmetadata')
+  video.play = () => {
+    video.plays++
+    return Promise.reject(Object.assign(new Error('refused'), { name: 'NotAllowedError' }))
+  }
+  crank(5)
+  await settle()
+  assert.equal(video.getAttribute('data-scene-media'), 'blocked')
+  controller.setAwake(false)
+  log.length = 0
+  fire('click')
+  assert.deepEqual(log, ['load:true'], 'blocked again: the next tap loads again')
   controller.destroy()
 })

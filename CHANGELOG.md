@@ -67,6 +67,13 @@ the newest release heading below, and the release tag.
   frame. With no `playing` in 300 ms (`KICK_PLAYING_MS`) it retries once, then `load()` and a fresh prime, then
   `blocked` with the tap armed. It never clones the element and never plays mid-scrub. The load recovery's counter is
   now `loads`, and `debug()` adds `kicks`, `kickOk`, `kickFail` and `kicking`.
+- ScrubVideo refreshed with the scene in view under Low Power Mode (iPhone: no tap unlocked it; `primes 2 refused 2`,
+  `unlocked -`). The tap retry was skipped whenever the element read `paused` false, which a refused WebKit element can
+  do for good. While `blocked`, every tap (a `touchend` that didn't pan, a click, a key) now calls `load()` and then
+  the prime inside the event, starting at the band's frame; a touch that moved more than 10 px is ignored, and an
+  earlier refusal (the tap's `pointerup`) no longer reads `blocked` over the play that followed. Folio's `?motion-debug`
+  readout moves to the top (its "Tap to play" hint was under it) and adds `paused` and `unlocks`, and its act caption
+  follows the scene's mode (on a phone the tail starts while the band's line is still on screen).
 - `verify-motion.mjs`: the entry slide is sampled ¾ visible, a `preload="none"` video never asked to
   load no longer fails the decode check, and a clip frozen through the scrub steps fails.
 

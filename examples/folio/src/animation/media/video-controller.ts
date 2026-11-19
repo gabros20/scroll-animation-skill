@@ -295,6 +295,9 @@ export const KICK_LOAD_MS = 2000
 /** The events that grant user activation (HTML: `touchend`, never `touchstart`), on which a refused prime retries. */
 const ACTIVATION_EVENTS = ['touchend', 'pointerup', 'click', 'keydown'] as const
 
+/** A touch that moved further than this, in px, between `touchstart` and `touchend` was a pan: no activation. */
+const TAP_SLOP_PX = 10
+
 /** A kick in flight (see `createVideoController`). */
 interface KickRun {
   rung: 1 | 2 | 3
@@ -342,6 +345,10 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   // A refused prime waits for the reader's next activation; `activating` is true inside that event.
   let activationArmed = false
   let activating = false
+  // Where the touch in progress started (client px), to tell a tap from a pan at its touchend.
+  let touchFrom: { x: number; y: number } | null = null
+  // The latest prime: a refusal from an earlier one (a tap's pointerup, before the touchend that unlocked) is stale.
+  let primeId = 0
   // This source has shown a frame: from then on a pending seek, not a missing frame, explains a low readyState.
   let framed = false
   // data-scene-media on the video, and how the element was unlocked (a gesture's play() or load()).
@@ -579,7 +586,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
    * Power Mode), the poster stays until the reader's next activation (`ACTIVATION_EVENTS`), which retries it inside
    * the event, where the play is allowed.
    */
-  function prime() {
+  function prime(at: number | null = primeTime()) {
     primed = true
     stats.primes++
     // Armed before the play, until the source shows a frame: WebKit grants the play only inside the gesture's own
@@ -588,6 +595,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     armActivation()
     const token = playToken
     const gesture = activating
+    const id = ++primeId
     video.play().then(
       () => {
         if (gesture) unlockedBy = 'play'
@@ -598,6 +606,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
         // An AbortError is the scene's own pause landing first: the load has started all the same.
         if ((error as { name?: string } | null)?.name !== 'NotAllowedError') return
         stats.rejections++
+        // A later prime is in flight (the touchend after a tap's pointerup): its outcome, not this one, says blocked.
+        if (id !== primeId) return
         if (media !== 'live') setMedia('blocked')
         // The ladder's last rung was this prime: refused, the scene reads blocked now, not at the rung's timeout.
         if (kickRun?.rung === 3) kickFailed(kickRun)
@@ -606,14 +616,22 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     // Then straight to the scroll's frame, before anything decodes: the clip is all-intra, so the first frame it
     // presents is that one, never frame 0. After the play(), not before: Safari drops a play() issued mid-seek. Only
     // under a poster image: a seek clears the poster attribute, and with nothing decoded there is nothing to show.
-    if (posterEl && validDuration()) {
+    // Right after a load() (`at` worked out before it) this sets where playback starts once the metadata is back.
+    if (at !== null) {
       try {
         seekSentAt = performance.now()
-        video.currentTime = loops(mode) ? targetTime(mode, band, tl) : frameTime(wanted(), fps)
+        video.currentTime = at
       } catch {
         // Not seekable yet: the poster still covers.
       }
     }
+  }
+
+  /** Where a prime sends the playhead: the scroll's frame (a loop: its target), or nowhere without a poster image or
+   * a duration. */
+  function primeTime() {
+    if (!posterEl || !validDuration()) return null
+    return loops(mode) ? targetTime(mode, band, tl) : frameTime(wanted(), fps)
   }
 
   /** `data-scene-media` on the video, written on change only. */
@@ -640,38 +658,78 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
 
   /**
    * Every activation event retries the prime synchronously, inside the event, while the source has no frame: the one
-   * the browser honours is the one that plays. Asleep, it waits armed; once a frame shows, it disarms.
+   * the browser honours is the one that plays. Asleep, it waits armed; once a frame shows, it disarms. While
+   * `blocked`, every tap (a `touchend` that didn't pan, a click, a key) first calls `load()` inside the event.
    */
   function onActivation(event: Event) {
     if (destroyed || media === 'live') {
       disarmActivation()
       return
     }
-    if (reduced || !hasSource || !video.paused) return
+    if (reduced || !hasSource) return
+    // A touch that became a pan (a scroll, a pull to refresh) is no activation in WebKit: nothing to retry on.
+    if (event.type === 'touchend' && panned(event as TouchEvent)) return
+    // A tap's pointerup comes before its touchend and never carries the gesture in WebKit.
+    const gesture = event.type !== 'pointerup'
     activating = true
     try {
-      // Until the video shows the scroll's frame, a frame it merely claims (readyState after a lock) is no proof.
-      if (running) prime()
-      else if (
-        event.type !== 'pointerup' &&
+      if (gesture && media === 'blocked') {
+        // Refused, whatever the element claims. WebKit unpauses on play() before its media session admits the play,
+        // and an interrupted session's pause() returns early, so a refused element can read `paused` false with no
+        // frame and no `playing`, for good: a retry gated on `paused` never ran again (iPhone, refreshed in view).
+        // load() inside the gesture resets it and lifts the restriction for the element; the play follows in the
+        // same event, then pauses, and the reveal runs behind the poster as on any prime. The band's time is read
+        // before the load() empties the duration; set after the play, it is where playback starts: never frame 0.
+        const at = primeTime()
+        unlock()
+        if (running) prime(at)
+        else primed = false
+      } else if (running) {
+        // Until the video shows the scroll's frame, a frame it merely claims (readyState after a lock) is no proof.
+        if (video.paused) prime()
+      } else if (
+        gesture &&
         !hasFrame() &&
         !unlockedBy &&
-        (media === 'blocked' || !primed) &&
+        !primed &&
         video.networkState !== NETWORK_LOADING
       ) {
         // Not running: a load() inside the gesture lifts WebKit's gesture restriction for this element, so a tap
-        // anywhere on the way down (or after a refusal, away from the scene) unlocks it before it arrives. Only on the
-        // events WebKit counts (a tap's touchend or click, a key), never the pointerup before them, since the load
-        // runs once. Never with a frame or a download in flight, which it would restart; with preload="none" it
-        // fetches nothing. The next wake primes again, now allowed.
-        stats.unlocks++
-        video.load()
-        unlockedBy = 'load'
+        // anywhere on the way down unlocks it before it arrives. Only on the events WebKit counts (a tap's touchend
+        // or click, a key), never the pointerup before them, since the load runs once. Never with a frame or a
+        // download in flight, which it would restart; with preload="none" it fetches nothing. The next wake primes
+        // again, now allowed.
+        unlock()
         primed = false
       }
     } finally {
       activating = false
     }
+  }
+
+  /** `load()` inside a gesture: it lifts WebKit's gesture restriction for this element and drops whatever play it
+   * held. The cover stays, no longer `blocked`, so the same tap's later events (the click after its touchend) don't
+   * load again; a refusal of the play that follows reads `blocked` once more. */
+  function unlock() {
+    stats.unlocks++
+    framed = false
+    video.load()
+    unlockedBy = 'load'
+    if (media === 'blocked') setMedia('')
+  }
+
+  const onTouchStart = (event: Event) => {
+    const touch = (event as TouchEvent).touches?.[0]
+    touchFrom = touch ? { x: touch.clientX, y: touch.clientY } : null
+  }
+
+  /** The touch moved past `TAP_SLOP_PX` since it started. Unknown (no coordinates): a tap. */
+  function panned(event: TouchEvent) {
+    const from = touchFrom
+    touchFrom = null
+    const touch = event.changedTouches?.[0]
+    if (!from || !touch) return false
+    return Math.hypot(touch.clientX - from.x, touch.clientY - from.y) > TAP_SLOP_PX
   }
 
   /** The source has shown a frame: the prime did its job. */
@@ -682,12 +740,15 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   function armActivation() {
     if (activationArmed || destroyed) return
     activationArmed = true
+    window.addEventListener('touchstart', onTouchStart, { capture: true, passive: true })
     for (const type of ACTIVATION_EVENTS) window.addEventListener(type, onActivation, { capture: true, passive: true })
   }
 
   function disarmActivation() {
     if (!activationArmed) return
     activationArmed = false
+    touchFrom = null
+    window.removeEventListener('touchstart', onTouchStart, { capture: true })
     for (const type of ACTIVATION_EVENTS) window.removeEventListener(type, onActivation, { capture: true })
   }
 

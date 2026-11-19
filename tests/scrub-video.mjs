@@ -298,9 +298,15 @@ const withinBudget = (ran) => ran >= BUDGET_MS - SLACK_MS / 3 && ran <= BUDGET_M
  * metadata only (`readyState` held at 1); a play() or a load() inside the gesture unlocks the element (WebKit's
  * removeBehaviorRestrictionsAfterFirstUserGesture). Whether a later load() outside a gesture (iOS dropping a sleeping
  * clip's data) forgets the unlock, WebKit's source doesn't say it does: `loadForgets` runs both, and the block must
- * work either way.
+ * work either way. A touch that moved more than 10 px between touchstart and touchend was a pan, which is no gesture.
+ * `stuck`: a refused play() leaves the element claiming to play, `paused` false with no frame, until a load() or an
+ * honoured play (WebKit's playInternal unpauses before the media session admits the play, and an interrupted
+ * session's pauseInternal returns early, so the page's own pause() can't undo it). Inferred from WebKit's source and
+ * the iPhone readout after a refresh in view (no tap ever primed again); `paused` was not on that readout.
+ * Takes `loadForgets` alone, or `{ loadForgets, stuck }`.
  */
-function lowPowerInit(loadForgets) {
+function lowPowerInit(options) {
+  const { loadForgets = false, stuck = false } = typeof options === 'object' && options ? options : { loadForgets: !!options }
   window.__plays = { refused: 0, allowed: 0, dropped: 0, calls: 0 }
   const unlocked = new WeakSet()
   // A short lock (WebKit, read in its source; see references/video.md): the data stays, seeks land, currentTime and
@@ -313,10 +319,24 @@ function lowPowerInit(loadForgets) {
   // and never playing. `interruption` is 'frame' (it ends one animation frame after the return) or 'first' (the
   // first play() after the return is dropped, whenever it comes).
   let interrupted = null
+  let touchFrom = null
+  window.addEventListener('touchstart', (e) => (touchFrom = e.touches[0] ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null), true)
+  const panned = (e) => {
+    const t = e.changedTouches?.[0]
+    return !!touchFrom && !!t && Math.hypot(t.clientX - touchFrom.x, t.clientY - touchFrom.y) > 10
+  }
   const gesture = () => {
     const e = window.event
-    return !!e && e.isTrusted && (e.type === 'touchend' || e.type === 'click' || e.type === 'keydown')
+    return !!e && e.isTrusted && ((e.type === 'touchend' && !panned(e)) || e.type === 'click' || e.type === 'keydown')
   }
+  const claims = new WeakSet()
+  const pausedDesc = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'paused')
+  Object.defineProperty(HTMLMediaElement.prototype, 'paused', {
+    configurable: true,
+    get() {
+      return claims.has(this) ? false : pausedDesc.get.call(this)
+    }
+  })
   const ready = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'readyState')
   Object.defineProperty(HTMLMediaElement.prototype, 'readyState', {
     configurable: true,
@@ -335,10 +355,12 @@ function lowPowerInit(loadForgets) {
     }
     if (!unlocked.has(this) && !gesture()) {
       window.__plays.refused++
+      if (stuck) claims.add(this)
       return new Promise((resolve, reject) => setTimeout(() => reject(new DOMException('refused', 'NotAllowedError')), 100))
     }
     window.__plays.allowed++
     unlocked.add(this)
+    claims.delete(this)
     return play.apply(this, args)
   }
   // Nothing is presented before the unlock (desktop engines decode a first frame unasked; iOS doesn't): frame callbacks
@@ -354,6 +376,7 @@ function lowPowerInit(loadForgets) {
   const load = HTMLMediaElement.prototype.load
   HTMLMediaElement.prototype.load = function (...args) {
     stale.delete(this)
+    claims.delete(this)
     if (gesture()) unlocked.add(this)
     else if (loadForgets) unlocked.delete(this)
     return load.apply(this, args)
@@ -636,6 +659,54 @@ const CHECKS = {
         `${ok ? `blocked after ${ms} ms` : 'never blocked'} · ${JSON.stringify(state)}`
       ]
     ]
+  },
+
+  // Found on the device pass (iPhone, Low Power Mode, after 351f08a): refreshed with the scene in view, the scene ran
+  // on its poster and no tap unlocked it (`primes 2 refused 2`, `unlocked -`, `loads 0`: no tap ever reached the
+  // retry). Modelled as WebKit can leave it (`stuck`: the refused element reads `paused` false) and as the plain
+  // refusal, with a touch tap that fires no click (WebKit on a non-clickable target): the tap unlocks the scene where
+  // the reader is, behind the poster, and the scrub follows with no play().
+  async refreshTap(t) {
+    const out = []
+    for (const stuck of [false, true]) {
+      const { page } = await t.open([[lowPowerInit, { loadForgets: false, stuck }]], { holds: true, painted: true, touch: true })
+      await page.evaluate(() => window.__t.to(0.5))
+      await page.waitForTimeout(400)
+      await page.reload({ waitUntil: 'load' })
+      // Playwright's WebKit doesn't always restore the scroll on reload: put the reader back where they were.
+      await page.evaluate(() => scrollY < 10 && window.__t.to(0.5))
+      await page.waitForFunction(() => window.__t.video()?.getAttribute('data-scene-media') === 'blocked', null, { timeout: 3000 }).catch(() => {})
+      await page.waitForTimeout(400)
+      const before = await page.evaluate(() => ({ media: window.__t.video().getAttribute('data-scene-media'), paused: window.__t.video().paused, readyState: window.__t.video().readyState }))
+      await page.evaluate(startRevealSampler, FPS)
+      await page.touchscreen.tap(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
+      await page.waitForFunction(() => window.__t.video().getAttribute('data-scene-media') === 'live', null, { timeout: 4000 }).catch(() => {})
+      await page.waitForTimeout(400)
+      const { rows } = await page.evaluate(() => window.__reveal.stop())
+      const end = rows[rows.length - 1]
+      const wrong = rows.filter((r) => r.poster < 0.999 && (r.presented === null || Math.abs(r.presented - r.want) > 1))
+      const calls = await page.evaluate(() => window.__plays.calls)
+      for (const p of [0.55, 0.6, 0.65]) {
+        await page.evaluate((at) => window.__t.to(at), p)
+        await page.waitForTimeout(250)
+      }
+      await page.waitForTimeout(400)
+      const after = await page.evaluate(() => ({ calls: window.__plays.calls, plays: { ...window.__plays }, loads: window.__mediaCalls.load, shown: window.__t.shown(), want: Math.round(window.__t.expected().frame), media: window.__t.video().getAttribute('data-scene-media') }))
+      out.push([
+        `refreshed in view under Low Power Mode${stuck ? ', the refused element claiming to play' : ''}: a touch tap unlocks it where the reader is, behind the poster, and the scrub follows with no play()`,
+        before.media === 'blocked' &&
+          end.media === 'live' &&
+          end.poster === 0 &&
+          Math.abs(end.presented - end.want) <= 1 &&
+          wrong.length === 0 &&
+          after.calls === calls &&
+          after.media === 'live' &&
+          Math.abs(after.shown - after.want) <= 1,
+        `before ${JSON.stringify(before)} · end ${JSON.stringify(end)} · ${wrong.length} wrong ${JSON.stringify(wrong.slice(0, 3))} · scrubbed on: shown ${after.shown} want ${after.want} ${after.media}, play() mid-scrub ${after.calls - calls}, load() ${after.loads} · plays ${JSON.stringify(after.plays)}`
+      ])
+      await page.context().close()
+    }
+    return out
   },
 
   // The tap's reveal: the poster stays over the video until it presents the band's frame, so a reader never sees a
@@ -941,8 +1012,8 @@ async function main() {
            * (or with `painted`) the scene painted (state written, poster set); `holds` opens the scene of holds. Returns the tiers
            * requested and the video bytes served.
            */
-          async open(initScripts = [], { reducedMotion = 'no-preference', holds = false, painted = false } = {}) {
-            const context = await open.browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion })
+          async open(initScripts = [], { reducedMotion = 'no-preference', holds = false, painted = false, touch = false } = {}) {
+            const context = await open.browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion, hasTouch: touch })
             contexts.push(context)
             for (const [script, arg] of initScripts) await context.addInitScript(script, arg)
             await context.addInitScript(mediaCallsInit)

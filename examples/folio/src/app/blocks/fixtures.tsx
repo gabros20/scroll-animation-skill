@@ -15,15 +15,33 @@ const ACTS = [
   "Tail: the last frame holds.",
 ];
 
+// With motion, the acts are the scene's runway and the caption follows the mode in
+// the pin (ModeCaption): an act's own line sits by layout, and on a phone the
+// tail's 320 px lead starts it while the band's line is still on screen. Under
+// reduced motion there is no pin to scroll through: the lines read in flow.
 function Acts() {
   return ACTS.map((act) => (
     <div
       key={act}
       className="flex flex-col justify-end px-6 py-10 font-sans text-sm text-muted sm:px-10 motion-safe:h-svh"
     >
-      <p>{act}</p>
+      <p className="motion-safe:sr-only">{act}</p>
     </div>
   ));
+}
+
+const ACT_OF_MODE: Record<SceneMode, number> = { head: 0, scrub: 1, tail: 2 };
+
+/** The act line for the scene's mode, pinned, so it never disagrees with the badge. */
+function ModeCaption({ mode }: { mode: SceneMode }) {
+  return (
+    <p
+      aria-hidden="true"
+      className="absolute bottom-16 left-6 z-10 font-sans text-sm text-muted motion-reduce:hidden sm:left-10"
+    >
+      {ACTS[ACT_OF_MODE[mode]]}
+    </p>
+  );
 }
 
 /** The scene's mode, as data-scene-state has it. */
@@ -47,6 +65,7 @@ export function SequenceScene({ manifest, label }: { manifest: string; label: st
             </div>
           </div>
           <ModeReadout mode={mode} />
+          <ModeCaption mode={mode} />
         </>
       )}
     >
@@ -102,6 +121,7 @@ export function ScrubScene({
       pinned={
         <>
           <ModeReadout mode={mode} />
+          <ModeCaption mode={mode} />
           <DeviceReadout scrub={ref} />
         </>
       }
@@ -115,7 +135,8 @@ export function ScrubScene({
 /**
  * With ?motion-debug, a device-round readout (references/verification.md "Send a diagnostic with the first device
  * round"): the scene's progress and wake, and the controller's counters, four times a second. A phone with no remote
- * console shows here which layer stopped: no readout at all means the page never hydrated.
+ * console shows here which layer stopped: no readout at all means the page never hydrated. At the top, under the mode
+ * badge, so the page's "Tap to play" hint at the bottom stays in view.
  */
 function DeviceReadout({ scrub }: { scrub: React.RefObject<ScrubVideoHandle | null> }) {
   const [line, setLine] = useState<string | null>(null);
@@ -127,9 +148,9 @@ function DeviceReadout({ scrub }: { scrub: React.RefObject<ScrubVideoHandle | nu
       setLine(
         [
           `p ${scene ? scene.progress().toFixed(2) : "-"} ${scene?.mode() ?? "-"} awake ${scene?.awake() ?? "-"}`,
-          `run ${v.running} ready ${v.ready} t ${v.time} src ${String(v.source ?? "").split("/").pop()}`,
+          `run ${v.running} paused ${v.paused} ready ${v.ready} t ${v.time} src ${String(v.source ?? "").split("/").pop()}`,
           `primes ${v.primes} refused ${v.rejections} plays ${v.plays} ticks ${v.ticks} reseeks ${v.reseeks}`,
-          `media ${v.media || "-"} unlocked ${v.unlockedBy ?? "-"} vis ${v.vis} wakes ${v.wakes} lost ${v.lost}`,
+          `media ${v.media || "-"} unlocked ${v.unlockedBy ?? "-"} unlocks ${v.unlocks} vis ${v.vis} wakes ${v.wakes} lost ${v.lost}`,
           `kicks ${v.kicks} kickOk ${v.kickOk} kickFail ${v.kickFail} loads ${v.loads} kicking ${v.kicking ?? "-"} pf ${v.vframes} (info)`,
         ].join(" · "),
       );
@@ -138,7 +159,7 @@ function DeviceReadout({ scrub }: { scrub: React.RefObject<ScrubVideoHandle | nu
   }, [scrub]);
   if (line === null) return null;
   return (
-    <p className="absolute bottom-4 left-4 right-4 z-10 rounded bg-ink/90 px-3 py-2 font-mono text-[10px] leading-snug text-paper">
+    <p className="absolute top-[calc(var(--header-h)+3.5rem)] left-4 right-4 z-10 rounded bg-ink/90 px-3 py-2 font-mono text-[10px] leading-snug text-paper">
       {line}
     </p>
   );

@@ -219,6 +219,11 @@ thermal mitigation, the same rule) a restriction that refuses playback outside a
   anywhere calls `load()` inside the gesture, which lifts the restriction for that element: a reader who tapped a
   link on the way down arrives at an unlocked scene. One gesture unlocks the element for the page in WebKit's source;
   the tests run both that and a forgetting model.
+- While `blocked`, every tap calls `load()` and then the prime inside the event, whatever `paused` reads: WebKit
+  unpauses on `play()` before its media session admits the play, and an interrupted session's `pause()` returns early,
+  so a refused element can claim to play, with no frame, for good (an iPhone refreshed with the scene in view: no tap
+  ever retried). The band's time, read before the `load()`, is set after the play, so the first frame is still the
+  band's. A touch that moved more than 10 px (a scroll, a pull to refresh) is no tap and does nothing.
 - Measured on an iPhone in Low Power Mode: every prime refused, taps included, until these.
 
 ## 12. Tab-sleep rehydrate
