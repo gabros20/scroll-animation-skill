@@ -31,9 +31,10 @@
  *   they keep coming), where WebKit and Chromium hold the newest behind the running one. The moment one lands
  *   (`seeked`) the frame the band wants THEN is sent, so a slow decoder shows fewer frames, never older ones. Each
  *   seek lands a quarter frame into its frame, so float rounding can't show the frame before. A loop wrap and a snap
- *   skip the queue: behind a stale seek they would land a frame late. A band seek still unanswered after
- *   `STUCK_SEEK_MS` is sent again: iOS has been seen to leave one `seeking` for good, and the one-in-flight guard
- *   would then hold the frame for the rest of the visit.
+ *   skip the queue: behind a stale seek they would land a frame late. A band seek the element still reports
+ *   `seeking` after `STUCK_SEEK_MS` is sent again: iOS has been seen to leave one pending for good, and the
+ *   one-in-flight guard would then hold the frame for the rest of the visit. While a seek is pending `readyState`
+ *   sits at HAVE_METADATA (measured in Chromium), so the check runs before the tick's wait for a frame.
  * - The tail's wrap sits one frame before the clip's end, and WebKit runs frame callbacks about 0.8 of a frame after
  *   presentation: a busy main thread let the tail run out, stop (`ended`) and sit paused until the watchdog. So a
  *   late callback wraps as soon as the loop's last frame is DUE (`wrapDue`), a rAF backstop wraps once it is half
@@ -308,6 +309,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   let seekSentAt = 0
   // A refused prime waits for the reader's next activation.
   let activationArmed = false
+  // This source has shown a frame: from then on a pending seek, not a missing frame, explains a low readyState.
+  let framed = false
   // A handover out of a loop: where the loop left the playhead (both adapters step the mode before they hand over the
   // event's band, so it is measured at the next drive), then its distance from the band in seconds, decaying to 0.
   let handoverFrom: number | null = null
@@ -416,6 +419,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       return
     }
     seeking = true
+    seekSentAt = performance.now()
     video.currentTime = time
   }
 
@@ -426,18 +430,26 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       handover = handoverFrom - bandTarget()
       handoverFrom = null
     }
-    // A seek that never answered: re-send the band's frame, even if it is the one already asked for.
-    const stuck = seeking && performance.now() - seekSentAt > STUCK_SEEK_MS
-    if (stuck) {
-      stats.reseeks++
-      pending = null
-    }
-    if ((seeking && !stuck) || !hasFrame()) return
+    if (resendStuck() || seeking || !hasFrame()) return
     const frame = wanted()
-    if (!stuck && frame === frameOf(video.currentTime, fps)) return
+    if (frame === frameOf(video.currentTime, fps)) return
     seeking = true
     seekSentAt = performance.now()
     video.currentTime = frameTime(frame, fps)
+  }
+
+  /**
+   * A band seek the element still reports `seeking` after STUCK_SEEK_MS: send the band's frame again, even if it is
+   * the one already asked for. Only on a source that has shown a frame, so the poster was already gone.
+   */
+  function resendStuck(): boolean {
+    if (!seeking || !video.seeking || !framed || loops(mode) || !validDuration()) return false
+    if (performance.now() - seekSentAt <= STUCK_SEEK_MS) return false
+    stats.reseeks++
+    pending = null
+    seekSentAt = performance.now()
+    video.currentTime = frameTime(wanted(), fps)
+    return true
   }
 
   /** Straight to `time`, past the queue: a wrap or a snap must not land behind a stale seek. */
@@ -523,7 +535,9 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     )
   }
 
+  /** A refused prime retries inside the reader's activation, only while the scene runs; asleep, it stays armed. */
   function onActivation() {
+    if (!destroyed && !running) return
     disarmActivation()
     if (!destroyed && !reduced && hasSource && !hasFrame() && video.paused) prime()
   }
@@ -571,9 +585,12 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     badTicks = 0
     stats.ticks++
     if (!hasFrame()) {
-      if (!primed && video.paused && video.networkState === NETWORK_IDLE) prime()
+      // A pending seek holds readyState at HAVE_METADATA: a hung one is re-sent here, or the tick would never see it.
+      // Only a source that never showed a frame is primed: on one that has, a play() here ran a held tail to its end.
+      if (!resendStuck() && !primed && !framed && video.paused && video.networkState === NETWORK_IDLE) prime()
       return
     }
+    framed = true
     const time = video.currentTime
 
     if (loops(mode) && !capped) {
@@ -655,6 +672,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   function kick() {
     recovering = true
     primed = false
+    framed = false
     stats.kicks++
     video.preload = 'auto'
     try {
@@ -708,6 +726,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       hadMetadata = false
       recovering = false
       primed = false
+      framed = false
       if (src) video.src = src
       else {
         video.removeAttribute('src')

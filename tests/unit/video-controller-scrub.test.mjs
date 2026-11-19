@@ -46,7 +46,8 @@ let clock = 0
 const scene = { band: 0 }
 
 /** An element with data, whose seeks land `latency` frames after they are sent (Gecko's model: a new seek replaces
- * one in flight). `shown` is the frame the last landed seek put on screen. */
+ * one in flight). `shown` is the frame the last landed seek put on screen. While a seek is pending `readyState` is
+ * HAVE_METADATA (1), back to 4 on `seeked`, as measured in Chromium. */
 function fakeVideo(latency) {
   let time = 0
   const video = {
@@ -72,6 +73,7 @@ function fakeVideo(latency) {
       time = t
       video.seeks.push({ frame: frameOf(t, FPS), time: t, band: scene.band, busy: video.seeking, at: clock })
       video.seeking = true
+      video.readyState = 1
       video.landAt = video.hang ? Infinity : clock + latency
     },
     /** Playback moving the playhead (a loop), not a seek. */
@@ -84,7 +86,9 @@ function fakeVideo(latency) {
     removeAttribute() {},
     querySelector: () => null,
     load() {},
+    plays: 0,
     play() {
+      video.plays++
       video.paused = false
       return Promise.resolve()
     },
@@ -102,6 +106,7 @@ function crank(video, n = 1, gap = 0) {
     clock += 1 + gap
     if (video.seeking && clock >= video.landAt) {
       video.seeking = false
+      video.readyState = 4
       video.shown = frameOf(video.currentTime, FPS)
       video.dispatch('seeked')
     }
@@ -297,6 +302,7 @@ describe('a resume mid-scroll', () => {
 
 describe('a seek that never answers', () => {
   // iOS has been seen to leave a seek `seeking` for good: with one seek in flight, that froze the frame for the visit.
+  // The fake holds readyState at 1 while seeking, so this runs through the tick's wait for a frame, as in a browser.
   test('is sent again once STUCK_SEEK_MS passes without `seeked`, and not before', () => {
     const realNow = performance.now
     let now = 0
@@ -310,7 +316,9 @@ describe('a seek that never answers', () => {
       assert.equal(sent, 1, 'the band sends its frame')
       now += STUCK_SEEK_MS - 100
       crank(video, 10)
+      progress(controller, 0.5)
       assert.equal(video.seeks.length, sent, 'still waiting: a slow seek is not a hung one')
+      assert.equal(controller.debug().reseeks, 0, 'scroll events while waiting send nothing and count nothing')
       now += 200
       crank(video, 1)
       assert.equal(video.seeks.length, sent + 1, 're-sent once past the threshold')
@@ -324,5 +332,21 @@ describe('a seek that never answers', () => {
     } finally {
       performance.now = realNow
     }
+  })
+})
+
+describe('priming', () => {
+  // Found in Chromium: a pending seek drops readyState to 1, and a tick that then primed played a held tail from its
+  // last frame to the clip's end (frame 60 of 60 on the holds check).
+  test('a source that has shown a frame is never primed while a seek is pending', () => {
+    // Seeks land three frames after they are sent, so ticks run while one is pending.
+    const { video, controller } = setup({ latency: 3 })
+    progress(controller, 1, 'tail')
+    for (let i = 0; i < 5; i++) {
+      crank(video, 1)
+      progress(controller, 1 - i * 0.01)
+    }
+    assert.equal(video.plays, 0, 'no play() in a scene of holds')
+    controller.destroy()
   })
 })

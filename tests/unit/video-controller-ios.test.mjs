@@ -197,3 +197,18 @@ test('destroy drops a pending activation retry', async () => {
   win.dispatch('click')
   assert.equal(video.plays, 1, 'no prime after destroy')
 })
+
+test('a tap while the scene sleeps fetches nothing; the retry waits for the scene to run', async () => {
+  const { video, controller, allow } = refusing()
+  crank(30)
+  await settle()
+  allow()
+  controller.setAwake(false)
+  win.dispatch('touchend')
+  assert.equal(video.plays, 1, 'asleep: no prime, so a far-away clip fetches nothing')
+  controller.setAwake(true)
+  crank(5)
+  win.dispatch('touchend')
+  assert.equal(video.plays, 2, 'running again: the next activation retries')
+  controller.destroy()
+})
