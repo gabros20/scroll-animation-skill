@@ -164,5 +164,15 @@
     "id": "glb-model-shader",
     "prompt": "Model a low-poly lighthouse for our React Three Fiber scene, optimise the exported GLB for the web, and write a water shader around it.",
     "should_trigger": false
+  },
+  {
+    "id": "dialog-exit-spring",
+    "prompt": "Give our settings dialog a spring when it opens and a proper exit animation when it closes, and make the toast stack animate as items are added and removed.",
+    "should_trigger": false
+  },
+  {
+    "id": "layered-parallax-hero",
+    "prompt": "Build a layered hero where the mountains, the product and the foreground grass drift at different depths as the reader scrolls past.",
+    "should_trigger": true
   }
 ]

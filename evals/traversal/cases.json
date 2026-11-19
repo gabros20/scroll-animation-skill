@@ -264,5 +264,38 @@
       "references/video.md",
       "references/brownfield-coexistence.md"
     ]
+  },
+  {
+    "id": "layered-hero-planes",
+    "prompt": "I have a cut-out product shot, a background plate and some foreground foliage. Make them move at different depths as the hero scrolls away, and let them lean toward the mouse a little.",
+    "expected_references": [
+      "references/layered-visuals.md"
+    ],
+    "forbidden_references": [
+      "references/video.md",
+      "references/webgl.md"
+    ]
+  },
+  {
+    "id": "scrolly-photos-flash",
+    "prompt": "Our scrollytelling section swaps between full-bleed photographs as the steps pass, and every swap flashes the page background for a moment.",
+    "expected_references": [
+      "references/scrollytelling.md"
+    ],
+    "forbidden_references": [
+      "references/video.md",
+      "references/scenes.md"
+    ]
+  },
+  {
+    "id": "harness-shows-posters",
+    "prompt": "Our Playwright run of verify-motion passes every scene, but the screenshots only ever show the video posters, never a frame of the scrub.",
+    "expected_references": [
+      "references/verification.md"
+    ],
+    "forbidden_references": [
+      "references/brownfield-coexistence.md",
+      "references/text.md"
+    ]
   }
 ]

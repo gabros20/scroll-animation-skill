@@ -90,5 +90,28 @@
       }
     ],
     "source": "evals/output/evals.json#4"
+  },
+  {
+    "id": "low-power-scrub-poster",
+    "prompt": "On one tester's iPhone our ScrubVideo hero only ever shows the poster, even after they tap the page. Every other phone scrubs fine, and the headless verify-motion run passes. They mentioned the battery icon is yellow.",
+    "expected_output": "Identifies Low Power Mode refusing the muted prime (iOS loads only metadata for a never-played video); explains that the controller retries the prime inside the reader's next activation (touchend, pointerup, click or a key, never touchstart) and counts refusals in debug().rejections, so a tap after mount should rescue it; checks the copied block is current (the retry is in media/video-controller.ts) rather than adding a timer retry; points to a device diagnostic page and notes headless runs cannot prove it.",
+    "assertions": [
+      {
+        "text": "names Low Power Mode refusing the muted prime as the cause",
+        "check": "response mentions Low Power Mode and a refused play()/prime"
+      },
+      {
+        "text": "relies on the activation retry, never a timer loop",
+        "check": "response names touchend/pointerup/click (not touchstart) and rejects retrying play() on a timer"
+      },
+      {
+        "text": "reads the controller's counters to confirm",
+        "check": "response mentions debug().rejections or window.__scrub() with ?motion-debug"
+      },
+      {
+        "text": "states the headless pass proves nothing here",
+        "check": "response says a real device check is required"
+      }
+    ]
   }
 ]
