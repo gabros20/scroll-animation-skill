@@ -113,5 +113,28 @@
         "check": "response says a real device check is required"
       }
     ]
+  },
+  {
+    "id": "standalone-context-check",
+    "prompt": "Add some nice scroll animations to my portfolio site.",
+    "expected_output": "Reads the repo (stack, existing motion, any ANIMATION.md) and any digital-product/LEDGER.md Context first; asks at most four questions in one round, each with a recommended answer \u2014 the story the scroll should tell, the assets on hand, how much motion (Reading by default), the weakest device \u2014 folding preflight's technical defaults into that same round, or proceeds on the defaults and opens with the assumptions that would change it most; records answers and assumptions in the LEDGER's Context block and ANIMATION.md.",
+    "assertions": [
+      {
+        "text": "asks nothing the repo already answers",
+        "check": "response cites what it detected (framework, existing motion libraries) instead of asking for it"
+      },
+      {
+        "text": "one round of at most four questions, each with a recommended answer",
+        "check": "response asks four or fewer questions, each with a default, or states the assumptions it proceeded on"
+      },
+      {
+        "text": "defaults to the Reading profile unless the brief asks for more",
+        "check": "response recommends Reading (or names why not) before any pinned scene or smooth scroll"
+      },
+      {
+        "text": "writes the answers down",
+        "check": "response records answers and assumptions in the LEDGER's Context block, each assumption with its basis and cost to reverse"
+      }
+    ]
   }
 ]

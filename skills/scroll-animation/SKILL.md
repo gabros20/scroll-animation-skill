@@ -23,6 +23,33 @@ gestures, layout animation: `frontend` `ui-motion.md`, "Enter and exit" and "Hov
 spec), layout scaling and viewport-unit sizing (fluid-design's job; this skill reads its breakpoint, header height and
 units when a project uses it), colour systems.
 
+## Standalone context check
+
+Before producing anything the user will have to live with:
+1. **Look first.** Read `digital-product/LEDGER.md` (Context), `digital-product/<pack>/`, upstream
+   artifacts, the repo and this conversation. A fact found is never asked; a fact recorded is never
+   re-asked.
+2. **Size it.** Reversible and small → proceed, stating assumptions. New, costly or hard to undo →
+   check.
+3. **Ask only what the owner alone knows**, in their words: one round, at most four, highest
+   leverage first, each with a recommended answer ("ok" accepts all). Two rounds at most.
+4. **No or thin answers → decide as the expert.** Record each assumption with its basis and cost to
+   reverse; prefer the reversible option; show the cheapest proof early.
+5. **No way to ask → never block.** Proceed, and open the artifact with the assumptions and the
+   answers that would change it most.
+6. **Write it down.** Answers and assumptions go to the LEDGER's Context block.
+
+This pack's questions:
+1. What should the scroll reveal — the story, in order? (Propose the beats from the content when it
+   exists.)
+2. Which assets exist: video, 3D, stills, copy? (Detect first.)
+3. How much motion: a calm reading page, an expressive one, or an immersive world? (Recommended:
+   Reading, unless the brief asks for pinned storytelling, inertial scroll or 3D.)
+4. What is the weakest device it must run well on? (Recommended: a mid-range phone in iOS Safari.)
+
+Technical choices (smoothing, engines, existing motion) join the same single round:
+[Preflight](references/preflight.md) "5. Asking the questions".
+
 ## Route before acting
 
 First pick the lane, then the reference:
