@@ -36,6 +36,7 @@ const scratchClip = join(testsDir, '.scratch', 'clip.mp4')
 const BROWSERS = { chromium, webkit }
 const PAGES = ['motion', 'gsap']
 const VIEWPORT = { width: 1440, height: 900 }
+const VIEWPORT_CENTRE = { x: 720, y: 450 }
 const FPS = 30
 // The fixture's loops: head 0-4 (match 5), tail 55-58 (match 59, the clip's last frame).
 const HEAD_HOLD_FRAME = 4
@@ -191,6 +192,7 @@ function helpersInit(fps) {
       requestAnimationFrame(step)
     })
   window.__t = {
+    video,
     ready: () => !!root()?.getAttribute('data-scene-state') && (video()?.readyState ?? 0) >= 2,
     /** The scene is up without any video data: its state is written and the controller has set the poster. */
     painted: () => !!root()?.getAttribute('data-scene-state') && !!video()?.getAttribute('poster'),
@@ -287,7 +289,70 @@ const withinBudget = (ran) => ran >= BUDGET_MS - SLACK_MS / 3 && ran <= BUDGET_M
 // ── checks ──────────────────────────────────────────────────────────────
 // Each takes a `t` bound to one browser + one engine page and returns [[name, ok, detail], ...].
 
+/**
+ * iOS in Low Power Mode, modelled: a never-played video loads metadata only (`readyState` held at 1 until a play()
+ * succeeds), and play() is refused (NotAllowedError) until the reader activates the page.
+ */
+function lowPowerInit() {
+  window.__plays = { refused: 0, allowed: 0 }
+  let active = false
+  for (const type of ['pointerup', 'touchend', 'click', 'keydown']) {
+    window.addEventListener(type, () => (active = true), { capture: true })
+  }
+  const played = new WeakSet()
+  const ready = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'readyState')
+  Object.defineProperty(HTMLMediaElement.prototype, 'readyState', {
+    configurable: true,
+    get() {
+      const r = ready.get.call(this)
+      return played.has(this) ? r : Math.min(r, 1)
+    }
+  })
+  const play = HTMLMediaElement.prototype.play
+  HTMLMediaElement.prototype.play = function (...args) {
+    if (!active) {
+      window.__plays.refused++
+      return Promise.reject(new DOMException('refused', 'NotAllowedError'))
+    }
+    window.__plays.allowed++
+    const result = play.apply(this, args)
+    result.then(() => played.add(this), () => {})
+    return result
+  }
+}
+
 const CHECKS = {
+  // Found on the device pass (iPhone, Low Power Mode): the prime is refused until the reader taps. The scene must still
+  // run head > scrub > tail on the poster, and the next tap must unlock the clip where the reader is.
+  async lowPower(t) {
+    // No frame until a play succeeds, so the page is ready once the scene is painted, not once video data is in.
+    const { page } = await t.open([[lowPowerInit]], { holds: true, painted: true })
+    const modes = []
+    for (const p of [0, 0.5, 1]) {
+      await page.evaluate((at) => window.__t.to(at), p)
+      await page.waitForTimeout(400)
+      modes.push(await page.evaluate(() => window.__t.read().mode))
+    }
+    const before = await page.evaluate(() => ({ readyState: window.__t.video().readyState, plays: { ...window.__plays } }))
+    await page.evaluate(() => window.__t.to(0.5))
+    await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
+    await page.waitForFunction(() => window.__t.video().readyState >= 2, null, { timeout: 5000 }).catch(() => {})
+    await page.waitForTimeout(500)
+    const after = await page.evaluate(() => ({ ...window.__t.read(), shown: window.__t.shown(), want: window.__t.expected(), readyState: window.__t.video().readyState, plays: { ...window.__plays } }))
+    return [
+      [
+        'Low Power Mode: the scene runs on the poster with play() refused, and a tap unlocks the clip where the reader is',
+        modes.join() === 'head,scrub,tail' &&
+          before.readyState <= 1 &&
+          before.plays.refused >= 1 &&
+          after.readyState >= 2 &&
+          after.mode === 'scrub' &&
+          Math.abs(after.shown - after.want.frame) <= 1,
+        `modes ${modes.join(' > ')} · before ${JSON.stringify(before)} · after tap ${JSON.stringify(after)}`
+      ]
+    ]
+  },
+
   async saveData(t) {
     const out = []
     {
@@ -543,10 +608,10 @@ async function main() {
           browser: browserName,
           /**
            * A fresh context on this engine's page with its own run id, ready: video data in, or under reduced motion
-           * the scene painted (state written, poster set); `holds` opens the scene of holds. Returns the tiers
+           * (or with `painted`) the scene painted (state written, poster set); `holds` opens the scene of holds. Returns the tiers
            * requested and the video bytes served.
            */
-          async open(initScripts = [], { reducedMotion = 'no-preference', holds = false } = {}) {
+          async open(initScripts = [], { reducedMotion = 'no-preference', holds = false, painted = false } = {}) {
             const context = await open.browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion })
             contexts.push(context)
             for (const [script, arg] of initScripts) await context.addInitScript(script, arg)
@@ -560,7 +625,7 @@ async function main() {
               if (url.pathname.endsWith('/clip.mp4')) tiers.add(url.searchParams.get('tier'))
             })
             await page.goto(`${base}/${engine}.html?run=${runId}${holds ? '&holds' : ''}`, { waitUntil: 'load' })
-            const ready = reducedMotion === 'reduce' ? () => window.__t.painted() : () => window.__t.ready()
+            const ready = reducedMotion === 'reduce' || painted ? () => window.__t.painted() : () => window.__t.ready()
             await page.waitForFunction(ready, null, { timeout: 20000 })
             const bytes = () => {
               const desktop = served.get(`${runId}:desktop`) ?? 0

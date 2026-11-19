@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FrameSequence } from "@/animation/motion/FrameSequence";
 import { PinnedScene } from "@/animation/motion/PinnedScene";
-import { ScrubVideo } from "@/animation/motion/ScrubVideo";
+import { ScrubVideo, type ScrubVideoHandle } from "@/animation/motion/ScrubVideo";
 import type { SceneMode } from "@/animation/scene";
 
 // Fixtures, not design: every block runs on its defaults (no hold, loop or
@@ -90,17 +90,54 @@ export function ScrubScene({
   poster: string;
 }) {
   const [mode, setMode] = useState<SceneMode>("head");
+  const ref = useRef<ScrubVideoHandle>(null);
 
   return (
     <ScrubVideo
+      ref={ref}
       src={src}
       mobileSrc={mobileSrc}
       poster={poster}
       fps={30}
-      pinned={<ModeReadout mode={mode} />}
+      pinned={
+        <>
+          <ModeReadout mode={mode} />
+          <DeviceReadout scrub={ref} />
+        </>
+      }
       onMode={(next) => setMode(next)}
     >
       <Acts />
     </ScrubVideo>
+  );
+}
+
+/**
+ * With ?motion-debug, a device-round readout (references/verification.md "Send a diagnostic with the first device
+ * round"): the scene's progress and wake, and the controller's counters, four times a second. A phone with no remote
+ * console shows here which layer stopped: no readout at all means the page never hydrated.
+ */
+function DeviceReadout({ scrub }: { scrub: React.RefObject<ScrubVideoHandle | null> }) {
+  const [line, setLine] = useState<string | null>(null);
+  useEffect(() => {
+    if (!new URLSearchParams(location.search).has("motion-debug")) return;
+    const id = window.setInterval(() => {
+      const scene = scrub.current?.scene;
+      const v = (scrub.current?.debug() ?? {}) as Record<string, unknown>;
+      setLine(
+        [
+          `p ${scene ? scene.progress().toFixed(2) : "-"} ${scene?.mode() ?? "-"} awake ${scene?.awake() ?? "-"}`,
+          `run ${v.running} ready ${v.ready} t ${v.time} src ${String(v.source ?? "").split("/").pop()}`,
+          `primes ${v.primes} refused ${v.rejections} plays ${v.plays} ticks ${v.ticks} reseeks ${v.reseeks}`,
+        ].join(" · "),
+      );
+    }, 250);
+    return () => window.clearInterval(id);
+  }, [scrub]);
+  if (line === null) return null;
+  return (
+    <p className="absolute bottom-4 left-4 right-4 z-10 rounded bg-ink/90 px-3 py-2 font-mono text-[10px] leading-snug text-paper">
+      {line}
+    </p>
   );
 }
