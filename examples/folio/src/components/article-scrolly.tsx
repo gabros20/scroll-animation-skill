@@ -33,7 +33,10 @@ function pictures(article: JournalArticle): Record<ScrollyPicture, Picture> {
  * scroll-animation: scrolly-steps (Motion wrapper). A sticky graphic beside
  * the steps from 1024 px up; phones, no JavaScript and print read it stacked,
  * a step's picture in its own flow where the step says so. The graphic's
- * states crossfade (css/scrolly.css, MOTION.disclosure); the two steps on the
+ * states crossfade (css/scrolly.css, MOTION.disclosure) as a cover fade: they
+ * are opaque photographs, so the incoming one fades in over the outgoing one,
+ * held at full strength, and the page never shows through mid-fade
+ * (data-scrolly-fade="cover", passed to the root); the two steps on the
  * detail photograph pan across it instead (ScrollyPan), since a picture
  * crossfaded into a crop of itself reads as a glitch, not a move.
  * A Server Component: the steps, the states and every image are in the
@@ -54,7 +57,11 @@ export function ArticleScrolly({ article }: { article: JournalArticle }) {
       >
         {scrolly.title}
       </h2>
-      <ScrollySteps aria-labelledby="scrolly-title" className="mt-10 gap-x-10 [--scrolly-gap:60svh]">
+      <ScrollySteps
+        aria-labelledby="scrolly-title"
+        data-scrolly-fade="cover"
+        className="mt-10 gap-x-10 [--scrolly-gap:60svh]"
+      >
         <ScrollyGraphic className="py-6">
           {shown.map((key) => {
             const picture = media[key];
