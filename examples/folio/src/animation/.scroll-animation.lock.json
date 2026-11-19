@@ -20,7 +20,7 @@
     "scene.ts": "681c45e78fd3add5",
     "css/scene.css": "cbed68a7df63cac9",
     "gsap/pinned-scene.ts": "66bd7063f88e5ba6",
-    "media/video-controller.ts": "d6ac3a01e25de8c4",
+    "media/video-controller.ts": "de64255354cb51a5",
     "media/camera.ts": "aac8e28e75cb8011",
     "gsap/scrub-video.ts": "399c4104ebde7582",
     "motion/usePinnedScene.ts": "0db204262309604e",
@@ -49,7 +49,7 @@
     "css/view-transitions-mpa.css": "90ff035a0b7a9ec6",
     "scrolly-steps.ts": "b0cf2f4fe3836640",
     "motion/ScrollySteps.tsx": "d59ae2fa86065f9a",
-    "css/scrolly.css": "2e1961ebc50b05cb",
+    "css/scrolly.css": "e8b77111eec2130a",
     "render-bridge.ts": "c2544ae40763f287",
     "gsap/pinned-scene-render.ts": "f6c55eec1d80a16f"
   }

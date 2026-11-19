@@ -32,6 +32,10 @@
  * 3. States crossfade, opacity only, MOTION.disclosure from config.ts (0.24 s on CURVES.disclosure; tests/scrolly-
  *    steps.mjs fails if they drift). Under reduced motion the swap is instant. Anything richer (an animated
  *    transition, a pan and zoom) runs in the page's engine from onStep, the scrolly:step event or --step-p.
+ *    - Opaque states (a photograph, a filled panel) take data-scrolly-fade="cover" on the root: the incoming state
+ *      fades in on top while the outgoing one holds at full strength, then drops once covered. Two opaque layers
+ *      fading both ways at once let the page show through the middle (a quarter of it at 50/50): a flash.
+ *      Transparent states (a chart's lines over one axis) keep the default, or both versions would show at once.
  */
 
 /* --step-p (progress: true): the active step's progress, 0..1, written on the root. It inherits, so the graphic's
@@ -111,6 +115,9 @@
   [data-scrolly][data-scrolly-mode='sticky'] [data-scrolly-state][data-state-active] {
     opacity: 1;
   }
+  [data-scrolly][data-scrolly-mode='sticky'][data-scrolly-fade='cover'] [data-scrolly-state][data-state-active] {
+    z-index: 1;
+  }
 }
 
 /* Before the core mounts: the same layout where it will choose sticky (DESKTOP_QUERY, the gate on, no failsafe, no
@@ -165,5 +172,9 @@
 @media screen and (prefers-reduced-motion: no-preference) {
   [data-scrolly][data-scrolly-mode='sticky'] [data-scrolly-state] {
     transition: opacity var(--scrolly-fade-duration) var(--scrolly-fade-curve);
+  }
+  /* cover: the outgoing state waits out the incoming fade before it drops. */
+  [data-scrolly][data-scrolly-mode='sticky'][data-scrolly-fade='cover'] [data-scrolly-state]:not([data-state-active]) {
+    transition-delay: var(--scrolly-fade-duration);
   }
 }
