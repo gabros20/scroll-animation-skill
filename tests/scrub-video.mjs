@@ -290,42 +290,51 @@ const withinBudget = (ran) => ran >= BUDGET_MS - SLACK_MS / 3 && ran <= BUDGET_M
 // Each takes a `t` bound to one browser + one engine page and returns [[name, ok, detail], ...].
 
 /**
- * iOS in Low Power Mode, modelled: a never-played video loads metadata only (`readyState` held at 1 until a play()
- * succeeds), and play() is refused (NotAllowedError) until the reader activates the page.
+ * iOS in Low Power Mode, modelled strictly: play() is granted only when called synchronously inside a trusted
+ * gesture event (a tap's touchend or click, a key), never from a timer, a promise or a pointerup; a refusal settles
+ * late (100 ms here; on the device some never did), after the rest of the tap's events; a never-played video loads
+ * metadata only (`readyState` held at 1); and `load()` (iOS dropping a sleeping clip's data) forgets the unlock, so
+ * the clip needs a fresh gesture.
  */
 function lowPowerInit() {
   window.__plays = { refused: 0, allowed: 0 }
-  let active = false
-  for (const type of ['pointerup', 'touchend', 'click', 'keydown']) {
-    window.addEventListener(type, () => (active = true), { capture: true })
+  const unlocked = new WeakSet()
+  const gesture = () => {
+    const e = window.event
+    return !!e && e.isTrusted && (e.type === 'touchend' || e.type === 'click' || e.type === 'keydown')
   }
-  const played = new WeakSet()
   const ready = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'readyState')
   Object.defineProperty(HTMLMediaElement.prototype, 'readyState', {
     configurable: true,
     get() {
       const r = ready.get.call(this)
-      return played.has(this) ? r : Math.min(r, 1)
+      return unlocked.has(this) ? r : Math.min(r, 1)
     }
   })
   const play = HTMLMediaElement.prototype.play
   HTMLMediaElement.prototype.play = function (...args) {
-    if (!active) {
+    if (!unlocked.has(this) && !gesture()) {
       window.__plays.refused++
-      return Promise.reject(new DOMException('refused', 'NotAllowedError'))
+      return new Promise((resolve, reject) => setTimeout(() => reject(new DOMException('refused', 'NotAllowedError')), 100))
     }
     window.__plays.allowed++
-    const result = play.apply(this, args)
-    result.then(() => played.add(this), () => {})
-    return result
+    unlocked.add(this)
+    return play.apply(this, args)
+  }
+  const load = HTMLMediaElement.prototype.load
+  HTMLMediaElement.prototype.load = function (...args) {
+    unlocked.delete(this)
+    return load.apply(this, args)
   }
 }
 
 const CHECKS = {
-  // Found on the device pass (iPhone, Low Power Mode): the prime is refused until the reader taps. The scene must still
-  // run head > scrub > tail on the poster, and the next tap must unlock the clip where the reader is.
+  // Found on the device pass (iPhone, Low Power Mode): every prime refused, taps included (`primes 3 refused 3`). A tap
+  // fires pointerup before the click that carries the gesture, and a listener spent on the pointerup missed it; and a
+  // clip that lost its data was never primed again. The scene runs on the poster, a click unlocks the clip where the
+  // reader is, and after the clip's data is dropped the next click unlocks it again.
   async lowPower(t) {
-    // No frame until a play succeeds, so the page is ready once the scene is painted, not once video data is in.
+    // No frame until a gesture's play, so the page is ready once the scene is painted, not once video data is in.
     const { page } = await t.open([[lowPowerInit]], { holds: true, painted: true })
     const modes = []
     for (const p of [0, 0.5, 1]) {
@@ -333,22 +342,32 @@ const CHECKS = {
       await page.waitForTimeout(400)
       modes.push(await page.evaluate(() => window.__t.read().mode))
     }
-    const before = await page.evaluate(() => ({ readyState: window.__t.video().readyState, plays: { ...window.__plays } }))
+    const readyState = () => page.evaluate(() => window.__t.video().readyState)
+    const settle = () => page.waitForFunction(() => window.__t.video().readyState >= 2, null, { timeout: 4000 }).catch(() => {})
+    const before = await readyState()
     await page.evaluate(() => window.__t.to(0.5))
     await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
-    await page.waitForFunction(() => window.__t.video().readyState >= 2, null, { timeout: 5000 }).catch(() => {})
+    await settle()
     await page.waitForTimeout(500)
-    const after = await page.evaluate(() => ({ ...window.__t.read(), shown: window.__t.shown(), want: window.__t.expected(), readyState: window.__t.video().readyState, plays: { ...window.__plays } }))
+    const after = await page.evaluate(() => ({ ...window.__t.read(), shown: window.__t.shown(), want: window.__t.expected(), readyState: window.__t.video().readyState }))
+    // The clip's data dropped (as iOS does to a sleeping clip): the poster again, and a fresh gesture needed.
+    await page.evaluate(() => window.__t.video().load())
+    await page.waitForTimeout(800)
+    const dropped = await readyState()
+    await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
+    await settle()
+    const again = await readyState()
+    const plays = await page.evaluate(() => window.__plays)
     return [
       [
-        'Low Power Mode: the scene runs on the poster with play() refused, and a tap unlocks the clip where the reader is',
-        modes.join() === 'head,scrub,tail' &&
-          before.readyState <= 1 &&
-          before.plays.refused >= 1 &&
-          after.readyState >= 2 &&
-          after.mode === 'scrub' &&
-          Math.abs(after.shown - after.want.frame) <= 1,
-        `modes ${modes.join(' > ')} · before ${JSON.stringify(before)} · after tap ${JSON.stringify(after)}`
+        'Low Power Mode: the scene runs on the poster with play() refused, and a click unlocks the clip where the reader is',
+        modes.join() === 'head,scrub,tail' && before <= 1 && after.readyState >= 2 && after.mode === 'scrub' && Math.abs(after.shown - after.want.frame) <= 1,
+        `modes ${modes.join(' > ')} · readyState ${before} before the click · after ${JSON.stringify(after)} · plays ${JSON.stringify(plays)}`
+      ],
+      [
+        'Low Power Mode: a clip whose data was dropped is primed again and the next click unlocks it',
+        dropped <= 1 && again >= 2,
+        `readyState ${dropped} after the drop, ${again} after the click · plays ${JSON.stringify(plays)}`
       ]
     ]
   },

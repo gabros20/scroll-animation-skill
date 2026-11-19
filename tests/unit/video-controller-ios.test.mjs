@@ -182,9 +182,84 @@ test('a refused prime retries inside the reader\'s next activation: touchend or 
   win.dispatch('touchend')
   assert.equal(video.plays, 2, 'the lift retries the prime, inside the event')
   await settle()
-  win.dispatch('click')
   crank(30)
-  assert.equal(video.plays, 2, 'one retry per refusal, and no retry loop')
+  assert.equal(video.plays, 2, 'no retry loop: only activations retry')
+  // The played source loads: once it shows a frame the listener is gone.
+  Object.assign(video, { readyState: 4 })
+  crank(2)
+  win.dispatch('click')
+  assert.equal(video.plays, 2, 'a framed source never primes on a tap')
+  controller.destroy()
+})
+
+/** A play the browser grants only inside a gesture event (WebKit: a tap's touchend or click), refused otherwise. */
+function gestureOnly(video) {
+  let inGesture = false
+  video.play = () => {
+    video.plays++
+    if (!inGesture) return Promise.reject(Object.assign(new Error('refused'), { name: 'NotAllowedError' }))
+    video.paused = false
+    return Promise.resolve()
+  }
+  return (type) => {
+    inGesture = type === 'touchend' || type === 'click'
+    win.dispatch(type)
+    inGesture = false
+  }
+}
+
+test('one tap retries on each of its events: the pointerup before it does not use up the touchend', async () => {
+  const { video, controller } = refusing()
+  const tap = gestureOnly(video)
+  crank(30)
+  await settle()
+  const before = video.plays
+  tap('pointerup')
+  tap('touchend')
+  assert.ok(video.plays >= before + 2, 'the pointerup and the touchend each retried, synchronously')
+  assert.equal(video.paused, false, 'the touchend, which carries the gesture, played')
+  controller.destroy()
+})
+
+test('a refused play() left pending for good still leaves the next tap a retry', async () => {
+  const video = fakeVideo()
+  let pend = true
+  video.play = () => {
+    video.plays++
+    if (pend) return new Promise(() => {})
+    video.paused = false
+    return Promise.resolve()
+  }
+  const controller = createVideoController(video, { fps: 30, src: '/clip.mp4' })
+  crank(1)
+  Object.assign(video, { readyState: 1, networkState: 1, duration: 8 })
+  video.dispatch('loadedmetadata')
+  controller.setMode('scrub')
+  controller.setBand(0.5)
+  controller.setAwake(true)
+  crank(30)
+  await settle()
+  assert.equal(video.plays, 1, 'the first prime pends: never resolved, never refused')
+  pend = false
+  win.dispatch('touchend')
+  assert.equal(video.plays, 2, 'the tap still retries')
+  controller.destroy()
+})
+
+test('a source that loses its data (iOS dropping a sleeping clip) is primed again, and a tap can unlock it', async () => {
+  const { video, controller, allow } = refusing()
+  allow()
+  crank(30)
+  await settle()
+  Object.assign(video, { readyState: 4, paused: true })
+  crank(3)
+  const primed = video.plays
+  // Asleep and back: the element kept its metadata but no frame, and nothing is seeking.
+  controller.setAwake(false)
+  Object.assign(video, { readyState: 1, seeking: false, networkState: 1 })
+  controller.setAwake(true)
+  crank(5)
+  assert.equal(video.plays, primed + 1, 'primed again once the frame is gone')
   controller.destroy()
 })
 

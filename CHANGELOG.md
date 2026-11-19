@@ -43,7 +43,10 @@ the newest release heading below, and the release tag.
 ### Fixed
 
 - `media/video-controller.ts`: a prime refused in Low Power Mode retries inside the reader's next
-  `touchend`, `pointerup`, `click` or key press while the scene runs, where it was never retried; a
+  `touchend`, `pointerup`, `click` or key press while the scene runs, on every one of them until a frame
+  shows (a tap's pointerup no longer uses up the touchend or click that carries the gesture, and a refusal
+  that settles late or never no longer leaves the clip without a retry), and again after the clip loses its
+  data, where it was never retried; a
   band seek the element still reports `seeking` after 700 ms (`STUCK_SEEK_MS`) is sent again instead
   of freezing the frame for the visit; a source that has shown a frame is never primed mid-seek (it
   played a held tail to the clip's end: the `holds` flake, 3 of 6 runs in Chrome, now 16 of 16).

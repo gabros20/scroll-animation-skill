@@ -340,6 +340,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   const hasFrameCallback = typeof video.requestVideoFrameCallback === 'function'
   // A scrub video is never heard and never loops natively: the controller wraps its loops.
   video.muted = true
+  // The attribute too: React sets `muted` as a property only, and the markup is what an autoplay policy may read first.
+  video.defaultMuted = true
   video.playsInline = true
   video.loop = false
 
@@ -432,7 +434,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     }
     if (resendStuck() || seeking || !hasFrame()) return
     // A frame exists: count it now, since this seek drops readyState before any tick can see it.
-    framed = true
+    markFramed()
     const frame = wanted()
     if (frame === frameOf(video.currentTime, fps)) return
     seeking = true
@@ -517,12 +519,17 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
    * iOS loads only metadata for a video that has never played, then idles (preload is a hint it ignores), so a scene
    * of holds would never get a frame: seeks go nowhere and the poster is all there is. A muted, inline play() is
    * allowed and starts the data; it pauses again at once unless a loop owns the mode, and the band's first seek takes
-   * the playhead where the scroll wants it. Once per source. Refused (Low Power Mode), the poster stays until the
-   * reader's next activation (`ACTIVATION_EVENTS`), which retries it inside the event, where the play is allowed.
+   * the playhead where the scroll wants it. Once per source, and again if the source loses its data. Refused (Low
+   * Power Mode), the poster stays until the reader's next activation (`ACTIVATION_EVENTS`), which retries it inside
+   * the event, where the play is allowed.
    */
   function prime() {
     primed = true
     stats.primes++
+    // Armed before the play, until the source shows a frame: WebKit grants the play only inside the gesture's own
+    // event (a tap's touchend or click, not the pointerup before them), and iOS may leave a refused play() pending for
+    // good, so a retry can never wait for the refusal to settle.
+    armActivation()
     const token = playToken
     video.play().then(
       () => {
@@ -530,18 +537,28 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       },
       (error: unknown) => {
         // An AbortError is the scene's own pause landing first: the load has started all the same.
-        if ((error as { name?: string } | null)?.name !== 'NotAllowedError') return
-        stats.rejections++
-        armActivation()
+        if ((error as { name?: string } | null)?.name === 'NotAllowedError') stats.rejections++
       },
     )
   }
 
-  /** A refused prime retries inside the reader's activation, only while the scene runs; asleep, it stays armed. */
+  /**
+   * Every activation event retries the prime synchronously, inside the event, while the source has no frame: the one
+   * the browser honours is the one that plays. Asleep, it waits armed; once a frame shows, it disarms.
+   */
   function onActivation() {
-    if (!destroyed && !running) return
+    if (destroyed || framed) {
+      disarmActivation()
+      return
+    }
+    if (running && !reduced && hasSource && !hasFrame() && video.paused) prime()
+  }
+
+  /** The source has shown a frame: the prime did its job. */
+  function markFramed() {
+    if (framed) return
+    framed = true
     disarmActivation()
-    if (!destroyed && !reduced && hasSource && !hasFrame() && video.paused) prime()
   }
 
   function armActivation() {
@@ -588,11 +605,18 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     stats.ticks++
     if (!hasFrame()) {
       // A pending seek holds readyState at HAVE_METADATA: a hung one is re-sent here, or the tick would never see it.
-      // Only a source that never showed a frame is primed: on one that has, a play() here ran a held tail to its end.
-      if (!resendStuck() && !primed && !framed && video.paused && video.networkState === NETWORK_IDLE) prime()
+      // Never prime under a pending seek: a play() there ran a held tail to its end.
+      if (resendStuck() || seeking || video.seeking) return
+      // No frame and no seek to explain it: a source that had one lost it (iOS drops a sleeping clip's data), so it
+      // is primed again, and waits for a fresh gesture if that is refused.
+      if (framed) {
+        framed = false
+        primed = false
+      }
+      if (!primed && video.paused && video.networkState === NETWORK_IDLE) prime()
       return
     }
-    framed = true
+    markFramed()
     const time = video.currentTime
 
     if (loops(mode) && !capped) {

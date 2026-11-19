@@ -187,7 +187,7 @@ spare (`tpad=stop_mode=clone:stop=1`) and keyframe.
 - **Decorative video is `muted playsinline`** (iOS plays inline only with both) and IO-gated (audit rule `video-attrs`).
 - **A refused `play()` stays refused until the reader asks** (Low Power Mode, autoplay policy). LoopVideo keeps the
   poster and the control, and a sticky flag stops every retry until a click (a timer would hammer it every 2 s).
-  ScrubVideo retries its prime once inside the reader's next activation (below) and counts refusals in
+  ScrubVideo retries its prime inside the reader's activations (below) and counts refusals in
   `debug().rejections`.
 - **Save-Data** (`navigator.connection.saveData`; Safari and Firefox don't expose it): LoopVideo shows the poster and
   fetches nothing until the control is pressed. ScrubVideo takes `mobileSrc` at every viewport.
@@ -202,8 +202,11 @@ spare (`tpad=stop_mode=clone:stop=1`) and keyframe.
 never gets a frame, and its first seek clears the poster (measured on the device pass). The controller primes each
 source once (a muted `play()`, paused at once), only while it has never shown a frame (primed mid-seek, a held tail
 played to the clip's end), and seeks only once a frame exists. Refused in Low Power Mode, the
-poster stays until the reader's next `touchend`, `pointerup`, `click` or key press, inside which the prime is
-retried: those grant activation, `touchstart` doesn't. Primed, the simulator fetched the whole clip in one request,
+poster stays, and every `touchend`, `pointerup`, `click` or key press retries the prime inside the event until a frame
+shows: WebKit grants the play only in the event that carries the gesture (a tap's touchend or click, not the
+pointerup before them), `touchstart` grants none, and a refusal may settle late or never, so the listener is armed
+before the play, not after the refusal. A source that later loses its data (iOS drops a sleeping clip's) is primed,
+and waits for a gesture, again (measured on an iPhone in Low Power Mode: every prime refused until this). Primed, the simulator fetched the whole clip in one request,
 paused; the prime runs in the awake tick, so on iOS data starts at the wake margin, not the warm one.
 
 ## 12. Tab-sleep rehydrate
