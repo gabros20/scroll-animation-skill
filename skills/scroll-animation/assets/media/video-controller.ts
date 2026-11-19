@@ -292,6 +292,13 @@ export const KICK_PLAYING_MS = 300
 /** The ladder's last rung, `load()` and a fresh prime, waits this long, in ms, for `playing` before reading blocked. */
 export const KICK_LOAD_MS = 2000
 
+/** Covered with a frame to show and no lift for this long, in ms: the seek or the layer is wedged (WebKit, iPhone,
+ * refreshed in view: `seeking` for seconds, one frame callback), and a kick runs behind the cover. */
+export const LIFT_STALL_MS = 600
+
+/** Kicks the stall watchdog runs before the scene reads `blocked`, so a tap reloads it: never covered for good. */
+const STALL_KICKS = 2
+
 /** The events that grant user activation (HTML: `touchend`, never `touchstart`), on which a refused prime retries. */
 const ACTIVATION_EVENTS = ['touchend', 'pointerup', 'click', 'keydown'] as const
 
@@ -347,6 +354,9 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   let activating = false
   // Where the touch in progress started (client px), to tell a tap from a pan at its touchend.
   let touchFrom: { x: number; y: number } | null = null
+  // The stall watchdog: since when the cover has been up over a frame with no lift, and its kicks since the last lift.
+  let coveredAt: number | null = null
+  let stallKicks = 0
   // The latest prime: a refusal from an earlier one (a tap's pointerup, before the touchend that unlocked) is stale.
   let primeId = 0
   // This source has shown a frame: from then on a pending seek, not a missing frame, explains a low readyState.
@@ -390,6 +400,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     snaps: 0,
     reseeks: 0,
     unlocks: 0,
+    stalls: 0,
     wakes: 0,
     lost: 0,
     vis: document.visibilityState as string,
@@ -639,7 +650,10 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     if (next === media) return
     media = next
     video.setAttribute('data-scene-media', next)
-    if (next === 'live') disarmActivation()
+    if (next === 'live') {
+      stallKicks = 0
+      disarmActivation()
+    }
     else {
       settledTicks = 0
       armActivation()
@@ -678,9 +692,11 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
         // and an interrupted session's pause() returns early, so a refused element can read `paused` false with no
         // frame and no `playing`, for good: a retry gated on `paused` never ran again (iPhone, refreshed in view).
         // load() inside the gesture resets it and lifts the restriction for the element; the play follows in the
-        // same event, then pauses, and the reveal runs behind the poster as on any prime. The band's time is read
-        // before the load() empties the duration; set after the play, it is where playback starts: never frame 0.
+        // same event, then pauses, and the reveal runs behind the poster as on any prime (if it never lifts, the
+        // stall watchdog in the tick kicks). The band's time is read before the load() empties the duration; set
+        // after the play, it is where playback starts: never frame 0.
         const at = primeTime()
+        if (kickRun) endKick(kickRun)
         unlock()
         if (running) prime(at)
         else primed = false
@@ -818,6 +834,18 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
         if (++settledTicks >= 3) setMedia('live')
       } else settledTicks = 0
     }
+    // Never covered for good over a frame: no lift within LIFT_STALL_MS, the kick (a play unwedges what a paused
+    // seek can't), and past STALL_KICKS of them `blocked`, where the next tap reloads the element.
+    if (media === '' && !kickOwed()) {
+      coveredAt ??= now
+      if (now - coveredAt > LIFT_STALL_MS) {
+        coveredAt = null
+        stats.stalls++
+        if (++stallKicks > STALL_KICKS) setMedia('blocked')
+        else startKick(1)
+        return
+      }
+    } else coveredAt = null
 
     if (loops(mode) && !capped) {
       const match = matchFrame(mode)
@@ -865,6 +893,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     pausedTicks = 0
     badTicks = 0
     lastTick = 0
+    coveredAt = null
+    stallKicks = 0
     freshLoop()
     video.addEventListener('seeked', onSeeked)
     if (hasFrameCallback) startChain()
@@ -991,12 +1021,14 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       run.phase = 'play'
       run.timer = window.setTimeout(() => kickFailed(run), KICK_LOAD_MS)
       framed = false
+      // Read before the load() empties the duration; set after the prime's play, it is where playback starts.
+      const at = primeTime()
       try {
         video.load()
       } catch {
         // The timeout reads blocked.
       }
-      prime()
+      prime(at)
       return
     }
     run.raf = requestAnimationFrame(() => {
@@ -1042,7 +1074,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     if (run.phase !== 'play') return
     window.clearTimeout(run.timer)
     stats.kickOk++
-    // The last rung's prime pauses itself; a loop that owns the mode keeps playing. Either way the usual reveal lifts.
+    // The last rung's prime pauses itself; a loop that owns the mode keeps playing. Either way the usual reveal lifts
+    // (and the stall watchdog kicks if it never does).
     if (run.rung === 3 || (running && loops(mode) && !capped)) {
       endKick(run)
       needsKick = false
@@ -1062,11 +1095,13 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     }
     video.addEventListener('seeked', landed, { once: true })
     run.off = () => video.removeEventListener('seeked', landed)
-    // A seek that never answers: lift nothing, and leave it to the stuck-seek resend.
+    // A `seeked` that never comes: lift anyway if the seek has landed on the band's frame with a frame to show, else
+    // leave it to the stall watchdog's next kick.
     run.timer = window.setTimeout(() => {
       if (kickRun !== run) return
       endKick(run)
       needsKick = false
+      if (media !== 'live' && hasFrame() && !video.seeking && onWantedFrame(video.currentTime)) setMedia('live')
     }, STUCK_SEEK_MS)
     try {
       seekSentAt = performance.now()

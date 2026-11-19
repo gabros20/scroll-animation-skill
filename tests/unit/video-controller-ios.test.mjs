@@ -116,6 +116,7 @@ test('iOS, metadata then an idle network: no seek before a frame (the poster sta
   video.dispatch('loadeddata')
   crank(5)
   assert.ok(video.seeks.length > 0, 'with a frame, the glide seeks toward the band')
+  video.dispatch('seeked') // the band's seek lands (this fake never fires it by itself), and the poster lifts
   crank(60)
   assert.equal(video.plays, 1, 'primed once per source')
   controller.destroy()

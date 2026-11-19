@@ -74,6 +74,11 @@ the newest release heading below, and the release tag.
   earlier refusal (the tap's `pointerup`) no longer reads `blocked` over the play that followed. Folio's `?motion-debug`
   readout moves to the top (its "Tap to play" hint was under it) and adds `paused` and `unlocks`, and its act caption
   follows the scene's mode (on a phone the tail starts while the band's line is still on screen).
+- ScrubVideo after that tap (iPhone: unlocked by play, `readyState` 4, the band seeks stuck, one frame callback, the
+  poster never lifted and `data-scene-media` stayed empty). Covered over a frame with no lift for 600 ms
+  (`LIFT_STALL_MS`), the controller now kicks behind the cover; a kick whose `seeked` never comes lifts once the seek
+  has landed on the band's frame; after two stalled kicks the scene reads `blocked` for the next tap. The kick's
+  last rung starts at the band's frame, not frame 0. `debug()` adds `stalls`.
 - `verify-motion.mjs`: the entry slide is sampled ¾ visible, a `preload="none"` video never asked to
   load no longer fails the decode check, and a clip frozen through the scrub steps fails.
 

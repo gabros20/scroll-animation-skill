@@ -35,7 +35,7 @@ globalThis.document = { visibilityState: 'visible', documentElement: { dataset: 
 globalThis.location = { search: '' }
 globalThis.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} })
 
-const { createVideoController, frameOf, frameTime, wantedFrame, FRAME_BIAS, STUCK_SEEK_MS, KICK_PLAYING_MS } = await import(
+const { createVideoController, frameOf, frameTime, wantedFrame, FRAME_BIAS, STUCK_SEEK_MS, KICK_PLAYING_MS, LIFT_STALL_MS } = await import(
   '../../skills/scroll-animation/assets/media/video-controller.ts'
 )
 
@@ -522,6 +522,92 @@ describe('the kick after a hide', () => {
     crank(video, 3)
     assert.equal(controller.debug().kicks, 1)
     assert.equal(controller.debug().media, 'live')
+    controller.destroy()
+  })
+
+  // Found on the device (iPhone, Low Power Mode, refreshed in view, the tap unlocked by play): readyState 4,
+  // currentTime following the scroll through three stuck-seek resends, one frame callback, and `media` '' for good:
+  // the poster never lifted. Covered over a frame with no lift for LIFT_STALL_MS, the controller kicks behind the
+  // cover; a play unwedges what a paused seek can't, and past two such kicks the scene reads blocked for a tap.
+
+  /** Covered at band 0.4 with every seek wedged (never landing) until a play `unwedges` (or forever). */
+  function wedged({ unwedges = true } = {}) {
+    frames.length = 0
+    const video = fakeVideo(1)
+    video.hang = true
+    // As on the device: readyState 4 throughout, the seek pending or not.
+    Object.defineProperty(video, 'readyState', { get: () => 4, set() {} })
+    video.play = () => {
+      video.plays++
+      video.paused = false
+      if (unwedges) {
+        video.hang = false
+        if (video.seeking) video.landAt = clock + 1
+      }
+      return Promise.resolve().then(() => video.dispatch('playing'))
+    }
+    const controller = createVideoController(video, { fps: FPS })
+    scene.band = 0.4
+    controller.setAwake(true)
+    controller.rehydrate({ mode: 'scrub', band: 0.4, awake: true })
+    return { video, controller }
+  }
+  const stallFrames = Math.ceil(LIFT_STALL_MS / 16.667) + 2
+
+  test('covered over a frame whose seeks never land: a kick after LIFT_STALL_MS, and its play lifts on the band frame', async () => {
+    const { video, controller } = wedged()
+    crank(video, 10)
+    assert.equal(controller.debug().media, '', 'the seek is wedged: covered')
+    assert.equal(controller.debug().kicks, 0, 'not yet')
+    crank(video, stallFrames)
+    let d = controller.debug()
+    assert.equal(d.stalls, 1)
+    assert.equal(d.kicks, 1, 'the watchdog kicks')
+    crank(video, 2)
+    await settle()
+    crank(video, 4)
+    d = controller.debug()
+    assert.equal(d.media, 'live', 'lifted once the kick\'s seek landed, plus a frame')
+    assert.equal(video.shown, frameAt(0.4), 'on the band frame')
+    assert.equal(video.paused, true)
+    const plays = video.plays
+    for (const band of [0.45, 0.5, 0.55]) {
+      progress(controller, band)
+      crank(video, 3)
+    }
+    assert.equal(video.plays, plays, 'no play() mid-scrub')
+    assert.equal(video.shown, frameAt(0.55))
+    controller.destroy()
+  })
+
+  test('a kick whose `seeked` never comes lifts anyway once the seek has landed on the band frame', async () => {
+    const { video, controller } = wedged({ unwedges: false })
+    crank(video, stallFrames + 1)
+    crank(video, 2)
+    await settle()
+    // The kick's seek went out; the element lands it but never says so.
+    assert.equal(controller.debug().kicking, '1:seek')
+    Object.assign(video, { seeking: false, landAt: Infinity })
+    await wait(STUCK_SEEK_MS + 50)
+    assert.equal(controller.debug().media, 'live')
+    controller.destroy()
+  })
+
+  test('never covered for good: past two stalled kicks the scene reads blocked, and the tap retry is armed', async () => {
+    const { video, controller } = wedged({ unwedges: false })
+    for (let kick = 1; kick <= 2; kick++) {
+      crank(video, stallFrames)
+      crank(video, 2)
+      await settle()
+      assert.equal(controller.debug().kicks, kick)
+      await wait(STUCK_SEEK_MS + 50)
+      assert.equal(controller.debug().media, '', 'the seek never landed: still covered, no lift')
+    }
+    crank(video, stallFrames)
+    const d = controller.debug()
+    assert.equal(d.media, 'blocked', 'the next tap reloads it')
+    assert.equal(d.stalls, 3)
+    assert.equal(d.kicks, 2)
     controller.destroy()
   })
 })

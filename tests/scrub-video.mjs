@@ -303,10 +303,14 @@ const withinBudget = (ran) => ran >= BUDGET_MS - SLACK_MS / 3 && ran <= BUDGET_M
  * honoured play (WebKit's playInternal unpauses before the media session admits the play, and an interrupted
  * session's pauseInternal returns early, so the page's own pause() can't undo it). Inferred from WebKit's source and
  * the iPhone readout after a refresh in view (no tap ever primed again); `paused` was not on that readout.
- * Takes `loadForgets` alone, or `{ loadForgets, stuck }`.
+ * `wedge`: the first pause() after a gesture's honoured play wedges the element: its seeks report `seeking` and never
+ * fire `seeked`, and the layer keeps the frame it had, until it plays again (a `playing` event). From the second
+ * iPhone readout of that refresh (the tap unlocked by play, readyState 4, `currentTime` following the scroll through
+ * three stuck-seek resends, one frame callback, the poster never lifted); WebKit's cause is not known.
+ * Takes `loadForgets` alone, or `{ loadForgets, stuck, wedge }`.
  */
 function lowPowerInit(options) {
-  const { loadForgets = false, stuck = false } = typeof options === 'object' && options ? options : { loadForgets: !!options }
+  const { loadForgets = false, stuck = false, wedge = false } = typeof options === 'object' && options ? options : { loadForgets: !!options }
   window.__plays = { refused: 0, allowed: 0, dropped: 0, calls: 0 }
   const unlocked = new WeakSet()
   // A short lock (WebKit, read in its source; see references/video.md): the data stays, seeks land, currentTime and
@@ -328,6 +332,19 @@ function lowPowerInit(options) {
   const gesture = () => {
     const e = window.event
     return !!e && e.isTrusted && ((e.type === 'touchend' && !panned(e)) || e.type === 'click' || e.type === 'keydown')
+  }
+  let wedgeNext = null
+  let wedged = null
+  window.addEventListener('seeked', (e) => e.target === wedged && e.stopImmediatePropagation(), true)
+  window.addEventListener('playing', (e) => e.target === wedged && (wedged = null), true)
+  const pauseFn = HTMLMediaElement.prototype.pause
+  HTMLMediaElement.prototype.pause = function (...args) {
+    if (wedgeNext === this) {
+      wedgeNext = null
+      wedged = this
+      stale.set(this, Math.floor(this.currentTime * 30 + 1e-6))
+    }
+    return pauseFn.apply(this, args)
   }
   const claims = new WeakSet()
   const pausedDesc = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'paused')
@@ -359,6 +376,7 @@ function lowPowerInit(options) {
       return new Promise((resolve, reject) => setTimeout(() => reject(new DOMException('refused', 'NotAllowedError')), 100))
     }
     window.__plays.allowed++
+    if (wedge && gesture()) wedgeNext = this
     unlocked.add(this)
     claims.delete(this)
     return play.apply(this, args)
@@ -394,7 +412,7 @@ function lowPowerInit(options) {
   Object.defineProperty(HTMLMediaElement.prototype, 'seeking', {
     configurable: true,
     get() {
-      return hung === this || seekingDesc.get.call(this)
+      return hung === this || wedged === this || seekingDesc.get.call(this)
     }
   })
   const time = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'currentTime')
@@ -663,13 +681,20 @@ const CHECKS = {
 
   // Found on the device pass (iPhone, Low Power Mode, after 351f08a): refreshed with the scene in view, the scene ran
   // on its poster and no tap unlocked it (`primes 2 refused 2`, `unlocked -`, `loads 0`: no tap ever reached the
-  // retry). Modelled as WebKit can leave it (`stuck`: the refused element reads `paused` false) and as the plain
-  // refusal, with a touch tap that fires no click (WebKit on a non-clickable target): the tap unlocks the scene where
-  // the reader is, behind the poster, and the scrub follows with no play().
+  // retry); and in a second readout the tap unlocked it but the poster never lifted (`unlocked play`, readyState 4,
+  // three stuck-seek resends, `media -`). Modelled as the plain refusal, as WebKit can leave a refused element
+  // (`stuck`: it reads `paused` false) and with the unlocked element's seeks wedged (`wedge`), each with a touch tap
+  // that fires no click (WebKit on a non-clickable target): the tap unlocks the scene where the reader is, behind the
+  // poster, the poster lifts on the band's frame, and the scrub follows with no play().
   async refreshTap(t) {
     const out = []
-    for (const stuck of [false, true]) {
-      const { page } = await t.open([[lowPowerInit, { loadForgets: false, stuck }]], { holds: true, painted: true, touch: true })
+    const cases = [
+      { stuck: false, wedge: false, says: '' },
+      { stuck: true, wedge: false, says: ', the refused element claiming to play' },
+      { stuck: false, wedge: true, says: ', the unlocked element\'s seeks wedged until it plays again' }
+    ]
+    for (const { stuck, wedge, says } of cases) {
+      const { page } = await t.open([[lowPowerInit, { loadForgets: false, stuck, wedge }]], { holds: true, painted: true, touch: true })
       await page.evaluate(() => window.__t.to(0.5))
       await page.waitForTimeout(400)
       await page.reload({ waitUntil: 'load' })
@@ -680,7 +705,7 @@ const CHECKS = {
       const before = await page.evaluate(() => ({ media: window.__t.video().getAttribute('data-scene-media'), paused: window.__t.video().paused, readyState: window.__t.video().readyState }))
       await page.evaluate(startRevealSampler, FPS)
       await page.touchscreen.tap(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
-      await page.waitForFunction(() => window.__t.video().getAttribute('data-scene-media') === 'live', null, { timeout: 4000 }).catch(() => {})
+      await page.waitForFunction(() => window.__t.video().getAttribute('data-scene-media') === 'live', null, { timeout: 5000 }).catch(() => {})
       await page.waitForTimeout(400)
       const { rows } = await page.evaluate(() => window.__reveal.stop())
       const end = rows[rows.length - 1]
@@ -693,7 +718,7 @@ const CHECKS = {
       await page.waitForTimeout(400)
       const after = await page.evaluate(() => ({ calls: window.__plays.calls, plays: { ...window.__plays }, loads: window.__mediaCalls.load, shown: window.__t.shown(), want: Math.round(window.__t.expected().frame), media: window.__t.video().getAttribute('data-scene-media') }))
       out.push([
-        `refreshed in view under Low Power Mode${stuck ? ', the refused element claiming to play' : ''}: a touch tap unlocks it where the reader is, behind the poster, and the scrub follows with no play()`,
+        `refreshed in view under Low Power Mode${says}: a touch tap unlocks it where the reader is, behind the poster, and the scrub follows with no play()`,
         before.media === 'blocked' &&
           end.media === 'live' &&
           end.poster === 0 &&

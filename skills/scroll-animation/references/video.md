@@ -224,6 +224,11 @@ thermal mitigation, the same rule) a restriction that refuses playback outside a
   so a refused element can claim to play, with no frame, for good (an iPhone refreshed with the scene in view: no tap
   ever retried). The band's time, read before the `load()`, is set after the play, so the first frame is still the
   band's. A touch that moved more than 10 px (a scroll, a pull to refresh) is no tap and does nothing.
+- The cover never stays up for good over a frame. Unlocked after a refresh in view, an iPhone left every band seek
+  pending at `readyState` 4 with one frame callback, so neither lift ever fired. With no lift for `LIFT_STALL_MS`
+  (600 ms) the controller kicks behind the cover (a play unwedges what a paused seek can't); a kick whose `seeked`
+  never comes lifts anyway once the seek has landed on the band's frame; past two stalled kicks the scene reads
+  `blocked`, so the next tap reloads it. `debug()` counts `stalls`.
 - Measured on an iPhone in Low Power Mode: every prime refused, taps included, until these.
 
 ## 12. Tab-sleep rehydrate
