@@ -729,6 +729,11 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   function unlock() {
     stats.unlocks++
     framed = false
+    // A reloaded element has painted nothing and isn't proven until it plays, and the tap's own play rarely gets there
+    // (the metadata's rehydrate snaps, and its pause cuts the play before `playing`). So the kick is owed: the cover
+    // stays until a `playing` and the band's landed seek, as after a hide (iPhone, the tap after a refresh in view:
+    // lifted onto an empty layer, a white flash, then a scrub that skipped frames through stuck seeks).
+    needsKick = true
     video.load()
     unlockedBy = 'load'
     if (media === 'blocked') setMedia('')
@@ -1112,6 +1117,18 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     }
   }
 
+  /** `video.buffered` as "from-to" seconds, comma-separated: the device readout's view of what a seek can reach. */
+  function bufferedRanges() {
+    const out: string[] = []
+    try {
+      const b = video.buffered
+      for (let i = 0; i < (b?.length ?? 0); i++) out.push(`${b.start(i).toFixed(2)}-${b.end(i).toFixed(2)}`)
+    } catch {
+      // Not readable yet.
+    }
+    return out.join(',')
+  }
+
   /** Releases the kick's timers and listener; whether the kick is still owed is the caller's. */
   function endKick(run: KickRun) {
     window.clearTimeout(run.timer)
@@ -1310,6 +1327,9 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
         live: media === 'live',
         unlockedBy,
         kicking: kickRun ? `${kickRun.rung}:${kickRun.phase}` : needsKick ? 'owed' : null,
+        // What the element holds: its buffered ranges in seconds, and the preload it was given.
+        buf: bufferedRanges(),
+        preload: video.preload,
         duration: validDuration() ? +video.duration.toFixed(3) : null,
       }
     },

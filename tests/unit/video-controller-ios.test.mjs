@@ -160,7 +160,8 @@ function refusing() {
     video.plays++
     if (refuse) return Promise.reject(Object.assign(new Error('refused'), { name: 'NotAllowedError' }))
     video.paused = false
-    return Promise.resolve()
+    // An honoured play starts playback: `playing`, the proof a reloaded element's layer waits on.
+    return Promise.resolve().then(() => video.dispatch('playing'))
   }
   const controller = createVideoController(video, { fps: 30, src: '/clip.mp4' })
   crank(1)
@@ -470,5 +471,35 @@ test('blocked while the scene sleeps: every tap loads, not only the first', asyn
   log.length = 0
   fire('click')
   assert.deepEqual(log, ['load:true'], 'blocked again: the next tap loads again')
+  controller.destroy()
+})
+
+test('the tap\'s reload is never uncovered before the element plays: the metadata\'s snap cuts the tap\'s play, and the kick proves the layer', async () => {
+  // iPhone, the tap after a refresh in view (f0feb81): the imagery went white for about 0.5 s as the poster lifted,
+  // then the scrub skipped frames. The reloaded element had never reached `playing`: nothing painted, nothing buffered.
+  const { video, controller, log, fire } = claimingToPlay()
+  crank(30)
+  await settle()
+  fire('touchend')
+  assert.deepEqual(log.slice(-2), ['load:true', 'play:true'])
+  // The metadata comes back; its rehydrate snaps, and the snap's pause cuts the play before any `playing`.
+  Object.assign(video, { readyState: 1, networkState: 1, duration: 8 })
+  video.dispatch('loadedmetadata')
+  assert.equal(video.paused, true, 'cut')
+  // Then the data, with no play behind it.
+  Object.assign(video, { readyState: 4 })
+  const plays = video.plays
+  crank(10)
+  await settle()
+  assert.notEqual(video.getAttribute('data-scene-media'), 'live', 'never lifted onto a layer no play has painted')
+  assert.equal(controller.debug().kicking, '1:play', 'the kick owed by the reload is playing')
+  assert.equal(video.plays, plays + 1)
+  // Its `playing`: pause, the band's seek, and the lift once it lands plus a frame.
+  video.dispatch('playing')
+  assert.equal(video.paused, true)
+  video.dispatch('seeked')
+  crank(2)
+  assert.equal(video.getAttribute('data-scene-media'), 'live')
+  assert.equal(controller.debug().kickOk, 1)
   controller.destroy()
 })

@@ -307,10 +307,14 @@ const withinBudget = (ran) => ran >= BUDGET_MS - SLACK_MS / 3 && ran <= BUDGET_M
  * fire `seeked`, and the layer keeps the frame it had, until it plays again (a `playing` event). From the second
  * iPhone readout of that refresh (the tap unlocked by play, readyState 4, `currentTime` following the scroll through
  * three stuck-seek resends, one frame callback, the poster never lifted); WebKit's cause is not known.
- * Takes `loadForgets` alone, or `{ loadForgets, stuck, wedge }`.
+ * `blankLoad`: after a load() from page code the element has painted nothing (the layer is blank, read as frame -1)
+ * and buffered nothing until it plays (a `playing` event). From the third iPhone readout of that refresh (the tap
+ * recovered it, the imagery went white for about 0.5 s as the poster lifted, then the scrub skipped frames through six
+ * stuck-seek resends): the tap's play was cut before `playing`, and WebKit's layer follows only a play.
+ * Takes `loadForgets` alone, or `{ loadForgets, stuck, wedge, blankLoad }`.
  */
 function lowPowerInit(options) {
-  const { loadForgets = false, stuck = false, wedge = false } = typeof options === 'object' && options ? options : { loadForgets: !!options }
+  const { loadForgets = false, stuck = false, wedge = false, blankLoad = false } = typeof options === 'object' && options ? options : { loadForgets: !!options }
   window.__plays = { refused: 0, allowed: 0, dropped: 0, calls: 0 }
   const unlocked = new WeakSet()
   // A short lock (WebKit, read in its source; see references/video.md): the data stays, seeks land, currentTime and
@@ -346,6 +350,16 @@ function lowPowerInit(options) {
     }
     return pauseFn.apply(this, args)
   }
+  const unplayed = new WeakSet()
+  window.addEventListener('playing', (e) => unplayed.delete(e.target), true)
+  const bufferedDesc = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'buffered')
+  const none = { length: 0, start: () => { throw new DOMException('empty', 'IndexSizeError') }, end: () => { throw new DOMException('empty', 'IndexSizeError') } }
+  Object.defineProperty(HTMLMediaElement.prototype, 'buffered', {
+    configurable: true,
+    get() {
+      return unplayed.has(this) ? none : bufferedDesc.get.call(this)
+    }
+  })
   const claims = new WeakSet()
   const pausedDesc = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'paused')
   Object.defineProperty(HTMLMediaElement.prototype, 'paused', {
@@ -393,7 +407,10 @@ function lowPowerInit(options) {
   }
   const load = HTMLMediaElement.prototype.load
   HTMLMediaElement.prototype.load = function (...args) {
-    stale.delete(this)
+    if (blankLoad) {
+      stale.set(this, -1)
+      unplayed.add(this)
+    } else stale.delete(this)
     claims.delete(this)
     if (gesture()) unlocked.add(this)
     else if (loadForgets) unlocked.delete(this)
@@ -684,8 +701,10 @@ const CHECKS = {
   // retry); and in a second readout the tap unlocked it but the poster never lifted (`unlocked play`, readyState 4,
   // three stuck-seek resends, `media -`). Modelled as the plain refusal, as WebKit can leave a refused element
   // (`stuck`: it reads `paused` false) and with the unlocked element's seeks wedged (`wedge`), each with a touch tap
-  // that fires no click (WebKit on a non-clickable target): the tap unlocks the scene where the reader is, behind the
-  // poster, the poster lifts on the band's frame, and the scrub follows with no play().
+  // that fires no click (WebKit on a non-clickable target), and every case with a reloaded element blank and unbuffered
+  // until it plays (`blankLoad`, the third readout: a white flash at the lift, then a skipping scrub): the tap unlocks
+  // the scene where the reader is, behind the poster, never uncovering a blank, the clip buffered when the poster lifts
+  // onto the band's frame, and the scrub follows with no play().
   async refreshTap(t) {
     const out = []
     const cases = [
@@ -694,7 +713,7 @@ const CHECKS = {
       { stuck: false, wedge: true, says: ', the unlocked element\'s seeks wedged until it plays again' }
     ]
     for (const { stuck, wedge, says } of cases) {
-      const { page } = await t.open([[lowPowerInit, { loadForgets: false, stuck, wedge }]], { holds: true, painted: true, touch: true })
+      const { page } = await t.open([[lowPowerInit, { loadForgets: false, stuck, wedge, blankLoad: true }]], { holds: true, painted: true, touch: true })
       await page.evaluate(() => window.__t.to(0.5))
       await page.waitForTimeout(400)
       await page.reload({ waitUntil: 'load' })
@@ -704,6 +723,16 @@ const CHECKS = {
       await page.waitForTimeout(400)
       const before = await page.evaluate(() => ({ media: window.__t.video().getAttribute('data-scene-media'), paused: window.__t.video().paused, readyState: window.__t.video().readyState }))
       await page.evaluate(startRevealSampler, FPS)
+      // What the element holds the moment the poster lifts: the scrub after it seeks within that.
+      await page.evaluate(() => {
+        const v = window.__t.video()
+        new MutationObserver((_, observer) => {
+          if (v.getAttribute('data-scene-media') !== 'live') return
+          const b = v.buffered
+          window.__lift = { duration: v.duration, ranges: Array.from({ length: b.length }, (_, i) => [+b.start(i).toFixed(2), +b.end(i).toFixed(2)]) }
+          observer.disconnect()
+        }).observe(v, { attributes: true, attributeFilter: ['data-scene-media'] })
+      })
       await page.touchscreen.tap(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
       await page.waitForFunction(() => window.__t.video().getAttribute('data-scene-media') === 'live', null, { timeout: 5000 }).catch(() => {})
       await page.waitForTimeout(400)
@@ -717,9 +746,14 @@ const CHECKS = {
       }
       await page.waitForTimeout(400)
       const after = await page.evaluate(() => ({ calls: window.__plays.calls, plays: { ...window.__plays }, loads: window.__mediaCalls.load, shown: window.__t.shown(), want: Math.round(window.__t.expected().frame), media: window.__t.video().getAttribute('data-scene-media') }))
+      const lift = await page.evaluate(() => window.__lift ?? null)
+      const buffered = !!lift && lift.ranges.some(([from, to]) => from <= 0.05 && to >= lift.duration - 0.05)
+      const blank = rows.filter((r) => r.poster < 0.999 && r.presented === -1).length
       out.push([
         `refreshed in view under Low Power Mode${says}: a touch tap unlocks it where the reader is, behind the poster, and the scrub follows with no play()`,
         before.media === 'blocked' &&
+          blank === 0 &&
+          buffered &&
           end.media === 'live' &&
           end.poster === 0 &&
           Math.abs(end.presented - end.want) <= 1 &&
@@ -727,7 +761,7 @@ const CHECKS = {
           after.calls === calls &&
           after.media === 'live' &&
           Math.abs(after.shown - after.want) <= 1,
-        `before ${JSON.stringify(before)} · end ${JSON.stringify(end)} · ${wrong.length} wrong ${JSON.stringify(wrong.slice(0, 3))} · scrubbed on: shown ${after.shown} want ${after.want} ${after.media}, play() mid-scrub ${after.calls - calls}, load() ${after.loads} · plays ${JSON.stringify(after.plays)}`
+        `before ${JSON.stringify(before)} · ${blank} blank uncovered · at the lift ${JSON.stringify(lift)} · end ${JSON.stringify(end)} · ${wrong.length} wrong ${JSON.stringify(wrong.slice(0, 3))} · scrubbed on: shown ${after.shown} want ${after.want} ${after.media}, play() mid-scrub ${after.calls - calls}, load() ${after.loads} · plays ${JSON.stringify(after.plays)}`
       ])
       await page.context().close()
     }

@@ -229,6 +229,10 @@ thermal mitigation, the same rule) a restriction that refuses playback outside a
   (600 ms) the controller kicks behind the cover (a play unwedges what a paused seek can't); a kick whose `seeked`
   never comes lifts anyway once the seek has landed on the band's frame; past two stalled kicks the scene reads
   `blocked`, so the next tap reloads it. `debug()` counts `stalls`.
+- A tap's `load()` owes the kick. The reloaded element has painted and buffered nothing until it plays, and the
+  metadata's rehydrate snaps, so its pause cuts the tap's play before `playing`. Lifted then, the iPhone showed a white
+  picture for about half a second, then a scrub that skipped frames through stuck seeks. The cover stays until the
+  kick's `playing` and its landed seek, as after a hide. `debug()` gives `buf` (the buffered ranges) and `preload`.
 - Measured on an iPhone in Low Power Mode: every prime refused, taps included, until these.
 
 ## 12. Tab-sleep rehydrate

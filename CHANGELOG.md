@@ -79,6 +79,11 @@ the newest release heading below, and the release tag.
   (`LIFT_STALL_MS`), the controller now kicks behind the cover; a kick whose `seeked` never comes lifts once the seek
   has landed on the band's frame; after two stalled kicks the scene reads `blocked` for the next tap. The kick's
   last rung starts at the band's frame, not frame 0. `debug()` adds `stalls`.
+- ScrubVideo's tap recovery (iPhone: a white picture for about 0.5 s as the poster lifted, then a scrub that skipped
+  frames through six stuck-seek resends). The metadata's rehydrate cut the tap's play before `playing`, so the reloaded
+  element was lifted having painted and buffered nothing. A tap's `load()` now owes the kick: the cover stays until a
+  `playing` and the band's landed seek. `debug()` adds `buf` (buffered ranges) and `preload`, and Folio's readout
+  prints them.
 - `verify-motion.mjs`: the entry slide is sampled ¾ visible, a `preload="none"` video never asked to
   load no longer fails the decode check, and a clip frozen through the scrub steps fails.
 

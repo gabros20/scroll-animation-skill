@@ -148,7 +148,7 @@ function DeviceReadout({ scrub }: { scrub: React.RefObject<ScrubVideoHandle | nu
       setLine(
         [
           `p ${scene ? scene.progress().toFixed(2) : "-"} ${scene?.mode() ?? "-"} awake ${scene?.awake() ?? "-"}`,
-          `run ${v.running} paused ${v.paused} ready ${v.ready} t ${v.time} src ${String(v.source ?? "").split("/").pop()}`,
+          `run ${v.running} paused ${v.paused} ready ${v.ready} t ${v.time} buf ${v.buf || "-"} preload ${v.preload} src ${String(v.source ?? "").split("/").pop()}`,
           `primes ${v.primes} refused ${v.rejections} plays ${v.plays} ticks ${v.ticks} reseeks ${v.reseeks}`,
           `media ${v.media || "-"} unlocked ${v.unlockedBy ?? "-"} unlocks ${v.unlocks} stalls ${v.stalls} vis ${v.vis} wakes ${v.wakes} lost ${v.lost}`,
           `kicks ${v.kicks} kickOk ${v.kickOk} kickFail ${v.kickFail} loads ${v.loads} kicking ${v.kicking ?? "-"} pf ${v.vframes} (info)`,
