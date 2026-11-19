@@ -113,8 +113,8 @@ React: `<SmoothScroll authority="lenis" driver={gsapDriver(gsap, ScrollTrigger)}
   Lenis there instead of jumping to 0.
 - **Velocity**: `lenis.velocity` is the smoothed velocity. Logic that branches on scroll speed sees the lerp's
   curve, not the reader's gesture.
-- **`lerp` or `duration`, never both.** In Lenis 1.3 a numeric `duration` (with or without `easing`) takes over and
-  `lerp` is ignored, whatever the README says.
+- **`lerp` or `duration`, never both.** In Lenis 1.3 a numeric `duration`, or an `easing` alone (it sets `duration`
+  to 1), takes over and `lerp` is ignored, whatever the README says.
 
 ## 5. ScrollSmoother
 

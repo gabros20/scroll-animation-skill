@@ -14,7 +14,7 @@ transitions, smooth scroll (native, Lenis, ScrollSmoother) and scroll-driven Thr
 the performance, accessibility and verification work that motion needs.
 
 It does not own UI micro-interactions or component motion (buttons, toasts, menus, hovers, enter and exit,
-springs, gestures, layout animation: the `frontend` skill's, from `design`'s motion spec), layout scaling or
+springs, gestures, layout animation: `frontend` `ui-motion.md`, from `design`'s motion spec), layout scaling or
 viewport-unit sizing, colour systems, or component libraries. Layout scaling on a fluid-design
 project is fluid-design's; this skill reads its breakpoint, header height and units when present.
 

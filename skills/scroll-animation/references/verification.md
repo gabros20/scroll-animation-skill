@@ -87,8 +87,7 @@ the state the scroll position implies without any scrolling; and under reduced m
   rail's translate, a wipe, the camera. Sample at fractions of each scene, never evenly down the document (every
   position moves when a section above changes height). An intended pause is a `data-scene-spacer` act named in the
   ledger, so authored silence reads apart from a stall.
-- **The slides.** A sticky pin is on screen a viewport before progress leaves 0 and after it reaches 1; `--scenes`
-  shoots both, where a held clip is a still sliding past ([video.md](video.md) §14).
+- **The slides**: `--scenes` shoots the pin ¾ on screen entering and leaving ([video.md](video.md) §14).
 - **Contrast over moving media.** Copy riding a scrub, loop or canvas is graded at every sample, not on the poster:
   hide the copy and any fixed chrome, shoot the same frame, read the pixels under each line (clamped to the
   viewport), and grade light ink against the brightest patch, dark ink against the darkest. The worst frame decides.
@@ -177,7 +176,8 @@ contract.
   failure names its group and reason. It drives each `[data-scene-root]` to progress
   `[0, 0.25, 0.5, 0.75, 1]`, records `data-scene-state` at each step, and checks the states run `head`,
   `scrub`, `tail` without stepping back, leaving `head` by progress 1; a scene video with a source that never reaches
-  `readyState` 2 fails it, and the two slides are shot and reported. A check with nothing to find
+  `readyState` 2 (unless still `preload="none"`) or whose playhead never moves while scrubbing fails it, and the two
+  slides are shot and reported. A check with nothing to find
   reports SKIP, never PASS. **It forces
   `document.documentElement.style.scrollBehavior = 'auto'` for the duration of its stepped `scrollTo`
   calls and restores the old value afterwards.** A page with `html { scroll-behavior: smooth }` would
@@ -200,11 +200,12 @@ Both browser scripts resolve Playwright from the target project's `node_modules`
 inside the project), then a skill-local install, then print an install hint. Exit codes: `0` pass,
 `1` a check failed, `2` usage error or Playwright unavailable.
 
-- **The browser must decode the clip.** Before Playwright 1.57 its bundled Chromium has no H.264: a scrub never
-  paints, and every screenshot shows the poster. There, pass `verify-motion.mjs --channel chrome` or
-  `--browser webkit`; 1.57 and later bundle Chrome for Testing.
+- **The browser must decode the clip.** Before Playwright 1.57 (1.63 on Linux arm64) its bundled Chromium has no
+  H.264: a scrub never paints, and every screenshot shows the poster. There, pass `verify-motion.mjs --channel chrome`
+  or `--browser webkit`; later versions bundle Chrome for Testing.
 - **The run tests this build.** A dev server that failed on a busy port leaves another project answering: check the
-  served `<title>` and that a known media URL answers `206` before trusting a clean report.
+  served `<title>` and that a known media URL answers `206` before trusting a clean report. Serve over http: a
+  `file://` page breaks the sequence and preloader fetches.
 
 **The blocks arrive tested.** In the skill's own repository, `npm run test:reveal`, `test:text`,
 `test:scroll-effects`, `test:header-theme`, `test:count-up`, `test:rail` and `test:recipes` drive each

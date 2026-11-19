@@ -102,9 +102,10 @@ scroll stopped.
 - **One seek in flight, the newest frame next.** Gecko aborts a seek that a newer one replaces (nothing paints while
   they keep coming). The controller keeps one in flight and on `seeked` sends the frame the band wants then: a slow
   decoder shows fewer frames, never stale ones. A seek lands a quarter frame into its
-  frame. Wraps and snaps skip the queue: behind a stale seek they land a frame late. A band seek with no `seeked`
-  after 700 ms (`STUCK_SEEK_MS`) is sent again (`debug().reseeks`): iOS can leave one `seeking` for good, and one in
-  flight would then hold that frame for the visit.
+  frame. Wraps and snaps skip the queue: behind a stale seek they land a frame late. A band seek the element still
+  reports `seeking` after 700 ms (`STUCK_SEEK_MS`) is sent again (`debug().reseeks`): iOS can leave one pending for
+  good, and one in flight would then hold that frame for the visit. While a seek is pending `readyState` sits at
+  HAVE_METADATA (measured in Chromium), so a low `readyState` alone never means "no frame yet".
 - **The glide is only the handover out of a loop:** the playhead's distance from the band decays at `glide` (0.18) per
   60 Hz frame (`dt`-based) while the band moves on. Safari drops a `play()` issued mid-seek, so play waits for
   `seeked` (150 ms fallback).
@@ -199,7 +200,8 @@ spare (`tpad=stop_mode=clone:stop=1`) and keyframe.
 
 **iOS loads only metadata for a video that has never played** (`preload` is a hint it ignores): a scene of holds
 never gets a frame, and its first seek clears the poster (measured on the device pass). The controller primes each
-source once (a muted `play()`, paused at once) and seeks only once a frame exists. Refused in Low Power Mode, the
+source once (a muted `play()`, paused at once), only while it has never shown a frame (primed mid-seek, a held tail
+played to the clip's end), and seeks only once a frame exists. Refused in Low Power Mode, the
 poster stays until the reader's next `touchend`, `pointerup`, `click` or key press, inside which the prime is
 retried: those grant activation, `touchstart` doesn't. Primed, the simulator fetched the whole clip in one request,
 paused; the prime runs in the awake tick, so on iOS data starts at the wake margin, not the warm one.

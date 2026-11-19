@@ -39,7 +39,9 @@ scroll authority per route, the profile from `ANIMATION.md`.
 | An Immersive first screen that can't work until its assets arrive | real loading progress | `preloader` |
 
 Barba, Taxi and swup are legacy vanilla routers: where one already runs, keep it and give it §4's hygiene after
-its swap; never add one to a new project. A canvas that persists across routes (Immersive, [preflight.md](preflight.md)
+its swap; never add one to a new project. **One driver per navigation**: a custom curtain and React's
+`<ViewTransition>` never drive the same one, and under a curtain a route-level `loading.tsx` lifts the route onto its
+skeleton. A canvas that persists across routes (Immersive, [preflight.md](preflight.md)
 §3.1) has no block yet: a canvas route unmounts its canvas on leave, and a view transition's old snapshot keeps its
 last frame ([webgl.md](webgl.md) §6).
 
@@ -95,6 +97,11 @@ const PAGE_SLIDE = {
 | cross-document `@view-transition`, `pagereveal` / `pageswap` | 126+ | 18.2+ | **no** (Firefox 155) |
 
 Browsers that take only an update callback (Safari 18.0–18.1, Firefox 144–146) still transition, without the types.
+
+**Verify on sampled frames**, with motion and reduced: through a crossfade old and new opacity sum to about 1 (a dip or
+a flash otherwise), no entrance replays on content that persists, no old- or new-only layer outlives the transition,
+and nothing swaps paint or snaps a `box-shadow` at either end. During a transition judge the captured layers, not the
+live DOM.
 
 ## 3. Vanilla and multi-page sites
 
@@ -256,8 +263,9 @@ Both run `MOTION.route`, the route morph's timing, so an in-route change and a p
 - **It keeps moving while the page builds.** Idle motion is a CSS animation on `transform` or `opacity`, which the
   compositor runs while scripts block, never a rAF loop; a drawn loader runs in a Worker on an `OffscreenCanvas`.
   Progress lands in lumps: ease what reads `--load-p` (a short transition on the bar's `scale`). On the way out stop
-  drawing and fade with CSS; terminate a worker or lose a GL context only once the overlay is gone (either held the
-  main thread 55–240 ms on screen).
+  drawing and fade with CSS. Never `terminate()` the worker or call `loseContext()` on the main thread while the
+  page is on screen (holds of 55–240 ms and about 100 ms): tell the worker to drop its context, and terminate it on
+  `pagehide` or when the page is hidden.
 
 ## 8. Reduced motion and pointer events
 

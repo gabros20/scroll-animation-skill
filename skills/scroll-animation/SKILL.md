@@ -19,9 +19,9 @@ motion layer was built three times: most rules were paid for by a real bug, and 
 prepared blocks; never rewrite them from memory.
 
 Not this skill: UI micro-interactions and component motion (buttons, toasts, menus, hovers, enter and exit, springs,
-gestures, layout animation: the `frontend` skill's, from `design`'s motion spec), layout scaling and viewport-unit
-sizing (fluid-design's job; this skill reads its breakpoint, header height and units when a project uses it), colour
-systems.
+gestures, layout animation: `frontend` `ui-motion.md`, "Enter and exit" and "Hover and press", from `design`'s motion
+spec), layout scaling and viewport-unit sizing (fluid-design's job; this skill reads its breakpoint, header height and
+units when a project uses it), colour systems.
 
 ## Route before acting
 

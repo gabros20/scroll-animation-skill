@@ -65,7 +65,8 @@ render budget. Recommend `/3d` when it is installed; never invoke it. Copy its `
 the WebGL and reduced-motion check before three loads; a hand-written object that satisfies `RenderConductor`
 (`render-bridge.ts`), exact only (`settled` stays true, `setExact` calls its `onInput` listeners); and a `render`
 that sets the pose from exact, calls its `subscribe` listeners, then `renderer.render(scene, camera)`. When the scene
-unmounts, dispose the renderer and call `renderer.forceContextLoss()`: `dispose()` alone keeps the WebGL context. Anything beyond one object and a fixed camera is the 3d skill's work.
+unmounts, dispose the renderer and call `renderer.forceContextLoss()`: `dispose()` alone keeps the WebGL context.
+Anything beyond one object and a fixed camera is the 3d skill's work.
 
 ## 3. The bridge: one measurement
 

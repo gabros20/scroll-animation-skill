@@ -5,8 +5,9 @@ clip and scale reveals, a sticky stack, marquees, cursor media, blend text, colo
 section and stepped sections.
 
 **Read when:** layers should drift at different depths (a layered hero); a colour should hand over between sections;
-a ticker, a preview that follows the pointer, lines that draw themselves or a particle layer are wanted; a fixed or sticky header's ink must follow
-dark and light sections ("the nav disappears over the dark section"); or one of these misbehaves.
+a ticker, a preview that follows the pointer, lines that draw themselves or a particle layer are wanted; a fixed or
+sticky header's ink must follow dark and light sections ("the nav disappears over the dark section"); or one of these
+misbehaves.
 **Skip when:** content only animates in ([entrances.md](entrances.md)), the section pins ([scenes.md](scenes.md)), or
 the effect is plain CSS decoration ([css-scroll-effects.md](css-scroll-effects.md)).
 
@@ -106,7 +107,7 @@ has), with the subject between mid and foreground so the foreground overtakes it
   Recompose phones; type may sit above the subject there.
 - **Pointer depth** is optional, on a fine pointer only: one `pointermove` listener per section, a `quickTo` per plane
   (about 0.8 s), offset = the pointer's distance from centre × a small depth (0.02–0.05), back to rest on
-  `pointerleave` and window `blur`. It writes a wrapper of its own (the drift and the entrance own the plane's
+  `pointerleave`, `pointercancel` and window `blur`. It writes a wrapper of its own (the drift and the entrance own the plane's
   transform), stops under reduced motion, and nothing is visible only through it.
 
 ## 3. Clip, mask and scale reveals

@@ -253,7 +253,7 @@ Sections in `data-scene-content` ride over the render:
   Keep the fade short: copy caught half-faded over a bright frame is what a reader resting there sees.
 - **Copy over the render passes contrast at its worst frame**, never just the poster ([verification.md](verification.md)
   §1).
-- The section after a scene takes less top padding: the pin already spends a viewport leaving.
+- As a taste default, the section after a scene takes less top padding: the pin already spends a viewport leaving.
 
 ## 12. Travel on a scaled layout
 

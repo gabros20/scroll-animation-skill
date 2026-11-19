@@ -36,8 +36,12 @@ the newest release heading below, and the release tag.
 ### Fixed
 
 - `media/video-controller.ts`: a prime refused in Low Power Mode retries inside the reader's next
-  `touchend`, `pointerup`, `click` or key press, where it was never retried; a band seek with no
-  `seeked` after 700 ms (`STUCK_SEEK_MS`) is sent again instead of freezing the frame for the visit.
+  `touchend`, `pointerup`, `click` or key press while the scene runs, where it was never retried; a
+  band seek the element still reports `seeking` after 700 ms (`STUCK_SEEK_MS`) is sent again instead
+  of freezing the frame for the visit; a source that has shown a frame is never primed mid-seek (it
+  played a held tail to the clip's end: the `holds` flake, 3 of 6 runs in Chrome, now 16 of 16).
+- `verify-motion.mjs`: the entry slide is sampled ¾ visible, a `preload="none"` video never asked to
+  load no longer fails the decode check, and a clip frozen through the scrub steps fails.
 
 ## [1.0.0] - 2026-09-23
 

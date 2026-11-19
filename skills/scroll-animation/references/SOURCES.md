@@ -25,7 +25,9 @@ code was copied. Permissive sources (MIT, Apache-2.0) were adapted; an unlicense
 | `jpoindexter/typography-skills` | MIT | variable-font axes re-lay out the line |
 | `jakubkrehel/skills` | MIT | `MotionConfig` still animates `filter` |
 | `paper-design/shaders` | Apache-2.0 | releasing the WebGL context on unmount |
-| `DevMartinese/awwwards-animations-skill` | none | prompted the Lenis `lerp`/`duration` check only; the rule comes from Lenis's source |
+| `pbakaus/impeccable` | Apache-2.0 | checking a view transition on sampled frames |
+| `juliobsz/skills` | MIT | one driver per navigation, `loading.tsx` under a curtain |
+| `DevMartinese/awwwards-animations-skill` | inspiration, unlicensed | prompted the Lenis `lerp`/`duration` check only; the rule comes from Lenis's source |
 
 **Checked against primary sources**, where a fold rests on a fact: Playwright's release notes (1.57 bundles Chrome for
 Testing), Motion's changelog (14.2.0, accelerated independent transforms), Lenis 1.3.26's source (a numeric `duration`
