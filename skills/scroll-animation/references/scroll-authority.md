@@ -158,10 +158,15 @@ const scroll = createSmoother(ScrollSmoother, { smooth: 1, effects: true })
   `data-lag` keep running there, written from the main thread as the page scrolls (measured in Playwright's WebKit
   with touch emulation). A reload mid-page is a jump: iOS Safari restores the position after the scripts ran, past
   every trigger above it (`entrances.md` §5).
-- **Resizes**: `createSmoother` turns off ScrollSmoother's `autoResize` and runs a full `ScrollTrigger.refresh()` when
-  the content resizes. GSAP 3.15's own resize refresh covers only the smoother's trigger, so the page's other triggers
-  keep stale positions, and one landing in the first 0.5 s after creation replays the scroll from the top on a page
-  that is already scrolled (a reload mid-page).
+- **Resizes**: `createSmoother` turns off ScrollSmoother's `autoResize` and runs a full, safe
+  `ScrollTrigger.refresh(true)` when the content resizes (mid-scroll it waits for the scroll to end). GSAP 3.15's own
+  resize refresh covers only the smoother's trigger, so the page's other triggers keep stale positions, and one
+  landing in the first 0.5 s after creation replays the scroll from the top on a page that is already scrolled (a
+  reload mid-page).
+- **A link with a hash** (`/page#section`) lands on its target: the browser's own fragment jump loses the race with
+  the smoother (no scroll height until its first refresh, which puts back the scroll it recorded), so `createSmoother`
+  jumps there itself, once, after that refresh, with a native anchor's landing (`scroll-padding-top` plus
+  `scroll-margin-top`).
 - ScrollSmoother is free (GSAP 3.13+). It still costs sticky, fixed and `view()` timelines inside the content, which is
   why Lenis is the choice whenever the page mixes engines.
 

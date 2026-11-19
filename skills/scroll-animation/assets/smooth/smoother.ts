@@ -24,7 +24,15 @@
  * Touch-only screens (ScrollTrigger.isTouch 1) get the same native mode without smoothTouch, but effects still run,
  * written from the main thread as the page scrolls natively. Every ScrollTrigger reads the wrapper, a proxy the
  * smoother's own trigger sets to the window's scroll first in each update, so triggers fire as on a native page.
+ *
+ * A page loaded with a hash (`/page#section`) lands on it: the browser's own fragment jump races the smoother (the
+ * body has no scroll height until the first refresh, and a refresh puts back the scroll it recorded), so it would
+ * stay at the top. The handle owns the landing, once, right after the first refresh.
  */
+// gsap's index declares its plugin modules: 'gsap/ScrollTrigger' has no types of its own.
+/// <reference types="gsap" />
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
 import { REDUCED_MOTION_QUERY } from '../config'
 import {
   anchorInset,
@@ -87,14 +95,26 @@ export function createSmoother(ScrollSmoother: ScrollSmootherStatic, options: Sm
   // Replaces ScrollSmoother's autoResize, which refreshes only the smoother's own trigger: one that lands in the first
   // 0.5 s after creation replays the scroll from the top while the page is scrolled (GSAP 3.15; a reload mid-page, a
   // reduced-motion switch), and the page's other triggers keep stale positions. A full refresh has neither problem.
+  // Safe (`refresh(true)`): mid-scroll it waits for the scroll to end, so a lazy image decoding under the reader's
+  // finger never re-measures the page, or re-pins a pin, while they scroll.
   let resizeTimer = 0
   const resizeObserver = new ResizeObserver(() => {
     window.clearTimeout(resizeTimer)
-    resizeTimer = window.setTimeout(() => ScrollSmoother.refresh(), 200)
+    resizeTimer = window.setTimeout(() => ScrollSmoother.refresh(true), 200)
   })
   const contentEl = typeof content === 'string' ? document.querySelector(content) : content
   if (contentEl) resizeObserver.observe(contentEl)
   stampAuthority('smoother')
+
+  // The hash landing, after the first refresh (ScrollTrigger dispatches `refresh` once it has put the recorded scroll
+  // back), as an immediate jump with the same landing as a native anchor (the handle's scrollTo).
+  let destroyed = false
+  const landOnHash = () => {
+    ScrollTrigger.removeEventListener('refresh', landOnHash)
+    const el = hashTarget()
+    if (el && !destroyed) handle.scrollTo(el, { immediate: true })
+  }
+  if (hashTarget()) ScrollTrigger.addEventListener('refresh', landOnHash)
 
   const handle: SmoothScrollHandle = {
     authority: 'smoother',
@@ -124,6 +144,8 @@ export function createSmoother(ScrollSmoother: ScrollSmootherStatic, options: Sm
       smoother.scrollTo(window.scrollY, false)
     },
     destroy() {
+      destroyed = true
+      ScrollTrigger.removeEventListener('refresh', landOnHash)
       reduced.removeEventListener('change', followReducedMotion)
       window.clearTimeout(resizeTimer)
       resizeObserver.disconnect()
@@ -134,4 +156,16 @@ export function createSmoother(ScrollSmoother: ScrollSmootherStatic, options: Sm
   }
   registerHandle(handle)
   return handle
+}
+
+/** The element the URL's fragment names, if any. */
+function hashTarget(): HTMLElement | null {
+  const raw = window.location.hash.slice(1)
+  if (!raw) return null
+  try {
+    return document.getElementById(decodeURIComponent(raw))
+  } catch {
+    // A malformed escape: try it as written.
+    return document.getElementById(raw)
+  }
 }
