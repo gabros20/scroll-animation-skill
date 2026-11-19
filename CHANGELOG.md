@@ -42,6 +42,27 @@ the newest release heading below, and the release tag.
 
 ### Fixed
 
+- Pinned scenes (both engines) measure progress against the pin's own box: wrapper height minus the pin's `100lvh`,
+  never `innerHeight`. On iOS `innerHeight` follows the toolbar, so the range was one toolbar longer while it showed,
+  and on a GSAP page ScrollTrigger's cached `'bottom bottom'` and the live rehydrate used two rulers at once: each
+  toolbar step rewrote a rail's `--rail-from`/`--rail-to` and moved its cards 4.5–10.3 px (50–120 px toolbar). The
+  ScrollTrigger `end` is `+=` that range; Motion's scene takes `scrollY` as its tick and computes progress over a
+  cached wrapper top (re-measured on a resize of the wrapper or `<body>`), and its `progress` is that value, not a
+  `useScroll` offset. Desktop traces are unchanged (a `100lvh` pin is `innerHeight` tall there). `tests/rail.mjs`
+  `toolbar` emulates the toolbar and checks the track holds.
+- A height-only, toolbar-sized resize on touch (the same width, under a quarter of the height:
+  `isChromeResize` in `scene.ts`, the `3d` skill's rule plus the scroll well's quarter) no longer rehydrates a scene,
+  so the media and a canvas no longer snap and re-prime on every toolbar step. A resize no longer measures
+  synchronously either: Safari can report the new `innerHeight` while layout holds the old units, and the Motion
+  scene wrote the band from that read.
+- `ScrollTrigger.refresh(true)` (safe: mid-scroll it waits for the scroll to end) on a content resize in
+  `pinnedScene`'s `<body>` observer, the rail's track observer and `createSmoother`, so a lazy image decoding under
+  the reader's finger no longer re-measures the page, or re-pins a `pin: 'gsap'` scene, mid-scroll.
+- `createSmoother` lands a link's hash (`/page#section`): the browser's fragment jump lost the race with the smoother
+  and the page stayed at the top. It jumps to the target once, after the first refresh, with a native anchor's inset.
+  The `scrolly-steps` hash check is strict again under ScrollSmoother.
+- Folio's article scrolly crossfades its opaque photographs with `data-scrolly-fade="cover"`: the page no longer
+  shows through mid-fade on every step change.
 - `css/scroll-effects.css`: the parallax composes with `replace`, not `add`. On an iPhone (iOS 26.6, Low Power
   Mode on or off) an additive scroll-driven translate flicked vertically at every change of scroll direction, while
   `replace` was smooth (device A/B). The drift now owns the element's `translate`: put an element's own offset on
