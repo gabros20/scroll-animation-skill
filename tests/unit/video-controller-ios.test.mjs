@@ -168,7 +168,7 @@ function refusing() {
   controller.setMode('scrub')
   controller.setBand(0.5)
   controller.setAwake(true)
-  return { video, controller, allow: () => (refuse = false) }
+  return { video, controller, allow: () => (refuse = false), refuseAgain: () => (refuse = true) }
 }
 
 test('a refused prime retries inside the reader\'s next activation: touchend or a click, never touchstart', async () => {
@@ -184,11 +184,14 @@ test('a refused prime retries inside the reader\'s next activation: touchend or 
   await settle()
   crank(30)
   assert.equal(video.plays, 2, 'no retry loop: only activations retry')
-  // The played source loads: once it shows a frame the listener is gone.
+  // The played source loads: once it shows the scroll's frame (live) the listener is gone.
   Object.assign(video, { readyState: 4 })
   crank(2)
+  video.dispatch('seeked') // the band's seek lands (this fake never fires it by itself)
+  crank(5)
+  assert.equal(video.getAttribute('data-scene-media'), 'live')
   win.dispatch('click')
-  assert.equal(video.plays, 2, 'a framed source never primes on a tap')
+  assert.equal(video.plays, 2, 'a live source never primes on a tap')
   controller.destroy()
 })
 
@@ -310,5 +313,44 @@ test('a tap before the scene runs unlocks it with load(), on the event that carr
   win.dispatch('touchend')
   assert.equal(loads, 1, 'once')
   assert.equal(controller.debug().unlockedBy, 'load')
+  controller.destroy()
+})
+
+test('back from a lock: data dropped and a seek left pending no longer block recovery; a refusal re-arms the tap', async () => {
+  const { video, controller, allow, refuseAgain } = refusing()
+  allow()
+  crank(30)
+  await settle()
+  Object.assign(video, { readyState: 4 })
+  crank(2)
+  video.dispatch('seeked')
+  crank(5)
+  assert.equal(video.getAttribute('data-scene-media'), 'live', 'unlocked and live before the lock')
+  const plays = video.plays
+
+  // Lock: hidden, the data dropped, a seek left pending, and the unlock gone.
+  document.visibilityState = 'hidden'
+  document.dispatch('visibilitychange')
+  video.dispatch('emptied')
+  Object.assign(video, { readyState: 1, seeking: true, paused: true })
+  refuseAgain()
+  assert.equal(video.getAttribute('data-scene-media'), '', 'the cover goes back as the data goes, even hidden')
+
+  // Wake.
+  document.visibilityState = 'visible'
+  document.dispatch('visibilitychange')
+  crank(5)
+  await settle()
+  assert.ok(video.plays > plays, 'primed again, past the seek left pending from before the lock')
+  assert.equal(video.getAttribute('data-scene-media'), 'blocked', 'refused: blocked, the poster up')
+  const d = controller.debug()
+  assert.equal(d.vis, 'visible')
+  assert.equal(d.wakes, 1)
+  assert.equal(d.lost, 1)
+
+  allow()
+  const before = video.plays
+  win.dispatch('touchend')
+  assert.equal(video.plays, before + 1, 'the next tap retries')
   controller.destroy()
 })

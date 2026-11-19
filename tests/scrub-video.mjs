@@ -341,6 +341,52 @@ function lowPowerInit(loadForgets) {
     else if (loadForgets) unlocked.delete(this)
     return load.apply(this, args)
   }
+
+  // Lock and wake (the phone locked with the page open): the page goes hidden, iOS pauses the video, may drop its
+  // data (`evict`, a load() outside any gesture, which forgets the unlock when `loadForgets`) and may leave a seek
+  // pending across the lock (`hang`: the element reports `seeking` until a new seek or play is issued). Wake shows the
+  // page again, with a bfcache-style pageshow.
+  let hidden = false
+  let hung = null
+  Object.defineProperty(Document.prototype, 'visibilityState', { configurable: true, get: () => (hidden ? 'hidden' : 'visible') })
+  Object.defineProperty(Document.prototype, 'hidden', { configurable: true, get: () => hidden })
+  const seekingDesc = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'seeking')
+  Object.defineProperty(HTMLMediaElement.prototype, 'seeking', {
+    configurable: true,
+    get() {
+      return hung === this || seekingDesc.get.call(this)
+    }
+  })
+  const time = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'currentTime')
+  Object.defineProperty(HTMLMediaElement.prototype, 'currentTime', {
+    configurable: true,
+    get() {
+      return time.get.call(this)
+    },
+    set(value) {
+      if (hung === this) hung = null
+      time.set.call(this, value)
+    }
+  })
+  const playGate = HTMLMediaElement.prototype.play
+  HTMLMediaElement.prototype.play = function (...args) {
+    if (hung === this) hung = null
+    return playGate.apply(this, args)
+  }
+  window.__lock = ({ evict = true, hang = false } = {}) => {
+    const v = document.querySelector('[data-scene-root] video')
+    hidden = true
+    document.dispatchEvent(new Event('visibilitychange'))
+    v.pause()
+    if (evict) load.call(v)
+    if (evict && loadForgets) unlocked.delete(v)
+    if (hang) hung = v
+  }
+  window.__wake = () => {
+    hidden = false
+    document.dispatchEvent(new Event('visibilitychange'))
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }))
+  }
 }
 
 /**
@@ -431,6 +477,50 @@ const CHECKS = {
   async lowPower(t) {
     const out = []
     for (const loadForgets of [false, true]) out.push(...(await lowPowerRun(t, loadForgets)))
+    return out
+  },
+
+  // Found on the device pass (iPhone, Low Power Mode): lock the phone, wake it, and scrolling no longer moved the frame.
+  // Modelled with the clip's data dropped and a seek left pending across the lock, the unlock surviving or not: the
+  // scene recovers by itself when it survives, on the next tap when it doesn't, with no uncovered frame off the band.
+  async lockWake(t) {
+    const out = []
+    for (const loadForgets of [false, true]) {
+      const { page } = await t.open([[lowPowerInit, loadForgets]], { holds: true, painted: true })
+      await page.evaluate(() => window.__t.to(0.5))
+      await page.waitForTimeout(400)
+      await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
+      await page.waitForFunction(() => window.__t.video().getAttribute('data-scene-media') === 'live', null, { timeout: 5000 }).catch(() => {})
+      const before = await page.evaluate(() => window.__t.video().getAttribute('data-scene-media'))
+      await page.waitForTimeout(400) // the first reveal's fade is over
+      await page.evaluate(startRevealSampler, FPS)
+      await page.evaluate(() => window.__lock({ evict: true, hang: true }))
+      await page.waitForTimeout(500)
+      await page.evaluate(() => window.__wake())
+      await page.waitForTimeout(1500)
+      const woke = await page.evaluate(() => ({ media: window.__t.video().getAttribute('data-scene-media'), readyState: window.__t.video().readyState }))
+      if (loadForgets) {
+        await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
+        await page.waitForTimeout(1500)
+      }
+      // Before scrolling on: past this, the playhead trails a moving band by a seek, which is the scrub, not a flash.
+      const { rows } = await page.evaluate(() => window.__reveal.stop())
+      // Scrolling moves the frame again.
+      await page.evaluate(() => window.__t.to(0.7))
+      await page.waitForTimeout(800)
+      const moved = await page.evaluate(() => ({ ...window.__t.read(), shown: window.__t.shown(), want: window.__t.expected(), media: window.__t.video().getAttribute('data-scene-media') }))
+      const wrong = rows.filter((r) => r.poster < 0.999 && (r.presented === null || Math.abs(r.presented - r.want) > 1))
+      out.push([
+        `lock and wake (data dropped, a seek left pending; the unlock ${loadForgets ? 'lost' : 'kept'}): the scene ${loadForgets ? 'reads blocked, then recovers on the next tap' : 'recovers by itself'}, never uncovering a wrong frame`,
+        before === 'live' &&
+          (loadForgets ? woke.media === 'blocked' : woke.media === 'live' && woke.readyState >= 2) &&
+          moved.media === 'live' &&
+          Math.abs(moved.shown - moved.want.frame) <= 1 &&
+          wrong.length === 0,
+        `before ${before} · after wake ${JSON.stringify(woke)} · after scrolling ${JSON.stringify(moved)} · ${wrong.length} wrong ${JSON.stringify(wrong.slice(0, 3))}`
+      ])
+      await page.context().close()
+    }
     return out
   },
 

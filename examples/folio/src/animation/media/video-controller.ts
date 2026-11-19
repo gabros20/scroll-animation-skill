@@ -327,6 +327,10 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   let unlockedBy: 'play' | 'load' | null = null
   // Ticks the playhead has sat on the wanted frame with no seek pending: the reveal's fallback without frame callbacks.
   let settledTicks = 0
+  // Back from a lock, a hidden tab or the bfcache with data the element still claims: prime it again, once.
+  let reprime = false
+  // That re-prime is in flight: a refusal means the frame on screen can't be trusted, so the cover goes back up.
+  let confirming = false
   const posterEl = options.posterElement ?? null
   // A handover out of a loop: where the loop left the playhead (both adapters step the mode before they hand over the
   // event's band, so it is measured at the next drive), then its distance from the band in seconds, decaying to 0.
@@ -352,6 +356,9 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     snaps: 0,
     reseeks: 0,
     unlocks: 0,
+    wakes: 0,
+    lost: 0,
+    vis: document.visibilityState as string,
     lastRehydrate: null as null | Record<string, unknown>,
   }
 
@@ -482,6 +489,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     pending = null
     if (!hasFrame()) return
     try {
+      seekSentAt = performance.now()
       video.currentTime = time
     } catch {
       // Not seekable yet: the poster still covers.
@@ -555,6 +563,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     video.play().then(
       () => {
         if (gesture) unlockedBy = 'play'
+        confirming = false
         if (media === 'blocked') setMedia('')
         if (token === playToken && !(running && loops(mode) && !capped)) video.pause()
       },
@@ -562,7 +571,8 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
         // An AbortError is the scene's own pause landing first: the load has started all the same.
         if ((error as { name?: string } | null)?.name !== 'NotAllowedError') return
         stats.rejections++
-        if (media !== 'live') setMedia('blocked')
+        if (media !== 'live' || confirming) setMedia('blocked')
+        confirming = false
       },
     )
     // Then straight to the scroll's frame, before anything decodes: the clip is all-intra, so the first frame it
@@ -570,6 +580,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     // under a poster image: a seek clears the poster attribute, and with nothing decoded there is nothing to show.
     if (posterEl && validDuration()) {
       try {
+        seekSentAt = performance.now()
         video.currentTime = loops(mode) ? targetTime(mode, band, tl) : frameTime(wanted(), fps)
       } catch {
         // Not seekable yet: the poster still covers.
@@ -582,7 +593,11 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     if (next === media) return
     media = next
     video.setAttribute('data-scene-media', next)
-    if (next !== 'live') settledTicks = 0
+    if (next === 'live') disarmActivation()
+    else {
+      settledTicks = 0
+      armActivation()
+    }
   }
 
   /** The frame on screen is the one the scroll wants (a loop: any frame of it): the poster may lift. */
@@ -600,16 +615,18 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
    * the browser honours is the one that plays. Asleep, it waits armed; once a frame shows, it disarms.
    */
   function onActivation(event: Event) {
-    if (destroyed || framed) {
+    if (destroyed || media === 'live') {
       disarmActivation()
       return
     }
-    if (reduced || !hasSource || hasFrame() || !video.paused) return
+    if (reduced || !hasSource || !video.paused) return
     activating = true
     try {
+      // Until the video shows the scroll's frame, a frame it merely claims (readyState after a lock) is no proof.
       if (running) prime()
       else if (
         event.type !== 'pointerup' &&
+        !hasFrame() &&
         !unlockedBy &&
         (media === 'blocked' || !primed) &&
         video.networkState !== NETWORK_LOADING
@@ -631,9 +648,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
 
   /** The source has shown a frame: the prime did its job. */
   function markFramed() {
-    if (framed) return
     framed = true
-    disarmActivation()
   }
 
   function armActivation() {
@@ -680,10 +695,20 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     }
     badTicks = 0
     stats.ticks++
+    if (reprime && video.paused && !loops(mode)) {
+      // Back from a hide with data the element still claims: one fresh prime at the band's frame, behind the cover
+      // if the frame is gone. Refused (the unlock didn't survive), it reads blocked and the next tap retries.
+      reprime = false
+      primed = false
+      confirming = true
+      prime()
+    }
     if (!hasFrame()) {
       // A pending seek holds readyState at HAVE_METADATA: a hung one is re-sent here, or the tick would never see it.
-      // Never prime under a pending seek: a play() there ran a held tail to its end.
-      if (resendStuck() || seeking || video.seeking) return
+      // Never prime under a recent pending seek: a play() there ran a held tail to its end. One older than
+      // STUCK_SEEK_MS that isn't ours to re-send (left from before a hide) no longer blocks recovery.
+      if (resendStuck() || seeking) return
+      if (video.seeking && performance.now() - seekSentAt <= STUCK_SEEK_MS) return
       // No frame and no seek to explain it: a source that had one lost it (iOS drops a sleeping clip's data), so it
       // is primed again, and waits for a fresh gesture if that is refused.
       if (framed) {
@@ -692,7 +717,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
         // The cover goes back over the hole.
         if (media === 'live') setMedia('')
       }
-      if (!primed && video.paused && video.networkState === NETWORK_IDLE) prime()
+      if (!primed && video.paused && (video.networkState === NETWORK_IDLE || video.seeking)) prime()
       return
     }
     markFramed()
@@ -818,15 +843,61 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
     seam(true)
   }
 
+  /**
+   * A return (unlock, wake, a tab shown, a bfcache restore, focus): what the element held before may be gone. iOS
+   * pauses and may evict a hidden page's media, leave a seek pending across the lock, and drop the unlock. Seek state
+   * from before is stale; a missing frame puts the cover back and primes again; data the element still claims is
+   * re-primed once after a real hide; the activation retry is re-armed and `load()` may unlock again.
+   */
+  function onReturn(hidden: boolean) {
+    if (destroyed) return
+    stats.wakes++
+    // Any seek the element still reports is from before: older than any threshold.
+    seekSentAt = -Infinity
+    pending = null
+    seeking = false
+    primed = false
+    unlockedBy = null
+    if (!hasFrame()) {
+      if (framed) stats.lost++
+      framed = false
+      setMedia('')
+    } else if (hidden) reprime = true
+    armActivation()
+  }
+
+  /** The element dropped its data (a load(), iOS evicting a hidden page's media): it will show frame 0 next, so the
+   * cover goes back now, even while hidden, and the source must show the scroll's frame again before it lifts. */
+  const onEmptied = () => {
+    if (framed) stats.lost++
+    framed = false
+    primed = false
+    setMedia('')
+  }
+
+  let wasHidden = document.visibilityState === 'hidden'
   const onVisibility = () => {
     visible = document.visibilityState !== 'hidden'
+    stats.vis = document.visibilityState
+    if (!visible) wasHidden = true
+    else if (wasHidden) {
+      wasHidden = false
+      onReturn(true)
+    }
     updateRun()
   }
+  const onPageShow = (event: PageTransitionEvent) => {
+    if (event.persisted) onReturn(true)
+  }
+  const onFocus = () => onReturn(false)
 
   video.addEventListener('loadedmetadata', onMetadata)
   video.addEventListener('suspend', onSuspend)
+  video.addEventListener('emptied', onEmptied)
   video.addEventListener('ended', onEnded)
   document.addEventListener('visibilitychange', onVisibility)
+  window.addEventListener('pageshow', onPageShow)
+  window.addEventListener('focus', onFocus)
 
   // ── tiers ───────────────────────────────────────────────────────────
 
@@ -985,8 +1056,11 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       network?.removeEventListener?.('change', syncSource)
       video.removeEventListener('loadedmetadata', onMetadata)
       video.removeEventListener('suspend', onSuspend)
+      video.removeEventListener('emptied', onEmptied)
       video.removeEventListener('ended', onEnded)
       document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('pageshow', onPageShow)
+      window.removeEventListener('focus', onFocus)
     },
   }
 }

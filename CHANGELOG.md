@@ -55,6 +55,11 @@ the newest release heading below, and the release tag.
   longer flashes a blank and frame 0; a refused play reads `data-scene-media="blocked"`; the prime runs at the warm
   margin where the network idles without a frame; and a tap anywhere before the scene runs unlocks it with `load()`
   inside the gesture. Under iOS Low Power Mode a video still can't move before a tap: WebKit refuses it by design.
+- ScrubVideo after a lock or a hidden page (iPhone: the frame stopped following the scroll after a wake): the cover
+  returns the moment the data goes (`emptied`), a seek left pending from before the hide no longer blocks the
+  re-prime, a source still claiming data is primed once to prove it, a refusal reads `blocked` with the tap retry
+  re-armed, and the retry runs until the video is live rather than until any frame exists. `debug()` adds `vis`,
+  `wakes` and `lost`.
 - `verify-motion.mjs`: the entry slide is sampled ¾ visible, a `preload="none"` video never asked to
   load no longer fails the decode check, and a clip frozen through the scrub steps fails.
 

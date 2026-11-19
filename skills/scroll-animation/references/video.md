@@ -233,7 +233,12 @@ re-derives everything, coalesced to one frame:
    iOS fires `resize` on each step of its toolbar animation, and each rehydrates: a tracked playhead is already there;
 4. if `duration` is invalid (an evicted decoder), issue **one** soft `load()`; metadata rehydrates the scene again.
 
-A hidden tab stops the controller and pauses the video. LoopVideo re-checks on `visibilitychange`, `pageshow` and
+A hidden tab stops the controller and pauses the video. **A lock or a hidden page can cost the element its data,
+a pending seek and, under Low Power Mode, its unlock** (seen on an iPhone: the frame stopped following the scroll after
+a wake). So the moment the data goes (`emptied`) the poster covers again, at once; on the return (`visibilitychange`,
+a bfcache `pageshow`, `focus`) a seek left from before no longer holds anything back, a source without a frame is
+primed at the band's frame behind the cover, one that still claims data is primed once to prove it, a refusal reads
+`blocked` with the tap retry re-armed, and `debug()` counts `wakes` and `lost`. LoopVideo re-checks on `visibilitychange`, `pageshow` and
 `focus`, with the same single `load()`. Never scroll the reader back, reload on focus or store the playhead in
 `sessionStorage`: each fights a scroll position that is already right. A scene frozen after a sleep: scenes.md §13.
 

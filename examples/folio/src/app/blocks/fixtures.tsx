@@ -129,6 +129,7 @@ function DeviceReadout({ scrub }: { scrub: React.RefObject<ScrubVideoHandle | nu
           `p ${scene ? scene.progress().toFixed(2) : "-"} ${scene?.mode() ?? "-"} awake ${scene?.awake() ?? "-"}`,
           `run ${v.running} ready ${v.ready} t ${v.time} src ${String(v.source ?? "").split("/").pop()}`,
           `primes ${v.primes} refused ${v.rejections} plays ${v.plays} ticks ${v.ticks} reseeks ${v.reseeks}`,
+          `media ${v.media || "-"} unlocked ${v.unlockedBy ?? "-"} vis ${v.vis} wakes ${v.wakes} lost ${v.lost}`,
         ].join(" · "),
       );
     }, 250);

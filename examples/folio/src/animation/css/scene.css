@@ -133,8 +133,10 @@
   opacity: 0;
 }
 
+/* The fade is the lift only: the cover comes back at once (data dropped, a lock, a refusal), or it would show what
+   it is covering for 120 ms. */
 @media (prefers-reduced-motion: no-preference) {
-  [data-scene-media] + [data-scene-poster] {
+  [data-scene-media='live'] + [data-scene-poster] {
     transition: opacity 0.12s linear;
   }
 }
