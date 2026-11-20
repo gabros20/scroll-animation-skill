@@ -469,7 +469,8 @@ async function routesSequence(t) {
   const { page, errors } = await t.open('routes.html')
   await page.waitForFunction(() => window.__rb?.ready, null, { timeout: 15000 })
   await page.waitForSelector('[data-scene-ready="true"]', { timeout: 20000 })
-  await rest(page)
+  // fixed-wait: unconverted: the route's first frames and damped settle (routes.html keeps no render log)
+  await sleep(1200)
   for (let i = 0; i < 10; i++) {
     await page.evaluate(() => window.__rb.go('b'))
     // fixed-wait: unconverted: the route change to b mounting
@@ -488,7 +489,8 @@ async function routesSequence(t) {
   out.push(['routes: every mount left releases its conductor\'s listeners', before.length === 11 && released, `${before.length} mounts; last ${JSON.stringify(before.at(-1).listeners)}`])
   // A layout shift above the range, then routeChanged(), with no scroll: the bridge's route refresh re-derives.
   await page.evaluate(() => window.__rb.jump(1400))
-  await rest(page)
+  // fixed-wait: unconverted: the jump's damped settle (routes.html keeps no render log)
+  await sleep(1200)
   await page.evaluate(() => window.__rb.shiftAbove(300))
   // fixed-wait: unconverted: the layout shift's frames, with no scroll, before routeChanged()
   await sleep(300)
