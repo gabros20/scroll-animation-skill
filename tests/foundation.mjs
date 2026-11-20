@@ -19,7 +19,8 @@
 //   smoother       createSmoother: ScrollSmoother's native mode under reduced motion (at load and
 //                  live) with the triggers still tracking, no replay from the top when it is created
 //                  on a scrolled page, grown content refreshes every trigger, stop() survives switches
-//   anchors        a same-page #target link under Lenis lands the target at --header-h, pushes the hash
+//   anchors        a same-page #target link under Lenis lands the target at --header-h, pushes the hash; a skip
+//                  link moves focus there; a new tab, a download and an Alt-click stay the browser's
 //   gate           the pre-JS gate and the failsafe latch: JavaScript off; no engine (the failsafe
 //                  fires at 4 s); a late engine after it (the latch holds); an engine at 1 s (it never fires)
 //   print          a pinned scene prints in flow, entrance items print visible
@@ -456,6 +457,37 @@ const GROUPS = {
     t.check('the link pushes its hash', () => [
       r.hash === '#target' && r.historyLength === historyBefore + 1,
       `location.hash=${r.hash || '(none)'}, history.length ${historyBefore} -> ${r.historyLength}`,
+    ])
+
+    // A skip link from the keyboard: the target takes focus (tabindex="-1" while it holds it, since a section can't),
+    // and the next Tab continues inside it, as after a native fragment navigation.
+    await page.evaluate(() => scrollTo(0, 0))
+    await page.focus('#skip')
+    await page.keyboard.press('Enter')
+    const landed = await page.evaluate(() => ({ active: document.activeElement?.id, tabindex: document.getElementById('target').getAttribute('tabindex') }))
+    await page.keyboard.press('Tab')
+    const next = await page.evaluate(() => ({ active: document.activeElement?.id, tabindex: document.getElementById('target').getAttribute('tabindex') }))
+    t.check('a skip link moves focus to its target: the next Tab continues inside it, and the tabindex goes with the focus', () => [
+      landed.active === 'target' && landed.tabindex === '-1' && next.active === 'inside' && next.tabindex === null,
+      `after Enter: focus #${landed.active}, tabindex ${landed.tabindex} · after Tab: focus #${next.active}, tabindex ${next.tabindex}`,
+    ])
+
+    // Clicks the browser keeps: Lenis never takes them (a window listener reads defaultPrevented, then cancels them so
+    // no tab opens and nothing downloads).
+    await page.evaluate(() => {
+      window.__kept = []
+      addEventListener('click', (e) => {
+        window.__kept.push(`${e.target.id}${e.altKey ? '+alt' : ''}:${e.defaultPrevented ? 'taken' : 'kept'}`)
+        e.preventDefault()
+      })
+    })
+    await page.click('#blank')
+    await page.click('#download')
+    await page.click('#link', { modifiers: ['Alt'] })
+    const kept = await page.evaluate(() => window.__kept)
+    t.check('a target="_blank" link, a download and an Alt-click are left to the browser', () => [
+      kept.join(' ') === 'blank:kept download:kept link+alt:kept',
+      kept.join(' · '),
     ])
   },
 

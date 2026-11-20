@@ -49,6 +49,10 @@ the newest release heading below, and the release tag.
 
 ### Fixed
 
+- Lenis anchors (`createSmoothScroll`) focus the target without a scroll, so a skip link works: the next Tab continues
+  from the target, as after a native fragment jump (a section gets `tabindex="-1"` while it holds focus). An Alt-click,
+  `target="_blank"` and `download` links are left to the browser. `scroll-authority.md` §4: `pushState` never updates
+  `:target`; style the landed section from a class.
 - The scrub video's `destroy()` puts the element back as the markup had it: `data-scene-media` (it wrote `""`), the
   `muted` attribute (`defaultMuted`, which it sets for autoplay policies), the `muted`, `playsInline` and `loop`
   properties, and a `poster` attribute its poster image replaced. The source, the preload hint and a tier's poster stay

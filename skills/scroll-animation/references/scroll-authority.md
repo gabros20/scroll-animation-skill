@@ -99,7 +99,10 @@ React: `<SmoothScroll authority="lenis" driver={gsapDriver(gsap, ScrollTrigger)}
   previous frame's scroll under Lenis, so anything that must stay registered to moving content is driven from Lenis's
   tick (GSAP or Motion), not a CSS timeline (`css-scroll-effects.md` §4).
 - **Anchors**: `createSmoothScroll` handles same-page `#hash` links itself, offset by the fixed header
-  (`HEADER_HEIGHT_VAR`), and pushes the hash.
+  (`HEADER_HEIGHT_VAR`), and pushes the hash. It focuses the target without a scroll, so a "Skip to content" link
+  works: the next Tab continues from there, as after a native fragment jump (a section gets `tabindex="-1"` while it
+  holds focus). A modified click, `target="_blank"` and `download` stay the browser's. `pushState` never updates
+  `:target`: style the landed section from a class the page sets, because setting `location.hash` jumps.
 - **Modals and menus**: `currentSmoothScroll()?.stop()` on open, `.start()` on close. Never `position: fixed` on the
   body over a playing video (Safari drops the video's layer).
 - **Nested scrollers** (a code block, a map, a chat panel): `data-lenis-prevent` on the element.

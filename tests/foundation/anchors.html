@@ -21,6 +21,7 @@
       }
       header a {
         color: #fff;
+        margin-right: 16px;
       }
       #target {
         height: 400px;
@@ -29,10 +30,16 @@
     </style>
   </head>
   <body>
-    <header><a id="link" href="#target">To the target</a></header>
+    <header>
+      <a id="skip" href="#target">Skip to content</a>
+      <a id="link" href="#target">To the target</a>
+      <!-- Links the browser keeps: a new tab and a download (the page's own listener cancels them after the check). -->
+      <a id="blank" href="#target" target="_blank">New tab</a>
+      <a id="download" href="#target" download>Download</a>
+    </header>
     <main>
-      <div style="height: 1800px"></div>
-      <section id="target">Target</section>
+      <div style="height: 1800px"><a id="before" href="#">Between the header and the target</a></div>
+      <section id="target">Target <a id="inside" href="#">Inside the target</a></section>
       <div style="height: 2400px"></div>
     </main>
     <script type="module" src="./src/anchors.ts"></script>

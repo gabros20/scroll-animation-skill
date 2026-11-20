@@ -222,18 +222,40 @@ export function createSmoothScroll(options: SmoothScrollOptions): SmoothScrollHa
   return handle
 }
 
+/**
+ * Same-page #hash links, through Lenis. A native fragment navigation also moves focus's starting point to the target,
+ * so the next Tab continues from there (a "Skip to content" link depends on it); preventDefault() skips that, so the
+ * target is focused here, without a scroll, and a target that can't take focus gets tabindex="-1" until it loses it.
+ * pushState() doesn't update `:target`: style the landed section from a class the page sets, never `:target`.
+ * Left to the browser: a modified or non-primary click, a link that opens elsewhere (target other than _self) and a
+ * download.
+ */
 function wireAnchors(lenis: Lenis): () => void {
   const onClick = (event: MouseEvent) => {
-    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return
+    if (event.defaultPrevented || event.button !== 0) return
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
     const link = (event.target as Element | null)?.closest?.('a[href*="#"]') as HTMLAnchorElement | null
     if (!link || link.origin !== location.origin || link.pathname !== location.pathname || !link.hash) return
+    if ((link.target && link.target !== '_self') || link.hasAttribute('download')) return
     const target = document.getElementById(decodeURIComponent(link.hash.slice(1)))
     if (!target) return
     event.preventDefault()
     // Lenis 1.3 subtracts the root's scroll-padding-top and the target's scroll-margin-top itself.
     lenis.scrollTo(target)
     history.pushState(null, '', link.hash)
+    focusTarget(target)
   }
   document.addEventListener('click', onClick)
   return () => document.removeEventListener('click', onClick)
+}
+
+/** Focus without a scroll (Lenis is on its way); a target that can't take focus gets tabindex="-1" while it has it. */
+function focusTarget(target: HTMLElement) {
+  target.focus({ preventScroll: true })
+  if (document.activeElement === target) return
+  target.setAttribute('tabindex', '-1')
+  target.focus({ preventScroll: true })
+  // Not rendered (display: none, inert): nothing to hold, so the attribute goes at once.
+  if (document.activeElement !== target) target.removeAttribute('tabindex')
+  else target.addEventListener('blur', () => target.removeAttribute('tabindex'), { once: true })
 }
