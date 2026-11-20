@@ -49,6 +49,11 @@ the newest release heading below, and the release tag.
 
 ### Fixed
 
+- The scrub video's `destroy()` puts the element back as the markup had it: `data-scene-media` (it wrote `""`), the
+  `muted` attribute (`defaultMuted`, which it sets for autoplay policies), the `muted`, `playsInline` and `loop`
+  properties, and a `poster` attribute its poster image replaced. The source, the preload hint and a tier's poster stay
+  (media state: a route shown again doesn't fetch the clip again). `tests/usegsap-teardown.mjs` `scrub-video` passes
+  again (6 FAILs in Chromium), and two unit tests pin it.
 - Pinned scenes (both engines) measure progress against the pin's own box: wrapper height minus the pin's `100lvh`,
   never `innerHeight`. On iOS `innerHeight` follows the toolbar, so the range was one toolbar longer while it showed,
   and on a GSAP page ScrollTrigger's cached `'bottom bottom'` (a `100vh` probe in 3.15) and the live rehydrate

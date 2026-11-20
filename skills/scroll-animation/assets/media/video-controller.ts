@@ -9,7 +9,8 @@
  *   video.setReduced(reduced)    reduced motion: the poster is the scene; no video is fetched
  *   video.rehydrate(state)       the video half of a resume: snap the playhead to what scroll implies
  *   video.warm()                 the preload hint, from the scene's warm margin (kept until reduced motion lifts)
- *   video.destroy()              stops everything and pauses (a hidden route never keeps decoding)
+ *   video.destroy()              stops everything and pauses (a hidden route never keeps decoding), and puts back the
+ *                                attributes it wrote (muted, playsinline, loop, poster, data-scene-media) as the markup had them
  *
  * Modes on one continuous clip: the head and tail either LOOP (sub-ranges whose endpoints match, so leaving a loop
  * means continuing to play) or HOLD a frame when no loop is given; the scrub band in between is driven by scroll.
@@ -411,6 +412,17 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   }
 
   const hasFrameCallback = typeof video.requestVideoFrameCallback === 'function'
+  // What the markup had, before the writes below and setMedia(): destroy() puts each one back, so an unmount, a
+  // remount or an Activity hide finds the element as the page wrote it. The source, the preload hint and a poster the
+  // tier picked stay (media state, not motion: a route shown again doesn't fetch the clip again).
+  const authored = {
+    muted: video.muted,
+    defaultMuted: video.defaultMuted,
+    playsInline: video.playsInline,
+    loop: video.loop,
+    poster: video.getAttribute('poster'),
+    media: video.getAttribute('data-scene-media'),
+  }
   // A scrub video is never heard and never loops natively: the controller wraps its loops.
   video.muted = true
   // The attribute too: React sets `muted` as a property only, and the markup is what an autoplay policy may read first.
@@ -646,6 +658,18 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
   function primeTime() {
     if (!posterEl || !validDuration()) return null
     return loops(mode) ? targetTime(mode, band, tl) : frameTime(wanted(), fps)
+  }
+
+  /** The element as the markup had it (`authored`): the attributes and properties the controller wrote, put back. */
+  function restoreMarkup() {
+    if (authored.media === null) video.removeAttribute('data-scene-media')
+    else video.setAttribute('data-scene-media', authored.media)
+    // defaultMuted is the `muted` attribute; paused by stop(), the element is silent either way.
+    video.defaultMuted = authored.defaultMuted
+    video.muted = authored.muted
+    video.playsInline = authored.playsInline
+    video.loop = authored.loop
+    if (posterEl && authored.poster !== null) video.setAttribute('poster', authored.poster)
   }
 
   /** `data-scene-media` on the video, written on change only. */
@@ -1370,7 +1394,7 @@ export function createVideoController(video: HTMLVideoElement, options: VideoCon
       destroyed = true
       stop()
       disarmActivation()
-      video.setAttribute('data-scene-media', '')
+      restoreMarkup()
       cancelAnimationFrame(tierFrame)
       query?.removeEventListener('change', syncSource)
       network?.removeEventListener?.('change', syncSource)

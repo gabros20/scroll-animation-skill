@@ -20,7 +20,7 @@
     "scene.ts": "a941566c8e85a58f",
     "css/scene.css": "e745df9265c25260",
     "gsap/pinned-scene.ts": "f72e1bd417693a63",
-    "media/video-controller.ts": "5c0850f2ea8b4f0a",
+    "media/video-controller.ts": "df0432a41feba0e7",
     "media/camera.ts": "c368bddf324ce2cc",
     "gsap/scrub-video.ts": "db40ac66595fa1ce",
     "motion/usePinnedScene.ts": "5f9a87cbad7a93d2",

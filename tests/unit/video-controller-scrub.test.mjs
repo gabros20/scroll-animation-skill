@@ -680,3 +680,59 @@ describe('the kick after a hide', () => {
     controller.destroy()
   })
 })
+
+describe('destroy() puts the markup back', () => {
+  /** fakeVideo with real attributes: `defaultMuted`, `playsInline` and `loop` reflect theirs, as on an element. */
+  function markedUp(attrs) {
+    const video = fakeVideo(1)
+    const map = new Map(Object.entries(attrs))
+    const reflect = (prop, name) =>
+      Object.defineProperty(video, prop, {
+        get: () => map.has(name),
+        set: (on) => (on ? map.set(name, '') : map.delete(name)),
+        configurable: true,
+      })
+    Object.assign(video, {
+      getAttribute: (name) => map.get(name) ?? null,
+      hasAttribute: (name) => map.has(name),
+      setAttribute: (name, value) => map.set(name, String(value)),
+      removeAttribute: (name) => map.delete(name),
+      attrs: () => Object.fromEntries([...map].sort(([a], [b]) => a.localeCompare(b))),
+    })
+    reflect('defaultMuted', 'muted')
+    reflect('playsInline', 'playsinline')
+    reflect('loop', 'loop')
+    return video
+  }
+
+  test('every attribute and property it wrote, as the markup had them, after the poster lifted', () => {
+    // React's <video data-scene-media muted playsInline …>: data-scene-media="true", and `muted` a property only.
+    frames.length = 0
+    const video = markedUp({ 'data-scene-media': 'true', poster: '/poster.avif', src: '/clip.mp4' })
+    video.muted = true
+    const before = { attrs: video.attrs(), muted: video.muted }
+    const controller = createVideoController(video, { fps: FPS, posterElement: { src: '', getAttribute: () => null } })
+    controller.setAwake(true)
+    controller.rehydrate({ mode: 'scrub', band: 0.4, awake: true })
+    crank(video, 6)
+    assert.equal(controller.debug().media, 'live')
+    assert.equal(video.getAttribute('muted'), '', 'running, the muted attribute is set (defaultMuted)')
+    assert.equal(video.getAttribute('poster'), null, 'running, the poster image owns the cover')
+    controller.destroy()
+    assert.deepEqual({ attrs: video.attrs(), muted: video.muted }, before)
+  })
+
+  test('a muted attribute, playsinline and loop in the markup stay; a missing data-scene-media stays missing', () => {
+    frames.length = 0
+    const video = markedUp({ muted: '', playsinline: '', loop: '', src: '/clip.mp4' })
+    video.muted = false // the property can differ from the attribute: put back as it was too
+    const before = { attrs: video.attrs(), muted: video.muted }
+    const controller = createVideoController(video, { fps: FPS })
+    controller.setAwake(true)
+    controller.rehydrate({ mode: 'scrub', band: 0.2, awake: true })
+    crank(video, 6)
+    assert.equal(video.loop, false, 'running, the controller wraps its own loops')
+    controller.destroy()
+    assert.deepEqual({ attrs: video.attrs(), muted: video.muted }, before)
+  })
+})
