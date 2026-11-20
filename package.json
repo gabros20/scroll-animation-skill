@@ -37,7 +37,8 @@
     "test:cli": "node tests/cli.mjs",
     "generate:check": "node scripts/dev/generate.mjs --check",
     "check-sync": "bash scripts/check-sync",
-    "verify": "bash scripts/check-sync && npm test"
+    "verify": "bash scripts/check-sync && npm test",
+    "verify:all": "node scripts/dev/verify-all.mjs"
   },
   "devDependencies": {
     "@gsap/react": "^2.1.2",
