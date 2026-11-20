@@ -139,22 +139,30 @@ const bridge = usePinnedSceneRender(conductor, { render: (ms) => advance(ms / 10
 ## 5. The canvas slot
 
 ```tsx
-const Stage = () => {                                  // PinnedScene's `pinned`, inside [data-scene-pin]
-  const reduced = useReducedMotionLive()               // motion/useReducedMotionLive.ts
-  return (
-    <div data-scene-still>                             {/* only with acts stacked in the pin */}
-      <img data-scene-poster src="/media/hero-poster.avif" alt="…" width={1600} height={900} />
-      <div data-scene-canvas>
-        {reduced ? null : (
-          // SceneCanvas types frameloop as 'always' | 'demand'; 'never' passes through to R3F
-          <SceneCanvas frameloop={'never' as 'demand'}>…<ConductorDriver conductor={conductor} onFrame={pose} /></SceneCanvas>
-        )}
-      </div>
+const [warm, setWarm] = useState(false)                // set only after mount: false on the server and in hydration
+const reduced = useReducedMotionLive()                 // motion/useReducedMotionLive.ts
+const live = warm && !reduced
+<PinnedScene onWarm={() => setWarm(true)} pinned={<Stage live={live} />} /* + the bridge's callbacks (§4) */>
+  {acts}
+</PinnedScene>
+
+const Stage = ({ live }: { live: boolean }) => (       // PinnedScene's `pinned`, inside [data-scene-pin]
+  <div data-scene-still>                               {/* only with acts stacked in the pin */}
+    <img data-scene-poster src="/media/hero-poster.avif" alt="…" width={1600} height={900} />
+    <div data-scene-canvas>
+      {live ? (
+        // SceneCanvas types frameloop as 'always' | 'demand'; 'never' passes through to R3F
+        <SceneCanvas frameloop={'never' as 'demand'}>…<ConductorDriver conductor={conductor} onFrame={pose} /></SceneCanvas>
+      ) : null}
     </div>
-  )
-}
+  </div>
+)
 ```
 
+- Gate the canvas on a flag set after mount, never on `!reduced` alone: `useReducedMotionLive()` answers `false` on
+  the server and in the hydration render (`useSyncExternalStore`'s server snapshot), so a reduced-motion reader would
+  get the canvas for one commit, the three chunk requested and a context perhaps created. The scene's `onWarm` is
+  such a flag, and it also keeps the 3D bundle off the page until the reader nears the scene.
 - `css/scene.css`: both slots fill the pin (`position: absolute; inset: 0`), the poster first, the canvas over it by
   source order. No `z-index`: it would lift the canvas over acts stacked in the pin.
 - Under reduced motion unmount the canvas: no context, no work, and the poster is the scene. Without JavaScript

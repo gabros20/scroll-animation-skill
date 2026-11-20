@@ -49,6 +49,9 @@ the newest release heading below, and the release tag.
 
 ### Fixed
 
+- `webgl.md` §5: the canvas slot's snippet gates the canvas on the scene's `onWarm` flag and reduced motion
+  (`warm && !reduced`), as Folio's lab scene does. Gated on `!useReducedMotionLive()` alone, it mounted the canvas
+  for one commit for a reduced-motion reader: the hook answers `false` in the hydration render.
 - `css/animation.css` reserves the scrollbar gutter on `<html>` (`scrollbar-gutter: stable`): a modal's `stop()` hides
   the page's overflow, and on classic-scrollbar systems the scrollbar went with it, widening the page under the modal
   and firing the scenes' `<body>` ResizeObserver (a ScrollTrigger refresh during the modal's entrance).
