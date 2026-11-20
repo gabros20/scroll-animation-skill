@@ -259,6 +259,7 @@ async function parallaxSmoothing(t, { lenis = false } = {}) {
 async function parallaxReads(t) {
   const { page } = await t.open()
   await call(page, 'toPass', 0, 0.4)
+  // fixed-wait: unconverted: the parallax caches its layer heights after a scroll pass (added by PR 2 in parallel with the PR 3 ban)
   await wait(700)
   const r = await page.evaluate(async () => {
     const native = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight')
@@ -276,6 +277,7 @@ async function parallaxReads(t) {
       scrollBy(0, 6)
       await frame()
     }
+    // fixed-wait: unconverted: the parallax resize settles across a real resize event (added by PR 2 in parallel with the PR 3 ban)
     await new Promise((resolve) => setTimeout(resolve, 700))
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', native)
     return { reads, moved: Math.round(scrollY - y0), layers: document.querySelectorAll('.layer').length }

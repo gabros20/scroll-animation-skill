@@ -548,6 +548,7 @@ const GROUPS = {
         await frame()
       }
       const during = reads
+      // fixed-wait: unconverted: the scrollend debounce window must elapse with no reads (added by PR 2 in parallel with the PR 3 ban)
       await new Promise((resolve) => setTimeout(resolve, 400))
       Element.prototype.getBoundingClientRect = native
       removeEventListener('scrollend', count)
