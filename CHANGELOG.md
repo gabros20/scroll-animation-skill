@@ -58,6 +58,17 @@ the newest release heading below, and the release tag.
 - `verify-motion.mjs`: `--channel` (a branded Chromium; Playwright's own before 1.57 decodes no
   H.264); `--scenes` fails a scene video that never reaches `readyState` 2, and shoots the pin
   entering and leaving.
+- The browser suites share `tests/lib/harness.mjs`: `settle` (a page read polled once per frame until it holds,
+  returning the reading it settled on), `until`, `frames`, `snapshot` (scroll position, page clock and the value under
+  test from one evaluate), `scrollToProgress`, and time as a subject (Playwright's clock; `seekAnimations` for a CSS
+  animation's own clock). `HARNESS_CHROME` runs Chromium on an installed browser, a channel (`chrome`) or an
+  executable's path, where Playwright's own browsers are not installed; `tests/lib/chrome-preload.mjs` carries it into
+  the smoke run's `verify-motion.mjs`. `npm run test:harness` checks the library itself in a browser (CI, every engine).
+- `npm run test:lint` bans fixed waits in the suites and the Folio checks (`tests/lib/eslint-no-fixed-wait.mjs`):
+  `waitForTimeout`, `hold`/`sleep`/`wait` and a hand-built `setTimeout` sleep. A wait that is about time itself carries
+  a `fixed-wait: <reason>` comment; the ones still to convert say `fixed-wait: unconverted`.
+- `npm run verify:all` runs what CI runs, every browser suite, the Folio checks and the storefront's included, with
+  `--browsers`, `--skip` and `--only`, and a summary; a step whose install is missing is skipped and says why.
 
 ### Fixed
 
@@ -90,6 +101,20 @@ the newest release heading below, and the release tag.
   properties, and a `poster` attribute its poster image replaced. The source, the preload hint and a tier's poster stay
   (media state: a route shown again doesn't fetch the clip again). `tests/usegsap-teardown.mjs` `scrub-video` passes
   again (6 FAILs in Chromium), and two unit tests pin it.
+- Four CI flakes, each two readings taken at different times with a guess between them:
+  - `scrolly-steps` "loading with #step-4" reads the page once it has come to rest, not 600 ms after step 4 activates
+    (ScrollSmoother's landing follows its first refresh, and its content eases behind `scrollY`);
+  - `recipes` "--load-p reaches 1 exactly when the last asset settles" asks what was written before the last settle by
+    the write log's order, not by comparing a write's millisecond with a read's taken a task later;
+  - `sequence` p = 0: the fixture's producer re-reads the layout at each jump, so a first read taken before the layout
+    settled (WebKit at 2×: 0.027, frame 2) no longer stands when the jump scrolls nowhere;
+  - Folio `check:authority` leaves no page while one of its `<Link>` prefetches is in flight (WebKit reports a
+    cancelled RSC prefetch as an uncaught "access control checks" error).
+- The preloader's 300 ms minimum and maximum, the count-up's mid-count reads and both failsafes run on a moved clock
+  (Playwright's, and the failsafe animation's `currentTime`), so the checks assert exact times and no longer wait 4 s.
+- A branded Chrome's own `/favicon.ico` request no longer fails a suite's "no console errors" check: the harness
+  filters that one 404 by its URL and text, and any other 404 still fails.
+
 - Pinned scenes (both engines) measure progress against the pin's own box: wrapper height minus the pin's `100lvh`,
   never `innerHeight`. On iOS `innerHeight` follows the toolbar, so the range was one toolbar longer while it showed,
   and on a GSAP page ScrollTrigger's cached `'bottom bottom'` (a `100vh` probe in 3.15) and the live rehydrate
