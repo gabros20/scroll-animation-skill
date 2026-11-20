@@ -172,7 +172,8 @@ export function FrameSequence({
       ref={setCanvas}
       role="img"
       aria-label={label}
-      style={{ display: 'block', width: '100%', height: '100%', ...style }}
+      // clip-path: Safari on iOS draws a line along a composited canvas's own edge; css/scene.css "Media edges".
+      style={{ display: 'block', width: '100%', height: '100%', clipPath: 'inset(1px)', ...style }}
     />
   )
 }

@@ -135,6 +135,7 @@ const PROBE_PAGE = `() => {
   const pr = poster.getBoundingClientRect()
   const mode = slot.querySelector('[data-scene-mode]')
   return {
+    clips: [ps.clipPath, ss.clipPath],
     posterShown: ps.display !== 'none' && ps.visibility === 'visible' && pr.width > 0 && pr.height > 0,
     slotShown: ss.display !== 'none' && ss.visibility === 'visible',
     canvas: !!slot.querySelector('canvas'),
@@ -253,6 +254,9 @@ async function sceneSequence(t, variant, webgl) {
   if (want('load')) {
     const [ok, detail] = drawnAtTruth(await page.evaluate(() => window.__rb.log.drawn), range)
     push('load: the frames drawn on load are at the scene\'s progress', ok, detail)
+    // iOS Safari draws a line along a composited canvas's own edge (device pass): the slot and its poster clip 1 px in.
+    const { clips } = await slotState(page)
+    push('load: media edges: the canvas slot and its poster are clipped 1 px in (clip-path: inset(1px))', clips.every((c) => c === 'inset(1px)'), `poster ${clips[0]} · slot ${clips[1]}`)
     const mid = Math.round(g.top + range * 0.5)
     await jump(page, mid)
     await sleep(800)

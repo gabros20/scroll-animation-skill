@@ -107,6 +107,21 @@
   object-fit: cover;
 }
 
+/* Media edges. Safari on iOS draws thin black or gray lines along the edges of a composited video or canvas layer,
+   on screen only (screenshots miss them). On an iPhone (iOS 26.6.2) ten variants were compared and two were clean:
+   this clip, and drawing the video to a canvas. Rounding the box, dropping the translateZ(0) anchor, the encoding and
+   the poster changed nothing, so it is the layer's own outermost pixel ring (the WebKit or CoreAnimation mechanism is
+   VERIFY). The rule: a scene's media layer never shows its own edge. Each is clipped 1 CSS px in, before its
+   transform, so a camera scales the clip with the box. Cover framing loses 1 px per edge, which nobody sees; what is
+   behind the media shows in that 1 px band, so where the media doesn't reach a ground that matches its edge, give the
+   pin that ground (a `background`). A clip also cuts a focus ring drawn outside the element: ring a canvas the reader
+   interacts with inside it (a negative `outline-offset`). FrameSequence's canvas carries the same clip inline. */
+[data-scene-media],
+[data-scene-poster],
+[data-scene-canvas] {
+  clip-path: inset(1px);
+}
+
 @media (scripting: none) {
   [data-scene-canvas] {
     display: none;

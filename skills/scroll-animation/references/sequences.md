@@ -133,7 +133,9 @@ covering 1440×900 on a 2× screen gets 1440×900, and the compositor upscales. 
 dropped about 47% of scroll frames in headless Chromium, and the capped one none, in a quarter of the memory. It caps
 density, not size, so a letterboxed `contain` frame keeps its pixels; stores over 16.7 MP (Safari's limit) scale
 down. `dprCap: 1` lightens a heavy page further. Size the canvas with CSS: an unsized canvas takes its size from its
-backing store and keeps growing.
+backing store and keeps growing. FrameSequence's canvas is clipped 1 px in (`clip-path: inset(1px)`, inline): iOS Safari draws thin lines
+along a composited canvas's own edge ([ios-safari-motion.md](ios-safari-motion.md) §7). Give a GSAP `frameSequence()`
+canvas the same clip in the page's CSS.
 
 Put both budgets in the ledger:
 - **Network**: the manifest's `bytes`. Aim for about 25 KiB per 1600×900 frame from a clean render; noisy test frames

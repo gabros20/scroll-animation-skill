@@ -135,6 +135,10 @@ else set a transform). Don't clean it up, and never animate a transform on a vid
 A reset's `video { max-width: 100% }` clamps an oversized camera box to the pin's width. `scene.css` sets
 `max-width: none` on `[data-scene-media]`; any other oversized video needs the same fix, scoped, never global.
 
+`scene.css` also clips the video and its poster 1 px in (`clip-path: inset(1px)`): on iOS Safari a composited video
+draws thin lines along its own edge, on screen and never in a screenshot ([ios-safari-motion.md](ios-safari-motion.md)
+§7). Keep the clip on any video whose edge is in view, and the anchor with it: the anchor was ruled out as the cause.
+
 ## 7. Desktop and mobile sources
 
 ScrubVideo takes `src` and `mobileSrc` (with `poster` and `mobilePoster`), cut from one master canvas. The controller

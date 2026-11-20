@@ -27,7 +27,8 @@ real device or the matching iOS Simulator (§6).
 4. [`@property` for a mask sweep](#4-property-for-a-mask-sweep)
 5. [Overscroll and smooth scroll](#5-overscroll-and-smooth-scroll)
 6. [Device discipline for video and scroll](#6-device-discipline-for-video-and-scroll)
-7. [Traps](#traps)
+7. [Lines along media edges](#7-lines-along-media-edges)
+8. [Traps](#traps)
 
 ## 1. The pin and the toolbar
 
@@ -158,6 +159,25 @@ sets it: only a purely native page may add it, never one where ScrollTrigger or 
   has almost no travel) than a scroll-math bug. Close the tab and open a fresh one before reading any
   scrub code (`verification.md` §4).
 
+## 7. Lines along media edges
+
+- **The symptom:** thin black or gray lines along the edges of a composited `<video>` or `<canvas>` in a scene (a
+  scrubbed video, its poster, a frame sequence, a WebGL canvas). They show on the phone's screen and never in a
+  screenshot, so only an eye on the device sees them.
+- **The evidence** (iPhone 13 mini, iOS 26.6.2, one bench, ten variants on the same scenes): two were clean, a
+  `clip-path: inset(1px)` on the media and the video drawn to a canvas. Rounding the box to device pixels, dropping
+  the `translateZ(0)` anchor, an `opacity` under 1, overscanning the media under a clip, a file encoded with no SPS
+  crop, an sRGB transfer tag and removing the lifted poster all kept the lines. So it is the media layer's own outermost pixel
+  ring, not rounding, promotion, encoding or the poster. Which WebKit or CoreAnimation path draws it is VERIFY.
+- **The rule:** a scene's media layer never shows its own edge. `css/scene.css` clips `[data-scene-media]`, every
+  `[data-scene-poster]` and the `[data-scene-canvas]` slot 1 CSS px in, and FrameSequence's canvas carries the same
+  clip inline; a GSAP `frameSequence()` canvas is the page's, so give it `clip-path: inset(1px)` in the page's CSS.
+  Cover framing loses a pixel per edge, which nobody sees; what is behind shows in that pixel, so where the media
+  doesn't sit on a ground that matches its edge, give the pin that ground. The clip is applied before a camera's
+  transform and scales with it. It also cuts a focus ring drawn outside the element: ring an interactive canvas inside.
+- **Later:** ScrubVideo's canvas presenter (v2.0's single visible surface) is clean by construction, since the
+  `<video>` layer is no longer what the reader sees; its canvas keeps the clip.
+
 ## Traps
 
 - [ ] The pin is `lvh`, never `svh` or `dvh`; its margin matches (§1).
@@ -168,3 +188,4 @@ sets it: only a purely native page may add it, never one where ScrollTrigger or 
 - [ ] A custom property driving a mask or gradient is registered with `@property` (§4).
 - [ ] `overscroll-behavior: none` is on the root of any page with a scroll scene (§5).
 - [ ] The deployed build is confirmed to contain the fix before a device test (§6).
+- [ ] Every scene media layer (video, poster, sequence canvas, WebGL slot) is clipped 1 px in (§7).

@@ -789,6 +789,24 @@ const CHECKS = {
     return out
   },
 
+  // Found on the device pass (iPhone, iOS 26.6.2): thin dark lines along the video's and the poster's edges, on screen
+  // only. css/scene.css clips each media layer 1 px in so its own edge pixels never show (clean on the phone).
+  async edges(t) {
+    const { page } = await t.open([], { holds: true, painted: true })
+    const clips = await page.evaluate(() => {
+      const video = document.querySelector('video[data-scene-media]')
+      const poster = video?.nextElementSibling
+      return { video: video && getComputedStyle(video).clipPath, poster: poster?.hasAttribute('data-scene-poster') ? getComputedStyle(poster).clipPath : null }
+    })
+    return [
+      [
+        "media edges: the video and its poster are clipped 1 px in (clip-path: inset(1px)), so a layer's own edge never shows",
+        clips.video === 'inset(1px)' && clips.poster === 'inset(1px)',
+        `video ${clips.video} · poster ${clips.poster}`
+      ]
+    ]
+  },
+
   // The tap's reveal: the poster stays over the video until it presents the band's frame, so a reader never sees a
   // blank or frame 0 between them, whatever the clip decodes first.
   async flashFree(t) {

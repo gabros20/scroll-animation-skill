@@ -584,12 +584,14 @@ const GROUPS = {
     const ready = await whenReady(page)
     const a11y = await page.evaluate(() => {
       const c = document.getElementById('seq')
-      return { role: c.getAttribute('role'), label: c.getAttribute('aria-label'), display: getComputedStyle(c).display }
+      return { role: c.getAttribute('role'), label: c.getAttribute('aria-label'), display: getComputedStyle(c).display, clip: getComputedStyle(c).clipPath }
     })
     t.check('<FrameSequence>: a role="img" canvas with its label, filling its box', () => [
       ready.result === 'ready' && a11y.role === 'img' && a11y.label === 'Test pattern' && a11y.display === 'block',
       `${ready.result}, role ${a11y.role}, aria-label "${a11y.label}", display ${a11y.display}`,
     ])
+    // iOS Safari draws a line along a composited canvas's own edge (device pass): the canvas clips 1 px in.
+    t.check('<FrameSequence>: media edges: the canvas is clipped 1 px in (clip-path: inset(1px))', () => [a11y.clip === 'inset(1px)', `clip-path ${a11y.clip}`])
     await stops(t, page, 'react (useScroll)')
     await jump(page, 0.5)
     const frameBefore = await page.evaluate(() => window.__fx.frame())

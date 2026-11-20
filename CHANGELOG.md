@@ -61,6 +61,12 @@ the newest release heading below, and the release tag.
 
 ### Fixed
 
+- Scene media no longer shows iOS Safari's edge lines: thin black or gray lines along a composited video's or
+  canvas's own edge, visible on the phone and never in a screenshot. `css/scene.css` clips `[data-scene-media]`,
+  every `[data-scene-poster]` and the `[data-scene-canvas]` slot 1 px in (`clip-path: inset(1px)`), and
+  FrameSequence's canvas carries the clip inline. Of ten variants on an iPhone (iOS 26.6.2) only this clip and a
+  canvas presenter were clean. `ios-safari-motion.md` §7 has the evidence and the rule; `video.md` §6 and
+  `sequences.md` §5 point at it.
 - The Motion scene checks its cached box once the scroll rests (150 ms after the last `scrollend`), not at every
   `scrollend`: Chromium fires one after each instant programmatic scroll, so under Lenis every Motion scene read two
   rects a frame while smoothing. `tests/sequence.mjs` `scene`: 0 root reads over 60 such frames (120 before), one per
