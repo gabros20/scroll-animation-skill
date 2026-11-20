@@ -47,9 +47,9 @@
     "smooth/route.ts": "5f973132fbc3cff3",
     "css/view-transitions.css": "bfaa79267e7363c8",
     "css/view-transitions-mpa.css": "90ff035a0b7a9ec6",
-    "scrolly-steps.ts": "b0cf2f4fe3836640",
+    "scrolly-steps.ts": "70f8dde223dde2de",
     "motion/ScrollySteps.tsx": "d59ae2fa86065f9a",
-    "css/scrolly.css": "e8b77111eec2130a",
+    "css/scrolly.css": "3b38c5114011adaa",
     "render-bridge.ts": "c2544ae40763f287",
     "gsap/pinned-scene-render.ts": "f6c55eec1d80a16f"
   }

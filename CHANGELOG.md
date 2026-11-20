@@ -11,6 +11,9 @@ the newest release heading below, and the release tag.
 
 ### Changed
 
+- `scrolly-steps` writes `--step-p` on `[data-scrolly-graphic]` (the root without one), not on the root: the property
+  inherits, so on the root every step's text restyled each frame a step progressed. Read it inside the graphic; CSS
+  that read it outside the graphic now sees the registered initial `0`.
 - `usePinnedScene().progress` and `PinnedScene`'s `progress` render argument are the scene's own MotionValue, no longer
   `useScroll`'s `scrollYProgress`: progress over the pin's box, set by hand on the main thread (never handed to a
   native timeline), 0 until the scene mounts, with `getVelocity()` following the scene's writes. Read it in an event

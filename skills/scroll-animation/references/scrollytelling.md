@@ -59,7 +59,8 @@ keyboard and reduced-motion duties ([layered-visuals.md](layered-visuals.md) §1
 | Show and play | a clip plays when its step arrives | media, started on a trigger | `loop-video`, or a play started from `onStep`, with a pause control for anything over 5 s ([accessibility.md](accessibility.md) §3) |
 
 State changes once per step, never per frame: `onStep` and `useScrollyActive()` fire on a change, and `--step-p`
-is exact and written only when it moves.
+is exact and written only when it moves, on `[data-scrolly-graphic]` (the root without one): read it inside the
+graphic, so the steps' text never restyles with it.
 
 ## 4. The four layouts
 

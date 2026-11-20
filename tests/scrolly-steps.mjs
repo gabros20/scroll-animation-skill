@@ -192,7 +192,7 @@ function instrument({ scrollEvents, headerH }) {
     if (!root) return false
     new native.MO((records) => {
       for (const r of records) if (r.oldValue !== r.target.getAttribute('style')) styleWrites++
-    }).observe(root, { attributes: true, attributeFilter: ['style'], attributeOldValue: true })
+    }).observe(root, { attributes: true, attributeFilter: ['style'], attributeOldValue: true, subtree: true })
     return true
   }
   native.add.call(document, 'DOMContentLoaded', () => watchStyle() || native.raf(watchStyle))
@@ -253,7 +253,9 @@ function instrument({ scrollEvents, headerH }) {
       window.__hookSteps = []
     },
     hookSteps: () => (window.__hookSteps ?? []).slice(),
-    stepP: () => root()?.style.getPropertyValue('--step-p') ?? '',
+    stepP: () => root()?.querySelector('[data-scrolly-graphic]')?.style.getPropertyValue('--step-p') ?? '',
+    /** --step-p as the root and a step compute it: the registered initial 0 when it lives on the graphic. */
+    stepPOutside: () => [root(), steps()[0]].map((el) => getComputedStyle(el).getPropertyValue('--step-p').trim()),
     /** --step-p from the rects, as the block computes it: the active step's top to the next step's top (or its bottom). */
     expectedP() {
       const i = window.__t.active()
@@ -591,6 +593,7 @@ const CHECKS = {
       const inStep = rows.filter((r) => r.active === 2).map((r) => Number(r.p))
       const monotonic = inStep.every((p, i) => i === 0 || p >= inStep[i - 1])
       const atRest = await page.evaluate(() => [window.__t.stepP(), window.__t.expectedP(), window.__t.active(), window.__t.counters().rafCalls])
+      const outside = await page.evaluate(() => window.__t.stepPOutside())
       // Off-screen: the section below the viewport. Nothing is requested or written while it stays there.
       await jump(page, 0)
       await page.evaluate(() => window.__t.frames(10))
@@ -603,6 +606,11 @@ const CHECKS = {
           'progress: --step-p is monotonic through a step, within 0..1, and exact at rest (the rects, not a smoothed copy)',
           inStep.length > 10 && monotonic && inStep.every((p) => p >= 0 && p <= 1) && inStep.at(-1) > 0.5 && Number(atRest[0]) === atRest[1],
           `${inStep.length} frames in step 2: ${inStep[0]} → ${inStep.at(-1)} · at rest ${atRest[0]} (rects say ${atRest[1]}, step ${atRest[2]}, ${atRest[3]} rAF calls so far)`,
+        ],
+        [
+          'progress: --step-p lives on the graphic; the root and the steps\' text never restyle with it',
+          Number(atRest[0]) > 0 && outside.every((v) => v === '0'),
+          `graphic ${atRest[0]} · root ${outside[0]} · first step ${outside[1]}`,
         ],
         [
           'progress: off-screen, no --step-p writes' + (rafFree ? ' and no requestAnimationFrame' : ''),

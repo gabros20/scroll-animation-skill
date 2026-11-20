@@ -38,8 +38,9 @@
  *      Transparent states (a chart's lines over one axis) keep the default, or both versions would show at once.
  */
 
-/* --step-p (progress: true): the active step's progress, 0..1, written on the root. It inherits, so the graphic's
- * states can read it: calc(var(--step-p) * …). */
+/* --step-p (progress: true): the active step's progress, 0..1, written on [data-scrolly-graphic] (the root without
+ * one). It inherits, so the graphic's states can read it: calc(var(--step-p) * …). Written on the root it would
+ * restyle every step's text each frame (references/performance.md §8); read it inside the graphic. */
 @property --step-p {
   syntax: '<number>';
   inherits: true;

@@ -72,7 +72,8 @@
  * - Focus. Keyboard focus (:focus-visible) inside a step makes it active while it stays on screen, even when the line
  *   didn't move (a step that can't reach the line at the page end, a step visible below the line). A click doesn't:
  *   the reader aimed at what they saw.
- * - progress: true writes --step-p (0..1, exact, never smoothed) on the root: the active step's way from its top at the
+ * - progress: true writes --step-p (0..1, exact, never smoothed) on [data-scrolly-graphic] (the root without one), so
+ *   only what reads it restyles per frame, never the steps' text: the active step's way from its top at the
  *   line to the next step's top there (the last step: its own bottom). One requestAnimationFrame loop, only while the
  *   root is on screen in sticky mode, reading rects (what the reader sees, so ScrollSmoother's moving wrapper reads
  *   right; window.scrollY runs ahead of it). Written only when it changes. Gate your own motion from it under reduced
@@ -108,7 +109,7 @@ export interface ScrollyStepsOptions {
   line?: number
   /** The sticky-mode media query. Default: data-scrolly-query, else DESKTOP_QUERY. */
   query?: string
-  /** Write --step-p on the root while it is on screen. Default false. */
+  /** Write --step-p on the graphic (the root without one) while it is on screen. Default false. */
   progress?: boolean
   /** Mirror the shown state's figcaption into an aria-live region. Default: data-scrolly-live is present. */
   live?: boolean
@@ -212,6 +213,8 @@ export function mountScrollySteps(root: HTMLElement, options: ScrollyStepsOption
 
   let steps: HTMLElement[] = []
   let states: HTMLElement[] = []
+  /** Where --step-p goes: the graphic, which reads it, so the steps' text never restyles with it. */
+  let progressHost: HTMLElement = root
   let mode = 'stacked' as ScrollyMode
   let active = clampIndex(Number(root.getAttribute(ACTIVE)))
   let direction: ScrollyDirection = null
@@ -272,6 +275,7 @@ export function mountScrollySteps(root: HTMLElement, options: ScrollyStepsOption
   function collect() {
     steps = [...root.querySelectorAll<HTMLElement>(STEP)]
     states = [...root.querySelectorAll<HTMLElement>(STATE)]
+    progressHost = graphic() ?? root
     active = Math.min(active, Math.max(0, steps.length - 1))
   }
 
@@ -397,9 +401,9 @@ export function mountScrollySteps(root: HTMLElement, options: ScrollyStepsOption
     const r = step.getBoundingClientRect()
     const end = steps[active + 1]?.getBoundingClientRect().top ?? r.bottom
     const p = Math.round(stepProgress(r.top, end, line) * 1e4) / 1e4
-    if (p === progress && root.style.getPropertyValue('--step-p') !== '') return
+    if (p === progress && progressHost.style.getPropertyValue('--step-p') !== '') return
     progress = p
-    root.style.setProperty('--step-p', String(p))
+    progressHost.style.setProperty('--step-p', String(p))
     options.onProgress?.(p, handle)
   }
 
