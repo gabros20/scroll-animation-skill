@@ -56,9 +56,14 @@ html[data-animation-failsafe] [data-reveal-veil] {
  * refresh pass (which scrolls to measure) and double-smooths anchor jumps. A purely native page may add it itself
  * (references/scroll-authority.md §3). Anchor targets clear a fixed header: set --header-h on :root (on
  * fluid-design, `--header-h: var(--fluid-header-h)`).
+ * The gutter is reserved: a modal's stop() hides the page's overflow (Lenis's clip below, or the native handle's
+ * overflow: hidden), and a classic scrollbar (Windows, Linux, macOS set to always show) would go with it, widening
+ * the page under the modal and firing every <body> ResizeObserver. No visual change on a page that scrolls; one that
+ * never does keeps an empty gutter on those systems (Chromium 94, Firefox 97, Safari 18.2).
  * The Lenis rules below are lenis/dist/lenis.css (v1.3), inlined so a project doesn't need a second import. */
 html {
   scroll-padding-top: var(--header-h, 0px);
+  scrollbar-gutter: stable;
 }
 html.lenis,
 html.lenis body {

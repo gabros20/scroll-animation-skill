@@ -49,6 +49,9 @@ the newest release heading below, and the release tag.
 
 ### Fixed
 
+- `css/animation.css` reserves the scrollbar gutter on `<html>` (`scrollbar-gutter: stable`): a modal's `stop()` hides
+  the page's overflow, and on classic-scrollbar systems the scrollbar went with it, widening the page under the modal
+  and firing the scenes' `<body>` ResizeObserver (a ScrollTrigger refresh during the modal's entrance).
 - Lenis anchors (`createSmoothScroll`) focus the target without a scroll, so a skip link works: the next Tab continues
   from the target, as after a native fragment jump (a section gets `tabindex="-1"` while it holds focus). An Alt-click,
   `target="_blank"` and `download` links are left to the browser. `scroll-authority.md` §4: `pushState` never updates

@@ -11,7 +11,7 @@
   "files": {
     "config.ts": "e65dc072b75ec324",
     "scale.ts": "322b05138c6a47d1",
-    "css/animation.css": "7aa944c76accd5b7",
+    "css/animation.css": "174d9e54fac99bcf",
     "gsap/setup.ts": "fb9601866eb05ace",
     "motion/MotionProvider.tsx": "b3e3b8a7fe746942",
     "smooth/authority.ts": "48a641d3e6f88b8a",

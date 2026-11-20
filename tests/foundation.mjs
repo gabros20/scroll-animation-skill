@@ -303,6 +303,34 @@ const GROUPS = {
           `after destroy() while stopped, native: ${nativeLeft}, Lenis: ${lenisLeft}`,
       ])
     }
+
+    {
+      // stop() hides the page's overflow; without a stable gutter a classic scrollbar goes with it and the page widens
+      // under the modal (and every <body> ResizeObserver fires). Native (reduced motion), then Lenis.
+      const widths = []
+      for (const reducedMotion of ['reduce', 'no-preference']) {
+        const { page } = await t.open('authority.html', { reducedMotion })
+        const read = () => page.evaluate(() => ({ width: html().clientWidth, bar: innerWidth - html().clientWidth }))
+        await page.evaluate(() => {
+          window.html = () => document.documentElement
+          document.body.style.height = '3000px'
+        })
+        const i = await page.evaluate(() => window.__fx.create())
+        const open = await read()
+        await page.evaluate((n) => window.__fx.stop(n), i)
+        await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))))
+        const stopped = await read()
+        const gutter = await page.evaluate(() => getComputedStyle(document.documentElement).scrollbarGutter)
+        await page.evaluate((n) => window.__fx.destroy(n), i)
+        widths.push({ reducedMotion, open, stopped, gutter })
+      }
+      t.check("stop() never widens the page: <html> keeps a stable scrollbar gutter (css/animation.css)", () => [
+        widths.every((w) => w.gutter === 'stable' && w.stopped.width === w.open.width),
+        widths
+          .map((w) => `${w.reducedMotion === 'reduce' ? 'native' : 'lenis'}: gutter ${w.gutter}, width ${w.open.width} → ${w.stopped.width} (scrollbar ${w.open.bar} px)`)
+          .join(' · '),
+      ])
+    }
   },
 
   async smoother(t) {
