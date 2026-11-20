@@ -9,10 +9,10 @@
     "motion"
   ],
   "files": {
-    "config.ts": "e65dc072b75ec324",
+    "config.ts": "d293c08f2ccf5dd6",
     "scale.ts": "322b05138c6a47d1",
     "css/animation.css": "174d9e54fac99bcf",
-    "gsap/setup.ts": "fb9601866eb05ace",
+    "gsap/setup.ts": "a4a589fa32a2b922",
     "motion/MotionProvider.tsx": "b3e3b8a7fe746942",
     "smooth/authority.ts": "48a641d3e6f88b8a",
     "smooth/lenis.ts": "91a2dab10245e9b9",

@@ -11,6 +11,9 @@ the newest release heading below, and the release tag.
 
 ### Changed
 
+- `config.ts` drops three tokens no block reads: `TRIGGERS.atRest` (an alias of `pageEnd`), `CURVES.roll` and
+  `MOTION.roll` (and `EASES.roll` in `gsap/setup.ts`). A project's own copy keeps them until it re-copies; `craft.md`
+  §4 keeps the measured label roll as a number.
 - `scrolly-steps` writes `--step-p` on `[data-scrolly-graphic]` (the root without one), not on the root: the property
   inherits, so on the root every step's text restyled each frame a step progressed. Read it inside the graphic; CSS
   that read it outside the graphic now sees the registered initial `0`.
@@ -36,13 +39,6 @@ the newest release heading below, and the release tag.
   component motion point at the `frontend` skill. New `references/SOURCES.md` records provenance.
 
 ### Added
-
-- SKILL.md **Standalone context check** (before routing): the family's common core (look first,
-  size it, ask at most four owner-only questions with recommended answers, decide as the expert,
-  never block, record in the LEDGER) and four scroll-animation questions (the story in order, assets
-  on hand, how much motion, the weakest device); technical choices are detected or stated as
-  defaults to veto, never counted among the four (`preflight.md` "5. Asking the questions" now says
-  so). Output eval `standalone-context-check`.
 
 - `scrolly-steps`: `data-scrolly-fade="cover"` fades an opaque state in over the held outgoing one;
   a symmetric crossfade measured 0.52/0.48 midway, a quarter of the page showing through.

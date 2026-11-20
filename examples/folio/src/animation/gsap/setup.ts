@@ -22,7 +22,6 @@ import { CURVES, DESKTOP_QUERY, REDUCED_MOTION_QUERY, markAnimationReady, type C
 /** The measured curves as CustomEase names: `ease: EASES.entrance`. */
 export const EASES: Readonly<Record<CurveName, string>> = {
   entrance: 'anim-entrance',
-  roll: 'anim-roll',
   disclosure: 'anim-disclosure',
 }
 

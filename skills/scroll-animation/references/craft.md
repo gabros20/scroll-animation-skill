@@ -78,7 +78,6 @@ entrances only, on the measured long-tail curve, judged by when they read as arr
 |---|---|
 | an entrance: a reveal, a split word or line, a count | 1.3 s move; the fade 0.17 s, starting 0.13 s in (`MOTION.entrance`, `MOTION.entranceFade`) |
 | the load veil's dissolve | 0.13 s, after 0.17 s (`MOTION.veil`) |
-| a label roll | 0.3 s (`MOTION.roll`) |
 | a disclosure opening or closing | 0.24 s (`MOTION.disclosure`) |
 | header ink changing colour | 0.2 s ease-out: a colour usually carries a link's hover too, and longer lags the pointer |
 | anything scroll-driven | no duration: a span of scroll, and the reader sets the pace |
@@ -99,10 +98,10 @@ entrances only, on the measured long-tail curve, judged by when they read as arr
 - **The fade runs on its own clock**, short and late against the move. Each line becomes legible a beat after it
   starts moving, so a multi-line headline reads as staggered. Fade over the full 1.3 s instead and every line is
   legible before its move reads, and the stagger disappears.
-- `CURVES.roll` (`[0, 0, 0.58, 1]`, 17 samples, 0.48 px error) and `CURVES.disclosure` (`[0.23, 1, 0.32, 1]`, a strong
-  ease-out that doesn't creep at the end) cover the rest. Stylesheets write the `cubic-bezier()` literal (script builds
-  it with `cubicBezier(name)`), GSAP takes `EASES.entrance` (a custom ease `setupGsap()` registers) and Motion the
-  arrays.
+- `CURVES.disclosure` (`[0.23, 1, 0.32, 1]`, a strong ease-out that doesn't creep at the end) covers the rest.
+  Stylesheets write the `cubic-bezier()` literal (script builds it with `cubicBezier(name)`), GSAP takes
+  `EASES.entrance` (a custom ease `setupGsap()` registers) and Motion the arrays. A label roll was measured too (0.3 s
+  on `[0, 0, 0.58, 1]`, 17 samples, 0.48 px error); no block uses it, so `config.ts` doesn't carry it.
 
 | The motion | Ease |
 |---|---|

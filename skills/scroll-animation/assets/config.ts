@@ -60,7 +60,6 @@ export const TRIGGERS = {
   reveal: '0px 0px -20% 0px',
   /** The page's last group, or any group that comes to rest below the reveal line: an inset line would never be crossed. */
   pageEnd: '0px',
-  atRest: '0px',
 } as const
 
 /**
@@ -70,8 +69,6 @@ export const TRIGGERS = {
 export const CURVES = {
   /** The entrance movement: a first-order exponential approach, no overshoot (29 samples, RMSE 0.0017). */
   entrance: [0.15, 0.6, 0.2, 1],
-  /** A label roll (17 samples, RMS 0.48 px). */
-  roll: [0, 0, 0.58, 1],
   /** A disclosure opening or closing: a strong ease-out that doesn't creep at the end. */
   disclosure: [0.23, 1, 0.32, 1],
 } as const satisfies Record<string, readonly [number, number, number, number]>
@@ -83,7 +80,6 @@ export const MOTION = {
   entrance: { duration: 1.3, curve: 'entrance' },
   entranceFade: { duration: 0.17, delay: 0.13 },
   veil: { duration: 0.13, delay: 0.17 },
-  roll: { duration: 0.3, curve: 'roll' },
   disclosure: { duration: 0.24, curve: 'disclosure' },
   /** A route change: the shared-element morph and the directional slide (view-transitions.css). The root crossfade
    *  stays on `disclosure`; a morph travels further than a disclosure opens, so it gets longer on the same curve. */
