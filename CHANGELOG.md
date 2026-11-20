@@ -40,6 +40,16 @@ the newest release heading below, and the release tag.
 
 ### Added
 
+- `npm run generate:check` also checks the examples: every copy an example's `.scroll-animation.lock.json` records
+  equals its asset and the lock's hash, so a block change that wasn't re-copied with `scroll-animation add`, or a
+  hand edit, fails it.
+- SKILL.md **Standalone context check** (before routing): the family's common core (look first,
+  size it, ask at most four owner-only questions with recommended answers, decide as the expert,
+  never block, record in the LEDGER) and four scroll-animation questions (the story in order, assets
+  on hand, how much motion, the weakest device); technical choices are detected or stated as
+  defaults to veto, never counted among the four (`preflight.md` "5. Asking the questions" now says
+  so). Output eval `standalone-context-check`.
+
 - `scrolly-steps`: `data-scrolly-fade="cover"` fades an opaque state in over the held outgoing one;
   a symmetric crossfade measured 0.52/0.48 midway, a quarter of the page showing through.
 - `verify-motion.mjs`: `--channel` (a branded Chromium; Playwright's own before 1.57 decodes no
