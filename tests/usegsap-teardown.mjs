@@ -30,6 +30,8 @@ import { fileURLToPath } from 'node:url'
 import { chromium, firefox, webkit } from 'playwright'
 import { build, preview } from 'vite'
 
+import { hold as wait, isFaviconMiss, launch } from './lib/harness.mjs'
+
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(testsDir, '..')
 const fixtureRoot = join(testsDir, 'fixtures', 'usegsap-teardown')
@@ -144,7 +146,6 @@ async function serve() {
 
 // ── page helpers ────────────────────────────────────────────────────────
 
-const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 const t = (page, name, ...args) => page.evaluate(([n, a]) => window.__t[n](...a), [name, args])
 const frames = (page, n = 2) =>
   page.evaluate(
@@ -157,6 +158,7 @@ const frames = (page, n = 2) =>
     n,
   )
 async function settle(page, ms = SETTLE_MS) {
+  // fixed-wait: unconverted: the suite's settle before each teardown read
   await wait(ms)
   await frames(page)
 }
@@ -168,6 +170,7 @@ async function until(page, fn, arg, timeout = 5000) {
   while (Date.now() - t0 < timeout) {
     value = await page.evaluate(fn, arg)
     if (value?.ok) return { ...value, ms: Date.now() - t0 }
+    // fixed-wait: the poll interval of a condition loop, not a guess
     await wait(60)
   }
   return { ...value, ms: null }
@@ -219,6 +222,7 @@ const CASES = {
   reveal: {
     async exercise(page) {
       await topAt(page, 'ga', 0.5)
+      // fixed-wait: lands the teardown with entrances in flight (the timing is the subject)
       await wait(150) // entrances in flight
     },
     async works(page) {
@@ -234,6 +238,7 @@ const CASES = {
   'split-reveal': {
     async exercise(page) {
       await topAt(page, 's1', 0.5)
+      // fixed-wait: lands the teardown with the split's entrance in flight (the timing is the subject)
       await wait(150)
     },
     async works(page) {
@@ -248,6 +253,7 @@ const CASES = {
   'pinned-scene': {
     async exercise(page) {
       await rangeAt(page, 'scene', 0.55)
+      // fixed-wait: lands the teardown mid-scene (the timing is the subject)
       await wait(100)
     },
     works: (page) => sceneWorks(page, 'scene'),
@@ -255,6 +261,7 @@ const CASES = {
   'horizontal-rail': {
     async exercise(page) {
       await rangeAt(page, 'scene', 0.5)
+      // fixed-wait: lands the teardown mid-rail (the timing is the subject)
       await wait(100)
     },
     async works(page) {
@@ -269,8 +276,10 @@ const CASES = {
   'scrub-video': {
     async exercise(page) {
       await rangeAt(page, 'scene', 0.1)
+      // fixed-wait: lands the source set and the head loop running or handing over (the timing is the subject)
       await wait(400) // the source set, the head loop running or handing over
       await rangeAt(page, 'scene', 0.5)
+      // fixed-wait: lands the teardown mid-scrub (the timing is the subject)
       await wait(100)
     },
     async works(page) {
@@ -282,6 +291,7 @@ const CASES = {
   'frame-sequence': {
     async exercise(page) {
       await rangeAt(page, 'range', 0.5)
+      // fixed-wait: lands the teardown with decodes in flight (the timing is the subject)
       await wait(300)
     },
     async works(page) {
@@ -310,8 +320,10 @@ const CASES = {
   parallax: {
     async exercise(page) {
       await topAt(page, 'l1', 0.6)
+      // fixed-wait: lands the next scroll part-way through the parallax (the timing is the subject)
       await wait(50)
       await topAt(page, 'l1', 0.2)
+      // fixed-wait: lands the teardown with the 0.5 s catch-up in flight (the timing is the subject)
       await wait(60) // the 0.5 s catch-up in flight
     },
     async works(page) {
@@ -329,6 +341,7 @@ const CASES = {
   'colour-track': {
     async exercise(page) {
       await topAt(page, 'yellow', 0.5)
+      // fixed-wait: lands the teardown mid-track (the timing is the subject)
       await wait(80)
     },
     async works(page) {
@@ -343,6 +356,7 @@ const CASES = {
   'draw-on-scroll': {
     async exercise(page) {
       await topAt(page, 'wave', 0.6)
+      // fixed-wait: lands the teardown mid-draw (the timing is the subject)
       await wait(80)
     },
     async works(page) {
@@ -360,6 +374,7 @@ const CASES = {
         await page.evaluate(() => window.scrollBy({ top: 40, behavior: 'instant' }))
         await frames(page, 1)
       }
+      // fixed-wait: lands the teardown with the speed's quickTo in flight (the timing is the subject)
       await wait(50) // the speed's quickTo in flight
     },
     async works(page) {
@@ -370,6 +385,7 @@ const CASES = {
         return tr === 'none' ? 0 : new DOMMatrix(tr).m41
       }
       const a = await page.evaluate(offset)
+      // fixed-wait: motion over 500 ms is the subject (the marquee's track moving)
       await wait(500)
       const b = await page.evaluate(offset)
       return [Math.abs(b - a) > 5, `offset ${a.toFixed(1)} → ${b.toFixed(1)} in 0.5 s`]
@@ -380,6 +396,7 @@ const CASES = {
       const c = await centreOf(page, 'item-field')
       await page.mouse.move(c.x, c.y)
       await page.mouse.move(c.x + 8, c.y + 2)
+      // fixed-wait: lands the teardown with the follow in flight (the timing is the subject)
       await wait(80) // the follow in flight
     },
     async works(page) {
@@ -399,10 +416,12 @@ const CASES = {
       await scrollTop(page, 0)
       await page.mouse.move(640, 400)
       await page.mouse.wheel(0, 120)
+      // fixed-wait: lands the teardown with a step in flight (the timing is the subject)
       await wait(150) // a step in flight
     },
     async works(page) {
       await scrollTop(page, 0)
+      // fixed-wait: the step's gesture cooldown is the subject: the next wheel comes after it
       await wait(300)
       await page.mouse.move(640, 400)
       await page.mouse.wheel(0, 120)
@@ -416,6 +435,7 @@ const CASES = {
   'scroll-well': {
     async exercise(page) {
       await topAt(page, 'well', 0.35)
+      // fixed-wait: lands the teardown mid-pull (the timing is the subject)
       await wait(120) // pulling
     },
     async works(page) {
@@ -432,6 +452,7 @@ const CASES = {
     async exercise(page) {
       await scrollTop(page, 0)
       await page.click('#open')
+      // fixed-wait: lands the teardown mid-flight (the timing is the subject)
       await wait(120) // mid-flight
     },
     async works(page) {
@@ -489,7 +510,7 @@ async function runBlock(browser, origin, block, strict) {
   const page = await context.newPage()
   const errors = []
   page.on('pageerror', (err) => errors.push(err.message.split('\n')[0]))
-  page.on('console', (msg) => msg.type() === 'error' && errors.push(`console: ${msg.text().split('\n')[0]}`))
+  page.on('console', (msg) => msg.type() === 'error' && !isFaviconMiss(msg) && errors.push(`console: ${msg.text().split('\n')[0]}`))
   const c = CASES[block]
   const notes = { unmount: [], activity: [], remount: [] }
   const fail = (mode, what) => notes[mode].push(what)
@@ -604,7 +625,7 @@ async function main() {
   for (const browserName of args.browsers) {
     const blocks = (args.blocks ?? BLOCKS).filter((b) => browserName === 'chromium' || EVERY_ENGINE.includes(b))
     if (!blocks.length) continue
-    browserInUse = await BROWSERS[browserName].launch()
+    browserInUse = await launch(BROWSERS[browserName])
     const [inOrder, seen] = await measureOrder(browserInUse, origin)
     console.log(`${inOrder ? 'PASS' : 'FAIL'}  useGSAP order · ${browserName}  ${seen}${inOrder ? '' : ` (expected ${ORDER})`}`)
     if (!inOrder) failures++

@@ -13,18 +13,21 @@
 // Run `pnpm build` first. Starts `next start` on a free port and always stops it.
 //
 //   node scripts/check-authority.mjs [--browsers chromium,webkit]
+//
+// No navigation leaves a page while one of its <Link> prefetches (Next's RSC requests, `?_rsc=`) is in flight: a
+// cancelled prefetch is reported by WebKit as an uncaught "access control checks" error, which was this check's flake.
+// Waits are the repository's harness (tests/lib/harness.mjs): conditions, not sleeps; HARNESS_CHROME applies.
 
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium, webkit } from "playwright";
+import { hold, launch, settle } from "../../../tests/lib/harness.mjs";
 import { startServer, stopServer } from "./lib/next-server.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINES = { chromium, webkit };
 const VIEWPORT = { width: 1280, height: 800 };
-
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function parseArgs(argv) {
   const out = { browsers: Object.keys(ENGINES) };
@@ -68,7 +71,8 @@ const show = (s) => `${s.path}: stamp=${s.stamp} (${s.stamps} stamped) html.leni
 const isLenis = (s) => s.stamp === "lenis" && s.stamps === 1 && s.lenisClass && s.lenis === 1;
 const isNative = (s) => s.stamp === "native" && s.stamps === 1 && !s.lenisClass && s.lenis === 0;
 
-/** Waits (up to 10 s) for `path` to be showing with `stamp` on <html>, then reads the state either way. */
+/** Waits (up to 10 s) for `path` to be showing with `stamp` on <html>, and for the stamp and the live Lenis count to
+ * hold for 3 frames, then reads the state either way. */
 async function settleOn(page, path, stamp) {
   await page
     .waitForFunction(
@@ -77,8 +81,39 @@ async function settleOn(page, path, stamp) {
       { timeout: 10000 },
     )
     .catch(() => {});
-  await sleep(200);
+  await settle(page, () => [document.documentElement.dataset.scrollAuthority, document.documentElement.classList.contains("lenis"), window.__liveLenis], {
+    min: 2,
+  });
   return readState(page);
+}
+
+/**
+ * Counts the page's RSC requests (`?_rsc=`, a <Link> prefetch or a client navigation's payload) in flight. `quiet()`
+ * resolves once none has been in flight for 30 frames in a row (a prefetch starts a few frames after a link scrolls
+ * into view), or after 10 s: call it before anything that leaves the page.
+ */
+function rscRequests(page) {
+  const inFlight = new Set();
+  const isRsc = (request) => {
+    try {
+      return new URL(request.url()).searchParams.has("_rsc");
+    } catch {
+      return false;
+    }
+  };
+  page.on("request", (request) => isRsc(request) && inFlight.add(request));
+  page.on("requestfinished", (request) => inFlight.delete(request));
+  page.on("requestfailed", (request) => inFlight.delete(request));
+  return {
+    async quiet() {
+      const deadline = Date.now() + 10000;
+      let still = 0;
+      while (still < 30 && Date.now() < deadline) {
+        await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+        still = inFlight.size === 0 ? still + 1 : 0;
+      }
+    },
+  };
 }
 
 /** scrollY once it has held still for 30 frames. */
@@ -103,7 +138,8 @@ async function wheel(page, notches, delta = 100) {
   await page.mouse.move(VIEWPORT.width / 2, VIEWPORT.height / 2);
   for (let i = 0; i < notches; i++) {
     await page.mouse.wheel(0, delta);
-    await sleep(40);
+    // fixed-wait: wheel notches paced like a hand
+    await hold(40);
   }
 }
 
@@ -114,6 +150,7 @@ async function checkBrowser(browser, base, line) {
   await context.addInitScript(countLenis);
   const problems = [];
   const page = await context.newPage();
+  const rsc = rscRequests(page);
   page.on("pageerror", (e) => problems.push(`error: ${e.message}`));
   page.on("console", (m) => {
     if (m.text().includes("scroll authority")) problems.push(`${m.type()}: ${m.text()}`);
@@ -124,15 +161,19 @@ async function checkBrowser(browser, base, line) {
     const home = await settleOn(page, "/", "lenis");
     line(isLenis(home), "/ stamps lenis and runs one Lenis", show(home));
 
+    await rsc.quiet();
     await page.goto(`${base}/journal`);
     const journal = await settleOn(page, "/journal", "native");
     line(isNative(journal), "/journal stamps native and runs no Lenis", show(journal));
 
+    await rsc.quiet();
     await page.goto(`${base}/`);
     await settleOn(page, "/", "lenis");
     await page.evaluate(() => (window.__sameDocument = true));
+    await rsc.quiet();
     await page.click('header nav a[href="/journal"]');
     const there = await settleOn(page, "/journal", "native");
+    await rsc.quiet();
     await page.click('header a[href="/"]');
     const back = await settleOn(page, "/", "lenis");
     line(
@@ -141,10 +182,12 @@ async function checkBrowser(browser, base, line) {
       `${show(there)} · ${show(back)}${there.marker && back.marker ? "" : " · a full page load happened, not a client navigation"}`,
     );
 
+    await rsc.quiet();
     await page.goto(`${base}/`);
     await settleOn(page, "/", "lenis");
     await wheel(page, 8);
     const before = await restingY(page);
+    await rsc.quiet();
     await page.reload();
     const reloaded = await settleOn(page, "/", "lenis");
     const after = await restingY(page);
@@ -184,7 +227,7 @@ async function main() {
   try {
     server = await startServer(root);
     for (const name of args.browsers) {
-      browser = await ENGINES[name].launch();
+      browser = await launch(ENGINES[name]);
       await checkBrowser(browser, server.base, (ok, what, detail) => {
         if (!ok) failures++;
         console.log(`${ok ? "PASS" : "FAIL"}  ${name.padEnd(8)}  ${what}${detail ? `  (${detail})` : ""}`);

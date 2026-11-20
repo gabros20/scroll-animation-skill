@@ -19,6 +19,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { chromium, firefox, webkit } from 'playwright'
 import { build, preview } from 'vite'
 
+import { hold, isFaviconMiss, launch, settle } from './lib/harness.mjs'
+
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const fixtureRoot = join(testsDir, 'fixtures', 'scrolly-steps')
 const outDir = join(testsDir, '.scratch', 'scrolly-steps-dist')
@@ -342,7 +344,13 @@ function instrument({ scrollEvents, headerH }) {
 
 // ── helpers ─────────────────────────────────────────────────────────────
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+/** Waits for the page on screen to come to rest (an authority easing, a smoother's content catching up): the scroll
+ * position, step 0's top, the active step and the step on screen, unchanged for 10 frames. Resolves with that reading. */
+const rest = (page, timeout = 8000) =>
+  settle(page, () => ({ y: Math.round(scrollY), top: window.__t.stepTop(0), active: window.__t.active(), expected: window.__t.expected() }), {
+    frames: 10,
+    timeout,
+  })
 
 /** Polls `fn` in the page until it returns truthy; resolves with the elapsed ms, or null on timeout. */
 async function until(page, fn, arg, timeout = SETTLE_MS) {
@@ -389,7 +397,8 @@ async function wheel(page, dy, count, pause = 45) {
   await page.mouse.move(VIEWPORT.width / 4, VIEWPORT.height / 2)
   for (let i = 0; i < count; i++) {
     await page.mouse.wheel(0, dy)
-    await sleep(pause)
+    // fixed-wait: wheel notches paced like a hand
+    await hold(pause)
   }
 }
 
@@ -461,9 +470,9 @@ const CHECKS = {
         for (const [label, i, offset, want] of list) {
           await jump(page, await lineAt(page, i, offset))
           const [landed, active] = await activeBecomes(page, want)
-          // The crossfade's length, and a margin: Firefox's headless frames don't run at 60 Hz.
-          await sleep(MOTION.disclosure.duration * 1000 + 150)
-          const g = await page.evaluate(() => window.__t.graphic())
+          // Until the crossfade is over: the one state shown is the one state visible, for 3 frames in a row.
+          const crossfaded = mode === 'sticky' ? (g) => g.visible.length === 1 && g.shown.length === 1 && g.visible[0] === g.shown[0] : undefined
+          const g = (await settle(page, () => window.__t.graphic(), { when: crossfaded, timeout: MOTION.disclosure.duration * 1000 + 3000 })).value
           const hook = t.page === 'motion' ? await page.evaluate(() => window.__t.hook()) : null
           const stateOk = g.shown.length === 1 && g.shown[0] === shows(want) && g.hiddenOk && g.visible.join() === shows(want)
           const stepsOk = g.stepStates.every((s, n) => s === (n < want ? 'before' : n > want ? 'after' : 'active'))
@@ -488,10 +497,9 @@ const CHECKS = {
         window.__t.resetSpy()
       })
       await wheel(page, 100, 45)
-      await sleep(1500)
-      const bottom = await page.evaluate(() => window.__t.active())
+      const bottom = (await rest(page)).value.active
       await wheel(page, -100, 45)
-      await sleep(1500)
+      await rest(page)
       const events = await page.evaluate(() => window.__t.events())
       const hookSteps = t.page === 'motion' ? await page.evaluate(() => window.__t.hookSteps()) : events
       const counters = await page.evaluate(() => window.__t.counters())
@@ -538,11 +546,12 @@ const CHECKS = {
       await jump(page, await lineAt(page, 3, 100))
       await activeBecomes(page, 3)
       // WebKit saves the position it restores a moment after the scroll.
-      await sleep(500)
+      // fixed-wait: the browser's own save of the restore position, which the page can't observe
+      await hold(500)
       await page.reload({ waitUntil: 'load' })
       await page.waitForFunction(() => !!window.__fx && window.__t.mode() !== null, null, { timeout: 10000 })
       const [reloaded] = await activeBecomes(page, 3)
-      await page.waitForTimeout(600)
+      await rest(page)
       const r = await page.evaluate(() => ({ active: window.__t.active(), expected: window.__t.expected(), y: Math.round(scrollY), events: window.__t.events() }))
       out.push([
         `a reload mid-section: ${lands ? 'step 3 again, ' : ''}the step on screen, reported as a landing (previous null: seek, don\'t animate), never the steps before it`,
@@ -551,7 +560,8 @@ const CHECKS = {
       ])
       const { page: p2 } = await t.open('#step-4')
       const [anchored] = await activeBecomes(p2, 4)
-      await p2.waitForTimeout(600)
+      // At rest, not after a guess: ScrollSmoother's landing comes after its first refresh, and its content then eases.
+      await rest(p2)
       const a = await p2.evaluate(() => ({ active: window.__t.active(), expected: window.__t.expected(), y: Math.round(scrollY), events: window.__t.events() }))
       // Every authority lands a hash: ScrollSmoother's is createSmoother's own landing after its first refresh, so the
       // check is the same strict one on every page.
@@ -575,7 +585,7 @@ const CHECKS = {
       await activeBecomes(page, 1)
       await page.evaluate(() => window.__t.sample())
       await wheel(page, 40, 22, 60)
-      await sleep(1200)
+      await rest(page)
       const rows = await page.evaluate(() => window.__t.stopSample())
       // At rest: Lenis can still be easing 1.2 s after the last wheel on a busy machine.
       await until(
@@ -598,7 +608,8 @@ const CHECKS = {
       await jump(page, 0)
       await page.evaluate(() => window.__t.frames(10))
       await page.evaluate(() => window.__t.resetSpy())
-      await sleep(600)
+      // fixed-wait: an observation window: nothing may be requested or written while the section stays off-screen
+      await hold(600)
       const off = await page.evaluate(() => window.__t.counters())
       const rafFree = t.page !== 'lenis'
       return [
@@ -816,6 +827,7 @@ const CHECKS = {
           new Promise((resolve) => {
             if (!PerformanceObserver.supportedEntryTypes?.includes('layout-shift')) return resolve(null)
             new PerformanceObserver((list) => resolve(list.getEntries().reduce((s, e) => s + e.value, 0))).observe({ type: 'layout-shift', buffered: true })
+            // fixed-wait: an observation window for a layout shift the buffered entries don't hold yet
             setTimeout(() => resolve(0), 300)
           }),
       )
@@ -999,7 +1011,8 @@ const CHECKS = {
       await jump(page, await lineAt(page, 2, 100))
       await activeBecomes(page, 2)
       const mid = await time()
-      await sleep(900)
+      // The tween to the step's label, over: the timeline's time unchanged for 3 frames.
+      await settle(page, () => window.__gsap.tl?.time() ?? -1)
       const t2 = await time()
       const log = await page.evaluate(() => ({ seeks: window.__gsap.seeks.slice(), tweens: window.__gsap.tweens.slice() }))
       out.push([
@@ -1019,11 +1032,12 @@ const CHECKS = {
         phone === null && back === 2,
         `phone timeline ${phone === null ? 'reverted' : 'still there'} · back: ${back}`,
       ])
-      await sleep(500)
+      // fixed-wait: the browser's own save of the restore position, which the page can't observe
+      await hold(500)
       await page.reload({ waitUntil: 'load' })
       await page.waitForFunction(() => !!window.__gsap?.tl, null, { timeout: 10000 })
       await activeBecomes(page, 2)
-      await sleep(300)
+      await settle(page, () => window.__gsap.tl?.time() ?? -1)
       const reloaded = await page.evaluate(() => ({ time: window.__gsap.tl.time(), seeks: window.__gsap.seeks.slice(), tweens: window.__gsap.tweens.slice() }))
       out.push([
         'GSAP: a reload mid-section lands the timeline on the step (seeked, never tweened from the start)',
@@ -1080,7 +1094,7 @@ async function main() {
   }
 
   for (const browserName of args.browsers) {
-    open.browser = await BROWSERS[browserName].launch()
+    open.browser = await launch(BROWSERS[browserName])
     for (const pageName of args.pages) {
       const errors = []
       for (const [id, check] of Object.entries(CHECKS)) {
@@ -1096,12 +1110,13 @@ async function main() {
             await context.addInitScript(instrument, { scrollEvents: SCROLL_EVENTS, headerH: HEADER_H })
             const page = await context.newPage()
             page.on('pageerror', (err) => errors.push(`${id}: ${err.message.split('\n')[0]}`))
-            page.on('console', (msg) => msg.type() === 'error' && errors.push(`${id}: console: ${msg.text().split('\n')[0]}`))
+            page.on('console', (msg) => msg.type() === 'error' && !isFaviconMiss(msg) && errors.push(`${id}: console: ${msg.text().split('\n')[0]}`))
             await page.goto(`${base}/${pageName}.html${suffix}`, { waitUntil: 'load' })
             if (javaScriptEnabled) {
               await page.waitForFunction((r) => !!window.__fx && (!r || window.__t.mode() !== null), ready, { timeout: 10000 })
               // Let the load-time refreshes (ScrollSmoother's, Lenis's first frames) finish before scrolling.
-              await page.waitForTimeout(300)
+              // fixed-wait: the load-time refreshes are debounced inside the authority, with no signal the page can read
+              await hold(300)
             }
             return { page, context }
           },

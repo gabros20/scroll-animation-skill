@@ -30,6 +30,8 @@ import { fileURLToPath } from 'node:url'
 import { chromium, firefox, webkit } from 'playwright'
 import { build, preview } from 'vite'
 
+import { hold, isFaviconMiss, launch } from './lib/harness.mjs'
+
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const fixtureRoot = join(testsDir, 'fixtures', 'scroll-effects')
 const outDir = join(testsDir, '.scratch', 'scroll-effects-dist')
@@ -599,7 +601,8 @@ const CHECKS = {
       const motion = async (page) => {
         await frames(page, 2)
         const s0 = await state(page)
-        await page.waitForTimeout(300)
+        // fixed-wait: motion over 300 ms is the subject (running or not, moving or not)
+        await hold(300)
         const s1 = await state(page)
         const one = (id) => ({ play: s1[id].anim?.playState ?? 'none', moved: r4(s1[id].shift - s0[id].shift) })
         return { m1: one('m1'), m2: one('m2'), pressed: s1.pressed }
@@ -723,7 +726,8 @@ const CHECKS = {
       {
         const { page } = await t.open()
         const r0 = await read(page)
-        await page.waitForTimeout(300)
+        // fixed-wait: motion over 300 ms is the subject (the marquee's track moving)
+        await hold(300)
         const r1 = await read(page)
         const shift = (r) => r.probes['m1-track'].rect.right - r.probes.m1.rect.right
         const moved = r4(shift(r1) - shift(r0))
@@ -791,7 +795,8 @@ const CHECKS = {
       const { page } = await t.open(t.page, { reducedMotion: 'reduce' })
       const geo = await geometry(page)
       const rows = await sweep(page, [0, 1 / 3, 2 / 3, 1].map((f) => Math.round(f * geo.scrollMax)))
-      await page.waitForTimeout(500)
+      // fixed-wait: an observation window: under reduced motion no effect may start running
+      await hold(500)
       const all = await page.evaluate(() => window.__fx.all())
       const [ok, first] = allAtRest(rows, Object.keys(rows[0].probes))
       // a stack's cards keep sticking: sticky is layout, not motion
@@ -815,7 +820,8 @@ const CHECKS = {
       await page.evaluate((y) => window.__fx.scrollTo(y), Math.round(geo.scrollMax / 5))
       const before = (await page.evaluate(() => window.__fx.all())).length
       await page.emulateMedia({ reducedMotion: 'reduce' })
-      await page.waitForTimeout(300)
+      // fixed-wait: unconverted: the media switch reaching every effect
+      await hold(300)
       await frames(page)
       const rows = [{ S: await page.evaluate(() => document.scrollingElement.scrollTop), probes: (await read(page)).probes }]
       const all = await page.evaluate(() => window.__fx.all())
@@ -883,13 +889,13 @@ async function main() {
 
   for (const browserName of args.browsers) {
     const { type, prefs } = BROWSERS[browserName]
-    open.browser = await type.launch(prefs ? { firefoxUserPrefs: prefs } : {})
+    open.browser = await launch(type, prefs ? { firefoxUserPrefs: prefs } : {})
     const newPage = async (pageName, reducedMotion, contexts, onError) => {
       const context = await open.browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion })
       contexts.push(context)
       const page = await context.newPage()
       page.on('pageerror', (err) => onError(err.message.split('\n')[0]))
-      page.on('console', (msg) => msg.type() === 'error' && onError(`console: ${msg.text().split('\n')[0]}`))
+      page.on('console', (msg) => msg.type() === 'error' && !isFaviconMiss(msg) && onError(`console: ${msg.text().split('\n')[0]}`))
       await page.goto(`${base}/${pageName}.html`, { waitUntil: 'load' })
       await page.waitForFunction(() => !!window.__fx)
       if (pageName === 'smoother') await page.waitForFunction(() => document.documentElement.dataset.scrollAuthority === 'smoother')

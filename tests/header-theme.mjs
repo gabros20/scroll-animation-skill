@@ -21,6 +21,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { chromium, firefox, webkit } from 'playwright'
 import { build, preview } from 'vite'
 
+import { hold as sleep, isFaviconMiss, launch, settle } from './lib/harness.mjs'
+
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const fixtureRoot = join(testsDir, 'fixtures', 'header-theme')
 const outDir = join(testsDir, '.scratch', 'header-theme-dist')
@@ -343,8 +345,6 @@ function instrument(scrollEvents) {
 
 // ── helpers ─────────────────────────────────────────────────────────────
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
-
 /** Polls `fn` in the page until it returns truthy; resolves with the elapsed ms, or null on timeout. */
 async function until(page, fn, arg, timeout = SETTLE_MS) {
   const t0 = Date.now()
@@ -420,16 +420,20 @@ async function wheelThrough(page, step = 320, count = 26) {
     window.__t.resetSpy()
     window.__t.sample()
   })
+  // At rest: the content on screen (a smoother's eases behind scrollY) and the scroll position, unchanged for 10 frames.
+  const rest = () => settle(page, () => [window.__t.visual(), window.__t.scrollY()], { frames: 10, timeout: 6000 })
   for (let i = 0; i < count; i++) {
     await page.mouse.wheel(0, step)
+    // fixed-wait: wheel notches paced like a hand
     await sleep(45)
   }
-  await sleep(1600)
+  await rest()
   for (let i = 0; i < count; i++) {
     await page.mouse.wheel(0, -step)
+    // fixed-wait: wheel notches paced like a hand
     await sleep(45)
   }
-  await sleep(1600)
+  await rest()
   return page.evaluate(() => window.__t.stopSample())
 }
 
@@ -957,7 +961,7 @@ async function main() {
   }
 
   for (const browserName of args.browsers) {
-    open.browser = await BROWSERS[browserName].launch()
+    open.browser = await launch(BROWSERS[browserName])
     for (const pageName of args.pages) {
       const errors = []
       for (const [id, check] of Object.entries(CHECKS)) {
@@ -973,11 +977,12 @@ async function main() {
             await context.addInitScript(instrument, SCROLL_EVENTS)
             const page = await context.newPage()
             page.on('pageerror', (err) => errors.push(`${id}: ${err.message.split('\n')[0]}`))
-            page.on('console', (msg) => msg.type() === 'error' && errors.push(`${id}: console: ${msg.text().split('\n')[0]}`))
+            page.on('console', (msg) => msg.type() === 'error' && !isFaviconMiss(msg) && errors.push(`${id}: console: ${msg.text().split('\n')[0]}`))
             await page.goto(`${base}/${pageName}.html${query}`, { waitUntil: 'load' })
             await page.waitForFunction(() => !!window.__fx && window.__t.ink() !== null, null, { timeout: 10000 })
             // Let the load-time refreshes (ScrollSmoother's, Lenis's first frames) finish before scrolling.
-            await page.waitForTimeout(300)
+            // fixed-wait: the load-time refreshes are debounced inside the authority, with no signal the page can read
+            await sleep(300)
             return { page }
           },
         }

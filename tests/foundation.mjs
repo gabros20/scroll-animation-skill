@@ -33,6 +33,8 @@ import { fileURLToPath } from 'node:url'
 import { chromium, webkit } from 'playwright'
 import { build, preview } from 'vite'
 
+import { hold as sleep, launch, seekAnimations, settle as settleRead } from './lib/harness.mjs'
+
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const fixtures = join(testsDir, 'foundation')
 const outDir = join(testsDir, '.scratch', 'foundation-dist')
@@ -62,7 +64,6 @@ function parseArgs(argv) {
 
 // ── shared helpers ──────────────────────────────────────────────────────
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 const ms = (s) => `${Math.round(s * 1000)} ms`
 
 /** A mouse-wheel gesture: `steps` notches of `delta` px, `gap` ms apart (the S4 input). */
@@ -70,6 +71,7 @@ async function wheel(page, { steps, delta, gap = 40 }) {
   await page.mouse.move(300, 300)
   for (let i = 0; i < steps; i++) {
     await page.mouse.wheel(0, delta)
+    // fixed-wait: wheel notches paced like a hand (the S4 input)
     await sleep(gap)
   }
 }
@@ -80,12 +82,13 @@ async function recordWheelPass(page) {
     window.__fx.handle.scrollTo(0, { immediate: true })
     window.scrollTo(0, 0)
   })
-  await sleep(600)
+  const rest = () => settleRead(page, () => window.scrollY, { frames: 10, timeout: 4000 })
+  await rest()
   await page.evaluate(() => window.__fx.rec.start())
   await wheel(page, { steps: 14, delta: 100 })
-  await sleep(1400)
+  await rest()
   await wheel(page, { steps: 7, delta: -100 })
-  await sleep(1400)
+  await rest()
   return page.evaluate(() => window.__fx.rec.stop())
 }
 
@@ -117,7 +120,6 @@ function lagVerdict(lags) {
   return [ok, detail]
 }
 
-const untilPageTime = (page, t) => page.waitForFunction((at) => performance.now() >= at, t, { timeout: t + 15000 })
 const frames = (page, n) =>
   page.evaluate(
     (count) =>
@@ -135,6 +137,7 @@ const GROUPS = {
   async 'gsap-driver'(t) {
     const { page } = await t.open('gsap-driver.html')
     await page.waitForFunction(() => window.__fx)
+    // fixed-wait: unconverted: the driver's first ticks before the recording
     await sleep(500)
     const info = await page.evaluate(() => window.__fx.info())
     const rows = await recordWheelPass(page)
@@ -171,6 +174,7 @@ const GROUPS = {
   async 'motion-driver'(t) {
     const { page } = await t.open('motion-driver.html')
     await page.waitForFunction(() => window.__fx && document.getElementById('raw'))
+    // fixed-wait: unconverted: the driver's first ticks before the recording
     await sleep(500)
     const rows = await recordWheelPass(page)
     const lags = []
@@ -252,15 +256,12 @@ const GROUPS = {
       const i = await page.evaluate(() => window.__fx.create())
       const lenis = await state(page)
       await page.emulateMedia({ reducedMotion: 'reduce' })
-      await sleep(100)
-      const reduced = await state(page)
+      const reduced = (await settleRead(page, () => window.__fx.state(), { min: 2 })).value
       const same = await page.evaluate((n) => window.__fx.isCurrent(n), i)
       await page.evaluate((n) => window.__fx.scrollTo(n, 900), i)
-      await sleep(50)
-      const jumped = await page.evaluate(() => Math.round(window.scrollY))
+      const jumped = (await settleRead(page, () => Math.round(window.scrollY), { min: 2 })).value
       await page.emulateMedia({ reducedMotion: 'no-preference' })
-      await sleep(100)
-      const back = await state(page)
+      const back = (await settleRead(page, () => window.__fx.state(), { min: 2 })).value
       const y = await page.evaluate(() => Math.round(window.scrollY))
       await page.evaluate((n) => window.__fx.destroy(n), i)
       const after = await state(page)
@@ -282,8 +283,7 @@ const GROUPS = {
       const locked = []
       for (const reducedMotion of ['reduce', 'no-preference']) {
         await page.emulateMedia({ reducedMotion })
-        await sleep(100)
-        locked.push((await state(page)).locked)
+        locked.push((await settleRead(page, () => window.__fx.state(), { min: 2 })).value.locked)
       }
       await page.evaluate((n) => window.__fx.start(n), i)
       const started = (await state(page)).locked
@@ -349,14 +349,11 @@ const GROUPS = {
       await settle(page, 1500)
       const smooth = await state(page)
       await page.emulateMedia({ reducedMotion: 'reduce' })
-      await sleep(100)
-      const reduced = await state(page)
+      const reduced = (await settleRead(page, () => window.__fx.state(), { min: 2 })).value
       await page.evaluate(() => window.scrollTo(0, 2100))
-      await sleep(100)
-      const scrolled = await state(page)
+      const scrolled = (await settleRead(page, () => window.__fx.state(), { min: 2 })).value
       await page.evaluate(() => window.__fx.scrollTo(900, false))
-      await sleep(50)
-      const jumped = await state(page)
+      const jumped = (await settleRead(page, () => window.__fx.state(), { min: 2 })).value
       t.check('reduced motion on mid-visit: native mode (wrapper in flow, no effects), the reader stays, triggers track', () => [
         smooth.stamp === 'smoother' && smooth.wrapperFixed && smooth.effects === 1 && smooth.progress === 0.5 &&
           reduced.stamp === 'smoother' && !reduced.wrapperFixed && reduced.effects === 0 && reduced.speedY === 0 &&
@@ -378,6 +375,7 @@ const GROUPS = {
       ])
 
       await page.evaluate(() => window.__fx.grow(500))
+      // fixed-wait: the layout watch's debounced refresh has no signal the page can read
       await sleep(600)
       const grown = await state(page)
       // #track now spans 1400–3200 px: at scrollY 900 the trigger (start 'top bottom' = 800) reads 100 / 2400.
@@ -399,7 +397,7 @@ const GROUPS = {
       // GSAP 3.15's own autoResize this replays the scroll from the top ~0.2 s after creation.
       const { page } = await t.open('smoother.html')
       await page.evaluate(() => window.scrollTo(0, 1500))
-      await sleep(300)
+      await settleRead(page, () => window.scrollY, { frames: 5 })
       await page.evaluate(() => window.__fx.create())
       const drift = await page.evaluate(() => window.__fx.drift(45))
       t.check('created on a page already scrolled: holds the position, no replay from the top', () => [
@@ -412,8 +410,7 @@ const GROUPS = {
       const { page } = await t.open('smoother.html', { reducedMotion: 'reduce' })
       await page.evaluate(() => window.__fx.create())
       await page.evaluate(() => window.scrollTo(0, 1500))
-      await sleep(100)
-      const s = await state(page)
+      const s = (await settleRead(page, () => window.__fx.state(), { min: 2 })).value
       t.check('reduced motion at load: native mode, triggers track', () => [
         s.stamp === 'smoother' && !s.wrapperFixed && s.effects === 0 && s.speedY === 0 && s.contentTop === -1500 &&
           s.progress === 0.5,
@@ -429,13 +426,14 @@ const GROUPS = {
       const wheel = async (ms) => {
         const y0 = await page.evaluate(() => window.scrollY)
         await page.mouse.wheel(0, 400)
+        // fixed-wait: an observation window: a stopped smoother must not move in it
         await sleep(ms)
         return Math.round((await page.evaluate(() => window.scrollY)) - y0)
       }
       const moved = []
       for (const reducedMotion of ['reduce', 'no-preference']) {
         await page.emulateMedia({ reducedMotion })
-        await sleep(100)
+        await settleRead(page, () => window.__fx.state(), { min: 2 })
         moved.push(await wheel(500))
       }
       await page.evaluate(() => window.__fx.start())
@@ -553,17 +551,20 @@ const GROUPS = {
     }
 
     {
+      // The failsafe's 4 s on its own clock: the animations' currentTime, set 1 s short of the delay (they keep running,
+      // so the read a frame later is still well before it) and then to it (the browser fires animationend on its next
+      // frame, as it would at 4 s), so no check waits 4 s of wall time.
       const { page } = await t.open('gate.html')
-      await untilPageTime(page, 3500)
+      const { started } = await read(page)
+      await seekAnimations(page, /^animation-failsafe/, 3000)
+      await frames(page, 2)
       const early = await read(page)
-      // 4.1 s on the failsafe's own clock, which starts with the page's first style pass, so a slow
-      // first paint on a loaded CI runner can't eat the margin.
-      await untilPageTime(page, (early.started ?? 0) + 4100)
+      await seekAnimations(page, /^animation-failsafe/, 4000)
+      await page.waitForFunction(() => 'animationFailsafe' in document.documentElement.dataset, null, { timeout: 2000 }).catch(() => {})
       const fired = await read(page)
-      t.check('(b) no engine: hidden until 4 s, then revealed and html[data-animation-failsafe] latched by ~4.1 s', () => [
-        early.gate === 'on' && hidden(early) && !early.failsafe && early.started !== null && early.started < 1000 &&
-          visible(fired) && fired.failsafe,
-        `${show(early)} · ${show(fired)} · failsafe began at ${early.started} ms, animationend at ` +
+      t.check('(b) no engine: hidden until 4 s, then revealed and html[data-animation-failsafe] latched at 4 s', () => [
+        early.gate === 'on' && hidden(early) && !early.failsafe && started !== null && started < 1000 && visible(fired) && fired.failsafe,
+        `${show(early)} · ${show(fired)} · failsafe began at ${started} ms, sought to 3000 then 4000 ms, animationend at ` +
           `${fired.events.map((e) => Math.round(e.t)).join('/')} ms`,
       ])
       await page.evaluate(() => window.__fx.markAnimationReady())
@@ -576,8 +577,12 @@ const GROUPS = {
     }
 
     {
-      const { page } = await t.open('gate.html?ready=1000')
-      await untilPageTime(page, 4500)
+      // The engine's ready timer on Playwright's clock (fastForward fires it), then the failsafe sought past 4 s.
+      const { page } = await t.open('gate.html?ready=1000', { clock: true })
+      await page.clock.fastForward(1000)
+      await page.waitForFunction(() => 'animationReady' in document.documentElement.dataset, null, { timeout: 2000 }).catch(() => {})
+      await seekAnimations(page, /^animation-failsafe/, 4500)
+      await frames(page, 2)
       const s = await read(page)
       t.check('(d) engine ready at 1 s: the failsafe never fires', () => [
         s.ready && !s.failsafe && hidden(s) && s.events.length === 0,
@@ -681,15 +686,17 @@ async function main() {
   }
 
   for (const name of args.browsers) {
-    open.browser = await ENGINES[name].launch()
+    open.browser = await launch(ENGINES[name])
     for (const group of groups) {
       const contexts = []
       const errors = []
       const t = {
-        async open(path, options = {}) {
+        async open(path, { clock = false, ...options } = {}) {
           const context = await open.browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion: 'no-preference', ...options })
           contexts.push(context)
           const page = await context.newPage()
+          // Playwright's clock, installed before the page loads: time flows until a check moves it.
+          if (clock) await page.clock.install()
           page.on('pageerror', (e) => errors.push(`${path}: ${e.message}`))
           await page.goto(`${base}/${path}`, { waitUntil: 'load' })
           return { page }

@@ -47,6 +47,8 @@ import { fileURLToPath } from 'node:url'
 
 import { chromium, firefox, webkit } from 'playwright'
 
+import { hold as sleep, launch } from './lib/harness.mjs'
+
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const repo = join(testsDir, '..')
 const fixture = join(testsDir, 'fixtures', 'route-hygiene')
@@ -63,7 +65,6 @@ const HEADER_H = 64
 const Y1 = 3000
 const Y2 = 900
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // ── args ────────────────────────────────────────────────────────────────
 
@@ -164,6 +165,7 @@ async function start(app, variant) {
       await stop(child)
       throw new Error(`next start did not answer within 30 s:\n${log}`)
     }
+    // fixed-wait: the poll interval of a condition loop (the server answering), not a guess
     await sleep(200)
   }
 }
@@ -326,6 +328,7 @@ async function settle(page, path) {
     )
     .catch(() => {})
   // ScrollTrigger's queued refresh after a pin (the next frame) and anything a late refresh moves.
+  // fixed-wait: a late refresh is debounced inside GSAP, with no signal the page can read
   await sleep(250)
   return page.evaluate(() => window.__rh.state())
 }
@@ -334,6 +337,7 @@ async function wheel(page, notches, delta = 100) {
   await page.mouse.move(VIEWPORT.width / 2, VIEWPORT.height / 2)
   for (let i = 0; i < notches; i++) {
     await page.mouse.wheel(0, delta)
+    // fixed-wait: wheel notches paced like a hand
     await sleep(40)
   }
 }
@@ -654,7 +658,7 @@ async function main() {
   for (const variant of args.variants) {
     open.server = await start(build(variant), variant)
     for (const browserName of args.browsers) {
-      open.browser = await BROWSERS[browserName].launch()
+      open.browser = await launch(BROWSERS[browserName])
       for (const prefix of args.prefixes) {
         for (const contract of args.contract) {
           const tag = `${variant}${prefix || ''}${contract === 'off' ? ' (no contract)' : ''}`

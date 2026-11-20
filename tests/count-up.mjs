@@ -27,6 +27,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { chromium, firefox, webkit } from 'playwright'
 import { build, preview } from 'vite'
 
+import { hold as sleep, isFaviconMiss, launch, pauseClock, seekAnimations } from './lib/harness.mjs'
+
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const fixtureRoot = join(testsDir, 'fixtures', 'count-up')
 const outDir = join(testsDir, '.scratch', 'count-up-dist')
@@ -271,7 +273,13 @@ function readStatic(ids) {
 
 // ── verdicts ────────────────────────────────────────────────────────────
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+/** On Playwright's clock (an open with `clock: true`): a running count advances exactly `ms` (its frames fire at 16 ms
+ * steps), then time flows again. Mid-count is then a place in the count, not a guess at the wall clock. */
+async function advance(page, ms) {
+  await pauseClock(page)
+  await page.clock.runFor(ms)
+  await page.clock.resume()
+}
 const only = (records, stat, kind) => records.filter((r) => r.stat === stat && (!kind || r.kind === kind))
 
 /** Resolves with the ms until `id` reaches `state`, or null. */
@@ -393,6 +401,7 @@ const CHECKS = {
     const since = await page.evaluate(() => window.__t.now())
     await page.evaluate(() => window.__t.peek('pct', 0.45))
     const low = await page.evaluate(() => window.__t.visible('pct'))
+    // fixed-wait: an observation window: 45% visible must start nothing in it
     await sleep(500)
     const before = await page.evaluate(([s]) => [window.__t.state('pct'), window.__t.records(s).filter((r) => r.stat === 'pct' && r.kind === 'text').length], [since])
     await page.evaluate(() => window.__t.peek('pct', 0.8))
@@ -414,8 +423,10 @@ const CHECKS = {
     const since = await page.evaluate(() => window.__t.now())
     for (const y of [0, 0.5]) {
       await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+      // fixed-wait: an observation window: out of view, a finished count must write nothing
       await sleep(250)
       await page.evaluate((f) => window.__t.center('pct', f), y + 0.25)
+      // fixed-wait: an observation window: back in view, a finished count must not replay
       await sleep(400)
     }
     const later = await page.evaluate((s) => window.__t.records(s).filter((r) => r.stat === 'pct'), since)
@@ -442,13 +453,14 @@ const CHECKS = {
       ])
     }
     {
-      const { page } = await t.open()
+      const { page } = await t.open('', { clock: true })
       await page.evaluate(() => window.__t.center('eur'))
       await untilState(page, 'eur', 'counting')
-      await sleep(350)
+      await advance(page, 350)
       const mid = await page.evaluate(() => window.__t.text('eur'))
       await page.emulateMedia({ reducedMotion: 'reduce' })
       const ms = await untilState(page, 'eur', 'done', 1000)
+      // fixed-wait: an observation window: after landing, the count must write nothing more
       await sleep(400)
       const after = await page.evaluate(() => {
         const records = window.__t.records()
@@ -467,13 +479,16 @@ const CHECKS = {
   },
 
   async failsafe(t) {
-    // Well after the failsafe's 4 s, which counts from the page's first style pass.
-    const { page } = await t.open('?boot=5200')
+    // The failsafe's 4 s on its own clock (the animations' currentTime), then the engine's boot at 5.2 s on
+    // Playwright's: no check waits 5 s of wall time.
+    const { page } = await t.open('?boot=5200', { clock: true })
+    await seekAnimations(page, /^animation-failsafe/, 4000)
     const latched = await page
-      .waitForFunction(() => window.__t.html().failsafe, null, { timeout: 9000 })
+      .waitForFunction(() => window.__t.html().failsafe, null, { timeout: 2000 })
       .then(() => true)
       .catch(() => false)
-    await page.waitForFunction(() => window.__fx?.bootedAt != null, null, { timeout: 15000 })
+    await page.clock.fastForward(5200)
+    await page.waitForFunction(() => window.__fx?.bootedAt != null, null, { timeout: 5000 })
     await page.evaluate(() => window.__t.frames(10))
     for (const spec of STATS) {
       await page.evaluate((id) => window.__t.center(id), spec.id)
@@ -492,11 +507,11 @@ const CHECKS = {
   },
 
   async hidden(t) {
-    const { page } = await t.open()
+    const { page } = await t.open('', { clock: true })
     const want = (id) => finalText(STATS.find((s) => s.id === id), t.engine)
     await page.evaluate(() => window.__t.center('eur'))
     await untilState(page, 'eur', 'counting')
-    await sleep(300)
+    await advance(page, 300)
     const mid = await page.evaluate(() => window.__t.text('eur'))
     // Stamped and hidden in one task: no frame of the count can fall between the two.
     const since = await page.evaluate(() => {
@@ -505,14 +520,17 @@ const CHECKS = {
       return t
     })
     const [state, text] = await page.evaluate(() => [window.__t.state('eur'), window.__t.text('eur')])
+    // fixed-wait: an observation window: the landed count must write nothing more while hidden
     await sleep(300)
     const after = await page.evaluate((s) => window.__t.records(s).filter((r) => r.stat === 'eur' && r.kind === 'text').map((r) => r.value), since)
     // Still hidden: a stat that comes into view now shows its final value and never counts.
     await page.evaluate(() => window.__t.center('fr'))
     const fr = await untilState(page, 'fr', 'done', 1500)
+    // fixed-wait: an observation window: a stat that landed while hidden must not count
     await sleep(300)
     const frWrites = await page.evaluate((s) => window.__t.records(s).filter((r) => r.stat === 'fr' && r.kind === 'text').length, since)
     await page.evaluate(() => window.__t.showTab())
+    // fixed-wait: an observation window: the tab's return must start no count
     await sleep(300)
     const frText = await page.evaluate(() => window.__t.text('fr'))
     return [
@@ -567,11 +585,11 @@ const CHECKS = {
   },
 
   async activity(t) {
-    const { page } = await t.open()
+    const { page } = await t.open('', { clock: true })
     const want = finalText(STATS.find((s) => s.id === 'dec'), t.engine)
     await page.evaluate(() => window.__t.center('dec'))
     await untilState(page, 'dec', 'counting')
-    await sleep(300)
+    await advance(page, 300)
     const mid = await page.evaluate(() => window.__t.text('dec'))
     await page.evaluate(() => window.__fx.hide())
     const ms = await untilState(page, 'dec', 'done', 1000)
@@ -579,6 +597,7 @@ const CHECKS = {
     const since = await page.evaluate(() => window.__t.now())
     await page.evaluate(() => window.__fx.show())
     await page.evaluate(() => window.__t.center('dec'))
+    // fixed-wait: an observation window: shown again, the landed count must not replay
     await sleep(700)
     const later = await page.evaluate((s) => window.__t.records(s).filter((r) => r.stat === 'dec' && r.kind === 'text').length, since)
     const shown = await page.evaluate(() => [window.__t.state('dec'), window.__t.text('dec')])
@@ -645,7 +664,7 @@ async function main() {
   }
 
   for (const browserName of args.browsers) {
-    open.browser = await BROWSERS[browserName].launch()
+    open.browser = await launch(BROWSERS[browserName])
     for (const engine of args.engines) {
       const errors = []
       for (const [id, check] of Object.entries(CHECKS)) {
@@ -654,13 +673,15 @@ async function main() {
         const t = {
           browser: browserName,
           engine,
-          async open(query = '', { reducedMotion = 'no-preference', javaScriptEnabled = true } = {}) {
+          async open(query = '', { reducedMotion = 'no-preference', javaScriptEnabled = true, clock = false } = {}) {
             const context = await open.browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion, javaScriptEnabled })
             contexts.push(context)
             await context.addInitScript(instrument)
             const page = await context.newPage()
+            // Playwright's clock, installed before the page loads: time flows until a check moves it.
+            if (clock) await page.clock.install()
             page.on('pageerror', (err) => errors.push(`${id}: ${err.message.split('\n')[0]}`))
-            page.on('console', (msg) => msg.type() === 'error' && errors.push(`${id}: console: ${msg.text().split('\n')[0]}`))
+            page.on('console', (msg) => msg.type() === 'error' && !isFaviconMiss(msg) && errors.push(`${id}: console: ${msg.text().split('\n')[0]}`))
             await page.goto(`${base}/${engine}.html${query}`, { waitUntil: 'load' })
             if (javaScriptEnabled && !query.includes('boot=')) {
               await page.waitForFunction(() => window.__fx?.bootedAt != null && document.querySelector('[data-count-state]'))

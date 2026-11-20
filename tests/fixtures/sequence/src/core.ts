@@ -42,4 +42,5 @@ manifest.then((source) => {
   update()
 })
 
-expose({ handle: () => handle, progress: () => progress, boot: () => boot, destroy: () => handle?.destroy() })
+// `reread`: the runner's jump makes the producer read the layout it is on, as a scroll event would.
+expose({ handle: () => handle, progress: () => progress, boot: () => boot, destroy: () => handle?.destroy(), reread: update })

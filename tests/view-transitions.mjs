@@ -19,6 +19,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { chromium, firefox, webkit } from 'playwright'
 import { build, preview } from 'vite'
 
+import { hold, isFaviconMiss, launch, settle as settleRead } from './lib/harness.mjs'
+
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(testsDir, '..')
 const fixtureRoot = join(testsDir, 'fixtures', 'view-transitions')
@@ -699,12 +701,14 @@ const CHECKS = {
       const navigate = async (how) => {
         // Chromium 153 skipped the inbound transition ("opt-in disabled") on a navigation 200 ms after load; a reader
         // takes longer than that.
-        await page.waitForTimeout(1000)
+        // fixed-wait: a reader's pause before navigating is the subject (Chromium skips a transition 200 ms after load)
+        await hold(1000)
         await Promise.all([page.waitForURL(how === 'back' ? /mpa-a/ : /mpa-b/), how === 'back' ? page.evaluate(() => history.back()) : page.click('#go')])
         await page.waitForFunction(() => document.readyState === 'complete')
         if (supported) await page.waitForFunction(() => window.__reveal && (!window.__reveal.vt || 'types' in window.__reveal || window.__reveal.aborted), null, { timeout: 5000 })
-        await page.waitForTimeout(400)
-        return page.evaluate(() => ({ reveal: window.__reveal ?? null, rejections: window.__t.rejections, url: location.pathname }))
+        // The reveal's record and any rejection, unchanged for 5 frames.
+        const read = () => ({ reveal: window.__reveal ?? null, rejections: window.__t.rejections, url: location.pathname })
+        return (await settleRead(page, read, { frames: 5, min: 2 })).value
       }
       const forward = await navigate('link')
       const back = await navigate('back')
@@ -778,7 +782,7 @@ async function main() {
   }
 
   for (const browserName of args.browsers) {
-    open.browser = await BROWSERS[browserName].launch()
+    open.browser = await launch(BROWSERS[browserName])
     for (const pageName of args.pages) {
       const errors = []
       for (const [id, check] of Object.entries(CHECKS)) {
@@ -793,10 +797,11 @@ async function main() {
             await context.addInitScript(tools, { removeApi, record })
             const page = await context.newPage()
             page.on('pageerror', (err) => errors.push(`${id}: ${err.message.split('\n')[0]}`))
-            page.on('console', (msg) => msg.type() === 'error' && errors.push(`${id}: console: ${msg.text().split('\n')[0]}`))
+            page.on('console', (msg) => msg.type() === 'error' && !isFaviconMiss(msg) && errors.push(`${id}: console: ${msg.text().split('\n')[0]}`))
             await page.goto(`${base}/${path}`, { waitUntil: 'load' })
             if (pageName !== 'mpa') await page.waitForFunction(() => !!window.__fx?.go && !!window.__fx.view, null, { timeout: 10000 })
-            await page.waitForTimeout(200)
+            // fixed-wait: unconverted: the page's first frames after load, before any navigation
+            await hold(200)
             return { page }
           },
         }

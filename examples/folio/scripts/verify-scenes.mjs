@@ -57,6 +57,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
 import { chromium, firefox, webkit } from "playwright";
+import { hold as sleep } from "../../../tests/lib/harness.mjs";
 import { nextBuild, startServer, stopServer } from "./lib/next-server.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -93,7 +94,6 @@ const MEDIA = [
   "lab/antique-camera.glb",
 ];
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const size = (vp) => `${vp.width}x${vp.height}`;
 
 function parseArgs(argv) {
@@ -179,6 +179,7 @@ async function checkReduced(browser, base, vp, line) {
   try {
     await page.goto(`${base}/`, { waitUntil: "networkidle" });
     const r = await page.evaluate(async () => {
+      // fixed-wait: unconverted: an in-page settle of a frame and 100 ms after each step
       const settle = () => new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 100)));
       const scene = document.querySelector("[data-scene-root]");
       const pin = scene.querySelector("[data-scene-pin]");
@@ -246,6 +247,7 @@ async function checkPlayhead(browser, base, vp, line) {
       // The glide settles within half a frame of its target; give it up to 5 s.
       let snap = null;
       for (let waited = 0; waited < 5000; waited += 100) {
+        // fixed-wait: the poll interval of a condition loop, not a guess
         await sleep(100);
         snap = await page.evaluate(() => {
           const [s] = window.__scrub?.() ?? [];
@@ -297,6 +299,7 @@ async function openPage(browser, vp, { motion = "no-preference", js = true, init
 async function scrollThrough(page, onStep) {
   const steps = await page.evaluate(async (onStepSource) => {
     const onStep = onStepSource ? new Function(`return (${onStepSource})`)() : null;
+    // fixed-wait: unconverted: an in-page settle of a frame and 200 ms after each step
     const settle = () => new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 200)));
     const results = [];
     const max = () => document.documentElement.scrollHeight - innerHeight;
@@ -310,6 +313,7 @@ async function scrollThrough(page, onStep) {
     if (onStep) results.push(onStep());
     return results;
   }, onStep ? onStep.toString() : null);
+  // fixed-wait: unconverted: the walk's last entrances landing
   await sleep(1600);
   return steps;
 }
@@ -370,6 +374,7 @@ async function checkHeroNoJs(browser, base, vp, line) {
     const early = await page.evaluate(() =>
       document.getAnimations().filter((a) => /^split-word-/.test(a.animationName)).length,
     );
+    // fixed-wait: unconverted: the split words' entrances finishing
     await sleep(2200);
     const words = await readWords(page);
     const name = await page.locator("h1").ariaSnapshot();
@@ -392,6 +397,7 @@ async function checkHeroNoJs(browser, base, vp, line) {
       const track = document.querySelector("[data-rail] [data-rail-track]");
       track.scrollLeft = track.scrollWidth;
     });
+    // fixed-wait: unconverted: the rail's native scroller landing at its end
     await sleep(300);
     const rail = await page.evaluate(() => {
       const track = document.querySelector("[data-rail] [data-rail-track]");
@@ -440,6 +446,7 @@ async function checkHeroShift(browser, base, vp, line) {
   const { context, page, errors } = await openPage(browser, vp, { init });
   try {
     await page.goto(`${base}/`, { waitUntil: "load" });
+    // fixed-wait: unconverted: the home page's load-time entrances finishing
     await sleep(3200);
     const r = await page.evaluate(() => {
       const span = (v) => (v.length ? Math.max(...v) - Math.min(...v) : null);
@@ -495,6 +502,7 @@ async function checkEntrancesReduced(browser, base, route, vp, line) {
   try {
     await page.goto(`${base}${route}`, { waitUntil: "networkidle" });
     await page.waitForFunction(() => "animationReady" in document.documentElement.dataset, null, { timeout: 10000 });
+    // fixed-wait: unconverted: the route's first frames after ready
     await sleep(300);
     const r = await readReveals(page);
     const words = await readWords(page);
@@ -528,6 +536,7 @@ async function checkRail(browser, base, vp, line) {
         const top = rail.getBoundingClientRect().top + scrollY;
         scrollTo(0, top + (rail.offsetHeight - innerHeight) * p);
       }, p);
+      // fixed-wait: unconverted: the rail's scrub landing at p
       await sleep(600);
       samples.push(
         await page.evaluate(() => {
@@ -823,10 +832,12 @@ async function checkScrolly(browser, base, vp, line) {
     const seen = [];
     for (let i = 0; i < 4; i++) {
       await toStep(page, i);
+      // fixed-wait: unconverted: the pan's MOTION.entrance (1.3 s) and the crossfade landing
       await sleep(1600); // the pan's MOTION.entrance (1.3 s) and the crossfade land
       seen.push(await readScrolly(page));
     }
     await toStep(page, 0);
+    // fixed-wait: unconverted: the pan back to step 0 landing
     await sleep(1600);
     const up = await readScrolly(page);
     const steps = seen.map((s, i) => s.active === i && s.shown === s.shows[i] && s.opacity === "1");
@@ -841,15 +852,19 @@ async function checkScrolly(browser, base, vp, line) {
     });
     // Left mid-pan for a step with no frame (the state crossfade is shorter than the pan): the pan still lands.
     await toStep(page, 0);
+    // fixed-wait: unconverted: the pan back to step 0 landing
     await sleep(1600);
     await toStep(page, 1);
+    // fixed-wait: lands the next step part-way through the pan (the timing is the subject)
     await sleep(300);
     const midPan = await readScrolly(page);
     await toStep(page, 2);
+    // fixed-wait: unconverted: the pan to step 2 landing
     await sleep(1600);
     const leftMidPan = await readScrolly(page);
     // A reload on the second step: the core's first report has direction null, so the pan jumps to its frame.
     await toStep(page, 1);
+    // fixed-wait: unconverted: the pan to step 1 landing before the reload
     await sleep(1600);
     await page.reload({ waitUntil: "networkidle" });
     await page.waitForFunction(() => document.querySelector("[data-scrolly]")?.dataset.scrollyActive === "1", null, { timeout: 10000 }).catch(() => {});
@@ -888,6 +903,7 @@ async function checkScrollyReduced(browser, base, vp, line) {
     await page.goto(`${base}${ARTICLE}`, { waitUntil: "networkidle" });
     await page.waitForFunction(() => document.querySelector("[data-scrolly]")?.dataset.scrollyMode, null, { timeout: 10000 });
     await toStep(page, 1);
+    // fixed-wait: unconverted: step 1's first report landing
     await sleep(300);
     const pan1 = await readScrolly(page);
     await toStep(page, 2);
@@ -975,6 +991,7 @@ async function checkCoverTransition(browser, base, vp, line) {
       [path, stamp],
       { timeout: 10000 },
     ).catch(() => {});
+    // fixed-wait: unconverted: the route's first frames after its stamp
     await sleep(600);
     return state();
   };
@@ -986,6 +1003,7 @@ async function checkCoverTransition(browser, base, vp, line) {
     await page.click('header nav a[href="/journal"]');
     const index = await settle("/journal", "native");
     await page.evaluate(() => scrollTo(0, 280));
+    // fixed-wait: unconverted: the scroll landing before the navigation
     await sleep(300);
     const card = page.locator('a[href="/journal/what-rust-is-for"]').first();
     await card.scrollIntoViewIfNeeded();
@@ -1101,9 +1119,11 @@ async function labJump(page, p) {
         settledAt ||= performance.now();
         if (performance.now() - settledAt >= 300) return;
       } else settledAt = 0;
+      // fixed-wait: the poll interval of a condition loop, not a guess
       await new Promise((r) => setTimeout(r, 100));
     }
   }, p);
+  // fixed-wait: unconverted: the lab scene's frame after the jump
   await sleep(200);
 }
 
@@ -1153,6 +1173,7 @@ async function labRendersOver(page, ms, during) {
   const started = Date.now();
   if (during) await during();
   const left = ms - (Date.now() - started);
+  // fixed-wait: the measurement window is the subject (renders over ms)
   if (left > 0) await sleep(left);
   const b = await labState(page);
   const secs = Math.max(ms, Date.now() - started) / 1000;
@@ -1164,6 +1185,7 @@ async function labWheel(page, notches, dy = 100) {
   await page.mouse.move(200, 400);
   for (let i = 0; i < notches; i++) {
     await page.mouse.wheel(0, dy);
+    // fixed-wait: wheel notches paced like a hand
     await sleep(50);
   }
 }
@@ -1217,8 +1239,10 @@ async function labLag(page) {
     window.__labLagStop = () => ((on = false), rows);
   });
   await labWheel(page, 12);
+  // fixed-wait: unconverted: the wheel run's damped settle
   await sleep(1200);
   await labWheel(page, 6, -100);
+  // fixed-wait: unconverted: the wheel run's damped settle
   await sleep(1200);
   const rows = await page.evaluate(() => window.__labLagStop());
   let moving = 0;
@@ -1282,6 +1306,7 @@ async function checkLabWebgl(browser, base, vp, line) {
   try {
     await page.goto(`${base}${LAB}?motion-debug`, { waitUntil: "load" });
     await page.waitForFunction(() => window.__lab?.drawnAt, null, { timeout: 30000 });
+    // fixed-wait: unconverted: the lab scene's first frames and damped settle
     await sleep(800);
     const first = await labState(page);
     const net = await page.evaluate(() => {
@@ -1319,9 +1344,11 @@ async function checkLabWebgl(browser, base, vp, line) {
     );
 
     await labJump(page, 0.4);
+    // fixed-wait: unconverted: the jump's damped settle before the rest measurement
     await sleep(1000);
     const rest = await labRendersOver(page, 1000);
     const scrolling = await labRendersOver(page, 1200, () => labWheel(page, 20));
+    // fixed-wait: unconverted: the wheel run's damped settle
     await sleep(1500);
     const after = await labRendersOver(page, 1000);
     line(
@@ -1347,14 +1374,18 @@ async function checkLabWebgl(browser, base, vp, line) {
       tail.style.height = "250vh";
       document.querySelector(".lab-scene").after(tail);
     });
+    // fixed-wait: unconverted: the added tail's layout reaching the scene
     await sleep(600);
     await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+    // fixed-wait: unconverted: the scene falling asleep off-screen
     await sleep(1200);
     const away = await labState(page);
     const offscreen = await labRendersOver(page, 1000, () => labWheel(page, 5, -100));
     await page.evaluate(() => document.getElementById("verify-tail").remove());
+    // fixed-wait: unconverted: the removed tail's layout reaching the scene
     await sleep(600);
     await labJump(page, 0.25);
+    // fixed-wait: unconverted: the jump's damped settle
     await sleep(800);
     const back = await labState(page);
     line(
@@ -1364,11 +1395,13 @@ async function checkLabWebgl(browser, base, vp, line) {
     );
 
     await fakeHidden(page, true);
+    // fixed-wait: unconverted: the fake hide reaching the conductor
     await sleep(200);
     const hiddenBefore = await labState(page);
     await labJump(page, 0.75);
     const hidden = await labRendersOver(page, 1000);
     await fakeHidden(page, false);
+    // fixed-wait: unconverted: the damped settle after the page shows again
     await sleep(1000);
     const shown = await labState(page);
     line(
@@ -1381,12 +1414,14 @@ async function checkLabWebgl(browser, base, vp, line) {
     await labJump(page, 0.5);
     await page.click('header a[href="/journal"]');
     await page.waitForURL(`${base}/journal`);
+    // fixed-wait: unconverted: the journal route's first frames
     await sleep(1200);
     const gone = await page.evaluate(() => window.__liveGl());
     await page.goBack();
     await page.waitForURL(/\/lab/);
     const backLow = await labLanding(page);
     await page.waitForFunction(() => window.__lab?.drawnAt, null, { timeout: 30000 });
+    // fixed-wait: unconverted: the lab scene's damped settle after the return
     await sleep(800);
     const returned = await labState(page);
     line(
@@ -1399,6 +1434,7 @@ async function checkLabWebgl(browser, base, vp, line) {
     await page.reload({ waitUntil: "load" });
     const reloadLow = await labLanding(page);
     await page.waitForFunction(() => window.__lab?.drawnAt, null, { timeout: 30000 });
+    // fixed-wait: unconverted: the lab scene's damped settle after the reload
     await sleep(800);
     const reloaded = await labState(page);
     line(
@@ -1409,12 +1445,14 @@ async function checkLabWebgl(browser, base, vp, line) {
 
     // Reduced motion, switched on live: the canvas goes, the poster and every chapter stay.
     await page.emulateMedia({ reducedMotion: "reduce" });
+    // fixed-wait: unconverted: the media switch reaching the lab scene
     await sleep(1000);
     const reduced = await labState(page);
     const reducedDraws = await labRendersOver(page, 1000, () => labWheel(page, 5));
     await page.emulateMedia({ reducedMotion: "no-preference" });
     await labJump(page, 0.5);
     await page.waitForFunction(() => window.__lab?.drawnAt, null, { timeout: 30000 });
+    // fixed-wait: unconverted: the jump's damped settle under reduced motion
     await sleep(1000);
     const motion = await labState(page);
     line(
@@ -1440,6 +1478,7 @@ async function checkLabWebgl(browser, base, vp, line) {
       const entry = window.__gl.find((e) => !e.ctx.isContextLost() && e.canvas.closest("[data-scene-canvas]"));
       entry?.ctx.getExtension("WEBGL_lose_context")?.loseContext();
     });
+    // fixed-wait: unconverted: the context loss reaching the slot
     await sleep(1000);
     const lost = await labState(page);
     const lostDraws = await labRendersOver(page, 1000, () => labWheel(page, 5));
@@ -1463,6 +1502,7 @@ async function checkLabFallbacks(browser, base, vp, line) {
     page.on("request", (r) => r.url().includes("antique-camera.glb") && model++);
     try {
       await page.goto(`${base}${LAB}?motion-debug`, { waitUntil: "load" });
+      // fixed-wait: unconverted: the lab scene's first frames
       await sleep(1500);
       const s = await labState(page);
       line(
@@ -1480,6 +1520,7 @@ async function checkLabFallbacks(browser, base, vp, line) {
     page.on("request", (r) => r.url().includes("antique-camera.glb") && model++);
     try {
       await page.goto(`${base}${LAB}?motion-debug`, { waitUntil: "load" });
+      // fixed-wait: unconverted: the lab scene's first frames
       await sleep(1500);
       const head = await labState(page);
       const steps = [];
@@ -1500,6 +1541,7 @@ async function checkLabFallbacks(browser, base, vp, line) {
     const { context, page } = await openPage(browser, vp, { js: false });
     try {
       await page.goto(`${base}${LAB}`, { waitUntil: "load" });
+      // fixed-wait: unconverted: the lab scene's first frames
       await sleep(500);
       const s = await page.evaluate(() => {
         const root = document.querySelector(".lab-scene");

@@ -27,6 +27,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { chromium, firefox, webkit } from 'playwright'
 import { build, createLogger, preview } from 'vite'
 
+import { hold as sleep, isFaviconMiss, launch } from './lib/harness.mjs'
+
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const fixtureRoot = join(testsDir, 'fixtures', 'text')
 const outDir = join(testsDir, '.scratch', 'text-dist')
@@ -168,7 +170,6 @@ async function serve() {
 
 // ── helpers ─────────────────────────────────────────────────────────────
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 const near = (a, b, tol = 1e-6) => typeof a === 'number' && typeof b === 'number' && Math.abs(a - b) <= tol
 const r1 = (x) => (Number.isFinite(x) ? Math.round(x * 10) / 10 : x)
@@ -195,6 +196,7 @@ async function until(page, fn, arg, timeout) {
 
 /** Waits until `ms` after the navigation began, then reads the page. */
 async function at(page, t0, ms, fn) {
+  // fixed-wait: the reading time after navigation is the subject (the late font's timeline)
   await sleep(Math.max(0, ms - (Date.now() - t0)))
   return page.evaluate(fn)
 }
@@ -208,6 +210,7 @@ async function atFirstPaint(page, timeout = 5000) {
   for (;;) {
     const s = await page.evaluate(wordsSnapshot)
     if ((s.fcp !== null && s.animations && s.started) || Date.now() - t0 > timeout) return s
+    // fixed-wait: the poll interval of a condition loop, not a guess
     await sleep(8)
   }
 }
@@ -217,6 +220,7 @@ async function atRest(page, t0, timeout = 6000) {
   for (;;) {
     const s = await page.evaluate(wordsSnapshot)
     if ((s.animations === 0 && s.rest) || Date.now() - t0 > timeout) return { ...s, at: Date.now() - t0 }
+    // fixed-wait: the poll interval of a condition loop, not a guess
     await sleep(50)
   }
 }
@@ -561,6 +565,7 @@ async function checkPlay(t) {
   const out = []
   await page.evaluate(() => window.__t.scrollTo('h', 0.86))
   await frames(page, 4)
+  // fixed-wait: an observation window: above its trigger the entrance must not start
   await sleep(200)
   const waiting = await page.evaluate(() => ({ entrance: window.__t.entrance('h'), first: window.__t.first('h'), trigger: window.__t.trigger('h') }))
   await page.evaluate(() => window.__t.scrollTo('h', 0.74))
@@ -602,6 +607,7 @@ async function checkPlay(t) {
   await frames(page, 3)
   await page.evaluate(() => window.__t.scrollTo('h', 0.5))
   await frames(page, 3)
+  // fixed-wait: an observation window: a finished entrance must not replay on re-entry
   await sleep(300)
   const again = await page.evaluate(() => ({ now: window.__t.now('h'), first: window.__t.first('h') }))
   const atRest = (f) => f?.transform === 'none' && f.opacity === '1' && f.mask === 'visible'
@@ -655,6 +661,7 @@ async function checkPlay(t) {
       window.scrollTo({ top: after.getBoundingClientRect().top + window.scrollY + innerHeight / 2, behavior: 'instant' })
     })
     await frames(jumped, 3)
+    // fixed-wait: unconverted: the entrances above a mid-page jump finishing
     await sleep(600)
     const above = await jumped.evaluate(() => ({
       h: window.__t.now('h').done,
@@ -713,6 +720,7 @@ async function checkLifecycle(t) {
     window.__t.create('p')
   })
   await frames(page, 4)
+  // fixed-wait: unconverted: the recreated split's entrance landing
   await sleep(300)
   const shown = await page.evaluate(() => ({ now: window.__t.now('p'), dom: window.__t.dom('p') }))
   out.push([
@@ -740,6 +748,7 @@ async function checkReduced(t) {
   const out = []
   {
     const { page } = await t.open('reveal.html', { context: { reducedMotion: 'reduce' }, waitUntil: 'domcontentloaded' })
+    // fixed-wait: the late font's delay is the subject: the page is read after it landed
     await sleep(FONT_DELAY + 1200)
     const read = () =>
       page.evaluate(() => ({
@@ -754,6 +763,7 @@ async function checkReduced(t) {
       await page.evaluate((i) => window.__t.scrollTo(i, 0.5), id)
       await frames(page, 3)
     }
+    // fixed-wait: an observation window: under reduced motion nothing may split or animate
     await sleep(300)
     const later = await read()
     const none = (r) => !r.h.split && !r.p.split && r.h.done && r.p.done && exact(r.dh) && exact(r.dp) && r.triggers === 0
@@ -781,9 +791,11 @@ async function checkReduced(t) {
         y: window.__t.scrollY()
       }))
     await page.emulateMedia({ reducedMotion: 'reduce' })
+    // fixed-wait: unconverted: the media switch reaching the split blocks
     await sleep(700)
     const on = await read()
     await page.emulateMedia({ reducedMotion: 'no-preference' })
+    // fixed-wait: unconverted: the media switch reaching the split blocks
     await sleep(700)
     const off = await read()
     out.push([
@@ -899,7 +911,7 @@ async function main() {
   open.server = await serve()
   const base = `http://127.0.0.1:${open.server.httpServer.address().port}`
   for (const browserName of args.browsers) {
-    open.browser = await BROWSERS[browserName].launch()
+    open.browser = await launch(BROWSERS[browserName])
     const errors = {}
     for (const [id, check] of groups) {
       const contexts = []
@@ -913,9 +925,10 @@ async function main() {
           contexts.push(context)
           const page = await context.newPage()
           page.on('pageerror', (err) => pageErrors.push(`${id}: ${err.message.split('\n')[0]}`))
-          page.on('console', (msg) => msg.type() === 'error' && pageErrors.push(`${id}: console: ${msg.text().split('\n')[0]}`))
+          page.on('console', (msg) => msg.type() === 'error' && !isFaviconMiss(msg) && pageErrors.push(`${id}: console: ${msg.text().split('\n')[0]}`))
           if (route) {
             await page.route(route.pattern, async (r) => {
+              // fixed-wait: the late font's server delay is the subject (a route handler holding the response)
               await sleep(route.delay)
               await r.continue().catch(() => {})
             })

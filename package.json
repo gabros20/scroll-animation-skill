@@ -12,7 +12,7 @@
     "pretest": "mkdir -p tests/.scratch tests/smoke-gsap/public && ffmpeg -y -f lavfi -i \"testsrc=size=640x360:rate=30:duration=2\" -g 1 -pix_fmt yuv420p tests/.scratch/clip.mp4 && cp tests/.scratch/clip.mp4 tests/smoke-gsap/public/clip.mp4",
     "test": "npm run test:types && npm run test:lint && npm run test:unit && npm run test:audit && npm run test:smoke && npm run generate:check && npm run test:cli",
     "test:types": "tsc --noEmit -p tests/tsconfig.core.json && tsc --noEmit -p tests/tsconfig.motion.json && tsc --noEmit -p tests/tsconfig.gsap.json",
-    "test:lint": "eslint --config tests/eslint.config.mjs --max-warnings 0 skills/scroll-animation/assets",
+    "test:lint": "eslint --config tests/eslint.config.mjs --max-warnings 0 skills/scroll-animation/assets tests/*.mjs tests/lib examples/folio/scripts",
     "test:unit": "node --test \"tests/unit/*.test.mjs\"",
     "test:traces": "node tests/scene-traces.mjs --check",
     "test:foundation": "node tests/foundation.mjs",

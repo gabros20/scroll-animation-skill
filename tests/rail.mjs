@@ -24,6 +24,8 @@ import { fileURLToPath } from 'node:url'
 import { chromium, firefox, webkit } from 'playwright'
 import { build, preview } from 'vite'
 
+import { hold, isFaviconMiss, launch, settle } from './lib/harness.mjs'
+
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const fixtureRoot = join(testsDir, 'fixtures', 'rail')
 const outDir = join(testsDir, '.scratch', 'rail-dist')
@@ -386,8 +388,7 @@ const CHECKS = {
         },
         before.travel
       )
-      await page.waitForTimeout(500)
-      const after = await state(page)
+      const after = (await settle(page, () => window.__t.state())).value
       await page.evaluate(() => window.__t.toBand(1))
       const end = await state(page)
       return [
@@ -507,7 +508,8 @@ const CHECKS = {
       const after = await state(page)
       // The runway grew, so pinnedScene's layout watch refreshes ScrollTrigger 150 ms later; a native smooth scroll
       // under way then would stop where it is (the refresh scrolls to measure). Let it land first.
-      await page.waitForTimeout(400)
+      // fixed-wait: the layout watch's debounced refresh has no signal the page can read
+      await hold(400)
       await page.evaluate(() => window.__rail.scrollToPanel(2, { immediate: true }))
       await page.evaluate(() => window.__t.frames(4))
       const third = await page.evaluate(() => window.__t.inView(2))
@@ -637,7 +639,8 @@ const CHECKS = {
         if (target) {
           const y0 = await page.evaluate(() => scrollY)
           await page.mouse.click(target.x, target.y)
-          await page.waitForTimeout(800)
+          // fixed-wait: an observation window: the click must start no scroll in it
+          await hold(800)
           const y1 = await page.evaluate(() => scrollY)
           const active = await page.evaluate(() => window.__t.active())
           ok = y1 === y0
@@ -706,13 +709,11 @@ const CHECKS = {
       await page.evaluate(() => window.__t.toBand(0.5))
       const before = await state(page)
       await page.emulateMedia({ reducedMotion: 'reduce' })
-      await page.waitForTimeout(600)
-      const r = await page.evaluate(() => window.__t.reduced())
+      const r = (await settle(page, () => window.__t.reduced(), { when: (r) => r.computed === 'none' })).value
       const scrolled = await page.evaluate(() => window.__t.scrollTrack())
       await page.evaluate(() => (document.querySelector('[data-rail-track]').scrollLeft = 0))
       await page.emulateMedia({ reducedMotion: 'no-preference' })
-      await page.waitForTimeout(900)
-      const back = await state(page)
+      const back = (await settle(page, () => window.__t.state(), { when: (s) => s.translate !== null })).value
       const pin = await page.evaluate(() => ({
         position: getComputedStyle(document.querySelector('[data-scene-pin]')).position,
         tabindex: document.querySelector('[data-rail-track]').getAttribute('tabindex')
@@ -834,7 +835,7 @@ async function main() {
   }
 
   for (const browserName of args.browsers) {
-    open.browser = await BROWSERS[browserName].launch()
+    open.browser = await launch(BROWSERS[browserName])
     for (const pageName of args.pages) {
       const errors = []
       for (const [id, check] of Object.entries(CHECKS)) {
@@ -850,13 +851,14 @@ async function main() {
             contexts.push(context)
             const page = await context.newPage()
             page.on('pageerror', (err) => errors.push(`${id}: ${err.message.split('\n')[0]}`))
-            page.on('console', (msg) => msg.type() === 'error' && errors.push(`${id}: console: ${msg.text().split('\n')[0]}`))
+            page.on('console', (msg) => msg.type() === 'error' && !isFaviconMiss(msg) && errors.push(`${id}: console: ${msg.text().split('\n')[0]}`))
             await page.goto(`${base}/${pageName}.html${query}`, { waitUntil: 'load' })
             await page.waitForFunction(() => !!window.__rail && !!document.querySelector('[data-scene-root]')?.dataset.sceneState)
             await page.evaluate(() => document.fonts.ready.then(() => window.__t.frames(3)))
             if (reducedMotion !== 'reduce') await page.waitForFunction(() => window.__t.state().written)
             // Let the load-time refreshes (ScrollTrigger's own, ScrollSmoother's) finish before measuring.
-            await page.waitForTimeout(400)
+            // fixed-wait: the load-time refreshes are debounced inside GSAP, with no signal the page can read
+            await hold(400)
             return { page }
           }
         }

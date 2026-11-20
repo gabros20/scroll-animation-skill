@@ -50,6 +50,8 @@ import { createRequire } from 'node:module'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
+import { launch } from './lib/harness.mjs'
+
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(testsDir, '..')
 const scratch = join(testsDir, '.scratch', 'scene-traces')
@@ -364,7 +366,7 @@ async function traceAll(args) {
       for (const name of args.browsers) {
         let browser
         try {
-          browser = await playwright[name].launch()
+          browser = await launch(playwright[name])
         } catch (err) {
           console.error(`[scene-traces] cannot launch ${name} (npx playwright install ${name}): ${err.message.split('\n')[0]}`)
           process.exit(2)

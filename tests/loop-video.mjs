@@ -21,6 +21,8 @@ import { promisify } from 'node:util'
 import { chromium, webkit } from 'playwright'
 import { build, preview } from 'vite'
 
+import { hold as sleep, launch } from './lib/harness.mjs'
+
 const execFileAsync = promisify(execFile)
 
 const testsDir = dirname(fileURLToPath(import.meta.url))
@@ -141,7 +143,6 @@ async function serve() {
 
 // ── page helpers ────────────────────────────────────────────────────────
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 async function scrollToVideo(page) {
   await page.evaluate(() => document.querySelector('video')?.scrollIntoView({ block: 'center' }))
@@ -235,8 +236,10 @@ const CHECKS = {
     await page.click('button')
     await waitPaused(page, true)
     await scrollAway(page)
+    // fixed-wait: an observation window: scrolled away, the paused clip must stay paused
     await sleep(300)
     await scrollToVideo(page)
+    // fixed-wait: an observation window: a user pause must not be auto-resumed by IO re-entering
     await sleep(500) // a user pause must not be auto-resumed by IO re-entering
     const s = await videoState(page)
     return [s.paused === true, `paused=${s.paused} after scroll-out/in following a manual pause`]
@@ -280,6 +283,7 @@ const CHECKS = {
   async 'reduced motion does not autoplay'(t) {
     const { page } = await t.open({ reducedMotion: 'reduce' })
     await scrollToVideo(page)
+    // fixed-wait: an observation window: under reduced motion the clip must not autoplay
     await sleep(800)
     const s1 = await videoState(page)
     await page.click('button') // the control can still play it
@@ -291,6 +295,7 @@ const CHECKS = {
   async 'saveData shows the poster'(t) {
     const { page } = await t.open({}, [saveDataInit])
     await scrollToVideo(page)
+    // fixed-wait: an observation window: under Save-Data the clip must not autoplay
     await sleep(800)
     const s1 = await videoState(page)
     await page.click('button') // the control can still play it
@@ -305,6 +310,7 @@ const CHECKS = {
   async 'a rejected play() shows the poster and the control, no retry loop'(t) {
     const { page } = await t.open({}, [rejectPlayInit])
     await scrollToVideo(page)
+    // fixed-wait: an observation window spanning a watchdog tick: a rejected play() must not be retried
     await sleep(WATCHDOG_MS + 800) // span at least one watchdog tick
     const s = await videoState(page)
     const btn = await toggleState(page)
@@ -326,6 +332,7 @@ const CHECKS = {
 async function seamLog(page, windowMs = SEAM_WINDOW_MS) {
   await page.evaluate(() => window.__fx?.reset())
   await scrollToVideo(page)
+  // fixed-wait: the seam measurement window is the subject (fps and seams over windowMs)
   await sleep(windowMs)
   return page.evaluate(() => ({
     fps: window.__fx.fps,
@@ -426,7 +433,7 @@ async function main() {
   }
 
   for (const browserName of args.browsers) {
-    open.browser = await ENGINES_BY_BROWSER[browserName].launch()
+    open.browser = await launch(ENGINES_BY_BROWSER[browserName])
     for (const engine of args.pages) {
       for (const [name, run] of Object.entries(CHECK_GROUPS[engine])) {
         const contexts = []

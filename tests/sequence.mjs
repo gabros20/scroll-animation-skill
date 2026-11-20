@@ -44,6 +44,8 @@ import { fileURLToPath } from 'node:url'
 import { chromium, webkit } from 'playwright'
 import { build, preview } from 'vite'
 
+import { hold as sleep, launch, settle } from './lib/harness.mjs'
+
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(testsDir, '..')
 const fixtures = join(testsDir, 'fixtures', 'sequence')
@@ -95,7 +97,6 @@ function makeMedia(fresh) {
 
 // ── shared helpers ──────────────────────────────────────────────────────
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 const mib = (bytes) => `${(bytes / MIB).toFixed(2)} MiB`
 const round = (n) => Math.round(n * 10) / 10
 
@@ -150,6 +151,9 @@ function jump(page, p) {
     const fx = window.__fx
     const t0 = performance.now()
     fx.scrollToProgress(p)
+    // The producer reads the layout it is on now: a scroll to where the page already sits fires no scroll event, and a
+    // first read taken before the layout settled (WebKit at 2×: 0.027 at p = 0, so frame 2) would otherwise stand.
+    fx.reread?.()
     const drawn = []
     let last = null
     while (performance.now() - t0 < 5000) {
@@ -202,8 +206,10 @@ async function wheelPass(page) {
   for (const delta of [100, -100]) {
     for (let i = 0; i < 30; i++) {
       await page.mouse.wheel(0, delta)
+      // fixed-wait: wheel notches paced like a hand
       await sleep(40)
     }
+    // fixed-wait: unconverted: the wheel's last notch landing before the pass turns
     await sleep(400)
   }
 }
@@ -327,6 +333,7 @@ const GROUPS = {
   async offscreen(t) {
     const { page } = await t.open('core.html?lead=4')
     await until(page, () => window.__fx?.stats?.())
+    // fixed-wait: an observation window: four viewports down nothing may be fetched or decoded
     await sleep(1000)
     const idle = await stats(page)
     const attr = await page.evaluate(() => window.__fx.frame())
@@ -337,6 +344,7 @@ const GROUPS = {
     const vh = VIEWPORT.height
     await page.evaluate((y) => scrollTo(0, y), 2 * vh) // the canvas's top one viewport below the fold
     await until(page, () => window.__fx.stats().fetched > 0).catch(() => {})
+    // fixed-wait: an observation window: between the margins it fetches but must not decode
     await sleep(500)
     const between = await stats(page)
     t.check('between the margins (1 viewport below): fetching, not decoding', () => [
@@ -375,6 +383,7 @@ const GROUPS = {
       `${ready.result}, frame ${s.frame}, ${s.fetched} fetched, ${s.decodes} decodes`,
     ])
     await page.evaluate(() => window.__fx.scrollToProgress(0.5))
+    // fixed-wait: an observation window: under reduced motion a scroll must not scrub
     await sleep(400)
     const still = await stats(page)
     t.check('scrolling does not scrub it', () => [
@@ -402,6 +411,7 @@ const GROUPS = {
       const adapter = await t.open(path, { reducedMotion: 'reduce' })
       const r = await whenReady(adapter.page)
       await adapter.page.evaluate(() => window.__fx.scrollToProgress(0.75))
+      // fixed-wait: an observation window: under reduced motion a scroll must not scrub
       await sleep(400)
       const a = await stats(adapter.page)
       t.check(`${path.split(/[.?]/)[0]} adapter: frame 0 under reduced motion by default, scroll or not`, () => [
@@ -431,6 +441,7 @@ const GROUPS = {
     const frameAtDestroy = await page.evaluate(() => window.__fx.frame())
     const requestsAtDestroy = requests.length
     await settled(page)
+    // fixed-wait: an observation window: a decode landing after destroy() must be closed on arrival
     await sleep(300)
     const s = await stats(page)
     const live = await page.evaluate(() => [window.__bitmaps.created(), window.__bitmaps.live()])
@@ -439,6 +450,7 @@ const GROUPS = {
       `${live[0]} created, ${live[1]} live after destroy (in flight at destroy: ${inflight.decode} decodes, ${inflight.fetch} fetches); stats ${s.decodes} decodes / ${s.closed} closed`,
     ])
     await page.evaluate(() => window.__fx.scrollToProgress(0.2))
+    // fixed-wait: an observation window: after destroy() a scroll must fetch and draw nothing
     await sleep(500)
     const frameAfter = await page.evaluate(() => window.__fx.frame())
     t.check('and stops: no fetches, the canvas keeps its last frame', () => [
@@ -505,6 +517,7 @@ const GROUPS = {
     // New holds move the band while scroll stays put: nothing may redraw until a rehydrate (here: focus) re-derives it.
     const before = await followBand(page, 0.5)
     await page.evaluate(() => window.__fx.setHolds({ headHoldPx: 500 }))
+    // fixed-wait: an observation window: new holds alone must redraw nothing until a rehydrate
     await sleep(300)
     const idle = await page.evaluate(() => ({ frame: window.__fx.frame(), band: window.__fx.scene().band }))
     await page.evaluate(() => window.dispatchEvent(new Event('focus')))
@@ -548,6 +561,7 @@ const GROUPS = {
     const reduced = await t.open('scene.html', { reducedMotion: 'reduce' })
     const r = await whenReady(reduced.page)
     await reduced.page.evaluate(() => window.__fx.scrollToProgress(0.5))
+    // fixed-wait: an observation window: under reduced motion a scroll must not scrub
     await sleep(400)
     const s = await stats(reduced.page)
     const scene = await reduced.page.evaluate(() => window.__fx.scene())
@@ -564,14 +578,12 @@ const GROUPS = {
         const top = el.getBoundingClientRect().top + window.scrollY
         window.scrollTo(0, top + (el.offsetHeight - window.innerHeight) * p)
       }, p)
-      await sleep(400)
-      return page.evaluate(() => document.getElementById('hook-range').getAttribute('data-scene-state'))
+      return (await settle(page, () => document.getElementById('hook-range').getAttribute('data-scene-state'), { min: 2 })).value
     }
     const hookStates = []
     for (const p of [0, 0.5, 1]) hookStates.push(await hookStateAt(p))
     await page.evaluate(() => window.dispatchEvent(new Event('focus')))
-    await sleep(300)
-    const hookAfter = await page.evaluate(() => document.getElementById('hook-range').getAttribute('data-scene-state'))
+    const hookAfter = (await settle(page, () => document.getElementById('hook-range').getAttribute('data-scene-state'), { min: 2 })).value
     const pinnedRoot = await page.evaluate(() => document.getElementById('range').getAttribute('data-scene-state'))
     t.check('usePinnedScene on hand markup writes data-scene-state: head > scrub > tail, and after a rehydrate', () => [
       hookStates.join(' > ') === 'head > scrub > tail' && hookAfter === 'tail' && pinnedRoot === 'tail',
@@ -596,8 +608,7 @@ const GROUPS = {
     await jump(page, 0.5)
     const frameBefore = await page.evaluate(() => window.__fx.frame())
     await page.evaluate(() => window.__fx.hide(true))
-    await sleep(300)
-    const hidden = await page.evaluate(() => ({ live: window.__bitmaps.live(), first: window.__fx.handleStats(0), frame: window.__fx.frame() }))
+    const hidden = (await settle(page, () => ({ live: window.__bitmaps.live(), first: window.__fx.handleStats(0), frame: window.__fx.frame() }), { min: 2 })).value
     t.check('an <Activity> hide destroys it: every bitmap closed, the canvas keeps its frame', () => [
       hidden.first.state === 'destroyed' && hidden.live === 0 && hidden.frame === frameBefore,
       `state ${hidden.first.state}, ${hidden.live} live bitmaps, data-frame ${hidden.frame}`,
@@ -607,8 +618,7 @@ const GROUPS = {
     const handles = await page.evaluate(() => window.__fx.handles())
     t.check('showing it again builds a new sequence that scrubs', () => [shown.ok && handles === 2, `${handles} handles, 0.75→${shown.frame}`])
     await page.evaluate(() => window.__fx.unmount())
-    await sleep(300)
-    const live = await page.evaluate(() => window.__bitmaps.live())
+    const live = (await settle(page, () => window.__bitmaps.live(), { min: 2 })).value
     t.check('unmount closes everything', () => [live === 0, `${live} live bitmaps`])
   },
 
@@ -682,6 +692,7 @@ const GROUPS = {
       }
       const before = await page.evaluate(() => ({ triggers: window.__fx.triggers(), ticker: window.__fx.tickerListeners() }))
       await page.evaluate(() => window.__fx.revert())
+      // fixed-wait: unconverted: the gsap.context revert finishing its teardown
       await sleep(300)
       const after = await page.evaluate(() => ({
         s: window.__fx.stats(),
@@ -765,7 +776,7 @@ async function main() {
   }
 
   for (const name of args.browsers) {
-    open.browser = await ENGINES[name].launch()
+    open.browser = await launch(ENGINES[name])
     for (const group of groups) {
       const contexts = []
       const errors = []

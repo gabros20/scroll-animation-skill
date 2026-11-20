@@ -8,10 +8,9 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { createServer } from "node:net";
+import { hold as sleep } from "../../../../tests/lib/harness.mjs";
 
 const NEXT_BIN = createRequire(import.meta.url).resolve("next/dist/bin/next");
-
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export function freePort() {
   return new Promise((resolve, reject) => {
@@ -56,6 +55,7 @@ export async function startServer(root) {
       await stopServer(child);
       throw new Error(`next start did not answer within 30 s:\n${log}`);
     }
+    // fixed-wait: the poll interval of a condition loop (the server answering), not a guess
     await sleep(200);
   }
 }

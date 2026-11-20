@@ -8,6 +8,8 @@
 // point of function values + invalidateOnRefresh and of the CSS pattern.
 import { chromium } from 'playwright'
 
+import { hold, launch } from './lib/harness.mjs'
+
 const url = process.argv[2]
 const DRAWN = 240
 const TOL = 0.75 // px
@@ -40,14 +42,15 @@ async function measure(page) {
   let m
   for (let i = 0; i < 25; i++) {
     await scrollPastEnd()
-    await page.waitForTimeout(200)
+    // fixed-wait: the poll interval of a condition loop, not a guess
+    await hold(200)
     m = await read(page)
     if (Math.abs(m.varMoved - m.expected) <= TOL && Math.abs(m.fnMoved - m.expected) <= TOL) break
   }
   return m
 }
 
-const browser = await chromium.launch()
+const browser = await launch(chromium)
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
 await page.goto(url, { waitUntil: 'networkidle' })
 let fail = 0

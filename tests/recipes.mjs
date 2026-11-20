@@ -27,6 +27,8 @@ import { fileURLToPath } from 'node:url'
 import { chromium, firefox, webkit } from 'playwright'
 import { build, preview } from 'vite'
 
+import { hold as wait, isFaviconMiss, launch, pauseClock } from './lib/harness.mjs'
+
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const fixtureRoot = join(testsDir, 'fixtures', 'recipes')
 const outDir = join(testsDir, '.scratch', 'recipes-dist')
@@ -119,7 +121,6 @@ function copyClip() {
 
 const near = (a, b, tol = 0.5) => typeof a === 'number' && typeof b === 'number' && Math.abs(a - b) <= tol
 const call = (page, name, ...args) => page.evaluate(([n, a]) => window.__t[n](...a), [name, args])
-const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 /** Polls `fn` in Node until it returns truthy; resolves with its last value and the elapsed ms (null on timeout). */
 async function until(fn, timeout = SETTLE_MS) {
@@ -128,6 +129,7 @@ async function until(fn, timeout = SETTLE_MS) {
   while (Date.now() - t0 < timeout) {
     value = await fn()
     if (value?.ok) return { ...value, ms: Date.now() - t0 }
+    // fixed-wait: the poll interval of a condition loop, not a guess
     await wait(50)
   }
   return { ...value, ms: null }
@@ -139,6 +141,7 @@ async function settledY(page, timeout = SETTLE_MS) {
   const t0 = Date.now()
   let still = 0
   while (Date.now() - t0 < timeout) {
+    // fixed-wait: the poll interval of a condition loop, not a guess
     await wait(100)
     const y = await call(page, 'y')
     still = y === last ? still + 1 : 0
@@ -152,6 +155,7 @@ async function settledY(page, timeout = SETTLE_MS) {
 async function destroyCheck(page) {
   await call(page, 'destroy')
   // Long enough for a catch-up tween that survived destroy() to write again.
+  // fixed-wait: an observation window: a catch-up tween that survived destroy() must not write again in it
   await wait(700)
   const left = await call(page, 'leftovers')
   const twice = await page
@@ -205,6 +209,7 @@ async function parallaxReduced(t) {
   let ok = true
   for (const p of [0.25, 0.5, 0.9]) {
     await call(page, 'toPass', 0, p)
+    // fixed-wait: an observation window: under reduced motion nothing may write after the scroll
     await wait(300)
     for (const i of [0, 1]) {
       const s = await call(page, 'layer', i)
@@ -295,8 +300,10 @@ async function parallaxLive(t) {
   })
   const y0 = await page.evaluate(() => Math.round(scrollY))
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await wait(600)
-  const off = await call(page, 'layer', 0)
+  const off = await until(async () => {
+    const s = await call(page, 'layer', 0)
+    return { ...s, ok: s.translate === 0 && s.inline === '' }
+  })
   const y1 = await page.evaluate(() => Math.round(scrollY))
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   const back = await until(async () => {
@@ -323,6 +330,7 @@ async function settledBox(page, id, timeout = SETTLE_MS) {
   const t0 = Date.now()
   let still = 0
   while (Date.now() - t0 < timeout) {
+    // fixed-wait: the poll interval of a condition loop, not a guess
     await wait(100)
     const box = await call(page, 'box', id)
     still = box.top === last.top ? still + 1 : 0
@@ -335,6 +343,7 @@ async function settledBox(page, id, timeout = SETTLE_MS) {
 /** A fresh visit: the page first shows only the spacer above `id` (no well engaged), then puts `id`'s edge at `at`. */
 async function visit(page, id, at, edge = 'top') {
   await call(page, 'place', id, (await call(page, 'view')) + 200)
+  // fixed-wait: the scroll well's idle detection is the subject: the reader stops before the next placement
   await wait(150)
   await call(page, 'place', id, at, edge)
 }
@@ -357,6 +366,7 @@ async function wellRest(t, { query = '' } = {}) {
   await visit(page, 'tall', view - 350, 'bottom')
   const up = await settledBox(page, 'tall')
   await visit(page, 'tall', -300)
+  // fixed-wait: an observation window: the well must leave the band of a too-tall section alone
   await wait(1000)
   const band = await call(page, 'box', 'tall')
   await visit(page, 'clamped', 300)
@@ -388,6 +398,7 @@ async function wellRelease(t) {
   await visit(page, 'fits', 500)
   const rested = await settledBox(page, 'fits')
   await call(page, 'place', 'fits', centre - 100)
+  // fixed-wait: an observation window: 100 px away is a decision, and the page must stay put
   await wait(1200)
   const left = await call(page, 'box', 'fits')
   // Mid-pull, 100 px past rest: an overshoot. Quiet close to rest before it ever arrived, it is forgiven once.
@@ -445,6 +456,7 @@ async function wellReduced(t) {
   const reduced = await t.open({ reducedMotion: 'reduce' })
   const centre = ((await call(reduced.page, 'view')) - 480) / 2
   await visit(reduced.page, 'fits', 500)
+  // fixed-wait: an observation window: under reduced motion nothing may pull
   await wait(1200)
   const still = await call(reduced.page, 'box', 'fits')
   await reduced.page.emulateMedia({ reducedMotion: 'no-preference' })
@@ -458,6 +470,7 @@ async function wellReduced(t) {
   await pullStarted(page)
   await page.emulateMedia({ reducedMotion: 'reduce' })
   const stopped = await call(page, 'box', 'fits')
+  // fixed-wait: an observation window: the pull stopped mid-way must stay stopped
   await wait(1000)
   const after = await call(page, 'box', 'fits')
   return [
@@ -480,6 +493,7 @@ async function wellAuthority(t) {
   const warnings = []
   page.on('console', (msg) => msg.type() === 'warning' && warnings.push(msg.text()))
   await visit(page, 'fits', 500)
+  // fixed-wait: an observation window: under Lenis the well must not pull (it warns instead)
   await wait(1200)
   const box = await call(page, 'box', 'fits')
   const said = warnings.filter((w) => w.includes('scroll well'))
@@ -501,6 +515,7 @@ async function wellDestroy(t) {
     window.__t.destroy()
     return Math.round(document.getElementById('fits').getBoundingClientRect().top * 10) / 10
   })
+  // fixed-wait: an observation window: after destroy() mid-pull nothing may move
   await wait(800)
   const after = await call(page, 'box', 'fits')
   return [
@@ -570,6 +585,7 @@ async function flipInterrupt(t) {
   const grid = await call(page, 'boxes')
   const detail = await call(page, 'layout', 'detail')
   await call(page, 'flip', 'detail')
+  // fixed-wait: lands the second flip part-way through the first (the timing is the subject)
   await wait(150)
   const second = await call(page, 'flip', 'grid')
   const end = await call(page, 'landed')
@@ -594,9 +610,11 @@ async function flipPending(t) {
   const grid = await call(page, 'boxes')
   await call(page, 'pending', 'detail')
   const second = await call(page, 'flip', 'grid', true)
+  // fixed-wait: unconverted: the first flip reaching its pending wait before the release
   await wait(100)
   await call(page, 'release')
   const end = await call(page, 'landed')
+  // fixed-wait: unconverted: the released flip's last frame landing
   await wait(100)
   const history = await call(page, 'history')
   const froms = await call(page, 'froms')
@@ -607,6 +625,7 @@ async function flipPending(t) {
   const during = await call(killed.page, 'bodyStyle')
   await call(killed.page, 'kill')
   await call(killed.page, 'release')
+  // fixed-wait: unconverted: the killed flip's release being handled
   await wait(100)
   const after = {
     body: await call(killed.page, 'bodyStyle'),
@@ -738,12 +757,16 @@ async function morphLazy(t) {
 // ── preloader ─────────────────────────────────────────────────────────────
 // Six assets by default: three promises the checks settle, an image, the font set and a fetched URL.
 
-/** Settles promise `i` and reads the state once the settle has been handled. */
+/** Settles promise `i` and reads the state once the settle has been handled (one macrotask: the settle is a promise
+ * reaction). `logged` is the write log's length before the settle, so a check can ask what was written BEFORE it by
+ * order, never by comparing two timestamps taken a task apart (the old flake: a write and a read a task later fell in
+ * different milliseconds on a slow runner). */
 const settleAndRead = (page, i) =>
   page.evaluate(async (n) => {
+    const logged = window.__t.log().length
     window.__t.settle(n)
     await new Promise((resolve) => setTimeout(resolve, 0))
-    return window.__t.state()
+    return { ...window.__t.state(), logged }
   }, i)
 const monotonic = (log) => log.every((e, i) => i === 0 || Number(e.p) >= Number(log[i - 1].p))
 
@@ -761,7 +784,7 @@ async function preloaderResponds(t) {
     return { ...s, ok: s.state === 'done' }
   })
   const log = await call(page, 'log')
-  const early = log.filter((e) => e.t < last.t && e.p === '1')
+  const early = log.slice(0, last.logged).filter((e) => e.p === '1')
   return [
     [
       'progress is the assets settling: the image, fonts and fetch give ½, each promise a sixth, written only upwards',
@@ -781,8 +804,21 @@ async function preloaderResponds(t) {
   ]
 }
 
+/** A fresh preloader mounted on a paused clock (the page loaded on flowing time, its first mount destroyed), so the
+ * check moves time itself: runFor(ms) fires exactly the timers due by then. The fade is WAAPI, on real time. */
+async function remountPaused(page) {
+  await call(page, 'destroy')
+  await pauseClock(page)
+  await call(page, 'remount')
+}
+
 async function preloaderMinimum(t) {
-  const { page } = await t.open({ query: '?fast' })
+  const { page } = await t.open({ query: '?fast', clock: true })
+  await remountPaused(page)
+  await page.clock.runFor(299)
+  const held = await call(page, 'state')
+  await page.clock.runFor(1)
+  await page.clock.resume()
   const gone = await until(async () => {
     const s = await call(page, 'state')
     return { ...s, ok: s.state === 'done' }
@@ -793,14 +829,19 @@ async function preloaderMinimum(t) {
   return [
     [
       'everything settled at once: --load-p is 1 at once, but the overlay stays 300 ms, no longer, so it doesn’t flash',
-      full && full.t < 150 && leaving && leaving.t >= 295 && leaving.t < 450 && gone.result === 'loaded',
-      `p 1 at ${full?.t} ms · leaving at ${leaving?.t} ms · ${gone.result}`,
+      full && full.t === 0 && held.state === 'loading' && held.overlay && leaving && leaving.t === 300 && gone.result === 'loaded',
+      `p 1 at ${full?.t} ms · at 299 ms ${held.state} · leaving at ${leaving?.t} ms · ${gone.result} (Playwright's clock)`,
     ],
   ]
 }
 
 async function preloaderMaximum(t) {
-  const { page } = await t.open({ query: '?hang&max=1200' })
+  const { page } = await t.open({ query: '?hang&max=1200', clock: true })
+  await remountPaused(page)
+  await page.clock.runFor(1199)
+  const held = await call(page, 'state')
+  await page.clock.runFor(1)
+  await page.clock.resume()
   const gone = await until(async () => {
     const s = await call(page, 'state')
     return { ...s, ok: s.state === 'done' }
@@ -814,8 +855,8 @@ async function preloaderMaximum(t) {
   return [
     [
       'an asset that never settles: at the maximum the page shows anyway, without reaching 1, done "timeout"',
-      leaving && near(leaving.t, 1200, 120) && leaving.p === '0.5' && gone.result === 'timeout' && !gone.overlay && !gone.inert,
-      `leaving at ${leaving?.t} ms (max 1200) with p ${leaving?.p} · ${gone.result} · overlay ${gone.overlay} · inert ${gone.inert}`,
+      held.state === 'loading' && leaving && leaving.t === 1200 && leaving.p === '0.5' && gone.result === 'timeout' && !gone.overlay && !gone.inert,
+      `at 1199 ms ${held.state} · leaving at ${leaving?.t} ms (max 1200) with p ${leaving?.p} · ${gone.result} · overlay ${gone.overlay} · inert ${gone.inert} (Playwright's clock)`,
     ],
     [
       'the CSS failsafe already fired: the overlay is removed at once, with no fade',
@@ -831,6 +872,7 @@ async function preloaderWrites(t) {
   // a thousandth per chunk, so --load-p (three decimals) changes every other chunk and aria-valuenow once.
   for (let i = 0; i < 20; i++) {
     await call(page, 'feed', 1)
+    // fixed-wait: paces the chunks so each lands in a task of its own (the write-per-chunk is the subject)
     await wait(10)
   }
   const s = await until(async () => {
@@ -1027,13 +1069,16 @@ const CHECKS = {
       const { page } = await t.open()
       const box = await page.locator('#ticker').boundingBox()
       await page.mouse.move(box.x + 100, box.y + box.height / 2)
+      // fixed-wait: unconverted: the hover's pause taking hold before movement is measured
       await wait(100)
       const hovered = await call(page, 'moved', 400)
       await page.mouse.move(5, 5)
+      // fixed-wait: unconverted: the pointer leaving taking hold before movement is measured
       await wait(100)
       const left = await call(page, 'moved', 400)
       // Keyboard: Tab through the six links to the last, which the 600 px frame clips at rest.
       for (let i = 0; i < 6; i++) await page.keyboard.press(t.tab)
+      // fixed-wait: unconverted: focus reaching the last link before movement is measured
       await wait(100)
       const focused = await call(page, 'moved', 400)
       const shows = await page.evaluate(() => {
@@ -1044,6 +1089,7 @@ const CHECKS = {
       })
       await page.evaluate(() => document.activeElement.blur())
       await page.click('#toggle')
+      // fixed-wait: unconverted: the toggle's pause taking hold before movement is measured
       await wait(100)
       const toggled = await call(page, 'state')
       const byChoice = await call(page, 'moved', 400)
@@ -1051,6 +1097,7 @@ const CHECKS = {
       await page.mouse.move(5, 5)
       const stillPaused = await call(page, 'moved', 400)
       await page.click('#toggle')
+      // fixed-wait: unconverted: the toggle's resume taking hold before movement is measured
       await wait(100)
       const resumed = await call(page, 'moved', 400)
       const after = await call(page, 'state')
@@ -1078,6 +1125,7 @@ const CHECKS = {
       const fling = await call(page, 'fling', 2400, 300)
       const s = await call(page, 'state')
       await page.click('#toggle')
+      // fixed-wait: unconverted: the toggle under reduced motion taking hold before movement is measured
       await wait(100)
       const played = await call(page, 'moved', 400)
       const after = await call(page, 'state')
@@ -1097,6 +1145,7 @@ const CHECKS = {
     destroy: async (t) => {
       const { page } = await t.open()
       await call(page, 'fling', 1800, 300)
+      // fixed-wait: lands destroy() part-way through the fling (the timing is the subject)
       await wait(300)
       return [await destroyCheck(page)]
     },
@@ -1119,6 +1168,7 @@ const CHECKS = {
       const first = await follow('field')
       const second = await follow('tide')
       await page.mouse.move(1200, 700, { steps: 3 })
+      // fixed-wait: unconverted: the pointer leaving the media hiding it
       await wait(100)
       const gone = await call(page, 'state')
       return [
@@ -1155,6 +1205,7 @@ const CHECKS = {
       const want = await call(page, 'end', 'field')
       const s = await call(page, 'state')
       await page.mouse.move(c.x - 40, c.y + 4, { steps: 3 })
+      // fixed-wait: an observation window: the media must not follow a pointer that moved within the item
       await wait(300)
       const s2 = await call(page, 'state')
       return [
@@ -1170,6 +1221,7 @@ const CHECKS = {
       // Mid-glide from one item to the next.
       const a = await call(page, 'centre', 'field')
       await page.mouse.move(a.x, a.y, { steps: 3 })
+      // fixed-wait: lands the second move part-way through the glide (the timing is the subject)
       await wait(600)
       const b = await call(page, 'centre', 'north')
       await page.mouse.move(b.x, b.y, { steps: 2 })
@@ -1204,6 +1256,7 @@ const CHECKS = {
     reduced: async (t) => {
       const { page } = await t.open({ reducedMotion: 'reduce' })
       await call(page, 'toPass', 'wave', 0.3)
+      // fixed-wait: an observation window: under reduced motion nothing may draw after the scroll
       await wait(300)
       const shapes = [...(await call(page, 'drawn', 'wave')), ...(await call(page, 'drawn', 'pair'))]
       return [
@@ -1229,16 +1282,20 @@ const CHECKS = {
       await page.mouse.move(640, 400)
       await page.mouse.wheel(0, 100)
       const one = await settledY(page)
+      // fixed-wait: the step's gesture cooldown is the subject: the next wheel comes after it
       await wait(300)
       await page.mouse.wheel(0, 100)
       const two = await settledY(page)
+      // fixed-wait: the step's gesture cooldown is the subject: the next wheel comes after it
       await wait(300)
       // The third section is 2.5 viewports tall: a viewport at a time, then its end, then the fourth.
       await page.mouse.wheel(0, 100)
       const three = await settledY(page)
+      // fixed-wait: the step's gesture cooldown is the subject: the next wheel comes after it
       await wait(300)
       await page.mouse.wheel(0, 100)
       const four = await settledY(page)
+      // fixed-wait: the step's gesture cooldown is the subject: the next wheel comes after it
       await wait(300)
       await page.mouse.wheel(0, 100)
       const five = await settledY(page)
@@ -1331,12 +1388,14 @@ const CHECKS = {
       await settledY(page)
       // Mid-step: destroy() stops the step where it is, and the page stays there.
       await page.mouse.wheel(0, 100)
+      // fixed-wait: lands destroy() part-way through the step (the timing is the subject)
       await wait(120)
       const at = await page.evaluate(() => {
         const y = Math.round(scrollY)
         window.__t.destroy()
         return y
       })
+      // fixed-wait: an observation window: after destroy() mid-step the page must not move
       await wait(600)
       const after = await call(page, 'y')
       return [
@@ -1378,6 +1437,7 @@ const CHECKS = {
       const { page } = await t.open()
       // Mid-flight, as a route change during one would.
       await call(page, 'flip', 'detail')
+      // fixed-wait: lands destroy() part-way through the flip (the timing is the subject)
       await wait(150)
       return [await destroyCheck(page)]
     },
@@ -1391,6 +1451,7 @@ const CHECKS = {
     destroy: async (t) => {
       const { page } = await t.open()
       await call(page, 'toggle', true)
+      // fixed-wait: lands destroy() part-way through the morph (the timing is the subject)
       await wait(150)
       return [await destroyCheck(page)]
     },
@@ -1452,7 +1513,7 @@ async function main() {
   }
 
   for (const browserName of args.browsers) {
-    open.browser = await BROWSERS[browserName].launch()
+    open.browser = await launch(BROWSERS[browserName])
     for (const pageName of args.pages) {
       const errors = []
       for (const [id, run] of Object.entries(CHECKS[pageName])) {
@@ -1463,16 +1524,19 @@ async function main() {
           page: pageName,
           tab: browserName === 'webkit' ? 'Alt+Tab' : 'Tab',
           /** A fresh context on this page with the recipe mounted and the page settled. */
-          async open({ reducedMotion = 'no-preference', query = '' } = {}) {
+          async open({ reducedMotion = 'no-preference', query = '', clock = false } = {}) {
             const context = await open.browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion })
             contexts.push(context)
             const page = await context.newPage()
+            // Playwright's clock, installed before the page loads: time flows until a check pauses it.
+            if (clock) await page.clock.install()
             page.on('pageerror', (err) => errors.push(`${id}: ${err.message.split('\n')[0]}`))
-            page.on('console', (msg) => msg.type() === 'error' && errors.push(`${id}: console: ${msg.text().split('\n')[0]}`))
+            page.on('console', (msg) => msg.type() === 'error' && !isFaviconMiss(msg) && errors.push(`${id}: console: ${msg.text().split('\n')[0]}`))
             await page.goto(`${base}/${pageName}.html${query}`, { waitUntil: 'load' })
             await page.waitForFunction(() => !!window.__t)
             await page.evaluate(() => document.fonts.ready.then(() => window.__t.frames(3)))
             // The load-time refreshes (ScrollTrigger's own on load) land before anything is measured.
+            // fixed-wait: ScrollTrigger's load-time refresh is debounced inside GSAP, with no signal the page can read
             await wait(300)
             return { page }
           },

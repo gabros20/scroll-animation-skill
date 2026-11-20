@@ -27,6 +27,7 @@ const outDir = join(__dirname_, '.scratch', 'smoke-dist')
 const verifyMotion = join(repoRoot, 'skills', 'scroll-animation', 'scripts', 'tools', 'verify-motion.mjs')
 const configPath = join(repoRoot, 'skills', 'scroll-animation', 'assets', 'config.ts')
 const { GATE_SCRIPT } = await import(pathToFileURL(configPath).href)
+const chromePreload = process.env.HARNESS_CHROME ? ['--import', pathToFileURL(join(__dirname_, 'lib', 'chrome-preload.mjs')).href] : []
 
 const UNSCALED = 'export const SCALE: ScaleConfig | null = null'
 const smokeBuild = [
@@ -83,9 +84,10 @@ async function main() {
     // out waiting for networkidle every time with spawnSync, and worked
     // immediately once this ran async.
     status = await new Promise((resolve) => {
+      // verify-motion.mjs launches Chromium itself: tests/lib/chrome-preload.mjs carries HARNESS_CHROME into it.
       const child = spawn(
         process.execPath,
-        [verifyMotion, url, '--reveal', '--scenes', '--out', join(__dirname_, '.scratch', 'verify-motion-out')],
+        [...chromePreload, verifyMotion, url, '--reveal', '--scenes', '--out', join(__dirname_, '.scratch', 'verify-motion-out')],
         { cwd: repoRoot, stdio: 'inherit' }
       )
       child.on('exit', (code) => resolve(code ?? 2))

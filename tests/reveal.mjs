@@ -40,6 +40,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { chromium, firefox, webkit } from 'playwright'
 import { build, preview } from 'vite'
 
+import { hold as sleep, launch } from './lib/harness.mjs'
+
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const fixtureRoot = join(testsDir, 'fixtures', 'reveal')
 const outDir = join(testsDir, '.scratch', 'reveal-dist')
@@ -292,7 +294,6 @@ const showStats = (stats) =>
     .map(([id, s]) => `${id}:min${s.minOpacity.toFixed(2)}/m${s.moved}/c${s.clipped}/i${s.inline}/${s.frames}f`)
     .join(' ')
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 const untilPageTime = (page, t) => page.waitForFunction((at) => performance.now() >= at, t, { timeout: t + 15000 })
 const read = (page, ids) => page.evaluate((list) => window.__t.read(list), ids)
 const untilReady = (page, timeout = 8000) =>
@@ -320,9 +321,11 @@ const scrollItemTo = (page, id, fraction) => page.evaluate(([i, f]) => window.__
 async function scrollThrough(page, pause = 400) {
   for (const group of GROUPS) {
     await scrollItemTo(page, group.items[0].id, 0.5)
+    // fixed-wait: a reader's pause on each group is the subject (the sampling window)
     await sleep(pause)
   }
   await page.evaluate(() => window.__t.scrollTop())
+  // fixed-wait: a reader's pause at the top is the subject (the sampling window)
   await sleep(pause)
 }
 
@@ -365,6 +368,7 @@ const CHECKS = {
     out.push(['the mount group reveals when the engine boots', mountLanded, show(await read(page, MOUNT))])
 
     await scrollItemTo(page, VIEW[0], BELOW_LINE)
+    // fixed-wait: an observation window: below the line nothing may reveal
     await sleep(700)
     const below = await read(page, VIEW)
     await scrollItemTo(page, VIEW[0], ACROSS_LINE)
@@ -429,6 +433,7 @@ const CHECKS = {
     const veil = await page.evaluate(() => window.__t.veil())
     await page.evaluate((ids) => window.__t.sample(ids), ALL)
     await page.waitForFunction(() => window.__fx.bootedAt !== null, null, { timeout: 4000 })
+    // fixed-wait: a sampling window across the late boot: a latched page must not animate
     await sleep(1500)
     await scrollThrough(page)
     const stats = await page.evaluate(() => window.__t.stopSample())
@@ -448,6 +453,7 @@ const CHECKS = {
     {
       const { page } = await t.open('', { reducedMotion: 'reduce' })
       await untilReady(page)
+      // fixed-wait: an observation window: under reduced motion nothing may animate at load
       await sleep(500)
       const atLoad = await read(page)
       await page.evaluate((ids) => window.__t.sample(ids), ALL)
@@ -464,15 +470,18 @@ const CHECKS = {
       const { page } = await t.open()
       await untilReady(page)
       await scrollItemTo(page, VIEW[0], ACROSS_LINE)
+      // fixed-wait: lands the media switch part-way through the entrance (the timing is the subject)
       await sleep(150)
       const midway = await read(page, VIEW)
       const y0 = await page.evaluate(() => window.__t.scrollY())
       await page.emulateMedia({ reducedMotion: 'reduce' })
+      // fixed-wait: unconverted: the media switch reaching the entrances
       await sleep(400)
       const settled = await read(page)
       const y1 = await page.evaluate(() => window.__t.scrollY())
       await page.evaluate((ids) => window.__t.sample(ids), ONCE)
       await page.emulateMedia({ reducedMotion: 'no-preference' })
+      // fixed-wait: a sampling window: switched back, landed entrances must not replay
       await sleep(1200)
       const stats = await page.evaluate(() => window.__t.stopSample())
       const y2 = await page.evaluate(() => window.__t.scrollY())
@@ -493,9 +502,11 @@ const CHECKS = {
     await scrollItemTo(page, VIEW[0], ACROSS_LINE)
     const first = await untilLanded(page, VIEW)
     await page.evaluate(() => window.__t.scrollTop())
+    // fixed-wait: unconverted: back at the top before the sample starts
     await sleep(500)
     await page.evaluate((ids) => window.__t.sample(ids), VIEW)
     await scrollItemTo(page, VIEW[0], ACROSS_LINE)
+    // fixed-wait: a sampling window: a second crossing must not replay
     await sleep(900)
     const stats = await page.evaluate(() => window.__t.stopSample())
     const back = await read(page, VIEW)
@@ -558,6 +569,7 @@ const CHECKS = {
     await untilReady(page)
     await page.evaluate(([ids, resting]) => window.__t.watchStarts(ids, resting), [VIEW, { rise: RISE_REST, scale: SCALE_REST }])
     await scrollItemTo(page, VIEW[0], ACROSS_LINE)
+    // fixed-wait: a sampling window: every entrance start is recorded
     await sleep(1500)
     const starts = await page.evaluate(() => window.__t.stopSample())
     const times = VIEW.map((id) => starts[id])
@@ -582,12 +594,15 @@ const CHECKS = {
     await scrollItemTo(page, VIEW[0], ACROSS_LINE)
     const first = await untilLanded(page, VIEW)
     await page.evaluate(() => window.__t.scrollTop())
+    // fixed-wait: unconverted: back at the top before the route hides
     await sleep(300)
     const shownIds = [...MOUNT, ...VIEW]
     await page.evaluate(() => window.__fx.hide())
+    // fixed-wait: unconverted: the hide landing before the sample starts
     await sleep(300)
     await page.evaluate((ids) => window.__t.sample(ids), shownIds)
     await page.evaluate(() => window.__fx.show())
+    // fixed-wait: a sampling window: shown again, landed entrances must not replay
     await sleep(1200)
     const stats = await page.evaluate(() => window.__t.stopSample())
     const shown = await read(page, shownIds)
@@ -607,6 +622,7 @@ const CHECKS = {
     const { page } = await t.open('', t.touch)
     await untilReady(page)
     await scrollItemTo(page, CARD[0], BELOW_FOLD)
+    // fixed-wait: an observation window: below the fold nothing may reveal
     await sleep(700)
     const below = await read(page, CARD)
     const top = await page.evaluate(() => document.getElementById('g-card').getBoundingClientRect().top / innerHeight)
@@ -627,6 +643,7 @@ const CHECKS = {
     // VIEW ends up a screen and a half above the view: every trigger on it is passed in one step.
     const past = async (page) => {
       await scrollItemTo(page, REPLAY[0], 0.5)
+      // fixed-wait: unconverted: the passed triggers' entrances landing
       await sleep(900)
       const bottom = await page.evaluate((id) => document.getElementById(id).getBoundingClientRect().bottom, VIEW[0])
       return { bottom, above: await read(page, VIEW) }
@@ -638,6 +655,7 @@ const CHECKS = {
     {
       const { page } = await t.open('', t.touch)
       await untilReady(page)
+      // fixed-wait: unconverted: the page's first frames after ready
       await sleep(300)
       const { bottom, above } = await past(page)
       const back = await backUp(page)
@@ -652,9 +670,11 @@ const CHECKS = {
       const { page } = await t.open('', t.touch)
       await untilReady(page)
       await scrollItemTo(page, REPLAY[0], 0.5)
+      // fixed-wait: the browser's own save of the restore position, which the page can't observe
       await sleep(300)
       await page.reload({ waitUntil: 'load' })
       await untilReady(page)
+      // fixed-wait: unconverted: the reload's restore and the triggers it passes
       await sleep(900)
       const y = await page.evaluate(() => window.__t.scrollY())
       const above = await read(page, VIEW)
@@ -721,7 +741,7 @@ async function main() {
   const groups = args.only ?? Object.keys(CHECKS)
 
   for (const browserName of args.browsers) {
-    open.browser = await BROWSERS[browserName].launch()
+    open.browser = await launch(BROWSERS[browserName])
     for (const engine of args.engines) {
       const errors = []
       for (const group of groups) {

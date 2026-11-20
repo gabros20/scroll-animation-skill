@@ -25,6 +25,8 @@ import { promisify } from 'node:util'
 import { chromium, webkit } from 'playwright'
 import { build, preview } from 'vite'
 
+import { launch, settle as settleRead } from './lib/harness.mjs'
+
 const execFileAsync = promisify(execFile)
 
 const testsDir = dirname(fileURLToPath(import.meta.url))
@@ -535,8 +537,7 @@ async function lowPowerRun(t, loadForgets) {
   const modes = []
   for (const p of [0, 0.5, 1]) {
     await page.evaluate((at) => window.__t.to(at), p)
-    await page.waitForTimeout(400)
-    modes.push(await page.evaluate(() => window.__t.read().mode))
+    modes.push((await settleRead(page, () => window.__t.read().mode, { min: 2 })).value)
   }
   const readyState = () => page.evaluate(() => window.__t.video().readyState)
   const settle = () => page.waitForFunction(() => window.__t.video().readyState >= 2, null, { timeout: 4000 }).catch(() => {})
@@ -544,11 +545,13 @@ async function lowPowerRun(t, loadForgets) {
   await page.evaluate(() => window.__t.to(0.5))
   await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
   await settle()
+  // fixed-wait: unconverted: the unlocked clip presenting the band frame (media on real time)
   await page.waitForTimeout(500)
   const after = await page.evaluate(() => ({ ...window.__t.read(), shown: window.__t.shown(), want: window.__t.expected(), readyState: window.__t.video().readyState }))
   // The clip's data dropped (as iOS does to a sleeping clip). If the unlock survived, it recovers on its own; if not,
   // the poster covers again and the next click unlocks it.
   await page.evaluate(() => window.__t.video().load())
+  // fixed-wait: unconverted: the dropped data reaching readyState (media on real time)
   await page.waitForTimeout(800)
   const dropped = await readyState()
   if (!loadForgets) await settle()
@@ -592,25 +595,31 @@ const CHECKS = {
     for (const loadForgets of [false, true]) {
       const { page } = await t.open([[lowPowerInit, loadForgets]], { holds: true, painted: true })
       await page.evaluate(() => window.__t.to(0.5))
+      // fixed-wait: unconverted: the scrub reaching the band before the tap
       await page.waitForTimeout(400)
       await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
       await page.waitForFunction(() => window.__t.video().getAttribute('data-scene-media') === 'live', null, { timeout: 5000 }).catch(() => {})
       const before = await page.evaluate(() => window.__t.video().getAttribute('data-scene-media'))
+      // fixed-wait: unconverted: the first reveal's fade finishing
       await page.waitForTimeout(400) // the first reveal's fade is over
       await page.evaluate(startRevealSampler, FPS)
       await page.evaluate(() => window.__lock({ evict: true, hang: true }))
+      // fixed-wait: the lock's length is the subject: a phone locked for 0.5 s
       await page.waitForTimeout(500)
       await page.evaluate(() => window.__wake())
+      // fixed-wait: unconverted: the wake's recovery, the kick and the lift (media on real time)
       await page.waitForTimeout(1500)
       const woke = await page.evaluate(() => ({ media: window.__t.video().getAttribute('data-scene-media'), readyState: window.__t.video().readyState }))
       if (loadForgets) {
         await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
+        // fixed-wait: unconverted: the tap's recovery (media on real time)
         await page.waitForTimeout(1500)
       }
       // Before scrolling on: past this, the playhead trails a moving band by a seek, which is the scrub, not a flash.
       const { rows } = await page.evaluate(() => window.__reveal.stop())
       // Scrolling moves the frame again.
       await page.evaluate(() => window.__t.to(0.7))
+      // fixed-wait: unconverted: the playhead following the scroll (media on real time)
       await page.waitForTimeout(800)
       const moved = await page.evaluate(() => ({ ...window.__t.read(), shown: window.__t.shown(), want: window.__t.expected(), media: window.__t.video().getAttribute('data-scene-media') }))
       const wrong = rows.filter((r) => r.poster < 0.999 && (r.presented === null || Math.abs(r.presented - r.want) > 1))
@@ -644,20 +653,25 @@ const CHECKS = {
     for (const c of cases) {
       const { page } = await t.open([[lowPowerInit, false]], { holds: true, painted: true })
       await page.evaluate(() => window.__t.to(0.5))
+      // fixed-wait: unconverted: the scrub reaching the band before the tap
       await page.waitForTimeout(400)
       await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
       await page.waitForFunction(() => window.__t.video().getAttribute('data-scene-media') === 'live', null, { timeout: 5000 }).catch(() => {})
       const before = await page.evaluate(() => window.__t.video().getAttribute('data-scene-media'))
+      // fixed-wait: unconverted: the first reveal's fade finishing
       await page.waitForTimeout(400) // the first reveal's fade is over
       await page.evaluate(startRevealSampler, FPS)
       await page.evaluate(({ interrupt, forget }) => window.__lock({ evict: false, staleLayer: true, interrupt, forget }), c)
+      // fixed-wait: the lock's length is the subject: a phone locked for 1.2 s
       await page.waitForTimeout(1200)
       await page.evaluate(() => window.__wake())
       await page.evaluate(() => window.__t.to(0.56))
+      // fixed-wait: unconverted: the wake's recovery at the new band (media on real time)
       await page.waitForTimeout(1500)
       const woke = await page.evaluate(() => window.__t.video().getAttribute('data-scene-media'))
       if (c.forget) {
         await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
+        // fixed-wait: unconverted: the tap's recovery (media on real time)
         await page.waitForTimeout(1500)
       }
       // Before scrolling on: past this, the picture trails a moving band by a seek, which is the scrub, not a flash.
@@ -668,8 +682,10 @@ const CHECKS = {
       const calls = await page.evaluate(() => window.__plays.calls)
       for (const p of [0.6, 0.64, 0.68, 0.72]) {
         await page.evaluate((at) => window.__t.to(at), p)
+        // fixed-wait: a reader's scroll steps, paced: the sampler watches every frame between them
         await page.waitForTimeout(250)
       }
+      // fixed-wait: unconverted: the last step's seek landing (media on real time)
       await page.waitForTimeout(400)
       const after = await page.evaluate(() => {
         const v = window.__t.video()
@@ -697,6 +713,7 @@ const CHECKS = {
   async refreshInView(t) {
     const { page } = await t.open([[lowPowerInit, false]], { holds: true, painted: true })
     await page.evaluate(() => window.__t.to(0.5))
+    // fixed-wait: unconverted: the band settling before the reload
     await page.waitForTimeout(400)
     await page.reload({ waitUntil: 'load' })
     const t0 = Date.now()
@@ -736,11 +753,13 @@ const CHECKS = {
     for (const { stuck, wedge, head = false, says } of cases) {
       const { page } = await t.open([[lowPowerInit, { loadForgets: false, stuck, wedge, blankLoad: true, fromHead: head, layerLag: head }]], { holds: true, painted: true, touch: true })
       await page.evaluate(() => window.__t.to(0.5))
+      // fixed-wait: unconverted: the band settling before the reload
       await page.waitForTimeout(400)
       await page.reload({ waitUntil: 'load' })
       // Playwright's WebKit doesn't always restore the scroll on reload: put the reader back where they were.
       await page.evaluate(() => scrollY < 10 && window.__t.to(0.5))
       await page.waitForFunction(() => window.__t.video()?.getAttribute('data-scene-media') === 'blocked', null, { timeout: 3000 }).catch(() => {})
+      // fixed-wait: unconverted: the blocked scene's poster at rest before the tap
       await page.waitForTimeout(400)
       const before = await page.evaluate(() => ({ media: window.__t.video().getAttribute('data-scene-media'), paused: window.__t.video().paused, readyState: window.__t.video().readyState }))
       await page.evaluate(startRevealSampler, FPS)
@@ -756,6 +775,7 @@ const CHECKS = {
       })
       await page.touchscreen.tap(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
       await page.waitForFunction(() => window.__t.video().getAttribute('data-scene-media') === 'live', null, { timeout: 5000 }).catch(() => {})
+      // fixed-wait: unconverted: the lift's fade finishing
       await page.waitForTimeout(400)
       const { rows } = await page.evaluate(() => window.__reveal.stop())
       const end = rows[rows.length - 1]
@@ -763,8 +783,10 @@ const CHECKS = {
       const calls = await page.evaluate(() => window.__plays.calls)
       for (const p of [0.55, 0.6, 0.65]) {
         await page.evaluate((at) => window.__t.to(at), p)
+        // fixed-wait: a reader's scroll steps, paced: the sampler watches every frame between them
         await page.waitForTimeout(250)
       }
+      // fixed-wait: unconverted: the last step's seek landing (media on real time)
       await page.waitForTimeout(400)
       const after = await page.evaluate(() => ({ calls: window.__plays.calls, plays: { ...window.__plays }, loads: window.__mediaCalls.load, shown: window.__t.shown(), want: Math.round(window.__t.expected().frame), media: window.__t.video().getAttribute('data-scene-media') }))
       const lift = await page.evaluate(() => window.__lift ?? null)
@@ -812,9 +834,11 @@ const CHECKS = {
   async flashFree(t) {
     const { page } = await t.open([[lowPowerInit, false]], { holds: true, painted: true })
     await page.evaluate(() => window.__t.to(0.5))
+    // fixed-wait: unconverted: the band settling before the sampler starts
     await page.waitForTimeout(600)
     await page.evaluate(startRevealSampler, FPS)
     await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
+    // fixed-wait: a sampling window across the tap's unlock and lift (media on real time)
     await page.waitForTimeout(1500)
     const { rows, presented } = await page.evaluate(() => window.__reveal.stop())
     const uncovered = rows.filter((r) => r.poster < 0.999)
@@ -833,14 +857,18 @@ const CHECKS = {
   // it through load() inside the gesture, so it plays when the reader arrives with no second tap.
   async earlierTap(t) {
     const { page } = await t.open([[lowPowerInit, false]], { holds: true, painted: true })
+    // fixed-wait: unconverted: the refused prime settling the scene to blocked
     await page.waitForTimeout(400)
     const blocked = await page.evaluate(() => window.__t.video().getAttribute('data-scene-media'))
     await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }))
+    // fixed-wait: unconverted: the jump to the page end landing
     await page.waitForTimeout(800)
     await page.mouse.click(VIEWPORT_CENTRE.x, VIEWPORT_CENTRE.y)
+    // fixed-wait: unconverted: the tap's unlock starting before the return
     await page.waitForTimeout(300)
     await page.evaluate(() => window.__t.to(0.5))
     await page.waitForFunction(() => window.__t.video().readyState >= 2, null, { timeout: 5000 }).catch(() => {})
+    // fixed-wait: unconverted: the clip presenting the band frame (media on real time)
     await page.waitForTimeout(600)
     const after = await page.evaluate(() => ({ ...window.__t.read(), readyState: window.__t.video().readyState, media: window.__t.video().getAttribute('data-scene-media'), plays: { ...window.__plays } }))
     return [
@@ -856,6 +884,7 @@ const CHECKS = {
     const out = []
     {
       const { page, tiers } = await t.open([[connectionInit, true]])
+      // fixed-wait: unconverted: the tier choice settling
       await page.waitForTimeout(600)
       const s = await page.evaluate(() => window.__t.read())
       out.push([
@@ -866,6 +895,7 @@ const CHECKS = {
     }
     {
       const { page, tiers } = await t.open([[connectionInit, false]])
+      // fixed-wait: unconverted: the tier choice settling
       await page.waitForTimeout(600)
       const s = await page.evaluate(() => window.__t.read())
       out.push([
@@ -901,6 +931,7 @@ const CHECKS = {
     // Leave for the band, come back: a new visit, a new 5 s.
     await page.evaluate(() => window.__t.to(0.4))
     await page.waitForFunction(() => window.__t.read().mode === 'scrub', null, { timeout: 3000 })
+    // fixed-wait: unconverted: the playhead catching the band (media on real time)
     await page.waitForTimeout(300)
     const again = await page.evaluate(() => {
       const since = performance.now()
@@ -924,6 +955,7 @@ const CHECKS = {
     })
     // The band takes over from the held frame: p = 0.5 is frame 35.2 on this geometry (as in the parity traces).
     await page.evaluate(() => window.__t.to(0.5))
+    // fixed-wait: unconverted: the playhead catching the band from the held frame (media on real time)
     await page.waitForTimeout(1200)
     const band = await page.evaluate(() => window.__t.read())
     return [
@@ -945,8 +977,10 @@ const CHECKS = {
     // Through the whole scene and past it: warm margin, wake, every rehydrate on the way.
     for (const p of [0, 0.25, 0.5, 0.75, 1, 1.4]) {
       await page.evaluate((at) => window.__t.to(at), p)
+      // fixed-wait: a reader's scroll steps, paced: reduced motion must load no clip on any of them
       await page.waitForTimeout(300)
     }
+    // fixed-wait: an observation window: under reduced motion no clip loads
     await page.waitForTimeout(800)
     const still = await page.evaluate(() => window.__t.still())
     const none = bytes()
@@ -959,9 +993,11 @@ const CHECKS = {
     ]
     // Mid-scene, reduced motion lifts: the tier loads and the scene runs from where the reader is.
     await page.evaluate(() => window.__t.to(0.5))
+    // fixed-wait: unconverted: the band settling before the media switch
     await page.waitForTimeout(300)
     await page.emulateMedia({ reducedMotion: 'no-preference' })
     await page.waitForFunction(() => window.__t.ready(), null, { timeout: 10000 })
+    // fixed-wait: unconverted: the playhead catching the band after the tier loads (media on real time)
     await page.waitForTimeout(1200)
     const want = await page.evaluate(() => window.__t.expected())
     const got = await page.evaluate(() => window.__t.read())
@@ -978,12 +1014,15 @@ const CHECKS = {
   async reducedMotionOn(t) {
     const { page, bytes } = await t.open()
     await page.evaluate(() => window.__t.to(0.5))
+    // fixed-wait: unconverted: the band settling before the media switch
     await page.waitForTimeout(600)
     await page.emulateMedia({ reducedMotion: 'reduce' })
+    // fixed-wait: unconverted: the media switch freezing the still
     await page.waitForTimeout(600)
     const still = await page.evaluate(() => window.__t.still())
     const at = bytes().total
     await page.evaluate(() => window.__t.to(1))
+    // fixed-wait: an observation window: after reduced motion, no more bytes
     await page.waitForTimeout(800)
     const later = bytes().total
     return [
@@ -1000,10 +1039,12 @@ const CHECKS = {
   async holds(t) {
     const { page } = await t.open([], { holds: true })
     await page.evaluate(() => window.__t.to(1))
+    // fixed-wait: unconverted: the playhead reaching the tail (media on real time)
     await page.waitForTimeout(800)
     const rest = await page.evaluate(() => ({ ...window.__t.read(), shown: window.__t.shown() }))
     // Back up into the tail's hysteresis gap: the band has left its end, and the scene still reads `tail`.
     await page.evaluate(() => window.__t.to(0.7))
+    // fixed-wait: unconverted: the playhead leaving the tail's end (media on real time)
     await page.waitForTimeout(500)
     const want = await page.evaluate(() => window.__t.expected())
     const back = await page.evaluate(() => ({ ...window.__t.read(), shown: window.__t.shown() }))
@@ -1022,6 +1063,7 @@ const CHECKS = {
   async tracking(t) {
     const { page } = await t.open([], { holds: true })
     await page.evaluate(() => window.__t.to(0.35))
+    // fixed-wait: unconverted: the playhead reaching the band (media on real time)
     await page.waitForTimeout(800)
     const frames = await page.evaluate(() => window.__t.framesTo(0.6))
     const got = await page.evaluate(() => ({ ...window.__t.read(), shown: window.__t.shown(), want: window.__t.expected() }))
@@ -1038,6 +1080,7 @@ const CHECKS = {
     const { page, bytes, requests } = await t.open()
     for (const p of [0, 0.5, 1]) {
       await page.evaluate((at) => window.__t.to(at), p)
+      // fixed-wait: a reader's scroll steps, paced
       await page.waitForTimeout(300)
     }
     const b = bytes()
@@ -1099,7 +1142,7 @@ async function main() {
   }
 
   for (const browserName of args.browsers) {
-    open.browser = await BROWSERS[browserName].launch()
+    open.browser = await launch(BROWSERS[browserName])
     for (const engine of args.pages) {
       for (const [id, run] of Object.entries(CHECKS).filter(([id]) => !args.only || args.only.includes(id))) {
         const contexts = []

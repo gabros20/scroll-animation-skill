@@ -43,6 +43,8 @@ import { fileURLToPath } from 'node:url'
 import { chromium, firefox, webkit } from 'playwright'
 import { build, preview } from 'vite'
 
+import { hold as sleep, isFaviconMiss, launch, settle } from './lib/harness.mjs'
+
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const repo = join(testsDir, '..')
 const fixtureRoot = join(testsDir, 'fixtures', 'render-bridge')
@@ -57,7 +59,6 @@ const VIEWPORT = { width: 1000, height: 600 }
 /** Agreement with the rect, px of the range. */
 const TOL_PX = 1.01
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // ── args ────────────────────────────────────────────────────────────────
 
@@ -150,6 +151,7 @@ const jump = (page, y) => page.evaluate((v) => window.__rb.jump(v), y)
 const renders = (page) => page.evaluate(() => window.__rb.log.renders)
 async function rendersOver(page, ms) {
   const before = await renders(page)
+  // fixed-wait: the render count over a window is the subject (renders per second)
   await sleep(ms)
   return (await renders(page)) - before
 }
@@ -157,6 +159,7 @@ async function wheel(page, steps, delta, gap = 40) {
   await page.mouse.move(300, 300)
   for (let i = 0; i < steps; i++) {
     await page.mouse.wheel(0, delta)
+    // fixed-wait: wheel notches paced like a hand
     await sleep(gap)
   }
 }
@@ -171,11 +174,15 @@ async function lastDrawn(page) {
 }
 const r1 = (x) => (Number.isFinite(x) ? Math.round(x * 10) / 10 : x)
 
+/** At rest: the scene has stopped rendering (its damped settle is over: it renders every frame until then) and the page
+ * has stopped scrolling, for 30 frames in a row. */
+const rest = (page, timeout = 8000) => settle(page, () => [Math.round(scrollY), window.__rb.log.renders], { frames: 30, timeout })
+
 async function waitReady(page, webgl) {
   await page.waitForFunction(() => window.__rb?.ready && !!window.__rb.scene?.(), null, { timeout: 15000 })
   if (webgl) await page.waitForSelector('[data-scene-ready="true"]', { timeout: 20000 })
   // The mount rehydrate, the first frames, a damped settle.
-  await sleep(1500)
+  await rest(page)
 }
 
 /** Every frame drawn so far: at the rect's progress (exact and smooth), and at least one ticked by the driver. */
@@ -228,11 +235,13 @@ const VARIANTS = {
 /** A wheel run down and back up the range, recorded at the end of every frame. */
 async function lagRun(t, page, g, push, when) {
   await jump(page, Math.round(g.top - 100))
-  await sleep(800)
+  await rest(page)
   await page.evaluate(() => window.__rb.rec.start())
   await wheel(page, 14, 100)
+  // fixed-wait: unconverted: the wheel run's damped settle, inside the recording
   await sleep(1400)
   await wheel(page, 7, -100)
+  // fixed-wait: unconverted: the wheel run's damped settle, inside the recording
   await sleep(1400)
   const lag = analyseLag(await page.evaluate(() => window.__rb.rec.stop()))
   // Native wheel scrolling in a headless browser jumps per notch: few moving frames, each one counted.
@@ -259,7 +268,7 @@ async function sceneSequence(t, variant, webgl) {
     push('load: media edges: the canvas slot and its poster are clipped 1 px in (clip-path: inset(1px))', clips.every((c) => c === 'inset(1px)'), `poster ${clips[0]} · slot ${clips[1]}`)
     const mid = Math.round(g.top + range * 0.5)
     await jump(page, mid)
-    await sleep(800)
+    await rest(page)
     await page.reload()
     await waitReady(page, webgl)
     let y = await page.evaluate(() => scrollY)
@@ -279,24 +288,26 @@ async function sceneSequence(t, variant, webgl) {
 
   if (want('rest')) {
     await jump(page, Math.round(g.top + range * 0.4))
-    await sleep(2000)
+    await rest(page)
     const atRest = await rendersOver(page, 1000)
     push('rest: 0 renders/s at rest once settled', atRest === 0, `${atRest}/s`)
     await jump(page, Math.round(g.top + g.height + 900))
+    // fixed-wait: unconverted: the scene falling asleep off-screen
     await sleep(800)
     const asleep = await page.evaluate(() => !window.__rb.scene().awake)
     const offscreen = await rendersOver(page, 1000)
     push('rest: 0 renders/s off-screen (the scene asleep)', offscreen === 0 && asleep, `${offscreen}/s, asleep ${asleep}`)
     await jump(page, Math.round(g.top + range * 0.3))
-    await sleep(1500)
+    await rest(page)
     const back = await lastDrawn(page)
     push('rest: back in view, the last frame drawn is at the scroll position', back.errPx <= TOL_PX && back.sErrPx <= TOL_PX, `${r1(back.errPx)} px`)
     await page.evaluate(() => window.__rb.fakeHidden(true))
+    // fixed-wait: unconverted: the fake hide reaching the conductor
     await sleep(200)
     await jump(page, Math.round(g.top + range * 0.6))
     const hidden = await rendersOver(page, 1000)
     await page.evaluate(() => window.__rb.fakeHidden(false))
-    await sleep(1500)
+    await rest(page)
     const shown = await lastDrawn(page)
     push('rest: 0 renders/s while hidden, even as the scroll moves', hidden === 0, `${hidden}/s`)
     push('rest: shown again, the last frame drawn is at the scroll position', shown.errPx <= TOL_PX && shown.sErrPx <= TOL_PX, `${r1(shown.errPx)} px`)
@@ -304,10 +315,11 @@ async function sceneSequence(t, variant, webgl) {
 
   if (want('reduced')) {
     await jump(page, Math.round(g.top + range * 0.6))
-    await sleep(1500)
+    await rest(page)
     const before = await renders(page)
     const rehydratesBefore = await page.evaluate(() => window.__rb.log.rehydrates.length)
     await page.emulateMedia({ reducedMotion: 'reduce' })
+    // fixed-wait: unconverted: the media switch reaching the conductor
     await sleep(1200)
     const held = await page.evaluate(() => window.__rb.conductor())
     const heldRenders = (await renders(page)) - before
@@ -318,11 +330,13 @@ async function sceneSequence(t, variant, webgl) {
     push('reduced: css/scene.css shows the poster in the canvas\'s place', posterVisible(slot) && !slot.slotShown, JSON.stringify(slot))
     const r0 = await renders(page)
     await wheel(page, 4, 100)
+    // fixed-wait: an observation window: under reduced motion a scroll must render nothing
     await sleep(800)
     const scrolled = await page.evaluate(() => window.__rb.conductor())
     const scrolledRenders = (await renders(page)) - r0
     push('reduced: scroll is ignored (no input, no render)', scrolled.exact === 0 && scrolledRenders === 0, `exact ${scrolled.exact}, ${scrolledRenders} renders`)
     await page.emulateMedia({ reducedMotion: 'no-preference' })
+    // fixed-wait: unconverted: the media switch back and the damped settle
     await sleep(1800)
     const live = await page.evaluate(() => window.__rb.conductor())
     const drawn = await lastDrawn(page)
@@ -334,15 +348,18 @@ async function sceneSequence(t, variant, webgl) {
 
   if (want('destroy')) {
     await jump(page, Math.round(g.top + range * 0.5))
-    await sleep(800)
+    await rest(page)
     const rehydrates = await page.evaluate(() => window.__rb.log.rehydrates.length)
     await page.evaluate(() => window.__rb.unmount())
+    // fixed-wait: unconverted: unmount's teardown finishing
     await sleep(800)
     const left = await page.evaluate(() => ({ listeners: { ...window.__rb.listeners }, ticker: window.__rb.ticker(), contexts: window.__rb.contexts() }))
     const r0 = await renders(page)
     await wheel(page, 5, 100)
+    // fixed-wait: an observation window: after unmount a scroll must render nothing
     await sleep(600)
     await page.evaluate(() => window.__rb.routeChanged())
+    // fixed-wait: an observation window: after unmount routeChanged() must rehydrate nothing
     await sleep(300)
     const after = await page.evaluate(() => window.__rb.log.rehydrates.length)
     const stray = (await renders(page)) - r0
@@ -357,7 +374,7 @@ async function sceneSequence(t, variant, webgl) {
     push('destroy: nothing renders or rehydrates after it (scroll, routeChanged)', stray === 0 && after === rehydrates, `${stray} renders, ${after - rehydrates} rehydrates`)
     await page.evaluate(() => window.__rb.remount())
     if (webgl) await page.waitForSelector('[data-scene-ready="true"]', { timeout: 20000 })
-    await sleep(1500)
+    await rest(page)
     const again = await lastDrawn(page)
     push('destroy: mounted again, the new bridge draws the scroll position', again.errPx <= TOL_PX && again.sErrPx <= TOL_PX, `${r1(again.errPx)} px`)
     // A remount adds the bridge's tick after the authority's driver has been running for a while.
@@ -366,10 +383,12 @@ async function sceneSequence(t, variant, webgl) {
 
   if (webgl && want('lost')) {
     await jump(page, Math.round(g.top + range * 0.4))
-    await sleep(800)
+    await rest(page)
     const lost = await page.evaluate(() => window.__rb.loseContext())
+    // fixed-wait: unconverted: the context loss reaching the slot
     await sleep(1200)
     await wheel(page, 3, 100)
+    // fixed-wait: unconverted: the wheel's frames reaching the lost canvas
     await sleep(600)
     const slot = await slotState(page)
     push('lost: WEBGL_lose_context leaves the poster (no canvas in the slot), nothing thrown', lost && posterVisible(slot) && !slot.canvas && slot.mode === 'poster' && errors.length === 0, JSON.stringify(slot))
@@ -382,6 +401,7 @@ async function sceneSequence(t, variant, webgl) {
 async function noWebglSequence(t, engine) {
   const { page, errors } = await t.open(`scene.html?engine=${engine}&auth=native&nowebgl=1`)
   await waitReady(page, false)
+  // fixed-wait: unconverted: the no-WebGL fallback's first frames
   await sleep(2500)
   const slot = await slotState(page)
   const total = await renders(page)
@@ -449,14 +469,17 @@ async function routesSequence(t) {
   const { page, errors } = await t.open('routes.html')
   await page.waitForFunction(() => window.__rb?.ready, null, { timeout: 15000 })
   await page.waitForSelector('[data-scene-ready="true"]', { timeout: 20000 })
-  await sleep(1200)
+  await rest(page)
   for (let i = 0; i < 10; i++) {
     await page.evaluate(() => window.__rb.go('b'))
+    // fixed-wait: unconverted: the route change to b mounting
     await sleep(300)
     await page.evaluate(() => window.__rb.go('a'))
     await page.waitForSelector('[data-scene-ready="true"]', { timeout: 20000 })
+    // fixed-wait: unconverted: route a's first frames
     await sleep(300)
   }
+  // fixed-wait: unconverted: the last route change's teardown finishing
   await sleep(1000)
   const contexts = await page.evaluate(() => window.__rb.contexts())
   out.push(['routes: 10 round trips leave one live context, none detached', contexts.live === 1 && contexts.liveDetached === 0 && contexts.canvases === 1, JSON.stringify(contexts)])
@@ -465,10 +488,12 @@ async function routesSequence(t) {
   out.push(['routes: every mount left releases its conductor\'s listeners', before.length === 11 && released, `${before.length} mounts; last ${JSON.stringify(before.at(-1).listeners)}`])
   // A layout shift above the range, then routeChanged(), with no scroll: the bridge's route refresh re-derives.
   await page.evaluate(() => window.__rb.jump(1400))
-  await sleep(1200)
+  await rest(page)
   await page.evaluate(() => window.__rb.shiftAbove(300))
+  // fixed-wait: unconverted: the layout shift's frames, with no scroll, before routeChanged()
   await sleep(300)
   await page.evaluate(() => window.__rb.routeChanged())
+  // fixed-wait: unconverted: the route refresh's re-derive and damped settle
   await sleep(800)
   const after = await page.evaluate(() => window.__rb.mounts())
   const answered = after.map((m, i) => m.rehydrates.filter((r) => r === 'route').length - before[i].rehydrates.filter((r) => r === 'route').length)
@@ -486,6 +511,7 @@ async function routesSequence(t) {
   const err = Math.abs(shifted.last.e - truthNow) * shifted.rangePx
   out.push(['routes: after a shift above the range and routeChanged(), the canvas draws the new position', err <= TOL_PX, `${r1(err)} px`])
   await page.evaluate(() => window.__rb.go('b'))
+  // fixed-wait: unconverted: the route change releasing the context
   await sleep(800)
   const gone = await page.evaluate(() => window.__rb.contexts())
   out.push(['routes: on the plain route no context is live', gone.live === 0, JSON.stringify(gone)])
@@ -540,7 +566,7 @@ async function main() {
   }
 
   for (const browserName of args.browsers) {
-    open.browser = await BROWSERS[browserName].launch(LAUNCH[browserName])
+    open.browser = await launch(BROWSERS[browserName], LAUNCH[browserName])
     const webgl = browserName === 'chromium'
     const runs = [
       ...Object.keys(VARIANTS).map((v) => [`${v}${webgl ? '' : '-dom'}`, (t) => sceneSequence(t, v, webgl)]),
@@ -561,7 +587,7 @@ async function main() {
           const page = await context.newPage()
           const errors = []
           page.on('pageerror', (err) => errors.push(err.message.split('\n')[0]))
-          page.on('console', (msg) => msg.type() === 'error' && !IGNORED.test(msg.text()) && errors.push(`console: ${msg.text().split('\n')[0]}`))
+          page.on('console', (msg) => msg.type() === 'error' && !IGNORED.test(msg.text()) && !isFaviconMiss(msg) && errors.push(`console: ${msg.text().split('\n')[0]}`))
           await page.goto(`${base}/${path}`, { waitUntil: 'load' })
           return { page, context, errors }
         },
