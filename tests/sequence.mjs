@@ -28,8 +28,9 @@
 //   react      <FrameSequence> on useScroll: role/label, the five stops, an <Activity> hide destroys it, a show
 //              rebuilds it, unmount closes everything
 //   gsap       frameSequence() with its own trigger and with a polled getter: the five stops; with its own trigger,
-//              a refresh while the iOS toolbar shows (emulated: innerHeight 86 px short, the pin's box fixed) keeps
-//              the range and the frame; reverting the gsap.context destroys it and removes its ticker listener
+//              a refresh while the iOS toolbar shows (emulated: innerHeight 86 px short, the pin's box fixed, under
+//              normalizeScroll so GSAP's viewport follows it) keeps the range and the frame; reverting the
+//              gsap.context destroys it and removes its ticker listener
 //   scene      PinnedScene hands FrameSequence its band through the `pinned` render function: data-frame follows
 //              the band, and after new holds plus a rehydrate (focus), with no scroll; the scenes' cached box is
 //              checked once the scroll rests, not per scrollend; reduced motion shows frame 0
@@ -617,32 +618,44 @@ const GROUPS = {
       await stops(t, page, `gsap (${mode})`)
       if (mode === 'trigger') {
         // iOS's shape: the pin's box stays put while innerHeight follows the toolbar, and a refresh while it shows (a
-        // late image, a rotation) must keep the range and the frame. (GSAP 3.15 measures 'bottom bottom' with a 100vh
-        // probe, so this held before the pin-box end too; under normalizeScroll it reads innerHeight.)
+        // late image, a rotation) must keep the range and the frame. Run under normalizeScroll, where GSAP 3.15 sizes
+        // the viewport from innerHeight: without it GSAP reads a 100vh probe the emulation can't move, and this check
+        // passed on 'bottom bottom' too (PR 1 review, n2). Under it the old end follows the toolbar and fails here.
+        // The refresh is ScrollTrigger's own (a late image, R8): only that one re-reads the viewport (_refresh100vh).
         await jump(page, 0.5)
         const toolbar = await page.evaluate(async (T) => {
           const st = window.__fx.handle().scrollTrigger
+          const ScrollTrigger = st.constructor
           const read = () => ({ travel: Math.round(st.end - st.start), p: +st.progress.toFixed(4), frame: window.__fx.frame() })
           const full = window.innerHeight
           const settle = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+          ScrollTrigger.normalizeScroll(true)
+          ScrollTrigger.refresh()
+          await settle()
           const hidden = read()
           Object.defineProperty(window, 'innerHeight', { get: () => full - T, configurable: true })
           window.dispatchEvent(new Event('resize'))
-          st.refresh()
+          ScrollTrigger.refresh()
           await settle()
           const shown = read()
           Object.defineProperty(window, 'innerHeight', { get: () => full, configurable: true })
           window.dispatchEvent(new Event('resize'))
-          st.refresh()
+          ScrollTrigger.refresh()
           await settle()
-          return { hidden, shown, back: read() }
+          const back = read()
+          const normalized = !!ScrollTrigger.normalizeScroll()
+          ScrollTrigger.normalizeScroll(false)
+          ScrollTrigger.refresh()
+          await settle()
+          return { hidden, shown, back, normalized }
         }, 86)
-        t.check('gsap (trigger): a refresh with the iOS toolbar shown keeps the range (the pin\'s box) and the frame', () => [
-          toolbar.shown.travel === toolbar.hidden.travel &&
+        t.check('gsap (trigger): a refresh with the iOS toolbar shown keeps the range (the pin\'s box) and the frame, under normalizeScroll', () => [
+          toolbar.normalized &&
+            toolbar.shown.travel === toolbar.hidden.travel &&
             toolbar.shown.p === toolbar.hidden.p &&
             toolbar.shown.frame === toolbar.hidden.frame &&
             toolbar.back.travel === toolbar.hidden.travel,
-          `travel ${toolbar.hidden.travel} → ${toolbar.shown.travel} → ${toolbar.back.travel} · p ${toolbar.hidden.p} → ${toolbar.shown.p} · frame ${toolbar.hidden.frame} → ${toolbar.shown.frame}`,
+          `normalizer ${toolbar.normalized} · travel ${toolbar.hidden.travel} → ${toolbar.shown.travel} → ${toolbar.back.travel} · p ${toolbar.hidden.p} → ${toolbar.shown.p} · frame ${toolbar.hidden.frame} → ${toolbar.shown.frame}`,
         ])
       }
       if (mode === 'trigger') {
