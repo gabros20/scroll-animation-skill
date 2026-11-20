@@ -1,6 +1,6 @@
 {
   "name": "scroll-animation-cli",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "description": "The scroll-animation skill's repository: the runtime pack lives in skills/scroll-animation/. The CLI ships from here at v2.",
   "license": "MIT",

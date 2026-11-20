@@ -9,6 +9,18 @@ the newest release heading below, and the release tag.
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-20
+
+### Known issues
+
+- iOS Safari draws thin edge lines on a GSAP `frameSequence()` canvas: the clip is documented but not yet set by the
+  block (the Motion `FrameSequence` and scene video are clipped).
+- WebKit and Firefox suites were not run for this release; Chromium suites and an iPhone (iOS 26.6, Low Power Mode)
+  device pass were.
+- Still on the v2 roadmap: the structure refactor (one reveal, one scene core, one loop-video core), the canvas
+  presenter for `ScrubVideo`, `verify` v2, the reference splits, and the Folio coverage scenes.
+
+
 ### Changed
 
 - Pinned scenes (both engines) write `data-scene-awake` on the root while awake, one write per transition, and the
@@ -197,5 +209,6 @@ scrubbed-video scene per page, looping video, header ink that follows the sectio
 scroll wells, and brownfield coexistence with GSAP and Lenis, for Motion and GSAP, plus the
 static audit, the runtime verifier and the anchor check.
 
-[Unreleased]: https://github.com/gabros20/scroll-animation-skill/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/gabros20/scroll-animation-skill/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/gabros20/scroll-animation-skill/releases/tag/v2.0.0
 [1.0.0]: https://github.com/gabros20/scroll-animation-skill/commits/v1.0.0
