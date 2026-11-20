@@ -7,8 +7,9 @@
  *   height − pin height)`, the distance a 100lvh pin travels. Not `useScroll`'s target progress: its offsets measure
  *   the scroll container's height (`documentElement.clientHeight`), not the pin's 100lvh, so on iOS its ruler can be
  *   up to one toolbar off. Motion's `scrollY` is the tick; the wrapper's top and height are cached, re-measured on a resize of the
- *   wrapper or <body>, a real window resize, a wake and every rehydrate, and checked once per `scrollend` (a shift
- *   above the range that resized neither, under `html, body { height: 100% }`). `progress` is a MotionValue of that value,
+ *   wrapper or <body>, a real window resize, a wake and every rehydrate, and checked once the scroll rests
+ *   (`SCROLL_REST_MS` after the last `scrollend`: a shift above the range that resized neither, under
+ *   `html, body { height: 100% }`). `progress` is a MotionValue of that value,
  *   read in `useMotionValueEvent`, and every scroll-linked style is written by hand. Bound through `style`, Motion
  *   hands opacity, clipPath, filter, backgroundColor and transform to a native timeline whose keyframes stop at the
  *   input range, and past it the element drifts back to its first-render value (spike S3), pinned or not.
@@ -53,6 +54,10 @@ import {
 import { useReducedMotionLive } from './useReducedMotionLive'
 
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect
+
+/** The cached box is checked once the scroll has rested this long after its last `scrollend`: Chromium fires one after
+ * every instant programmatic scroll, and Lenis moves the window that way each frame while it smooths. */
+const SCROLL_REST_MS = 150
 
 export interface PinnedSceneHandle {
   readonly root: HTMLDivElement | null
@@ -361,13 +366,18 @@ function createCore(
     }
     // Once the scroll rests, one rect read: a cached top that moved without a resize the observers saw is measured
     // again, and the next tick reads it.
-    const onScrollEnd = () => {
+    let restTimer = 0
+    const checkBox = () => {
       const r = el.getBoundingClientRect()
       const moved =
         Math.abs(r.top + window.scrollY - geometry.top) > 0.5 ||
         Math.abs(r.height - geometry.height) > 0.5 ||
         Math.abs(rulerPx() - geometry.ruler) > 0.5
       if (moved) scheduleMeasure()
+    }
+    const onScrollEnd = () => {
+      clearTimeout(restTimer)
+      restTimer = window.setTimeout(checkBox, SCROLL_REST_MS)
     }
     const onVisibility = () => {
       if (document.visibilityState === 'visible') rehydrate('visibility')
@@ -392,6 +402,7 @@ function createCore(
       awakeObserver.disconnect()
       window.removeEventListener('resize', onResize)
       window.removeEventListener('scrollend', onScrollEnd)
+      clearTimeout(restTimer)
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('pageshow', onPageShow)
       window.removeEventListener('focus', onFocus)

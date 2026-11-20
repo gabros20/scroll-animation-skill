@@ -31,7 +31,8 @@
 //              a refresh while the iOS toolbar shows (emulated: innerHeight 86 px short, the pin's box fixed) keeps
 //              the range and the frame; reverting the gsap.context destroys it and removes its ticker listener
 //   scene      PinnedScene hands FrameSequence its band through the `pinned` render function: data-frame follows
-//              the band, and after new holds plus a rehydrate (focus), with no scroll; reduced motion shows frame 0
+//              the band, and after new holds plus a rehydrate (focus), with no scroll; the scenes' cached box is
+//              checked once the scroll rests, not per scrollend; reduced motion shows frame 0
 
 import './unit/load-ts.mjs'
 
@@ -512,6 +513,35 @@ const GROUPS = {
         Number(after.frame) === frameIndex(after.band, FRAMES) && Math.abs(after.p - 0.5) < 1e-6,
       `band ${before.band.toFixed(3)} (frame ${before.frame}) → holds changed: frame ${idle.frame} → focus: band ` +
         `${after.band?.toFixed(3)} (frame ${after.frame}) at p ${after.p}`,
+    ])
+
+    // The cached-box check runs once the scroll rests, not at every scrollend: Chromium fires one after each instant
+    // programmatic scroll, which is how Lenis moves the window each frame. 60 such frames, then a rest.
+    const rest = await page.evaluate(async () => {
+      const roots = [...document.querySelectorAll('[data-scene-root]')]
+      const native = Element.prototype.getBoundingClientRect
+      let reads = 0
+      Element.prototype.getBoundingClientRect = function () {
+        if (roots.includes(this)) reads++
+        return native.call(this)
+      }
+      const frame = () => new Promise((resolve) => requestAnimationFrame(resolve))
+      const ends = { n: 0 }
+      const count = () => ends.n++
+      addEventListener('scrollend', count)
+      for (let i = 0; i < 60; i++) {
+        scrollTo({ top: scrollY + (i % 2 ? -2 : 2), behavior: 'instant' })
+        await frame()
+      }
+      const during = reads
+      await new Promise((resolve) => setTimeout(resolve, 400))
+      Element.prototype.getBoundingClientRect = native
+      removeEventListener('scrollend', count)
+      return { during, after: reads - during, scrollends: ends.n, scenes: roots.length }
+    })
+    t.check('the cached box is checked once the scroll rests, not at every scrollend (60 per-frame instant scrolls)', () => [
+      rest.scrollends > 30 && rest.during === 0 && rest.after >= 1 && rest.after <= rest.scenes,
+      `${rest.scrollends} scrollend events · scene-root rect reads: ${rest.during} while scrolling, ${rest.after} at rest (${rest.scenes} scenes)`,
     ])
 
     const reduced = await t.open('scene.html', { reducedMotion: 'reduce' })

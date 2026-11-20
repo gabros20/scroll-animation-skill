@@ -61,6 +61,10 @@ the newest release heading below, and the release tag.
 
 ### Fixed
 
+- The Motion scene checks its cached box once the scroll rests (150 ms after the last `scrollend`), not at every
+  `scrollend`: Chromium fires one after each instant programmatic scroll, so under Lenis every Motion scene read two
+  rects a frame while smoothing. `tests/sequence.mjs` `scene`: 0 root reads over 60 such frames (120 before), one per
+  scene at rest.
 - Both parallax recipes (`gsap/parallax.ts`, `motion/Parallax.tsx`) cache each layer's height (GSAP at each refresh,
   Motion on mount and on a resize of the element or the window) instead of reading `offsetHeight` in the write: with
   N layers a frame was read, write, read, write, and every read after a write forced a style recalculation.

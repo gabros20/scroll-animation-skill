@@ -60,7 +60,8 @@ before; code that bound it through `style` now gets main-thread updates.
   GSAP 3.15, `innerHeight` under `normalizeScroll`). Two rulers at once (ScrollTrigger's and the rehydrate's
   `innerHeight`) moved a rail's cards 4–10 px per toolbar step. The `3d` skill measures the same pin the same way. A scene without a `[data-scene-pin]` falls back to the viewport as its ruler: give every scene a pin.
 - **Motion caches the wrapper's top and height** (no layout read per scroll), re-measured when the wrapper or
-  `<body>` resizes, on a real window resize, a wake, a rehydrate and, if the box moved, at `scrollend`. So let
+  `<body>` resizes, on a real window resize, a wake, a rehydrate and, if the box moved, once the scroll rests (150 ms
+  after the last `scrollend`; Lenis fires one every frame while it smooths). So let
   `<body>` grow with the document (no `html, body { height: 100% }` around a scene), and never transform an ancestor
   (the pin rule below).
 - **The pin is `100lvh`**: a scene is read while scrolling, when iOS collapses its toolbars. An `svh` pin falls short

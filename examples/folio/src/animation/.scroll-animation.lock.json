@@ -23,7 +23,7 @@
     "media/video-controller.ts": "df0432a41feba0e7",
     "media/camera.ts": "c368bddf324ce2cc",
     "gsap/scrub-video.ts": "db40ac66595fa1ce",
-    "motion/usePinnedScene.ts": "29ee4723d82fa86a",
+    "motion/usePinnedScene.ts": "2a74984e837a05ed",
     "motion/PinnedScene.tsx": "a2aa87d7431ac1cd",
     "media/frame-sequence.ts": "70fb5f080360b1a0",
     "motion/FrameSequence.tsx": "afbcbc2af393c01a",
