@@ -17,8 +17,9 @@
  *   Positive lags behind the page and reads as further away; negative runs ahead. Keep it within ±0.2: large depth
  *   differences are a vestibular trigger (references/accessibility.md §7). data-parallax-speed wins over `speed`.
  * - The drift is written by hand as the `translate` property, in percent of the element's own height (GSAP's yPercent),
- *   from a pass re-measured at every ScrollTrigger refresh with the drift taken off, so the drift never shifts its own
- *   trigger. `translate` composes with the element's own `transform`, which keeps applying.
+ *   from a pass and a height re-measured at every ScrollTrigger refresh with the drift taken off, so the drift never
+ *   shifts its own trigger and a frame's writes read no layout. `translate` composes with the element's own
+ *   `transform`, which keeps applying.
  * - Scrubbed and smoothed once: 0.5 s of catch-up under native scrolling (what `scrub: 0.5` gives, on the expo ease
  *   ScrollTrigger's scrub uses, through gsap.quickTo on the progress), none under Lenis or ScrollSmoother, which
  *   already smooth. It reads the page's authority as it builds (getScrollAuthority(): the stamp, or a site's own
@@ -57,6 +58,9 @@ interface Layer {
   el: HTMLElement
   /** The inline translate the page wrote itself, put back whenever the recipe lets go. */
   authored: string
+  /** The element's height, read at each refresh with the pass: a write never reads layout, so N layers never
+   *  interleave N reads with N writes in one frame (each read after a write forces a style recalculation). */
+  height: number
   /** Moves the element to progress `p` of its pass; `now` skips the catch-up. Null while no full-motion build runs. */
   apply: ((p: number, now?: boolean) => void) | null
 }
@@ -71,6 +75,7 @@ export function parallax(root: ParentNode, options: ParallaxOptions = {}): Paral
   const layers: Layer[] = Array.from(root.querySelectorAll<HTMLElement>('[data-parallax]'), (el) => ({
     el,
     authored: el.style.translate,
+    height: el.offsetHeight,
     apply: null,
   }))
   // The triggers live outside the build, for the handle's life (see the header). A trigger refreshes as it is created.
@@ -80,7 +85,10 @@ export function parallax(root: ParentNode, options: ParallaxOptions = {}): Paral
       start: 'top bottom',
       end: 'bottom top',
       onUpdate: (self) => layer.apply?.(self.progress),
-      onRefresh: (self) => layer.apply?.(self.progress, true),
+      onRefresh: (self) => {
+        layer.height = layer.el.offsetHeight
+        layer.apply?.(self.progress, true)
+      },
     }),
   )
   // Measured with the drift taken off: 'refreshInit' comes before ScrollTrigger recalculates any start or end, and each
@@ -100,7 +108,7 @@ export function parallax(root: ParentNode, options: ParallaxOptions = {}): Paral
       const trigger = triggers[i]
       /** The one writer: the drift at progress `p`, speed × pass × (p − ½), in percent of the element's height. */
       const write = (p: number) => {
-        const height = el.offsetHeight
+        const { height } = layer
         const drift = height ? ((speedOf(el) * (trigger.end - trigger.start) * (p - 0.5)) / height) * 100 : 0
         el.style.translate = `0 ${drift.toFixed(3)}%`
       }

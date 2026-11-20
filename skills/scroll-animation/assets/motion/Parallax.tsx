@@ -16,7 +16,8 @@
  * - Progress is useScroll on the element itself over that pass, read in useMotionValueEvent, and the transform is
  *   written by hand. Bound through `style`, a scroll-linked transform goes to a native timeline whose keyframes stop at
  *   the input range, and the element drifts back outside it (spike S3). useScroll measures the layout box, so the
- *   drift never shifts its own progress.
+ *   drift never shifts its own progress. The element's and the viewport's heights are cached (on mount and on a
+ *   resize of either), so a frame's writes read no layout.
  * - Smoothed once: a spring on native routes, the raw scroll under Lenis, which already smooths. It reads the page's
  *   authority after it mounts (getScrollAuthority(): the route's SmoothScroll stamp, or a site's own Lenis). It is
  *   placed at once on mount, never glided in.
@@ -55,14 +56,17 @@ export function Parallax({ speed = 0.1, as: Tag = 'div', className, style, child
   const smoothed = useSpring(0, SPRING)
   /** Null until mounted; then whether to smooth here (native scrolling) or not (the authority already smooths). */
   const smooth = useRef<boolean | null>(null)
+  /** The element's and the viewport's heights, read on mount and on a resize of either, never in a write: N layers
+   *  would otherwise interleave N layout reads with N writes each frame (every read after a write forces a recalc). */
+  const size = useRef<Size>({ height: 0, viewport: 0 })
 
   useMotionValueEvent(scrollYProgress, 'change', (p) => {
     if (reduced || !ref.current) return
     if (smooth.current) smoothed.set(p)
-    else if (smooth.current === false) place(ref.current, speed, p)
+    else if (smooth.current === false) place(ref.current, speed, p, size.current)
   })
   useMotionValueEvent(smoothed, 'change', (p) => {
-    if (!reduced && ref.current && smooth.current) place(ref.current, speed, p)
+    if (!reduced && ref.current && smooth.current) place(ref.current, speed, p, size.current)
   })
 
   useEffect(() => {
@@ -77,11 +81,20 @@ export function Parallax({ speed = 0.1, as: Tag = 'div', className, style, child
   useEffect(() => {
     const el = ref.current
     if (!el || reduced) return
+    const measure = () => {
+      size.current = { height: el.offsetHeight, viewport: window.innerHeight }
+    }
+    measure()
+    const resized = new ResizeObserver(measure)
+    resized.observe(el)
+    window.addEventListener('resize', measure)
     const box = el.getBoundingClientRect()
     const p = Math.min(1, Math.max(0, (window.innerHeight - box.top) / (window.innerHeight + box.height)))
     smoothed.jump(p)
-    place(el, speed, p)
+    place(el, speed, p, size.current)
     return () => {
+      resized.disconnect()
+      window.removeEventListener('resize', measure)
       el.style.removeProperty('transform')
     }
   }, [reduced, speed, smoothed])
@@ -93,8 +106,13 @@ export function Parallax({ speed = 0.1, as: Tag = 'div', className, style, child
   )
 }
 
-/** The one writer: the drift at progress `p` of the element's pass. */
-function place(el: HTMLElement, speed: number, p: number) {
-  const y = speed * (window.innerHeight + el.offsetHeight) * (p - 0.5)
+interface Size {
+  height: number
+  viewport: number
+}
+
+/** The one writer: the drift at progress `p` of the element's pass, from the cached sizes (no layout read). */
+function place(el: HTMLElement, speed: number, p: number, size: Size) {
+  const y = speed * (size.viewport + size.height) * (p - 0.5)
   el.style.transform = `translate3d(0, ${y.toFixed(2)}px, 0)`
 }

@@ -58,6 +58,10 @@ the newest release heading below, and the release tag.
 
 ### Fixed
 
+- Both parallax recipes (`gsap/parallax.ts`, `motion/Parallax.tsx`) cache each layer's height (GSAP at each refresh,
+  Motion on mount and on a resize of the element or the window) instead of reading `offsetHeight` in the write: with
+  N layers a frame was read, write, read, write, and every read after a write forced a style recalculation.
+  `tests/recipes.mjs` `reads`: 0 height reads over 40 scrolled frames (110 and 82 before, two layers).
 - `webgl.md` §5: the canvas slot's snippet gates the canvas on the scene's `onWarm` flag and reduced motion
   (`warm && !reduced`), as Folio's lab scene does. Gated on `!useReducedMotionLive()` alone, it mounted the canvas
   for one commit for a reduced-motion reader: the hook answers `false` in the hydration render.

@@ -247,6 +247,44 @@ async function parallaxSmoothing(t, { lenis = false } = {}) {
   ]
 }
 
+/**
+ * No layout read in a write: 40 frames of scrolling (and the catch-up after them) read no layer's offsetHeight. Each
+ * read after another layer's write forces a style recalculation, so N layers paid N − 1 a frame.
+ */
+async function parallaxReads(t) {
+  const { page } = await t.open()
+  await call(page, 'toPass', 0, 0.4)
+  await wait(700)
+  const r = await page.evaluate(async () => {
+    const native = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight')
+    let reads = 0
+    Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+      configurable: true,
+      get() {
+        if (this.classList.contains('layer')) reads++
+        return native.get.call(this)
+      },
+    })
+    const frame = () => new Promise((resolve) => requestAnimationFrame(resolve))
+    const y0 = scrollY
+    for (let i = 0; i < 40; i++) {
+      scrollBy(0, 6)
+      await frame()
+    }
+    await new Promise((resolve) => setTimeout(resolve, 700))
+    Object.defineProperty(HTMLElement.prototype, 'offsetHeight', native)
+    return { reads, moved: Math.round(scrollY - y0), layers: document.querySelectorAll('.layer').length }
+  })
+  const after = await call(page, 'layer', 0)
+  return [
+    [
+      'scrolling reads no layer height: the heights are cached at a refresh or a resize, never read in a write',
+      r.reads === 0 && r.moved > 200 && near(after.translate, after.expected),
+      `${r.reads} offsetHeight reads over 40 frames (${r.moved} px, ${r.layers} layers) · then ${after.translate} (want ${after.expected})`,
+    ],
+  ]
+}
+
 /** Reduced motion switched on and off mid-page: the drift goes and comes back, and the page never moves. */
 async function parallaxLive(t) {
   const { page } = await t.open()
@@ -863,6 +901,7 @@ const CHECKS = {
     smoothing: async (t) => [...(await parallaxSmoothing(t)), ...(await parallaxSmoothing(t, { lenis: true }))],
     reduced: parallaxReduced,
     live: parallaxLive,
+    reads: parallaxReads,
     destroy: async (t) => {
       const { page } = await t.open()
       // Mid catch-up, as a route change during a scroll would.
@@ -876,6 +915,7 @@ const CHECKS = {
     smoothing: (t) => parallaxSmoothing(t),
     reduced: parallaxReduced,
     live: parallaxLive,
+    reads: parallaxReads,
     destroy: async (t) => {
       const { page } = await t.open()
       await call(page, 'toPass', 0, 0.3)
