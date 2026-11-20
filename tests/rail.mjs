@@ -4,8 +4,8 @@
 // runs, the script elsewhere, and the two agreeing at every scroll offset), the handover to the script while Lenis
 // smooths, RTL, re-measuring after a resize and a late image, the iOS toolbar (emulated) never moving the track and,
 // on touch, never rehydrating the scene, keyboard focus following into off-screen panels through
-// each scroll authority, the reduced-motion native scroller (at load and switched live), destroy() and re-creation,
-// and no uncaught errors.
+// each scroll authority, the reduced-motion native scroller (at load and switched live), the track's layer only
+// while the scene is awake, destroy() and re-creation, and no uncaught errors.
 // Builds tests/fixtures/rail with Vite, serves the build with `vite preview`, prints one PASS/FAIL line per
 // check/page/browser, and exits 1 on any FAIL. Needs the Playwright browsers, so it is its own script, like
 // `test:scrub-video` — not part of `npm test`.
@@ -452,6 +452,35 @@ const CHECKS = {
           ms !== null && near(start.firstGap, 48) && end.lastGap > 47 && end.lastGap <= 48.05,
           `travel ${before.travel} → ${end.travel} (want +96; scrollWidth − pin ${end.scrollWidth - end.pinWidth}) · ` +
             `band 0: first gap ${start.firstGap} · band 1: last gap ${end.lastGap}`
+        ]
+      ]
+    }
+  },
+
+  layer: {
+    pages: ['native', 'lenis', 'smoother'],
+    async run(t) {
+      const { page } = await t.open()
+      const read = () =>
+        page.evaluate(() => {
+          const root = document.querySelector('[data-rail]')
+          return { awake: root.hasAttribute('data-scene-awake'), willChange: getComputedStyle(root.querySelector('[data-rail-track]')).willChange }
+        })
+      await page.evaluate(() => window.__t.toBand(0.5))
+      const inside = await read()
+      // The page's end: the outro is 150vh, so the rail is out of view by more than its wake margin.
+      await page.evaluate(() => window.__t.toScroll(document.documentElement.scrollHeight))
+      await page.evaluate(() => window.__t.frames(4))
+      const asleep = await read()
+      await page.evaluate(() => window.__t.toBand(0.5))
+      const back = await read()
+      await page.evaluate(() => window.__t.destroy())
+      const gone = await page.evaluate(() => document.querySelector('[data-rail]').hasAttribute('data-scene-awake'))
+      return [
+        [
+          "the track is promoted (will-change) only while its scene is awake: released asleep, back when it wakes, data-scene-awake gone after destroy()",
+          inside.awake && inside.willChange === 'transform' && !asleep.awake && asleep.willChange === 'auto' && back.willChange === 'transform' && !gone,
+          `awake: ${inside.willChange} · asleep (${asleep.awake ? 'awake!' : 'not awake'}): ${asleep.willChange} · woken: ${back.willChange} · after destroy: ${gone ? 'attribute left' : 'no attribute'}`
         ]
       ]
     }

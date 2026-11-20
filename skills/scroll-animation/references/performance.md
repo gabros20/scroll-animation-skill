@@ -200,9 +200,10 @@ element's entire lifetime, for no benefit once the animation is idle.
 **Two standing, documented exceptions.** A video's `translateZ(0)`/`translate3d(...)` compositing
 anchor (`video.md` §6) is a Safari-specific requirement to keep the video's own compositing layer
 from being demoted, and it is deliberately permanent: do not "clean it up" as part of an unrelated
-refactor. The rail's track keeps `will-change: transform` (`css/rail.css`), because the rail writes
-its `translate` on every scroll frame; under reduced motion, where the track is a plain scroller, it
-drops it. Every other `will-change`-shaped optimisation should be justified the same way: a
+refactor. The rail's track takes `will-change: transform` (`css/rail.css`) while its scene is awake
+(`[data-scene-awake]`, written once per transition), because the rail writes its `translate` on every
+scroll frame there; asleep, the layer (as wide as every panel together) is released, and under reduced
+motion, where the track is a plain scroller, it never has one. Every other `will-change`-shaped optimisation should be justified the same way: a
 specific, documented, measured requirement, not a defensive default.
 
 ## 11. Filter blur limits
@@ -259,8 +260,8 @@ mount them per route; a page with just count-up numbers has no reason to pull in
 - [ ] A colour track's target is only the element that needs the colour; drawn shapes count toward the
   node budget (§5).
 - [ ] Custom properties are set on the animated element, never a parent (§8).
-- [ ] No permanent `will-change`; the video `translateZ(0)` anchor and the rail's track are the standing
-  exceptions (§10).
+- [ ] No permanent `will-change`; the video `translateZ(0)` anchor is the standing exception, and the rail's
+  track holds its promotion only while its scene is awake (§10).
 - [ ] `filter: blur()` stays small and is measured on Safari (§11).
 - [ ] At most one pinned, scrubbed scene per page.
 - [ ] Across all scroll-linked effects, no more than 1–3 intersect the viewport at once (§3).

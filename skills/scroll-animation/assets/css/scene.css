@@ -17,8 +17,9 @@
  *     </div>
  *   </div>
  *
- * The scene writes data-scene-state="head|scrub|tail" on the root, and `inert` on every [data-scene-act] that is not
- * the active act. Mark only acts that are HIDDEN when inactive (stacked in the pin): an act in the content layer
+ * The scene writes data-scene-state="head|scrub|tail" on the root, data-scene-awake while it is within its wake margin
+ * of the viewport (one write per transition: scope a layer promotion or a CSS loop to it), and `inert` on every
+ * [data-scene-act] that is not the active act. Mark only acts that are HIDDEN when inactive (stacked in the pin): an act in the content layer
  * scrolls into view on its own, and making it inert would trap keyboard users above it.
  *
  * Nothing may animate a transform on the root, the pin or their ancestors, and no ancestor may set `overflow: hidden`

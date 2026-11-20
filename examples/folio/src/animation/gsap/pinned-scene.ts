@@ -23,8 +23,8 @@
  *   trigger lives outside that build: GSAP 3.15 drops the page's scroll position (the page jumps to the top) when a
  *   ScrollTrigger is created during a matchMedia rebuild. For the same reason, create the scene outside your own
  *   `gsap.matchMedia` callbacks.
- * - Modes (scene.ts) are written per transition to `data-scene-state` on the root; `[data-scene-act]`s other than the
- *   active one get `inert`. Awake/warm margins and the rehydrate triggers match the Motion engine's.
+ * - Modes (scene.ts) are written per transition to `data-scene-state` on the root, and `data-scene-awake` while the
+ *   scene is awake; `[data-scene-act]`s other than the active one get `inert`. Awake/warm margins and the rehydrate triggers match the Motion engine's.
  * - Create scenes in page order (or give `refreshPriority`), so ScrollTrigger refreshes them top to bottom.
  * - In React, call it inside `useGSAP(() => { const s = pinnedScene(ref.current!); return () => s.destroy() })`;
  *   on a vanilla page, inside the route's `mount(routeRoot)`.
@@ -180,6 +180,7 @@ export function pinnedScene(root: HTMLElement, options: PinnedSceneOptions = {})
       modeListeners.clear()
       progressListeners.clear()
       root.removeAttribute('data-scene-state')
+      root.removeAttribute('data-scene-awake')
       if (pin && gsapPin) {
         if (pinValue === null) pin.removeAttribute('data-scene-pin')
         else pin.setAttribute('data-scene-pin', pinValue)
@@ -214,6 +215,7 @@ export function pinnedScene(root: HTMLElement, options: PinnedSceneOptions = {})
   function wake(next: boolean) {
     if (state.awake === next) return
     state.awake = next
+    root.toggleAttribute('data-scene-awake', next)
     options.onAwake?.(next, handle)
     if (next) rehydrate('wake')
   }

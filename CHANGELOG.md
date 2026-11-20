@@ -11,6 +11,9 @@ the newest release heading below, and the release tag.
 
 ### Changed
 
+- Pinned scenes (both engines) write `data-scene-awake` on the root while awake, one write per transition, and the
+  rail's track takes `will-change: transform` only then (and never under reduced motion). The track is as wide as
+  every panel together; its layer was held for the whole visit, on screen or not. `performance.md` §10 updated.
 - `config.ts` drops three tokens no block reads: `TRIGGERS.atRest` (an alias of `pageEnd`), `CURVES.roll` and
   `MOTION.roll` (and `EASES.roll` in `gsap/setup.ts`). A project's own copy keeps them until it re-copies; `craft.md`
   §4 keeps the measured label roll as a number.

@@ -16,8 +16,8 @@
  *   wherever the scene computes it, rehydrate included: hand it straight to media that scrubs,
  *   `<FrameSequence progress={band} />`, instead of bridging `onProgress` and `onRehydrate` by hand.
  * - The mode (head | scrub | tail, scene.ts) changes per TRANSITION only, from exact progress: returned as React state,
- *   and written by the scene to `data-scene-state` on the root, so hand markup gets it too. Every per-frame path
- *   writes refs and styles, never state.
+ *   and written by the scene to `data-scene-state` on the root, so hand markup gets it too (with `data-scene-awake`
+ *   while it is awake). Every per-frame path writes refs and styles, never state.
  * - Acts: descendants marked `data-scene-act` (this scene's own) get `inert` unless active, per transition.
  * - Gating: a warm margin (media may start fetching) and a wake margin (per-frame work may run). Safari can report a
  *   stale `isIntersecting: false` around a resize for elements much taller than the viewport, so the resize path
@@ -215,6 +215,7 @@ function createCore(
   function wake(next: boolean) {
     if (state.awake === next) return
     state.awake = next
+    root?.toggleAttribute('data-scene-awake', next)
     o().onAwake?.(next, handle)
     if (next) rehydrate('wake')
   }
@@ -292,7 +293,10 @@ function createCore(
 
   /** The elements (from the markup's refs) and the latest options, handed over after every commit. */
   function attach(nextRoot: HTMLDivElement | null, nextPin: HTMLDivElement | null, nextOptions: PinnedSceneOptions) {
-    if (root && root !== nextRoot) root.removeAttribute('data-scene-state')
+    if (root && root !== nextRoot) {
+      root.removeAttribute('data-scene-state')
+      root.removeAttribute('data-scene-awake')
+    }
     root = nextRoot
     pin = nextPin
     options = nextOptions
@@ -394,6 +398,7 @@ function createCore(
       writeActs(null)
       wake(false)
       el.removeAttribute('data-scene-state')
+      el.removeAttribute('data-scene-awake')
     }
   }
 

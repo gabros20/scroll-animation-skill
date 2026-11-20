@@ -22,8 +22,15 @@
   display: flex;
   height: 100%;
   pointer-events: auto;
-  /* The track's `translate` changes on every scroll frame: keep it on its own layer. */
-  will-change: transform;
+}
+
+/* The track's `translate` changes on every scroll frame: its own layer, but only while the scene is awake (near or in
+   the viewport; the scene writes data-scene-awake). The track is as wide as every panel together, and a layer that
+   size held for the whole visit costs GPU memory on screen or not. Never under reduced motion: nothing moves it. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-scene-root][data-scene-awake] [data-rail-track] {
+    will-change: transform;
+  }
 }
 
 [data-rail-panel] {
@@ -64,7 +71,6 @@
     overscroll-behavior-x: contain;
     scroll-snap-type: x mandatory;
     translate: none !important;
-    will-change: auto;
   }
   [data-rail-panel] {
     scroll-snap-align: start;
