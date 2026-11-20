@@ -21,7 +21,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { chromium, firefox, webkit } from 'playwright'
 import { build, preview } from 'vite'
 
-import { hold as sleep, isFaviconMiss, launch, settle } from './lib/harness.mjs'
+import { hold as sleep, isFaviconMiss, launch } from './lib/harness.mjs'
 
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const fixtureRoot = join(testsDir, 'fixtures', 'header-theme')
@@ -420,20 +420,20 @@ async function wheelThrough(page, step = 320, count = 26) {
     window.__t.resetSpy()
     window.__t.sample()
   })
-  // At rest: the content on screen (a smoother's eases behind scrollY) and the scroll position, unchanged for 10 frames.
-  const rest = () => settle(page, () => [window.__t.visual(), window.__t.scrollY()], { frames: 10, timeout: 6000 })
   for (let i = 0; i < count; i++) {
     await page.mouse.wheel(0, step)
     // fixed-wait: wheel notches paced like a hand
     await sleep(45)
   }
-  await rest()
+  // fixed-wait: the authority's ease to rest; not polled in the page, whose requestAnimationFrame the spy counts
+  await sleep(1600)
   for (let i = 0; i < count; i++) {
     await page.mouse.wheel(0, -step)
     // fixed-wait: wheel notches paced like a hand
     await sleep(45)
   }
-  await rest()
+  // fixed-wait: the authority's ease to rest; not polled in the page, whose requestAnimationFrame the spy counts
+  await sleep(1600)
   return page.evaluate(() => window.__t.stopSample())
 }
 
