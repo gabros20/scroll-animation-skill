@@ -1,6 +1,6 @@
 ---
 name: scroll-animation
-description: Build, fix and review scroll-driven animation for editorial and creative sites: reveals, split text, CSS scroll effects, pinned scenes, rails, scrubbed and looping video, scrollytelling, header ink, page transitions and smooth scroll (Lenis, ScrollSmoother), in CSS, Motion and GSAP, with iOS Safari, accessibility and performance fixes. Use for "fade in on scroll", "pin this section", "scrub the video", "transitions between pages", GSAP, ScrollTrigger, Lenis or Motion questions, a scrub stuck on frame one, reveals that never fire, or scroll jank. Not for UI micro-interactions (→ frontend).
+description: 'Build, fix and review scroll-driven animation for editorial and creative sites: reveals, split text, CSS scroll effects, pinned scenes, rails, scrubbed and looping video, scrollytelling, header ink, page transitions and smooth scroll (Lenis, ScrollSmoother), in CSS, Motion and GSAP, with iOS Safari, accessibility and performance fixes. Use for "fade in on scroll", "pin this section", "scrub the video", "transitions between pages", GSAP, ScrollTrigger, Lenis or Motion questions, a scrub stuck on frame one, reveals that never fire, or scroll jank. Not for UI micro-interactions (→ frontend).'
 ---
 
 # Scroll animation

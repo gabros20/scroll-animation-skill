@@ -1,5 +1,5 @@
 {
-  "version": "2.0.0",
+  "version": "2.0.1",
   "blocks": {
     "config": {
       "summary": "The names and numbers every block reads (queries, header variable, scale units, measured curves, the pre-JS gate) and scaledPx for viewport-scaled layouts",

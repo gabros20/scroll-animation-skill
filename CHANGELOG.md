@@ -9,6 +9,13 @@ the newest release heading below, and the release tag.
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-11-20
+
+### Fixed
+
+- `SKILL.md` frontmatter: the description is quoted, so strict YAML parsers (the `skills` CLI) accept it; an
+  unquoted `: ` inside it read as a nested mapping and the skill was skipped on install.
+
 ## [2.0.0] - 2026-11-20
 
 ### Known issues
@@ -209,6 +216,7 @@ scrubbed-video scene per page, looping video, header ink that follows the sectio
 scroll wells, and brownfield coexistence with GSAP and Lenis, for Motion and GSAP, plus the
 static audit, the runtime verifier and the anchor check.
 
-[Unreleased]: https://github.com/gabros20/scroll-animation-skill/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/gabros20/scroll-animation-skill/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/gabros20/scroll-animation-skill/releases/tag/v2.0.1
 [2.0.0]: https://github.com/gabros20/scroll-animation-skill/releases/tag/v2.0.0
 [1.0.0]: https://github.com/gabros20/scroll-animation-skill/commits/v1.0.0
