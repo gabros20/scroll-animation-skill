@@ -345,11 +345,13 @@ function instrument({ scrollEvents, headerH }) {
 // ── helpers ─────────────────────────────────────────────────────────────
 
 /** Waits for the page on screen to come to rest (an authority easing, a smoother's content catching up): the scroll
- * position, step 0's top, the active step and the step on screen, unchanged for 10 frames. Resolves with that reading. */
+ * position, step 0's top, the active step and the step on screen, unchanged for 10 reads a frame apart. Polled from
+ * Node: the checks count the page's requestAnimationFrame calls. Resolves with that reading. */
 const rest = (page, timeout = 8000) =>
   settle(page, () => ({ y: Math.round(scrollY), top: window.__t.stepTop(0), active: window.__t.active(), expected: window.__t.expected() }), {
     frames: 10,
     timeout,
+    fromNode: true,
   })
 
 /** Polls `fn` in the page until it returns truthy; resolves with the elapsed ms, or null on timeout. */

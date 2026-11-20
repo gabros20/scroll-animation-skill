@@ -45,10 +45,22 @@ const CHECKS = {
     })
     const late = await settle(page, () => window.late, { when: (v) => v === 'after' })
     const never = await settle(page, () => performance.now(), { timeout: 200 })
+    // From Node: the same result with no requestAnimationFrame call in the page.
+    await page.evaluate(() => {
+      window.m = 0
+      window.rafs = 0
+      const raf = window.requestAnimationFrame.bind(window)
+      window.requestAnimationFrame = (cb) => (window.rafs++, raf(cb))
+      const tick = () => (++window.m < 10 ? setTimeout(tick, 20) : null)
+      tick()
+    })
+    const fromNode = await settle(page, () => window.m, { fromNode: true })
+    const rafs = await page.evaluate(() => window.rafs)
     return [
       ['settle returns the reading it settled on, after the last change', climbed.settled && climbed.value === 20, JSON.stringify(climbed)],
       ["settle with `when` waits for the change to begin", late.settled && late.value === 'after', JSON.stringify(late)],
       ['settle on a value that never holds gives up at its timeout, settled false', !never.settled && typeof never.value === 'number', JSON.stringify(never)],
+      ['settle fromNode settles the same way and calls no requestAnimationFrame in the page', fromNode.settled && fromNode.value === 10 && rafs === 0, `${JSON.stringify(fromNode)} · ${rafs} rAF`],
     ]
   },
 

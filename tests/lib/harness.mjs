@@ -84,9 +84,11 @@ export async function until(page, fn, arg, { timeout = 5000 } = {}) {
  * (an arrow or function expression, not a method). A settle can't tell "not changed yet" from "done": after an action
  * whose effect lands a few frames late (a media query change, a debounced refresh), pass `when`, a page function of
  * the reading that is true once the effect has begun; the run only counts from there. `min` frames are read before
- * the run counts at all.
+ * the run counts at all. `fromNode: true` polls from Node every ~16 ms instead (a frame's worth, `frames` reads in a
+ * row), for a page whose requestAnimationFrame is itself under test: the in-page poll would add to its count.
  */
-export function settle(page, read, { arg, frames: still = 3, timeout = 5000, min = 0, when } = {}) {
+export function settle(page, read, { arg, frames: still = 3, timeout = 5000, min = 0, when, fromNode = false } = {}) {
+  if (fromNode) return settleFromNode(page, read, { arg, still, timeout, min, when })
   const src = `(async ([arg, still, timeout, min]) => {
     const read = ${read.toString()}
     const when = ${when ? when.toString() : '() => true'}
@@ -108,6 +110,27 @@ export function settle(page, read, { arg, frames: still = 3, timeout = 5000, min
   })(${JSON.stringify([arg ?? null, still, timeout, min])})`
   // A string expression, not a function: `read` arrives as source, so the page's CSP (no eval) never applies.
   return page.evaluate(src)
+}
+
+async function settleFromNode(page, read, { arg, still, timeout, min, when }) {
+  const expr = (fn) => `(${fn.toString()})(...${JSON.stringify([arg ?? null])})`
+  const readOnce = () => page.evaluate(expr(read))
+  const t0 = Date.now()
+  let value = await readOnce()
+  let last = JSON.stringify(value)
+  let run = 0
+  let seen = 0
+  while (Date.now() - t0 < timeout) {
+    // fixed-wait: the poll interval of a condition loop (one frame's worth), not a guess
+    await hold(16)
+    value = await readOnce()
+    const now = JSON.stringify(value)
+    seen++
+    run = now === last && (!when || when(value, arg)) ? run + 1 : 0
+    last = now
+    if (run >= still && seen >= min) return { value, ms: Date.now() - t0, settled: true }
+  }
+  return { value, ms: Date.now() - t0, settled: false }
 }
 
 /** One `page.evaluate` returning the scroll position, the page's clock and `fn(arg)`: a reading that never
