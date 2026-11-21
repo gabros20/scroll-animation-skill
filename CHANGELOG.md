@@ -10,7 +10,25 @@ the newest release heading below, and the release tag.
 ## [Unreleased]
 
 ### Added
-- Queue unreleased changes here.
+- `test:route-hygiene` checks arrival (F2): Home scrolled to 2400 or 3000 px, then a link to a page of
+  `gsap/reveal.ts` items and `split-reveal` headings, native and under ScrollSmoother, with and without Cache
+  Components. No entrance starts with its item outside the viewport, nothing below the fold has played on arrival,
+  and every item plays on screen as the page is scrolled through. `--only sequence,arrival` runs one group.
+
+### Changed
+- entrances §5, "A callback is not an arrival", is the one home for the on-screen rule (text §3 points to it);
+  page-transitions §4 and `smooth/route.ts` no longer say route blocks measure themselves as they are created
+  without adding that they are created before the router places the scroll; verification §7 has the symptom
+  "entrances skip after following a link from a scrolled page". Folio's `smooth/route.ts` re-synced.
+
+### Fixed
+- `gsap/reveal.ts` and `split-reveal` play an entrance only if its item is on screen as it would start
+  (`bottom > 0 && top < innerHeight`), and otherwise keep its trigger until the reader reaches it. On a client
+  navigation the page's `useGSAP` runs before Next places the scroll (an ancestor's layout effect), so the triggers
+  were created at the previous page's `scrollY`: an item in that band played at once, and one above it fired
+  `onEnterBack` on the jump to the top and passed the old `progress < 1` test. 4 to 12 of the check's 13 entrances
+  were spent below the fold before the reader got there. Motion's `Reveal` and `mountReveals` observe with
+  IntersectionObserver, which reports after layout, and are unaffected.
 
 ## [2.1.1] - 2026-11-21
 
