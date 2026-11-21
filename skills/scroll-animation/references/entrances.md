@@ -146,7 +146,8 @@ A trigger line is an IntersectionObserver `rootMargin`, never a fraction of the 
   the viewport at 1440×900, but 90% at 375×667, past the default line.
 - `pageEnd` trades "plays slightly early" for "never plays": early is a preference, starved is a bug.
 - **Setting a line:** `margin` on `Reveal`, `data-reveal-margin` on a group, or GSAP's `margin` option. Keep it a
-  static string: a new value on each render rebuilds the observer.
+  static string: a new value on each render rebuilds the observer. On the GSAP reveals keep it ≤ 0: a positive margin
+  fires `onEnter` with the item still below the viewport, the on-screen check refuses it, and the item stays hidden.
 - **GSAP fires on the same line.** `lineFromMargin()` (`gsap/setup.ts`) turns `TRIGGERS.reveal` into
   `start: 'top 80%'`, `end: 'bottom top'`.
 - An item already above the view at load, or jumped past, reveals when the reader scrolls back up to it.
@@ -159,8 +160,8 @@ A trigger line is an IntersectionObserver `rootMargin`, never a fraction of the 
     played at load, off-screen (measured on the iOS simulator and in Playwright's WebKit and Chromium).
   - **A client navigation.** The page's `useGSAP` is a layout effect, and Next places the scroll in an ancestor's,
     which React runs after it: the triggers are created at the previous page's `scrollY`. An item in that band
-    starts active, and one above it fires `onEnterBack` on the jump to the top. Linked from a page scrolled to 2400
-    or 3000 px, 4 to 12 of 13 entrances played below the fold, native and under ScrollSmoother, with and without
+    starts active, and one above it fires `onEnterBack` on the jump to the top. Linked from a page scrolled to 1900
+    to 3000 px, 4 to 12 of 13 entrances played below the fold, native and under ScrollSmoother, with and without
     Cache Components (`route-hygiene`'s arrival check); a `progress < 1` test had let the second kind through.
 
   IntersectionObserver reports after layout and never for an element a jump carried past, so Motion and the
