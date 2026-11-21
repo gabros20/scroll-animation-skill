@@ -39,13 +39,33 @@ the newest release heading below, and the release tag.
 
 - Reveal holds a layer only while a group plays: every engine marks the group `data-reveal-playing` for its
   entrance, and `css/reveal.css` §5 gives only its rising and scaling items `will-change: transform`, dropped when
-  the last item lands. Motion drives `y` and `scale` from JavaScript (motion-dom 13.4 accelerates only `opacity`,
-  `clipPath`, `filter`, `transform` and `backgroundColor`) and its automatic `will-change` is dormant, so display type
-  could step in whole pixels as it settled.
-- `performance.md` §10 rewritten: Motion never accelerates `x`/`y`, the scoped rule, the layer-memory arithmetic (a
-  400 × 120 word at DPR 3 is about 1.7 MB). `entrances.md` and `SKILL.md`: a hero entrance runs on the compositor
-  (CSS, or Motion's `transform` string), never `x`/`y` on display type. `craft.md` §5: a move-only entrance is for
-  items at t≈0 or masked; delayed items fade.
+  the last item lands. Motion before 14.2 drives `y` and `scale` from JavaScript (motion-dom 13.4 accelerates only
+  `opacity`, `clipPath`, `filter`, `transform` and `backgroundColor`) and its automatic `will-change` is dormant, so
+  display type could step in whole pixels as it settled.
+- `performance.md` §10 rewritten: before Motion 14.2 `x`/`y` are never accelerated (14.2's `TransformAnimation`
+  joins time-based ones into a WAAPI `transform` where the browser has CSS `linear()`, read in motion-dom 14.2, as
+  §4 already said), the scoped rule, the layer-memory arithmetic (a 400 × 120 word at DPR 3 is about 1.7 MB).
+  `entrances.md` and `SKILL.md`: a hero entrance runs on the compositor (CSS, or Motion's `transform` string; no
+  `x`/`y` on display type before 14.2). `craft.md` §5: a move-only entrance is for items at t≈0 or masked; delayed
+  items fade.
+- The clock: a consumer's failsafe counts from navigation start (`performance.now()`), never from its own mount,
+  which runs at hydration, hundreds of ms after the entrance began at first paint (`entrances.md` §11,
+  `performance.md` §14, `webgl.md` §8, the fixture's stub consumer). The publisher's own timers already run on the
+  animation's clock (`entrance-signal.ts` says so).
+- `entrances.md` §11: cues on the entrance's clock (count from navigation start; never reveal a cued layer through
+  Suspense, which React 19 holds ~300 ms after its fallback), a heavy DOM layer's stages, a teardown publishing
+  nothing, and a CSS entrance's server HTML may say `running`; `page-transitions.md` §7 points there. The
+  blurred-element rule points to its home in `ios-safari-motion.md` §8, and `webgl.md` §8 to the 3d skill's stages
+  instead of restating them.
+- `performance.md` §11: a blur placeholder is a filter blur over the image's whole box, never on a full-bleed or hero
+  image (a measured production hero: ~3.5 s of raster and two ~360 ms frames, none without it); §14: a heavy
+  client-only component mounts one composition, picked by `matchMedia`. `verification.md`: page-load jank by
+  attribution (§1), a server that stopped compiling CSS (§4), and rows for a raster freeze, a late cue and copy
+  vanishing over a background layer (§7). `ios-safari-motion.md` §9: copy under a background canvas or video after
+  its entrance in Safari (a stacking level on the copy's wrapper; cause untraced). `preflight.md` §3.2: name Lenis's
+  Safari frame-rate cost before choosing it for a Reading route. `css-scroll-effects.md` §2: the hero lift on
+  `scroll(root)`, with its reduced-motion reset pointing to `accessibility.md` §2 to keep the file's budget.
+  `css/split.css`: the var() in its keyframes stays (a theory that Safari won't composite it is unproven).
 
 ## [2.0.1] - 2026-11-20
 
