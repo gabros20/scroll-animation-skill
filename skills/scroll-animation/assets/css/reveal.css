@@ -22,6 +22,7 @@
  *   the computed value when the reveal starts.
  * - The numbers mirror config.ts: the move is MOTION.entrance on CURVES.entrance, and the fade trails it
  *   (MOTION.entranceFade). tests/reveal.mjs fails if they drift.
+ * - While a group plays, every engine marks it data-reveal-playing, and only its moving items take a layer (§5).
  */
 
 /* ── 1. The resting state ──────────────────────────────────────────────────────────────────────────
@@ -99,5 +100,20 @@ html[data-animation-ready] [data-reveal-veil] {
 @media print {
   [data-reveal-item] {
     clip-path: none !important;
+  }
+}
+
+/* ── 5. A layer only while the group plays ─────────────────────────────────────────────────────────
+ * Motion drives `y` and `scale` from JavaScript every frame (only opacity, clip-path, filter, transform and
+ * background-color run on WAAPI, motion-dom 13.4) and its automatic will-change is dormant, so an item that moves
+ * without a layer is repainted in place each frame, and display type was seen stepping in whole pixels through the
+ * slow end of the ease (a field report). The engines set
+ * data-reveal-playing on the group for the length of its entrance and drop it when the last item lands, so a rising
+ * or scaling item holds a layer only then. Never permanent: a 400 x 120 word at DPR 3 is about 1.7 MB of layer, a
+ * headline 10–20 MB for the page's life (references/performance.md §10). A nested group's items count as the outer
+ * group's while it plays. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal-playing] [data-reveal-item]:not([data-reveal-effect='fade'], [data-reveal-effect='clip']) {
+    will-change: transform;
   }
 }

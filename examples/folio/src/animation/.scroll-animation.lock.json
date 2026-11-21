@@ -1,5 +1,5 @@
 {
-  "skillVersion": "1.0.0",
+  "skillVersion": "2.0.1",
   "dir": "src/animation",
   "engines": [
     "agnostic",
@@ -30,8 +30,8 @@
     "motion/ScrubVideo.tsx": "f92871fff7c6ee43",
     "motion/LoopVideo.tsx": "e371fc0a8488d76b",
     "motion/useReducedMotionLive.ts": "f16b298eb3d9321e",
-    "motion/Reveal.tsx": "6a8c19a436b7c8a3",
-    "css/reveal.css": "82a3bc05e2348e7f",
+    "motion/Reveal.tsx": "99d0651be8b2e3c4",
+    "css/reveal.css": "5b9f6f2a3a2d0f4f",
     "motion/SplitWords.tsx": "5e49833fc89d4d73",
     "split-words.ts": "d76af3671f7a3f06",
     "css/split.css": "ec0c0f651018e84a",
@@ -51,6 +51,7 @@
     "motion/ScrollySteps.tsx": "d59ae2fa86065f9a",
     "css/scrolly.css": "3b38c5114011adaa",
     "render-bridge.ts": "c2544ae40763f287",
-    "gsap/pinned-scene-render.ts": "f6c55eec1d80a16f"
+    "gsap/pinned-scene-render.ts": "f6c55eec1d80a16f",
+    "entrance-signal.ts": "c6626fd94ae6872c"
   }
 }

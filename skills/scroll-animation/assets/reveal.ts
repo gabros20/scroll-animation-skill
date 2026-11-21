@@ -10,6 +10,7 @@
  *   <header data-reveal="mount">…</header>        "mount": reveals at once, for content on screen at load
  *
  *   const stop = mountReveals(routeRoot)          on a route's show; stop() on its hide or teardown
+ *   mountReveals(routeRoot, { entrance: true })   also publishes the page's entrance signal (entrance-signal.ts)
  *
  * - Group options, as attributes on the [data-reveal] element; items with no group take the defaults.
  *   - data-reveal-margin: the trigger line as an IntersectionObserver rootMargin (TRIGGERS.reveal, the top crossing
@@ -28,12 +29,19 @@
  * - Next's Activity: mount on show and stop on hide. stop() lands every running reveal on its end state, and a
  *   re-mount skips what is already shown, so hide and show never replay an entrance. Pass the route's root, never
  *   `document`: a hidden route's DOM stays in the document.
+ * - While a group plays it carries data-reveal-playing, and css/reveal.css gives only its moving items a layer; the
+ *   marker goes when the group's last item lands. A CSS transition on transform is the compositor's already: the marker
+ *   is there so every engine reads the same, and so a check can see the group play.
+ * - `entrance: true` publishes the entrance signal on <html> through trackEntrance(routeRoot): running at the mount,
+ *   tail and settled from the transitions themselves, so a group on screen at load that crosses its line counts too.
+ *   Reduced motion and the failsafe publish settled at once. One publisher per scope: give it to one route root.
  * - Never on the LCP element: its resting state waits for this script. An above-the-fold hero animates from CSS at
  *   first paint (SplitWords) instead.
  * - Items need a box (not display: contents) for the observer to see them. Content added later needs its own
  *   mountReveals.
  */
 import { MOTION, REDUCED_MOTION_QUERY, TRIGGERS, failsafeFired, markAnimationReady } from './config'
+import { trackEntrance } from './entrance-signal'
 
 interface GroupOptions {
   trigger: 'mount' | 'view'
@@ -45,10 +53,17 @@ interface GroupOptions {
 /** The properties css/reveal.css transitions: a reveal is done when none of them is still transitioning. */
 const REVEAL_PROPERTIES = ['opacity', 'transform', 'clip-path']
 
-export function mountReveals(root: ParentNode): () => void {
+export interface MountRevealsOptions {
+  /** Publish the page's entrance signal (entrance-signal.ts) on <html> from this root's reveals. */
+  entrance?: boolean
+}
+
+export function mountReveals(root: ParentNode, options: MountRevealsOptions = {}): () => void {
   markAnimationReady()
   const reduce = window.matchMedia(REDUCED_MOTION_QUERY)
   let stop = start(root, reduce.matches)
+  // After the first start: its transitions exist by the tracker's first look. Under reduce it publishes settled.
+  const stopEntrance = options.entrance ? trackEntrance(root instanceof Element ? root : document.documentElement) : null
   // A rebuild on every change: stop() lands running reveals, and the next start skips what is shown.
   const onChange = () => {
     stop()
@@ -58,6 +73,7 @@ export function mountReveals(root: ParentNode): () => void {
   return () => {
     reduce.removeEventListener('change', onChange)
     stop()
+    stopEntrance?.()
   }
 }
 
@@ -77,6 +93,22 @@ function start(root: ParentNode, reduced: boolean): () => void {
   }
   const endings = new Map<HTMLElement, () => void>()
   const lines = new Map<string, IntersectionObserver>()
+  // Each group's items in flight: the group is data-reveal-playing while there are any.
+  const playing = new Map<Element, Set<HTMLElement>>()
+  const markPlaying = (el: HTMLElement, on: boolean) => {
+    const group = el.closest('[data-reveal]')
+    if (!group) return
+    const items = playing.get(group) ?? new Set<HTMLElement>()
+    if (on) items.add(el)
+    else items.delete(el)
+    if (items.size) {
+      playing.set(group, items)
+      group.setAttribute('data-reveal-playing', '')
+    } else {
+      playing.delete(group)
+      group.removeAttribute('data-reveal-playing')
+    }
+  }
 
   /** Items that crossed together, staggered per group in document order. */
   function reveal(batch: HTMLElement[]) {
@@ -90,6 +122,7 @@ function start(root: ParentNode, reduced: boolean): () => void {
   }
 
   function show(el: HTMLElement, delay: number) {
+    markPlaying(el, true)
     el.setAttribute('data-reveal-transition', '')
     el.style.setProperty('--reveal-delay', `${delay}s`)
     el.setAttribute('data-reveal-state', 'shown')
@@ -121,6 +154,7 @@ function start(root: ParentNode, reduced: boolean): () => void {
     revealTransitions(el).forEach((transition) => transition.finish())
     el.removeAttribute('data-reveal-transition')
     el.style.removeProperty('--reveal-delay')
+    markPlaying(el, false)
   }
 
   function reset(el: HTMLElement) {

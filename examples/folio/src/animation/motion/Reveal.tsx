@@ -40,6 +40,13 @@
  * - Next's Activity: Motion replays a group's current state when its boundary shows again. A landed group rests in
  *   `settled`, a no-op from where its items are, and a reveal cut off mid-way resumes from where it stopped, so a
  *   finished reveal never plays twice.
+ * - While the group plays (`visible`, after hydration) it carries data-reveal-playing, and css/reveal.css §5 gives its
+ *   moving items `will-change: transform` until it lands. Motion runs `y` and `scale` from JavaScript, never on the
+ *   compositor, and promotes nothing itself: without the layer, display type can step in whole pixels as it settles.
+ * - `entrance` publishes the page's entrance signal on <html> (entrance-signal.ts): running when the group plays, tail
+ *   once its last item has run TAIL_AT of its move, settled when it lands, or at once under reduced motion or the
+ *   failsafe. Put it on the hero's `mount` group, one per page. It is still a JavaScript-driven move: a hero headline
+ *   belongs on the compositor (SplitWords, or Motion's `transform` string; references/entrances.md).
  * - An item is marked data-reveal-state="shown" when its reveal lands. It writes `transform`: centre or offset the
  *   item with `translate` (Motion leaves it alone), or on a wrapper.
  */
@@ -56,6 +63,7 @@ import {
 } from 'react'
 
 import { CURVES, MOTION, TRIGGERS, failsafeFired } from '../config'
+import { TAIL_AT, publishEntrance } from '../entrance-signal'
 import { useReducedMotionLive } from './useReducedMotionLive'
 
 export type RevealEffect = 'rise' | 'fade' | 'clip' | 'scale-in'
@@ -182,6 +190,8 @@ export interface RevealProps {
   stagger?: number
   /** 'view' only: reveal again on every return. Off by default: a reveal plays once. */
   replay?: boolean
+  /** Publish the page's entrance signal (entrance-signal.ts) on <html> from this group: the hero's `mount` group. */
+  entrance?: boolean
   className?: string
   style?: CSSProperties
   /** Passed through: the element the layout needs may be an anchor target or a labelled group. */
@@ -197,6 +207,7 @@ export function Reveal({
   margin = TRIGGERS.reveal,
   stagger = MOTION.lineStagger,
   replay = false,
+  entrance = false,
   className,
   style,
   id,
@@ -261,6 +272,21 @@ export function Reveal({
     }
   }, [ref, watching, margin, replay])
 
+  // The entrance signal follows the phase: `visible` is running (tail on a timer: Motion reports no progress), and
+  // `settled` is settled, however it got there. Never backwards, so a replay's later phases publish nothing.
+  const playing = hydrated && phase === 'visible'
+  useEffect(() => {
+    if (!entrance || !hydrated) return
+    if (phase === 'settled') return publishEntrance('settled')
+    if (phase !== 'visible') return
+    publishEntrance('running')
+    const el = ref.current
+    const items = el ? Array.from(el.querySelectorAll('[data-reveal-item]')).filter((item) => item.closest('[data-reveal]') === el) : []
+    const last = Math.max(0, items.length - 1) * stagger
+    const tail = window.setTimeout(() => publishEntrance('tail'), (last + TAIL_AT * MOTION.entrance.duration) * 1000)
+    return () => clearTimeout(tail)
+  }, [entrance, hydrated, phase, ref, stagger])
+
   const variants = useMemo<Variants>(() => ({ visible: { transition: { delayChildren: staggerChildren(stagger) } } }), [stagger])
 
   return (
@@ -268,6 +294,7 @@ export function Reveal({
       ref={attach}
       data-reveal={trigger}
       data-reveal-replay={replay && trigger === 'view' ? '' : undefined}
+      data-reveal-playing={playing ? '' : undefined}
       className={className}
       style={style}
       id={id}

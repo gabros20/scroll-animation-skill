@@ -10,6 +10,7 @@
  *   <header data-reveal="mount">…</header>        "mount": reveals at once, for content on screen at load
  *
  *   const reveals = reveal(routeRoot)             reveals.destroy() on the route's hide or teardown
+ *   reveal(routeRoot, { entrance: true })         also publishes the page's entrance signal (entrance-signal.ts)
  *
  * - Group attributes: data-reveal-margin (the trigger line as a rootMargin; TRIGGERS.reveal, the top crossing 80%
  *   of the viewport; TRIGGERS.pageEnd for the last group or one that rests below the line), data-reveal-stagger
@@ -34,10 +35,18 @@
  *   hidden route's DOM in the document.
  * - Never on the LCP element: its resting state waits for this script. An above-the-fold hero animates from CSS at
  *   first paint (SplitWords) instead.
+ * - While a group plays it carries data-reveal-playing (css/reveal.css §5), dropped when its last item lands. GSAP's
+ *   own force3D: 'auto' already layers a moving item for the tween; the marker is there so every engine reads the
+ *   same, and so a check can see the group play.
+ * - `entrance: true` publishes the entrance signal on <html> from the `mount` groups (GSAP tweens are not WAAPI, so
+ *   trackEntrance can't see them): running as they start, tail once the last item has run TAIL_AT of its move,
+ *   settled when the last lands, or at once under reduced motion or the failsafe. A destroy() mid-entrance lands the
+ *   items, so it settles too. One publisher per scope.
  * - An item's `transform` is GSAP's while it reveals. Its own `translate`, `rotate` and `scale` keep working: GSAP
  *   folds them into the transform for the length of the entrance and they are handed back when it lands.
  */
 import { MOTION, TRIGGERS, failsafeFired } from '../config'
+import { TAIL_AT, publishEntrance } from '../entrance-signal'
 import {
   EASES,
   MOTION_CONDITIONS,
@@ -57,6 +66,8 @@ export interface RevealOptions {
   stagger?: number
   /** Reveal again on every return. Default false: a reveal plays once. */
   replay?: boolean
+  /** Publish the page's entrance signal (entrance-signal.ts) on <html> from the `mount` groups. */
+  entrance?: boolean
 }
 
 export interface RevealHandle {
@@ -87,9 +98,22 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
   // Reveals in flight, with the item's own inline values from before GSAP touched it. Tracked here, not left to the
   // matchMedia context: a batch plays them from a callback, after the build has returned.
   const running = new Map<HTMLElement, { timeline: gsap.core.Timeline; inline: string[]; styled: boolean }>()
+  // The entrance signal: the mount items still in flight, and the tail's delayed call.
+  const entering = new Set<HTMLElement>()
+  let tail: gsap.core.Tween | null = null
 
-  function play(batch: HTMLElement[]) {
+  /** The group is data-reveal-playing while any of its items is in `running`. */
+  function markPlaying(el: HTMLElement) {
+    const group = el.closest('[data-reveal]')
+    if (!group) return
+    const busy = Array.from(running.keys()).some((item) => item.closest('[data-reveal]') === group)
+    if (busy) group.setAttribute('data-reveal-playing', '')
+    else group.removeAttribute('data-reveal-playing')
+  }
+
+  function play(batch: HTMLElement[]): number {
     const indices = new Map<Group, number>()
+    let last = -1
     for (const el of batch.sort(documentOrder)) {
       if (isShown(el) || running.has(el)) continue
       const group = groupOf(el)
@@ -98,7 +122,10 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
       const inline = WRITTEN.map((property) => el.style.getPropertyValue(property))
       const styled = el.hasAttribute('style')
       running.set(el, { timeline: entrance(el, index * group.stagger, () => land(el)), inline, styled })
+      markPlaying(el)
+      last = Math.max(last, index * group.stagger)
     }
+    return last
   }
 
   /**
@@ -111,6 +138,7 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
     const entry = running.get(el)
     if (!entry) return
     running.delete(el)
+    markPlaying(el)
     entry.timeline.kill()
     gsap.set(el, { clearProps: 'transform,opacity,clipPath' })
     WRITTEN.forEach((property, i) => {
@@ -125,6 +153,10 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
   function land(el: HTMLElement) {
     el.setAttribute('data-reveal-state', 'shown')
     release(el)
+    if (entering.delete(el) && !entering.size) {
+      tail?.kill()
+      publishEntrance('settled')
+    }
   }
 
   function reset(el: HTMLElement) {
@@ -145,11 +177,18 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
     settled = (context.conditions as MotionConditions).reduce || failsafeFired()
     if (settled) {
       items.forEach(land)
+      if (options.entrance) publishEntrance('settled')
       return
     }
     // Out of the context's record: its revert would timeline.revert() them (see release).
     context.ignore(() => {
-      for (const [group, els] of byGroup) if (group.trigger === 'mount') play(els)
+      let last = -1
+      for (const [group, els] of byGroup) if (group.trigger === 'mount') last = Math.max(last, play(els))
+      if (!options.entrance) return
+      for (const [group, els] of byGroup) if (group.trigger === 'mount') els.filter((el) => running.has(el)).forEach((el) => entering.add(el))
+      if (!entering.size) return publishEntrance('settled')
+      publishEntrance('running')
+      tail = gsap.delayedCall(last + TAIL_AT * MOTION.entrance.duration, () => publishEntrance('tail'))
     })
     // A revert (reduced motion changing, destroy) lands every reveal in flight: triggered means shown.
     return () => Array.from(running.keys()).forEach(land)
