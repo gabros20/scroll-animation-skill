@@ -3,7 +3,8 @@
 **Purpose:** Keep scroll motion inside the frame budget on real devices.
 
 **Read when:** you're adding a scroll-driven effect, reviewing whether a page's motion budget still
-holds, or diagnosing dropped frames and jank on a real device.
+holds, diagnosing dropped frames and jank on a real device, or a hero's load entrance shares its first
+seconds with a live canvas, video or loops (§14).
 **Skip when:** the work is a single triggered reveal with no scroll binding (`entrances.md`
 §1's triage already keeps that case cheap by construction). Render performance with no motion in it
 (fonts, image `sizes`, Core Web Vitals budgets for layout) belongs to the `fluid-design` skill's
@@ -33,7 +34,8 @@ order, is below.
 11. [Filter blur limits](#11-filter-blur-limits)
 12. [Library weight: strict feature sets](#12-library-weight-strict-feature-sets)
 13. [Motion asset and JS budgets](#13-motion-asset-and-js-budgets)
-14. [Traps](#traps)
+14. [The hero budget](#14-the-hero-budget)
+15. [Traps](#traps)
 
 ## 1. The cost order
 
@@ -192,10 +194,23 @@ matching a hand-computed one applies here too.
 
 ## 10. `will-change` policy
 
-Do not scatter manual `will-change` declarations. A capable declarative animation library already
-promotes an element to its own compositing layer while actively animating it and demotes it
-afterward. A permanent `will-change` instead pins the promotion (and its memory cost) for the
-element's entire lifetime, for no benefit once the animation is idle.
+A layer while the motion runs, never for the element's life. Who promotes on their own differs by engine:
+
+- **CSS animations and transitions, WAAPI and GSAP** (`force3D: 'auto'` writes `translate3d` mid-tween) hold a layer
+  for a `transform` or `opacity` animation and drop it after. Add nothing.
+- **Motion never accelerates `x`, `y`, `scale` or `rotate`**, whatever the unit. Only `opacity`, `clipPath`,
+  `filter`, `transform` and `backgroundColor` run on WAAPI (motion-dom 13.4, `accelerated-values`), and its automatic
+  `will-change` is dormant: nothing sets the `MotionGlobalConfig.WillChange` it waits for. An independent transform is
+  written from JavaScript every frame with no layer, so it stalls with the main thread, and display type easing to
+  rest was seen stepping in whole pixels (a field report). For a hero, animate the `transform` string or use CSS
+  ([entrances.md](entrances.md) §11). Where `y` stays, scope the layer: `Reveal` marks its group
+  `data-reveal-playing` while it plays and `css/reveal.css` §5 gives only its moving items `will-change: transform`,
+  dropped on settle. A hand-written entrance does the same from its start and complete callbacks. `useWillChange()`
+  is not this: once it holds `transform` it keeps it.
+- **The arithmetic** (not measured): a layer is about width × height × DPR² × 4 bytes. A 400 × 120 px word at DPR 3
+  is about 1.7 MB; a split headline 10–20 MB, held for the page's life if permanent. A layer promoted mid-`scale` keeps
+  that raster scale, so scale-in text stays soft until it is demoted. Demoting re-rasterises once, which display
+  type doesn't show.
 
 **Two standing, documented exceptions.** A video's `translateZ(0)`/`translate3d(...)` compositing
 anchor (`video.md` §6) is a Safari-specific requirement to keep the video's own compositing layer
@@ -249,6 +264,28 @@ mount them per route; a page with just count-up numbers has no reason to pull in
   checks a budget cannot: a value that "looks right" in a Lighthouse score but is measurably wrong
   mid-scroll.
 
+## 14. The hero budget
+
+A busy hero starts hydration, a JavaScript entrance, a shader compile, video decode, blur over live pixels and loops
+in the same two seconds. Each is fine alone; the order is the budget, and the entrance owns the clock
+(`entrance-signal.ts`: `data-entrance` goes `pending → running → tail → settled`, [entrances.md](entrances.md) §11).
+
+- **While `running`, compositor work only:** the entrance on CSS or Motion's `transform` string, opacity fades.
+  Nothing that compiles, decodes, lays out or evaluates a large chunk.
+- **On `settled`, costly starts queue one per task, about two frames apart:** 1. the WebGL run ([webgl.md](webgl.md)
+  §8); 2. video `play()`; 3. the loop strip; 4. embeds. Each also starts on a timeout (2.5 s), so a page whose
+  entrance never publishes still starts. A CSS loop needs no script:
+  `html[data-entrance]:not([data-entrance='settled']) .strip { animation-play-state: paused }`.
+- **Fonts before the entrance:** preload the display font, give it a metric-matched fallback (`size-adjust`,
+  `ascent-override`), and have a JavaScript entrance wait on `document.fonts.ready` with a short timeout. A swap
+  mid-entrance re-lays-out split words and re-rasterises every word layer.
+- **One tick:** Lenis with `autoRaf: false`, driven by the page's clock, and the scene advanced from the same authority
+  (the bridge's pattern, [webgl.md](webgl.md) §4). Three loops on three rAFs fight for one frame.
+- **On 120 Hz displays, cap the scene at 60 fps:** §2's budgets assume 60, and the headroom is the compositor's.
+- **No blur over live media until `settled`** ([ios-safari-motion.md](ios-safari-motion.md) §8).
+- **Measure with Long Animation Frames** (`PerformanceObserver`, type `long-animation-frame`, Chromium only);
+  elsewhere sample rAF deltas. A long frame during `running` is the stutter, and the start inside it is the cause.
+
 ## Traps
 
 - [ ] ★ No scroll-linked value bound through `style`, shorthand or not; write one composed `transform`
@@ -260,8 +297,10 @@ mount them per route; a page with just count-up numbers has no reason to pull in
 - [ ] A colour track's target is only the element that needs the colour; drawn shapes count toward the
   node budget (§5).
 - [ ] Custom properties are set on the animated element, never a parent (§8).
-- [ ] No permanent `will-change`; the video `translateZ(0)` anchor is the standing exception, and the rail's
-  track holds its promotion only while its scene is awake (§10).
+- [ ] No permanent `will-change`; the video `translateZ(0)` anchor is the standing exception, the rail's
+  track holds its promotion only while its scene is awake, and a reveal's items only while their group plays (§10).
+- [ ] No Motion `x`/`y` on display type; the hero entrance runs on the compositor (§10).
+- [ ] On a busy hero, costly starts wait for `settled`, one per task, each with a timeout (§14).
 - [ ] `filter: blur()` stays small and is measured on Safari (§11).
 - [ ] At most one pinned, scrubbed scene per page.
 - [ ] Across all scroll-linked effects, no more than 1–3 intersect the viewport at once (§3).

@@ -5,7 +5,8 @@ lines, once or replay, the load veil and count-up, with the gate, failsafe and s
 readable.
 
 **Read when:** sections, cards, images or stats should animate in, or a number should count up; a reveal never fires,
-fires late or flashes; you're reviewing entrance code.
+fires late or flashes; a hero's load entrance shares its first seconds with a live canvas, video or loops; you're
+reviewing entrance code.
 **Skip when:** the reader's scroll should drive the motion (a pin, a scrub, parallax: [scenes.md](scenes.md)); the
 text splits into words or lines ([text.md](text.md)); the question is timing or taste ([craft.md](craft.md)).
 
@@ -25,7 +26,8 @@ and a passing `verify-motion.mjs --reveal`.
 8. [Count-up](#8-count-up)
 9. [The gate, the failsafe and the server](#9-the-gate-the-failsafe-and-the-server)
 10. [Hide and show](#10-hide-and-show)
-11. [Traps](#traps)
+11. [The hero entrance and its signal](#11-the-hero-entrance-and-its-signal)
+12. [Traps](#traps)
 
 ## 1. Triage by clock
 
@@ -255,6 +257,38 @@ and its effects clean up on hide and run again on show.
   mount skips items already shown. They find items once, at mount, so content added later needs its own call.
 - Pass the route's root, never `document`: a hidden route's DOM is still in the document.
 
+## 11. The hero entrance and its signal
+
+A load entrance shares its first seconds with hydration, a live canvas, video, a blurred nav and loops. It stays
+smooth on the compositor, and it publishes one clock that everything costly waits on.
+
+- **A hero entrance runs on the compositor:** `SplitWords` (CSS keyframes from the first frame, [text.md](text.md) §2),
+  or in Motion an animated `transform` string (`animate={{ transform: 'translateY(0px)' }}`, no `transformTemplate`),
+  which runs on WAAPI. Never `x`/`y` for display type: Motion drives them from JavaScript every frame, so a busy main
+  thread stalls them and, with no layer, they step at the settle ([performance.md](performance.md) §10). `Reveal`
+  items rise on `y`; while a group plays it carries `data-reveal-playing`, and only its moving items hold a layer
+  until it lands (`css/reveal.css` §5).
+- **A blurred element fades in place** (`effect="fade"`): never translated in from off-screen, never under an
+  ancestor animating `opacity`, `filter`, `mask` or `clip-path`, no blur over live media until settled
+  ([ios-safari-motion.md](ios-safari-motion.md) §8).
+- **Publish the clock** (`entrance-signal.ts`; the `reveal` block brings it): write `data-entrance="pending"` on
+  `<html>` in the server HTML, then give one publisher per page the entrance:
+
+| Entrance | Publisher |
+|---|---|
+| `SplitWords` / `css/split.css` | `trackEntrance(heading)` in a client effect: running now, settled once its animations finish |
+| Motion | `<Reveal trigger="mount" entrance>` on the hero group |
+| GSAP | `reveal(root, { entrance: true })` |
+| neither | `mountReveals(root, { entrance: true })` (through `trackEntrance`) |
+
+- **Phases** go `pending → running → tail → settled`, never backwards; each is written on the attribute before an
+  `entrance:phase` event bubbles. `tail` means the display type is within about 1 px of rest (`TAIL_AT`). Reduced
+  motion and the failsafe publish `settled` at once; with no JavaScript `pending` stays and the consumers' timeouts
+  cover it. A route with its own entrance after a client navigation publishes on its route root (the scope argument).
+- **What waits on it** is the hero budget ([performance.md](performance.md) §14): the 3d skill's canvas prepares
+  outside the entrance, reveals at `tail` and runs at `settled` ([webgl.md](webgl.md) §8); video, loops and embeds
+  start on `settled`.
+
 ## Traps
 
 - [ ] No fractional `amount` (`viewport={{ amount: 0.6 }}`) or observer `threshold` as a trigger: a fraction of an
@@ -273,6 +307,8 @@ and its effects clean up on hide and run again on show.
 - [ ] `GATE_SCRIPT` is in `<head>` with the CSP nonce; `<html>` has `suppressHydrationWarning` (§9).
 - [ ] Nothing hides the LCP element: no `Reveal` on it, and no veil unless `ANIMATION.md` records the exception (§7,
       §9).
+- [ ] A hero headline moves on the compositor (CSS or Motion's `transform` string), never Motion `x`/`y`; a blurred
+      element only fades; the page publishes its entrance once (§11).
 - [ ] GSAP: `reveal()` runs outside your own `gsap.matchMedia()` callbacks. Observed on 3.15.0: creating or killing a
       ScrollTrigger during a matchMedia rebuild leaves the reader at scroll 0, so the block keeps its triggers outside.
 - [ ] Your own GSAP entrance never ends in `revert()` once GSAP folded the element's `translate`: observed on 3.15.0,

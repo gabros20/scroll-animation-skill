@@ -5,7 +5,8 @@ the reader sees: the pin's progress feeds the 3d skill's conductor, and the canv
 tick, only when something changed. The 3D itself is the 3d skill's.
 
 **Read when:** a model turns, a camera flies or a world changes as the reader scrolls a pinned section; a canvas in a
-scene lags the copy, sweeps from 0 on reload, renders off screen, or leaks contexts across routes.
+scene lags the copy, sweeps from 0 on reload, renders off screen, or leaks contexts across routes; a live canvas sits
+behind a page-load entrance (§8).
 **Skip when:** the move is fixed and nothing reacts to the reader: a scrub video ([video.md](video.md)) or an image
 sequence ([sequences.md](sequences.md)); the pin, acts and holds ([scenes.md](scenes.md)); modelling, a GLB, a
 shader, materials or the camera path (the 3d skill).
@@ -24,7 +25,8 @@ the checks in §7 run.
 5. [The canvas slot](#5-the-canvas-slot)
 6. [Lifecycle](#6-lifecycle)
 7. [Verification](#7-verification)
-8. [Traps](#traps)
+8. [On a trigger or route clock](#8-on-a-trigger-or-route-clock)
+9. [Traps](#traps)
 
 ## 1. Real-time or rendered
 
@@ -214,6 +216,33 @@ Headless WebGL needs Chromium's SwiftShader (`--enable-unsafe-swiftshader`). A r
 a real hidden tab, a real bfcache return, and iOS with the toolbars shown, where the scene's range is the pin's
 `100lvh` box ([scenes.md](scenes.md) §1) and a toolbar step must leave the canvas's frame where it was.
 
+## 8. On a trigger or route clock
+
+The common hero has no pin: a live canvas behind a page-load entrance (or a route's own entrance after a client
+navigation). Scroll progress feeds nothing; the entrance's clock orders the canvas's costs. Fixed cues (prepare at
+0.3 s, reveal at 1.0 s, run at 1.8 s) encode one machine's hydration and compile time and break silently when the
+entrance changes, so they survive only as timeouts.
+
+- **This skill owns the clock.** The entrance publishes `data-entrance` and `entrance:phase`
+  (`entrance-signal.ts`, [entrances.md](entrances.md) §11). **The 3d skill owns the stage cues** keyed off it:
+  `SceneCanvas startAfter="entrance"` writes `data-scene-stage` and waits through its own `whenEntrance()`. Neither
+  imports the other; the DOM is the interface, as with the bridge.
+
+| Stage | Starts when | Why |
+|---|---|---|
+| prepare | before the entrance starts (or in a worker, at once); else after `settled` | a compile or upload mid-entrance stalls the main thread and the GPU process the entrance's frames need |
+| reveal | prepared and proven, and the phase is `tail` or later | one still frame fades in while the type is within a pixel of rest |
+| run | `settled`, and revealed | the frame loop starts last |
+
+- Each wait has a timeout (2.5 s), so a page whose entrance never publishes still starts. No attribute means no
+  entrance: the canvas starts at once.
+- **Before blaming the GPU**, rule out the entrance itself: a Motion `x`/`y` headline and hydration on the main
+  thread, or a `backdrop-filter` nav recomputed over every canvas frame, also lag a scene. The entrance belongs on the
+  compositor and the blur gets a fill until `settled` (§8 of [ios-safari-motion.md](ios-safari-motion.md)).
+- The rest of the hero's costly starts (video, loops, embeds) queue after the canvas's run: the hero budget,
+  [performance.md](performance.md) §14. Record the cue in the scene ledger: `clock: trigger`, the publisher, the
+  canvas's stages ([preflight.md](preflight.md) §4).
+
 ## Traps
 
 - [ ] A fixed move nothing reacts to is a sequence or a scrub video, not a canvas (§1).
@@ -226,3 +255,4 @@ a real hidden tab, a real bfcache return, and iOS with the toolbars shown, where
 - [ ] The mesh takes its pose from `conductor.state` on mount; a late canvas calls `requestRender()` (§6).
 - [ ] No `frameloop="always"` on a route Cache Components may keep; one context per kept route (§6).
 - [ ] Ambient WebGL that moves by itself for more than 5 s has a pause control ([accessibility.md](accessibility.md) §3).
+- [ ] A canvas behind a load entrance waits on the entrance signal, never on fixed times; timeouts only (§8).

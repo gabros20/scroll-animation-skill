@@ -255,6 +255,9 @@ Disciplines that cost real cycles when skipped:
 | A canvas sweeps from 0 or shows a default pose on reload | fed outside `render-bridge`, or the mesh takes its pose only in `onFrame`: [webgl.md](webgl.md) §6 |
 | A canvas is blank or black after load or in a view transition | the new canvas never rendered (a late canvas without `requestRender()`); the old snapshot keeps its last frame: [webgl.md](webgl.md) §6 |
 | WebGL contexts pile up across routes | a canvas kept mounted on leave or a renderer never disposed; under Cache Components, one per kept route: [webgl.md](webgl.md) §6 |
+| Display type wobbles or steps in whole pixels as an entrance settles | a JavaScript-driven move with no layer (Motion `x`/`y`): move it to the compositor, or scope the layer to the playing group ([performance.md](performance.md) §10). Check the precondition (computed `will-change` on the items while the group is `data-reveal-playing`, or a running animation in `el.getAnimations()`) and compare cropped screenshots of consecutive frames; `getBoundingClientRect()` reports the float either way and can't see it |
+| A blurred nav drags a white or yellow streak as it enters (Safari) | a `backdrop-filter` element moved in from off-screen, or under a fading ancestor: [ios-safari-motion.md](ios-safari-motion.md) §8 |
+| A live scene lags, or the headline jumps at its end, while the hero's entrance plays | costly starts inside the entrance (a compile, hydration, video, a blur over the canvas): the hero budget, [performance.md](performance.md) §14, and the canvas's cues, [webgl.md](webgl.md) §8 |
 
 ## Traps
 

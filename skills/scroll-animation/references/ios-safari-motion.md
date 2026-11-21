@@ -28,7 +28,8 @@ real device or the matching iOS Simulator (§6).
 5. [Overscroll and smooth scroll](#5-overscroll-and-smooth-scroll)
 6. [Device discipline for video and scroll](#6-device-discipline-for-video-and-scroll)
 7. [Lines along media edges](#7-lines-along-media-edges)
-8. [Traps](#traps)
+8. [A blurred element during an entrance](#8-a-blurred-element-during-an-entrance)
+9. [Traps](#traps)
 
 ## 1. The pin and the toolbar
 
@@ -178,6 +179,23 @@ sets it: only a purely native page may add it, never one where ScrollTrigger or 
 - **Later:** ScrubVideo's canvas presenter (v2.0's single visible surface) is clean by construction, since the
   `<video>` layer is no longer what the reader sees; its canvas keeps the clip.
 
+## 8. A blurred element during an entrance
+
+- **The symptom** (a field report, Safari): a nav pill with `backdrop-filter` that translated in from above the
+  viewport dragged a white-to-yellow gradient through its blur, halfway down its move. Fading it in place fixed it.
+  The cause offered, Safari sampling the backdrop outside the viewport as blank and streaking it in, is unverified:
+  no WebKit bug was found.
+- **The rule holds without the cause:** a `backdrop-filter` element is a fixed sampling window.
+  - Never translate it in from off-screen; animate only its own `opacity`. If the design needs movement, the plate
+    stays put and fades while its content moves inside it.
+  - Never put it under an ancestor that animates `opacity`, `filter`, `mask` or `clip-path`. Under the Filter Effects
+    spec's Backdrop Root that ancestor cuts off what the blur can sample, in every engine, so a pill inside a fading
+    wrapper blurs nothing until the fade ends.
+  - Over a live canvas or video the blur is recomputed on every frame of the media. Give it a translucent fill until
+    the entrance settles (`html[data-entrance='settled']`, [performance.md](performance.md) §14), or keep it small.
+- **In the blocks:** `effect="fade"` (`data-reveal-effect="fade"`) on a blurred item, never `rise` or `scale-in`
+  ([entrances.md](entrances.md) §11).
+
 ## Traps
 
 - [ ] The pin is `lvh`, never `svh` or `dvh`; its margin matches (§1).
@@ -189,3 +207,5 @@ sets it: only a purely native page may add it, never one where ScrollTrigger or 
 - [ ] `overscroll-behavior: none` is on the root of any page with a scroll scene (§5).
 - [ ] The deployed build is confirmed to contain the fix before a device test (§6).
 - [ ] Every scene media layer (video, poster, sequence canvas, WebGL slot) is clipped 1 px in (§7).
+- [ ] A `backdrop-filter` element fades in place: no move, no animating ancestor, no blur over live media until
+      settled (§8).

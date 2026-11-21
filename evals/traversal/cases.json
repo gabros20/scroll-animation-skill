@@ -297,5 +297,18 @@
       "references/brownfield-coexistence.md",
       "references/text.md"
     ]
+  },
+  {
+    "id": "busy-hero",
+    "prompt": "Our hero headline steps a little as its Motion entrance settles, and the three.js scene behind it lags while the entrance plays. Fix the hero.",
+    "expected_references": [
+      "references/entrances.md",
+      "references/performance.md",
+      "references/webgl.md"
+    ],
+    "forbidden_references": [
+      "references/scenes.md",
+      "references/video.md"
+    ]
   }
 ]

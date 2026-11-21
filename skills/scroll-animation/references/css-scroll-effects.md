@@ -77,6 +77,7 @@ without it.
   and motion path run off the main thread: on Chromium's compositor, and in Safari from 26.4 (26.0–26.3 run every
   timeline on the main thread, near 60 fps). `width` or `left` is always a frame late (S1, S7f), so the progress bar
   scales.
+  A `backdrop-filter` element itself fades in place, never moves: [ios-safari-motion.md](ios-safari-motion.md) §8.
 - **One clock per property group on an element.** In Safari 26.4–26.6 a time-based animation (a transition, a Motion
   reveal) beside a scroll-driven one on the same group (`opacity`; `transform`, `translate`, `scale`, `rotate`;
   `filter`) puts both on the main thread while both run. Put the entrance on a wrapper.

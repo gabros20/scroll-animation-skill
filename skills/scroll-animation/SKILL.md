@@ -68,6 +68,7 @@ First pick the lane, then the reference:
 | Page transitions, a shared element from card to detail page, a grid opening in place, a preloader; a navigation that lands at the wrong scroll position or leaves triggers stale | [page-transitions.md](references/page-transitions.md) | which tool per router, `view-transitions`, `<RouteChange>` / `routeChanged()`, framework hooks, Flip and `layoutId`, preloaders |
 | Scrollytelling: a sticky graphic or chart beside text steps, a data story or visual essay | [scrollytelling.md](references/scrollytelling.md) | story beats, the five techniques and four layouts mapped to blocks, `scrolly-steps`, phones, accessibility |
 | Content that animates in (sections, cards, images, stats, a number counting up) | [entrances.md](references/entrances.md) | triage by clock, `Reveal` per engine, trigger lines, once or replay, the load veil, count-up, the gate and SSR |
+| A busy hero: a load entrance beside a live canvas, video or loops; type stepping at the settle | [entrances.md](references/entrances.md) §11, [performance.md](references/performance.md) §14 | a compositor entrance (CSS or Motion's `transform` string, never `x`/`y` on display type), the entrance signal, the hero budget |
 | A headline or paragraph revealed by word or line | [text.md](references/text.md) | `SplitWords` on the server or SplitText below the fold, fonts first, aria, React keys, CJK and Thai |
 | Motion (React) code: `useScroll`, springs, `LazyMotion`, Motion under Lenis | [motion.md](references/motion.md) | `m` under strict, live reduced motion, hand-written scroll styles, the `frame` driver |
 | GSAP code: `useGSAP`, a vanilla page's `mount`, section timelines, triggers that fire early or stack up, plugins | [gsap.md](references/gsap.md) | setup, cleanup per route, page order and `refreshPriority`, the matchMedia trap, `quickTo`, the 11 mistakes |
@@ -91,6 +92,7 @@ First pick the lane, then the reference:
 | Clock | Job | Block (engine) |
 |---|---|---|
 | trigger | content entrance; a load veil only as a recorded exception (it delays the LCP element) | `reveal` (motion: `Reveal`/`RevealItem`/`RevealVeil`; gsap: `reveal`; agnostic: `mountReveals`) |
+| trigger | the load entrance's clock, which a live canvas, video and loops wait on | `entrance-signal` (agnostic: `publishEntrance`, `trackEntrance`; `Reveal`'s `entrance`, `{ entrance: true }`) |
 | trigger | an above-the-fold headline, its words in from the first frame | `split-words` (motion: `SplitWords`, a Server Component; agnostic: `splitWordsHTML`) |
 | trigger | a heading or paragraph revealed line by line below the fold | `split-reveal` (gsap: `splitReveal`, SplitText) |
 | trigger | a number counting up | `count-up` (motion: `CountUp`; agnostic: `mountCountUps`) |

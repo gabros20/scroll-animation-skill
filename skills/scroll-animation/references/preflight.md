@@ -137,12 +137,14 @@ Existing motion: header colour script kept (drives data-theme); AOS replaced by 
 
 | # | Section | Beat | Clock | Block (engine) | Runway | Reduced motion |
 |---|---|---|---|---|---|---|
-| 1 | Hero | the promise | trigger | split-word hero (CSS, first paint) | none | text visible, no motion |
-| 2 | Product film | how it's made | media | ScrubVideo (GSAP) on PinnedScene | 4 viewports | poster, no pin |
-| 3 | Work rail | the proof | scroll | horizontal-rail (GSAP) | track width | native horizontal scroller |
+| 1 | Hero | the promise | trigger | split-word hero (CSS, first paint), publishes the entrance (`trackEntrance`) | none | text visible, no motion |
+| 2 | Hero canvas | the world behind it | trigger: entrance cue (prepare before, reveal at `tail`, run at `settled`, 2.5 s timeouts) | live canvas (3d, `startAfter="entrance"`) | none | poster, no canvas |
+| 3 | Product film | how it's made | media | ScrubVideo (GSAP) on PinnedScene | 4 viewports | poster, no pin |
+| 4 | Work rail | the proof | scroll | horizontal-rail (GSAP) | track width | native horizontal scroller |
 ```
 
-A section that wants the scroll clock names what the reader gains by driving it; otherwise it is a trigger. The
+A section that wants the scroll clock names what the reader gains by driving it; otherwise it is a trigger. A cue row
+names the clock it waits on and its stages ([webgl.md](webgl.md) §8). The
 beat is the one idea the section tells; a narrative page gets one row per beat, so a scrolly section's steps are rows.
 
 ## 5. Asking the questions

@@ -125,6 +125,9 @@ entrances only, on the measured long-tail curve, judged by when they read as arr
   50 ms reads as one group, and past about 150 ms it reads as a wait, not a cascade.
 - **Scale it to the count.** Twenty words at 67 ms spend 1.3 s just starting: give a lede 30–40 ms, or reveal it by
   line. A stagger is decoration, so nothing waits on it: a link is clickable while it plays.
+- **A move without a fade is for items that start at t≈0, or are masked.** A delayed item that only moves sits
+  visibly off its place, a gap beside it, until its turn: give anything with a real delay the fade too (`rise`, not a
+  move-only variant).
 - **A scroll-driven stagger has no time.** Convert it before trusting it: stagger in ms ≈ (stagger ÷ total) × runway
   in px ÷ scroll speed in px per ms. Try a trackpad and a fast flick: a stagger that reads on one can vanish on the
   other.
@@ -199,6 +202,7 @@ A generated page gives itself away through its motion as much as its copy. Befor
       fades to an empty stage or trails into the footer.
 - [ ] No group enters twice (the container and its children).
 - [ ] Staggers and durations fit the count: no three-second word cascade.
+- [ ] No delayed item parked off its place: a move-only entrance starts at t≈0 or behind a mask (§5).
 - [ ] Hover-only effects are limited to devices that hover, and nothing is lost on touch.
 - [ ] Reduced motion was switched on and looked at.
 
