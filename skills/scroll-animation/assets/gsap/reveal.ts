@@ -17,9 +17,10 @@
  *   (seconds between items that cross together; MOTION.lineStagger) and data-reveal-replay (reveal again on every
  *   return, reset only once the item is entirely out of view). `options` sets the defaults for groups that don't say.
  * - ScrollTrigger.batch, one trigger per item: items that cross together play as one staggered batch in document
- *   order, and an item further down (a column stacked on a phone) waits for its own arrival. Items above the view at
- *   load, or jumped past (a reload's restored scroll position, an anchor), reveal when the reader scrolls back up to
- *   them.
+ *   order, and an item further down (a column stacked on a phone) waits for its own arrival. An item plays only if it
+ *   is on screen as it would start; otherwise its trigger stays. So items above the view at load, or jumped past (a
+ *   reload's restored scroll position, an anchor), reveal when the reader scrolls back up to them, and items a client
+ *   navigation's scroll carried below the fold wait for the reader.
  * - Each item tweens from its computed resting state (css/reveal.css) to rest: the move on EASES.entrance, the fade
  *   short and late against it (MOTION.entranceFade). When it lands the item is marked data-reveal-state="shown" and
  *   GSAP's inline writes are cleared, so nothing is left behind but the item's own styles.
@@ -204,12 +205,15 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
     if (group.trigger === 'mount') continue
     const watched = group.replay ? els : els.filter((el) => !isShown(el))
     if (!watched.length) continue
-    // Entering from either side reveals. A jump past an item (iOS Safari restoring a reload's scroll position after
-    // the triggers exist, an anchor, a scrollTo) fires its onEnter with the item already above the view: ScrollTrigger
-    // fires the callbacks of every trigger a jump passes (limitCallbacks is off by default). Its trigger stays, and
-    // the item reveals on the way back up (onEnterBack) instead of off-screen at load.
+    // Entering from either side reveals, and only an item on screen plays: a callback is no proof of arrival.
+    // ScrollTrigger fires the callbacks of every trigger a jump passes (limitCallbacks is off by default): iOS Safari
+    // restoring a reload's scroll position after the triggers exist, an anchor, a scrollTo. And on a client
+    // navigation the page's useGSAP runs before Next places the scroll (in an ancestor's layout effect), so the
+    // triggers are created at the previous page's scrollY: an item in that band starts active, one above it fires
+    // onEnterBack on the jump to the top, and either would play below the fold. An item off screen keeps its trigger
+    // and reveals when the reader reaches it.
     const enter = (_batch: Element[], batchTriggers: ScrollTrigger[]) => {
-      const arrived = batchTriggers.filter((trigger) => trigger.progress < 1)
+      const arrived = batchTriggers.filter((trigger) => onScreen(trigger.trigger as HTMLElement))
       if (!settled) play(arrived.map((trigger) => trigger.trigger as HTMLElement))
       if (!group.replay) arrived.forEach((trigger) => trigger.kill())
     }
@@ -264,6 +268,12 @@ function readGroup(group: Element | null, defaults: RevealOptions): Group {
 }
 
 const isShown = (el: Element) => el.getAttribute('data-reveal-state') === 'shown'
+
+/** Some of the item is inside the viewport now (a smoother's transform included). */
+function onScreen(el: Element): boolean {
+  const { top, bottom } = el.getBoundingClientRect()
+  return bottom > 0 && top < window.innerHeight
+}
 
 function documentOrder(a: Node, b: Node) {
   return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
