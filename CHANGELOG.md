@@ -10,6 +10,11 @@ the newest release heading below, and the release tag.
 ## [Unreleased]
 
 ### Added
+- Queue unreleased changes here.
+
+## [2.1.0] - 2026-11-21
+
+### Added
 
 - `entrance-signal` (agnostic): the page-load entrance's clock on the DOM, so a busy hero's costly starts wait on it
   instead of fixed times. `data-entrance="pending|running|tail|settled"` on a scope (default `<html>`; the author
