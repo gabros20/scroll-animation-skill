@@ -12,7 +12,8 @@
 //             attribute; settled only once the entrance has landed; while it plays the group carries
 //             data-reveal-playing and its moving items take will-change: transform; after settled no marker and no
 //             will-change anywhere; the stub scene prepares before the entrance, reveals at tail or later and runs at
-//             settled, never on its timeout; the strip is held until settled; the blurred nav never moves
+//             settled, never on its timeout; the strip is held until settled; the blurred nav never moves; where
+//             the engine has Long Animation Frames (Chromium), no long frame while the type settles (tail → settled)
 //   late      the stub scene arrives mid-entrance: it prepares only once settled
 //   reduced   reduced motion: settled at once, nothing else published, the strip runs from the start
 //   failsafe  the engine boots after the failsafe fired: settled at once (the reveal pages; css has no failsafe; the
@@ -114,17 +115,32 @@ async function serve() {
  * and, once per animation frame, what the checks read across the entrance.
  */
 function recorderInit() {
-  const rec = { events: [], frames: [] }
+  const rec = { events: [], frames: [], loaf: null }
   window.__rec = rec
+  // Long Animation Frames (Chromium only): every frame whose update was delayed past 50 ms, with its script time.
+  if (PerformanceObserver.supportedEntryTypes?.includes('long-animation-frame')) {
+    rec.loaf = []
+    new PerformanceObserver((list) => {
+      for (const e of list.getEntries()) {
+        rec.loaf.push({ start: e.startTime, end: e.startTime + e.duration, script: e.scripts.reduce((sum, s) => sum + s.duration, 0) })
+      }
+    }).observe({ type: 'long-animation-frame', buffered: true })
+  }
   document.addEventListener(
     'entrance:phase',
     (e) => rec.events.push({ phase: e.detail.phase, attr: e.target.getAttribute('data-entrance'), t: performance.now() }),
     true,
   )
+  /** The vertical distance (px) an element's transform still holds it from rest. */
+  const offsetOf = (el) => {
+    const transform = getComputedStyle(el).transform
+    return transform === 'none' ? 0 : Math.abs(new DOMMatrixReadOnly(transform).m42)
+  }
   const tick = () => {
     const items = [...document.querySelectorAll('[data-reveal-item]')]
     const nav = document.getElementById('nav')
     const strip = document.getElementById('strip')
+    const movers = [...document.querySelectorAll('[data-split-word], [data-reveal-item]:not([data-reveal-effect="fade"])')]
     rec.frames.push({
       t: performance.now(),
       phase: document.documentElement.getAttribute('data-entrance'),
@@ -132,6 +148,8 @@ function recorderInit() {
       layered: items.filter((el) => getComputedStyle(el).willChange.includes('transform')).map((el) => el.id),
       nav: nav ? getComputedStyle(nav).transform : null,
       strip: strip?.getAnimations()[0]?.playState ?? null,
+      // The moving type's largest remaining offset: `tail` promises it is within about 1 px of rest.
+      offset: Math.max(0, ...movers.map(offsetOf)),
     })
     if (rec.frames.length < 3000) requestAnimationFrame(tick)
   }
@@ -205,6 +223,15 @@ const CHECKS = {
     const settledAt = r.events.find((e) => e.phase === 'settled')?.t ?? Infinity
     const tailAt = r.events.find((e) => e.phase === 'tail')?.t ?? Infinity
     out.push(['entrance: tail comes before settled', tailAt < settledAt, `tail ${Math.round(tailAt)} ms, settled ${Math.round(settledAt)} ms`])
+    // tail's meaning, measured: the first frame after it, the moving type sits within 1 px of rest (TAIL_AT is curve
+    // arithmetic; the Motion and GSAP tails are timers started with their moves).
+    const atTail = r.frames.find((f) => f.t >= tailAt)
+    const peak = Math.max(0, ...r.frames.filter((f) => f.t < tailAt).map((f) => f.offset))
+    out.push([
+      'entrance: at tail the moving type is within 1 px of rest',
+      atTail !== undefined && peak > 1 && atTail.offset <= 1,
+      atTail ? `${atTail.offset.toFixed(2)} px at ${Math.round(atTail.t)} ms (it moved up to ${peak.toFixed(1)} px)` : 'no frame after tail',
+    ])
     const landedOk =
       t.page === 'css'
         ? r.landed.words === 0
@@ -236,6 +263,21 @@ const CHECKS = {
       `${before.filter((f) => f.strip === 'paused').length}/${before.length} held, ${after.filter((f) => f.strip === 'running').length}/${after.length} running after`,
     ])
     out.push(['blurred nav: never moves (it fades in place)', r.frames.every((f) => f.nav === 'none'), [...new Set(r.frames.map((f) => f.nav))].join(',')])
+    if (r.loaf) {
+      // The hero budget while the type settles, the window a live canvas reveals in: no frame there may run long.
+      // A frame per rAF tick is the evidence the window was watched; its p95 is reported, not asserted (headless
+      // frame pacing is too noisy for a hard number, and a long frame shows up here anyway).
+      const long = r.loaf.filter((f) => f.start < settledAt && f.end > tailAt)
+      // From the last tick before the window, so the first delta inside it counts.
+      const ticks = r.frames.filter((f, i, all) => f.t <= settledAt && (f.t >= tailAt || all[i + 1]?.t >= tailAt)).map((f) => f.t)
+      const deltas = ticks.slice(1).map((tick, i) => tick - ticks[i]).sort((a, b) => a - b)
+      const p95 = deltas.length ? deltas[Math.ceil(deltas.length * 0.95) - 1] : null
+      out.push([
+        'hero budget: no long animation frame while the type settles, tail → settled (Long Animation Frames)',
+        long.length === 0 && deltas.length > 0,
+        `${long.length} long frame(s)${long.length ? `, up to ${Math.round(Math.max(...long.map((f) => f.end - f.start)))} ms` : ''}; rAF p95 ${p95 === null ? 'n/a' : `${Math.round(p95)} ms`} over ${deltas.length} frames`,
+      ])
+    }
     return out
   },
 
