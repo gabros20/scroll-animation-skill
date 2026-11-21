@@ -19,7 +19,7 @@
  * - Reduced motion, or the failsafe already fired (css/animation.css): `settled` at once, nothing else. No JavaScript:
  *   the server's `pending` stays, and the consumers' own timeouts cover it.
  * - The other engines publish from their blocks: motion/Reveal.tsx (`entrance`), gsap/reveal.ts and reveal.ts
- *   (`{ entrance: true }`). What waits on it is the hero budget (references/performance.md §11): only compositor work
+ *   (`{ entrance: true }`). What waits on it is the hero budget (references/performance.md §14): only compositor work
  *   while `running`; costly starts queue on `settled`, one per task.
  * - Client-side navigation keeps <html>, and a settled scope never runs again: a route with its own entrance publishes
  *   on its route root instead (the scope argument), and its consumers read that.
@@ -58,8 +58,9 @@ export function publishEntrance(phase: EntrancePhase, scope?: Element): void {
  * finishes), paused ones (a strip held until settled), scroll-driven ones (they finish only at the range's end) and
  * the failsafe's own 4 s animation. Animations that start later inside root (a staggered transition, a reveal that
  * crosses its line meanwhile) extend the entrance: settled waits until two frames pass with none left. stop() ends
- * the tracking; if the entrance was still running it publishes settled, because every block's teardown lands its
- * reveals at rest.
+ * the tracking and publishes nothing: React's StrictMode runs an effect's cleanup and the effect again in
+ * development, and a settle there would start everything early. An entrance torn down mid-way leaves its consumers
+ * to their timeouts.
  */
 export function trackEntrance(root: Element, opts: { scope?: Element; tailAt?: number } = {}): () => void {
   const { scope, tailAt = TAIL_AT } = opts
@@ -106,7 +107,9 @@ export function trackEntrance(root: Element, opts: { scope?: Element; tailAt?: n
   afterTwoFrames(check)
 
   return () => {
-    if (live) settle()
+    live = false
+    clearTimeout(tailTimer)
+    cancelAnimationFrame(frame)
   }
 }
 

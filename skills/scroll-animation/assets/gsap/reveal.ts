@@ -40,8 +40,9 @@
  *   same, and so a check can see the group play.
  * - `entrance: true` publishes the entrance signal on <html> from the `mount` groups (GSAP tweens are not WAAPI, so
  *   trackEntrance can't see them): running as they start, tail once the last item has run TAIL_AT of its move,
- *   settled when the last lands, or at once under reduced motion or the failsafe. A destroy() mid-entrance lands the
- *   items, so it settles too. One publisher per scope.
+ *   settled when the last lands, or at once under reduced motion or the failsafe. A destroy() publishes nothing (React's
+ *   StrictMode destroys and rebuilds in development): an entrance torn down mid-way leaves consumers to their
+ *   timeouts. One publisher per scope.
  * - An item's `transform` is GSAP's while it reveals. Its own `translate`, `rotate` and `scale` keep working: GSAP
  *   folds them into the transform for the length of the entrance and they are handed back when it lands.
  */
@@ -101,6 +102,7 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
   // The entrance signal: the mount items still in flight, and the tail's delayed call.
   const entering = new Set<HTMLElement>()
   let tail: gsap.core.Tween | null = null
+  let destroyed = false
 
   /** The group is data-reveal-playing while any of its items is in `running`. */
   function markPlaying(el: HTMLElement) {
@@ -155,7 +157,7 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
     release(el)
     if (entering.delete(el) && !entering.size) {
       tail?.kill()
-      publishEntrance('settled')
+      if (!destroyed) publishEntrance('settled')
     }
   }
 
@@ -223,6 +225,8 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
 
   return {
     destroy() {
+      destroyed = true
+      tail?.kill()
       mm.revert()
       triggers.forEach((trigger) => trigger.kill())
     },
