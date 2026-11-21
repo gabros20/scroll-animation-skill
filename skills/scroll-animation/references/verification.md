@@ -252,6 +252,10 @@ Disciplines that cost real cycles when skipped:
   answers in one screenshot what rounds of guessed fixes don't. When one clip works and another doesn't on the same
   phone, list every way the two differ (which loaded first, while the reader's first touch was spent) before blaming
   the platform.
+- **"It jitters on my phone": ask for a screen recording** and read it frame by frame. No harness here sees per-frame
+  misalignment between content and the compositor's scroll. Cut it into contact sheets,
+  `ffmpeg -i rec.mov -vf "fps=30,scale=360:-1,tile=6x5" sheet-%02d.png`, and compare the moving parts' positions
+  across neighbouring frames: a part a frame behind the page is JavaScript-driven against native scrolling.
 
 ## 7. Symptom index
 
