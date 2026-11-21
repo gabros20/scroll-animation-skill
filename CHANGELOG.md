@@ -10,7 +10,7 @@ the newest release heading below, and the release tag.
 ## [Unreleased]
 
 ### Added
-- `test:route-hygiene` checks arrival (F2): Home scrolled to 2400 or 3000 px, then a link to a page of
+- `test:route-hygiene` checks arrival (F2): Home scrolled to 1900, 2400 or 3000 px, then a link to a page of
   `gsap/reveal.ts` items and `split-reveal` headings, native and under ScrollSmoother, with and without Cache
   Components. No entrance starts with its item outside the viewport, nothing below the fold has played on arrival,
   and every item plays on screen as the page is scrolled through. `--only sequence,arrival` runs one group.
@@ -27,8 +27,10 @@ the newest release heading below, and the release tag.
 - scroll-authority §1 states the Lenis-or-ScrollSmoother trade-off for a GSAP-only route where Safari or 120 Hz
   screens matter: only native scrolling gets Safari's full-rate compositor scroll; Lenis's 60 fps cap there is
   measured, ScrollSmoother's rate is not (likely capped too, on the same ticker); and
-  native touch scrolling, where a GSAP pin or scrub lags iOS's compositor (skip ScrollSmoother when
-  `ScrollTrigger.isTouch === 1`; CSS sticky and scroll timelines there). Preflight §3.2 asks for it before either is
+  native touch scrolling (ScrollSmoother doesn't smooth touch by default, `smoothTouch`), where a GSAP pin or scrub
+  lags iOS's compositor: until the blocks choose the scroller per device, a route can skip ScrollSmoother when
+  `ScrollTrigger.isTouch === 1` and pin with CSS sticky there, keeping GSAP scrubs off content that moves with the
+  page. Preflight §3.2 asks for it before either is
   chosen.
 - verification §6: a phone jitter report is read from a screen recording cut into ffmpeg contact sheets.
 - css-scroll-effects §3: each keyframe animates one property, so Lightning CSS can't merge them into a `transform`.
@@ -40,7 +42,8 @@ the newest release heading below, and the release tag.
   navigation the page's `useGSAP` runs before Next places the scroll (an ancestor's layout effect), so the triggers
   were created at the previous page's `scrollY`: an item in that band played at once, and one above it fired
   `onEnterBack` on the jump to the top and passed the old `progress < 1` test. 4 to 12 of the check's 13 entrances
-  were spent below the fold before the reader got there. Motion's `Reveal` and `mountReveals` observe with
+  were spent below the fold before the reader got there. `split-reveal` reads the rectangle a frame after its
+  callback: ScrollTrigger calls back synchronously as the trigger is created, still at the old position. Motion's `Reveal` and `mountReveals` observe with
   IntersectionObserver, which reports after layout, and are unaffected.
 - `css/split.css` pauses split words under `html:active-view-transition` (Chromium 125+, Safari 18+, Firefox 144+;
   dropped elsewhere): a route's heading committed under the 0.24 s root crossfade ran its 0.17 s fade beneath it and
