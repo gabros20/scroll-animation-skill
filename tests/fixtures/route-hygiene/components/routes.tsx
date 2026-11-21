@@ -4,7 +4,7 @@
 // two triggers, a hash target). More and Journal are shorter than Home, so a restore measured against the wrong page
 // clamps. Streamed (Lenis, same layout) streams in: loading.tsx first, then the page, then a section inside it, and
 // `?long=1` lengthens it without changing the pathname. Every trigger logs its refreshes to window.__rhLog for
-// tests/route-hygiene.mjs.
+// tests/route-hygiene.mjs. Home links to Reveals and Smoothed, the arrival check's pages (components/reveals.tsx).
 import { useGSAP } from '@gsap/react'
 import type Lenis from 'lenis'
 import Link from 'next/link'
@@ -139,7 +139,13 @@ export function Home({ base }: { base: string }) {
           ['journal', `${base}/journal`, 'Journal'],
           ['journal-hash', `${base}/journal#notes`, 'Notes'],
           ['more', `${base}/more`, 'More'],
-          ...(base ? [] : [['streamed', '/streamed', 'Streamed'] as [string, string, string]]),
+          ...(base
+            ? []
+            : ([
+                ['streamed', '/streamed', 'Streamed'],
+                ['reveals', '/reveals', 'Reveals'],
+                ['smoothed', '/smoothed', 'Smoothed'],
+              ] as Array<[string, string, string]>)),
         ]}
       />
       <section className="screen">Home</section>

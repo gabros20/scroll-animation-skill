@@ -9,7 +9,7 @@
 // any FAIL, 2 when examples/folio has no node_modules (`pnpm install` there first). `npm run test:route-hygiene`.
 //
 //   node tests/route-hygiene.mjs [--browsers chromium,webkit,firefox] [--variants plain,cache]
-//                                [--prefixes /,/vt] [--contract on,off] [--folio]
+//                                [--prefixes /,/vt] [--contract on,off] [--only sequence,arrival] [--folio]
 //
 // Variants: `plain` (no cacheComponents: the left route unmounts) and `cache` (cacheComponents: true, Activity).
 // Prefixes: `/` and `/vt` (the routes inside <ViewTransition>). Contract `on` runs the route hygiene the fixture
@@ -38,6 +38,16 @@
 //   transition  every refresh logged during the navigation saw the trigger's own route alone (no half-swapped DOM),
 //               and Lenis never smoothed the jump (no frame with isScrolling 'smooth')
 //   limit       on Streamed, Lenis's limit is the page's scroll height less the viewport, as streamed
+//
+// Arrival (F2), outside /vt with the contract on, each on a fresh page: load Home, scroll it to 2400 or Y1, link to
+// Reveals (native: gsap/reveal.ts items, gsap/split-reveal.ts headings) or Smoothed (the same under ScrollSmoother,
+// smooth/smoother.ts). The page's useGSAP creates the triggers before Next places the scroll, at Home's scrollY. Every
+// item's start (GSAP's first inline write on it) is recorded with its rectangle at that moment; a heading is read by
+// its handle's `done`, once an entrance has had time to end.
+//   arrival     no item started outside the viewport; the first screen's item played; nothing below the fold
+//               started, and no heading below it finished
+//   scrolled    scrolled down 400 px at a time to the end: every item and heading played, each item on screen as it
+//               started
 
 import { spawn, spawnSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
@@ -56,7 +66,21 @@ const scratch = join(testsDir, '.scratch', 'route-hygiene')
 const assets = join(repo, 'skills', 'scroll-animation', 'assets')
 const folioModules = join(repo, 'examples', 'folio', 'node_modules')
 // The blocks the fixture imports, copied to <app>/animation the way `scroll-animation add` copies them.
-const BLOCKS = ['config.ts', 'smooth/authority.ts', 'smooth/lenis.ts', 'smooth/SmoothScroll.tsx', 'smooth/route.ts', 'gsap/setup.ts']
+const BLOCKS = [
+  'config.ts',
+  'entrance-signal.ts',
+  'css/animation.css',
+  'css/reveal.css',
+  'smooth/authority.ts',
+  'smooth/lenis.ts',
+  'smooth/smoother.ts',
+  'smooth/SmoothScroll.tsx',
+  'smooth/route.ts',
+  'gsap/setup.ts',
+  'gsap/reveal.ts',
+  'gsap/split-reveal.ts',
+  'split-words.ts',
+]
 
 const BROWSERS = { chromium, webkit, firefox }
 const VARIANTS = { plain: '0', cache: '1' }
@@ -64,24 +88,36 @@ const VIEWPORT = { width: 1280, height: 800 }
 const HEADER_H = 64
 const Y1 = 3000
 const Y2 = 900
+// F2: where Home is scrolled before the link to a page of reveals.
+const ARRIVE_FROM = [2400, Y1]
+const ARRIVE_STEP = 400
 
 
 // ── args ────────────────────────────────────────────────────────────────
 
 function parseArgs(argv) {
-  const out = { browsers: Object.keys(BROWSERS), variants: Object.keys(VARIANTS), prefixes: ['', '/vt'], contract: ['on', 'off'], folio: false }
+  const out = {
+    browsers: Object.keys(BROWSERS),
+    variants: Object.keys(VARIANTS),
+    prefixes: ['', '/vt'],
+    contract: ['on', 'off'],
+    only: ['sequence', 'arrival'],
+    folio: false,
+  }
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
     if (a === '--browsers') out.browsers = argv[++i].split(',')
     else if (a === '--variants') out.variants = argv[++i].split(',')
     else if (a === '--prefixes') out.prefixes = argv[++i].split(',').map((p) => (p === '/' ? '' : p))
     else if (a === '--contract') out.contract = argv[++i].split(',')
+    else if (a === '--only') out.only = argv[++i].split(',')
     else if (a === '--folio') out.folio = true
     else throw new Error(`unknown argument: ${a}`)
   }
   for (const b of out.browsers) if (!BROWSERS[b]) throw new Error(`unknown browser: ${b}`)
   for (const v of out.variants) if (!VARIANTS[v]) throw new Error(`unknown variant: ${v} (${Object.keys(VARIANTS).join(', ')})`)
   for (const c of out.contract) if (c !== 'on' && c !== 'off') throw new Error(`unknown contract mode: ${c} (on, off)`)
+  for (const o of out.only) if (o !== 'sequence' && o !== 'arrival') throw new Error(`unknown group: ${o} (sequence, arrival)`)
   if (out.folio) {
     out.variants = ['folio']
     out.prefixes = ['']
@@ -218,6 +254,17 @@ function probes(contractOff) {
       if (!window.__rhST && typeof this.constructor?.getAll === 'function') window.__rhST = this.constructor
     },
   })
+  // F2: each reveal item's rectangle when its entrance started, GSAP's first inline write on it.
+  window.__rhStarts = []
+  const started = new WeakSet()
+  new MutationObserver((records) => {
+    for (const { target: el } of records) {
+      if (!(el instanceof HTMLElement) || !el.hasAttribute('data-reveal-item') || started.has(el) || !el.style.length) continue
+      started.add(el)
+      const r = el.getBoundingClientRect()
+      window.__rhStarts.push({ id: el.id, top: Math.round(r.top), bottom: Math.round(r.bottom), vh: window.innerHeight, y: window.scrollY })
+    }
+  }).observe(document, { subtree: true, attributes: true, attributeFilter: ['style'] })
   window.__rhLog = []
   window.__rhVT = false
   window.__rhVTCount = 0
@@ -586,6 +633,131 @@ async function sequence({ browser, base, prefix, contract, line }) {
   line(unique.length === 0, unique.slice(0, 3).join(' | '), 'no uncaught errors or scroll-authority warnings')
 }
 
+/** Resolves once the route's reveal items have held still for 10 frames (ScrollSmoother's catch-up included). */
+async function still(page, route) {
+  await page
+    .waitForFunction(
+      (r) =>
+        new Promise((resolve) => {
+          const first = document.querySelector(`[data-route="${r}"] [data-reveal-item]`)
+          let last = null
+          let held = 0
+          const step = () => {
+            const top = first ? first.getBoundingClientRect().top : 0
+            held = top === last ? held + 1 : 0
+            last = top
+            if (held >= 10) resolve(true)
+            else requestAnimationFrame(step)
+          }
+          requestAnimationFrame(step)
+        }),
+      route,
+      { timeout: 10000 },
+    )
+    .catch(() => {})
+  // fixed-wait: ScrollTrigger.batch calls back after its interval (0.1 s), with no signal the page can read
+  await sleep(200)
+}
+
+/** The reveal items of the shown route: where each is now, whether it started and whether it landed. */
+function readReveals(route) {
+  const starts = window.__rhStarts.slice()
+  const items = Array.from(document.querySelectorAll(`[data-route="${route}"] [data-reveal-item]`)).map((el) => {
+    const r = el.getBoundingClientRect()
+    return {
+      id: el.id,
+      top: Math.round(r.top),
+      bottom: Math.round(r.bottom),
+      started: starts.some((s) => s.id === el.id),
+      shown: el.getAttribute('data-reveal-state') === 'shown',
+    }
+  })
+  const splits = (window.__rhSplits ?? []).map((handle) => {
+    const r = handle.el.getBoundingClientRect()
+    return { id: handle.el.id, top: Math.round(r.top), done: handle.done }
+  })
+  return { starts, items, splits, vh: window.innerHeight, y: window.scrollY, max: document.documentElement.scrollHeight - window.innerHeight }
+}
+
+const offScreen = (s) => !(s.bottom > 0 && s.top < s.vh)
+
+/** F2: a link from a scrolled page to a page of GSAP reveals, native and under ScrollSmoother. */
+async function arrivalSequence({ browser, base, line }) {
+  for (const [route, path] of [
+    ['reveals', '/reveals'],
+    ['smoothed', '/smoothed'],
+  ]) {
+    for (const from of ARRIVE_FROM) {
+      const name = `link from Home at ${from} to ${path}`
+      const context = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion: 'no-preference' })
+      await context.addInitScript(probes, false)
+      const errors = []
+      try {
+        const page = await context.newPage()
+        page.on('pageerror', (e) => errors.push(e.message))
+        await page.goto(`${base}/`, { waitUntil: 'load' })
+        await settle(page, '/')
+        await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), from)
+        const at = (await settle(page, '/')).y
+        await page.evaluate((k) => window.__rh.click(k), route)
+        await settle(page, path)
+        await still(page, route)
+        // fixed-wait: a heading's entrance (MOTION.entrance, 1.3 s) ends before `done` can say it played
+        await sleep(1600)
+
+        const arrived = await page.evaluate(readReveals, route)
+        const early = arrived.starts.filter(offScreen)
+        line(
+          early.length === 0,
+          `Home at ${at} · ${arrived.starts.length} started` +
+            (early.length ? `, off screen: ${early.map((s) => `${s.id} at ${s.top}–${s.bottom} (viewport 0–${s.vh})`).join(', ')}` : ''),
+          `${name}: no entrance started off screen`,
+        )
+        const below = [
+          ...arrived.items.filter((item) => item.top >= arrived.vh && (item.started || item.shown)),
+          ...arrived.splits.filter((split) => split.top >= arrived.vh && split.done),
+        ]
+        const first = arrived.items.filter((item) => item.bottom > 0 && item.top < arrived.vh)
+        line(
+          below.length === 0 && first.length > 0 && first.every((item) => item.started),
+          `scrollY ${arrived.y} · first screen ${first.map((i) => `${i.id}${i.started ? '' : ' (waiting)'}`).join(', ') || 'none'}` +
+            (below.length ? ` · below the fold, already played: ${below.map((i) => `${i.id} at ${i.top}`).join(', ')}` : ''),
+          `${name}: on arrival the first screen played, nothing below the fold`,
+        )
+
+        for (let y = ARRIVE_STEP; y < arrived.max + ARRIVE_STEP; y += ARRIVE_STEP) {
+          await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), Math.min(y, arrived.max))
+          await still(page, route)
+        }
+        await page
+          .waitForFunction(
+            (r) =>
+              Array.from(document.querySelectorAll(`[data-route="${r}"] [data-reveal-item]`)).every(
+                (el) => el.getAttribute('data-reveal-state') === 'shown',
+              ) && (window.__rhSplits ?? []).every((split) => split.done),
+            route,
+            { timeout: 5000 },
+          )
+          .catch(() => {})
+        const end = await page.evaluate(readReveals, route)
+        const waiting = [...end.items.filter((item) => !item.shown), ...end.splits.filter((split) => !split.done)]
+        const off = end.starts.filter(offScreen)
+        line(
+          waiting.length === 0 && off.length === 0,
+          `${end.items.length + end.splits.length - waiting.length}/${end.items.length + end.splits.length} played` +
+            (waiting.length ? `, never: ${waiting.map((i) => i.id).join(', ')}` : '') +
+            (off.length ? ` · off screen as they started: ${off.map((s) => `${s.id} at ${s.top}`).join(', ')}` : ''),
+          `${name}: scrolled through, every item played on screen`,
+        )
+      } finally {
+        await context.close()
+      }
+      const unique = [...new Set(errors)]
+      line(unique.length === 0, unique.slice(0, 3).join(' | '), `${name}: no uncaught errors`)
+    }
+  }
+}
+
 async function folioSequence({ browser, base, line }) {
   const context = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion: 'no-preference' })
   await context.addInitScript(probes, false)
@@ -668,11 +840,20 @@ async function main() {
             else if (!ok) failures++
             console.log(`${word}  ${browserName.padEnd(8)}  ${tag.padEnd(22)}  ${name}${detail ? `  (${detail})` : ''}`)
           }
-          try {
-            const run = variant === 'folio' ? folioSequence : sequence
-            await run({ browser: open.browser, base: open.server.base, prefix, contract, line })
-          } catch (err) {
-            line(false, err.message.split('\n')[0], 'the sequence ran to completion')
+          if (variant === 'folio' || args.only.includes('sequence')) {
+            try {
+              const run = variant === 'folio' ? folioSequence : sequence
+              await run({ browser: open.browser, base: open.server.base, prefix, contract, line })
+            } catch (err) {
+              line(false, err.message.split('\n')[0], 'the sequence ran to completion')
+            }
+          }
+          if (variant !== 'folio' && !prefix && contract === 'on' && args.only.includes('arrival')) {
+            try {
+              await arrivalSequence({ browser: open.browser, base: open.server.base, line })
+            } catch (err) {
+              line(false, err.message.split('\n')[0], 'the arrival sequence ran to completion')
+            }
           }
         }
       }
