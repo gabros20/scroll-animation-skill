@@ -9,6 +9,44 @@ the newest release heading below, and the release tag.
 
 ## [Unreleased]
 
+### Added
+
+- `entrance-signal` (agnostic): the page-load entrance's clock on the DOM, so a busy hero's costly starts wait on it
+  instead of fixed times. `data-entrance="pending|running|tail|settled"` on a scope (default `<html>`; the author
+  writes `pending` into the server HTML, and no attribute means no entrance) and a bubbling `entrance:phase` event,
+  dispatched after the attribute is written, never backwards. `publishEntrance(phase, scope?)`;
+  `trackEntrance(root, { scope, tailAt })` waits on `getAnimations({ subtree: true })` (running, finite,
+  document-timeline animations: loops, paused, scroll-driven and the failsafe's own are left out), with `tail` at
+  `TAIL_AT` (0.8) of the last-ending animation. Reduced motion and a fired failsafe publish `settled` at once; a
+  teardown publishes nothing (StrictMode). The 3d skill's canvas consumes it from the DOM alone.
+- The reveal engines publish it: Motion `<Reveal entrance>`, `reveal(root, { entrance: true })`,
+  `mountReveals(root, { entrance: true })` (through `trackEntrance`); `SplitWords`/`css/split.css` through
+  `trackEntrance(heading)` from a client effect.
+- `tests/hero.mjs` (`npm run test:hero`, in `verify:all` and the CI blocks job): a busy hero per publisher with a stub
+  live canvas, a blurred nav and a loop strip. It checks the phase order, settled only once landed, the playing
+  marker and no `will-change` after, the stub's stages against the phases (early and late), the strip held until
+  settled, the nav never moving, and settled at once under reduced motion and the failsafe. A unit test covers
+  `publishEntrance`.
+- References: `performance.md` §14 the hero budget (compositor-only while `running`, costly starts queued on
+  `settled` one per task with timeouts, fonts before the entrance, one tick, 60 fps on 120 Hz, Long Animation
+  Frames); `entrances.md` §11 the hero entrance and its signal; `webgl.md` §8 "On a trigger or route clock" (the
+  canvas's prepare, reveal and run cues); `ios-safari-motion.md` §8 a blurred element during an entrance (the Safari
+  streak's cause marked unverified; the Backdrop Root rule), linked from `css-scroll-effects.md`; `verification.md`
+  §7 rows for stepping at the settle, the backdrop streak and a scene lagging during the entrance; a cue row in the
+  `ANIMATION.md` ledger template; a `busy-hero` traversal eval.
+
+### Changed
+
+- Reveal holds a layer only while a group plays: every engine marks the group `data-reveal-playing` for its
+  entrance, and `css/reveal.css` §5 gives only its rising and scaling items `will-change: transform`, dropped when
+  the last item lands. Motion drives `y` and `scale` from JavaScript (motion-dom 13.4 accelerates only `opacity`,
+  `clipPath`, `filter`, `transform` and `backgroundColor`) and its automatic `will-change` is dormant, so display type
+  could step in whole pixels as it settled.
+- `performance.md` §10 rewritten: Motion never accelerates `x`/`y`, the scoped rule, the layer-memory arithmetic (a
+  400 × 120 word at DPR 3 is about 1.7 MB). `entrances.md` and `SKILL.md`: a hero entrance runs on the compositor
+  (CSS, or Motion's `transform` string), never `x`/`y` on display type. `craft.md` §5: a move-only entrance is for
+  items at t≈0 or masked; delayed items fade.
+
 ## [2.0.1] - 2026-11-20
 
 ### Fixed
