@@ -20,11 +20,18 @@ export function indexView(): string {
   )
 }
 
+/** css/split.css's markup (splitWordsHTML's): the article's entrance, which commits under the root crossfade. */
+const STANDFIRST =
+  '<p class="standfirst" data-split-words=""><span data-split-copy="">Fired every day since 1931</span>' +
+  '<span aria-hidden="true">' +
+  ['Fired', 'every', 'day', 'since', '1931'].map((w, i) => `<span data-split-word="" style="--i:${i}">${w}</span>`).join(' ') +
+  '</span></p>'
+
 export function articleView(): string {
   return (
     `<article class="article" data-view="article">` +
     `<div class="cover" style="view-transition-name: cover; view-transition-class: vt-morph"></div>` +
-    `<h1>The Kiln That Never Went Cold</h1>${filler(40)}</article>`
+    `<h1>The Kiln That Never Went Cold</h1>${STANDFIRST}${filler(40)}</article>`
   )
 }
 

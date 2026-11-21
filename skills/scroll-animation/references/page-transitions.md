@@ -63,6 +63,11 @@ every caller of the API shares it: `transition()`, React, and cross-document nav
 - A class does nothing until the element also has a `view-transition-name`: only named elements get a group.
 - Keep one `[data-header]` rendered: two elements with one name abort the transition (`transition()` still updates).
 - `--vt-distance` and the timing variables work on `:root` only: the pseudo-elements inherit from the root element.
+- **An entrance waits for the crossfade.** The new route commits under the root's 0.24 s crossfade, where a 0.17 s
+  fade ends unseen and the words surface opaque. `css/split.css` pauses split words under `html:active-view-transition`
+  (Chromium 125+, Safari 18+, Firefox 144+; elsewhere the rule is dropped and they play as before); pause any CSS
+  entrance of your own the same way. CSS can't hold transitions, Motion or GSAP: a `mount` reveal group on a
+  transitioned route still plays under the crossfade.
 
 **React.** React starts the transitions itself and assigns the classes; the CSS is the same.
 

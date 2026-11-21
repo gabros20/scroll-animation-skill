@@ -6,7 +6,8 @@
 // mid-visit) leaves no slide or morph, only the short crossfade; no API, a hidden tab and a concurrent call update
 // directly without an uncaught rejection; clicks reach the page once a transition settles; under Lenis a transition
 // that jumps to the top leaves no smooth catch-up; React 19.3's <ViewTransition> picks up the same classes;
-// cross-document navigations between two pages crossfade, keep the header still and carry their direction; the
+// cross-document navigations between two pages crossfade, keep the header still and carry their direction; split
+// words that enter under the crossfade wait for it to end (css/split.css); the
 // CSS timing matches config.ts. A feature a browser lacks passes by asserting the fallback. Builds
 // tests/fixtures/view-transitions with Vite, serves it with `vite preview`, prints one PASS/FAIL line per
 // check/page/browser, and exits 1 on any FAIL. Needs the Playwright browsers: `npm run test:view-transitions`.
@@ -287,6 +288,38 @@ const CHECKS = {
           'the root crossfade runs on that duration and curve',
           ran && live,
           `${root.length} root animations: ${[...new Set(root.map((a) => `${a.name} ${a.duration}ms ${a.easing}`))].join(' | ')}`,
+        ],
+      ]
+    },
+  },
+
+  // The article's split words commit inside the update, under the root crossfade: css/split.css holds them paused
+  // while the transition runs, so they still fade in once it ends.
+  entrance: {
+    pages: ['native'],
+    async run(t) {
+      const { page } = await t.open()
+      const r = await page.evaluate(async () => {
+        const words = () => Array.from(document.querySelectorAll('[data-view="article"] [data-split-word]'))
+        const fades = () => words().flatMap((w) => w.getAnimations().filter((a) => a.animationName === 'split-word-fade'))
+        const opacity = () => words().map((w) => Number(getComputedStyle(w).opacity))
+        const p = window.__fx.go('article')
+        await window.__t.ready()
+        const during = [...new Set(fades().map((a) => a.playState))]
+        await document.activeViewTransition?.finished.catch(() => {})
+        await p
+        await window.__t.frames(1)
+        const atEnd = Math.max(...opacity())
+        await Promise.all(fades().map((a) => a.finished.catch(() => {})))
+        return { supported: CSS.supports('selector(:active-view-transition)'), count: words().length, during, atEnd, after: Math.min(...opacity()) }
+      })
+      const held = !r.supported || (r.during.length === 1 && r.during[0] === 'paused' && r.atEnd <= 0.05)
+      return [
+        [
+          'split words entering under the crossfade wait for it, then fade in',
+          r.count > 0 && held && r.after === 1,
+          `${r.count} words, :active-view-transition ${r.supported ? 'supported' : 'unsupported (fallback: they play)'}, ` +
+            `during: ${r.during.join(',') || 'none'}, max opacity as it ended ${r.atEnd.toFixed(2)}, then min ${r.after}`,
         ],
       ]
     },
