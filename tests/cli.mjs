@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // cli.mjs — the `scroll-animation` command end to end, in throwaway projects: list, add (copy +
-// lock + refuse-on-hand-edit + --force + --dry-run + engine auto-pick from package.json), and
+// lock + refuse-on-hand-edit + keep a require's hand edit + --force + --dry-run + engine auto-pick from package.json), and
 // media probe/sequence (+ scrub/poster, loop --loop-from seam keyframes and .mp4 default outputs)
 // against a tiny ffmpeg-generated clip — skipped entirely if ffmpeg/ffprobe aren't on PATH. No
 // browser, no network.
@@ -165,6 +165,28 @@ try {
   expect(!existsSync(join(g, 'src/animation')), 'no default src/animation was created once a lock directory existed')
   const lock2 = JSON.parse(readFileSync(join(g, 'lib/motion/.scroll-animation.lock.json'), 'utf8'))
   expect(Object.keys(lock2.files).some((f) => f.includes('header-theme')) && Object.keys(lock2.files).some((f) => f.includes('scroll-well')), 'the lock accumulates files across separate add calls', JSON.stringify(lock2))
+
+  // A require the user edited (config.ts, which the skill tells them to edit) is kept, not refused, as long as the
+  // blocks being added import nothing it lacks.
+  const config = join(g, 'lib/motion/config.ts')
+  appendFileSync(config, 'export const FLUID_FRAME = 1440 // mine\n')
+  r = run(g, 'add', 'smooth-smoother')
+  const lock3 = JSON.parse(readFileSync(join(g, 'lib/motion/.scroll-animation.lock.json'), 'utf8'))
+  expect(
+    r.code === 0 && existsSync(join(g, 'lib/motion/smooth/smoother.ts')) && readFileSync(config, 'utf8').includes('// mine') && /Kept[\s\S]*config\.ts/.test(r.out),
+    "add keeps a hand-edited file of a require (config.ts) and copies the block it was asked for",
+    r.out,
+  )
+  expect(lock3.files['config.ts'] === lock2.files['config.ts'], 'a kept file keeps its old lock record', JSON.stringify(lock3.files['config.ts']))
+  r = run(g, 'add', 'smooth-smoother', '--dry-run')
+  expect(r.code === 0 && /kept\s+config\.ts/.test(r.out), '--dry-run lists a kept file as kept', r.out)
+
+  // An edit that drops a name the blocks import is refused: the block does need that file changed.
+  writeFileSync(config, readFileSync(config, 'utf8').replace('export const REDUCED_MOTION_QUERY', 'const REDUCED_MOTION_QUERY'))
+  r = run(g, 'add', 'smooth-smoother')
+  expect(r.code === 1 && r.out.includes('Refusing to overwrite') && /config\.ts.*REDUCED_MOTION_QUERY/.test(r.out), 'add refuses a require whose edit dropped a name the blocks import, and says which', r.out)
+  r = run(g, 'add', 'smooth-smoother', '--force')
+  expect(r.code === 0 && !readFileSync(config, 'utf8').includes('// mine'), '--force takes the skill\'s copy of a kept file too', r.out)
 
   // ── add: engine disambiguation ───────────────────────────────────────
   const amb = join(root, 'ambiguous')
