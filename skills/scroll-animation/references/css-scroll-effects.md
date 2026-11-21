@@ -117,7 +117,7 @@ without it.
     and `dir` in agreement.
   - It merges `transform`, `translate` and `scale` set in one rule into one `transform: translate(0,0) scale(1)`, so a
     reset of all three loses two and leaves an identity transform. That is why `animation.css` resets `transform`
-    alone.
+    alone, and why each keyframe of your own animates one property, through `translate`, `scale` or `rotate` alone.
 
 ## 4. Under each scroll authority
 
