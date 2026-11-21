@@ -31,9 +31,11 @@
  * - Lenis lives on across a navigation between two routes of one Lenis layout. Clicked mid-glide, it keeps gliding
  *   toward the old route's target and overrides the router: the new route lands at its bottom, and the next one far
  *   down. sync() ends the glide. A route that starts or stops Lenis has no glide to carry over.
- * - Refresh once, never per block. A block created on the new route measures itself as it is created, in page
- *   order; a trigger the navigation doesn't re-create (one in a persistent layout, a reading progress with
- *   `end: 'max'`) keeps the previous route's numbers until something refreshes it.
+ * - Refresh once, never per block. A block created on the new route measures its start and end as it is created, in
+ *   page order; a trigger the navigation doesn't re-create (one in a persistent layout, a reading progress with
+ *   `end: 'max'`) keeps the previous route's numbers until something refreshes it. The blocks are created before Next
+ *   places the scroll (the route's useGSAP runs first), so a trigger's first state is the old page's position: an
+ *   entrance checks its item is on screen before it plays (gsap/reveal.ts).
  * - A streamed route commits twice or more: Next commits its loading.tsx (or a Suspense fallback) under the new
  *   pathname first, and the content lands later. Refreshed at the first commit, a layout-level `end: 'max'` measured
  *   the skeleton (0–64 against a fresh load's 0–3464) and a trigger below a streamed section kept its pre-stream

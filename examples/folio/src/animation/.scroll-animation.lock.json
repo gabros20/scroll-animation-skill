@@ -1,5 +1,5 @@
 {
-  "skillVersion": "2.0.1",
+  "skillVersion": "2.1.1",
   "dir": "src/animation",
   "engines": [
     "agnostic",
@@ -44,7 +44,7 @@
     "css/rail.css": "6682d3bf5ae42a9e",
     "css/scroll-effects.css": "2f66964ed3d27709",
     "image-ink.ts": "4815e855ec0337cb",
-    "smooth/route.ts": "5f973132fbc3cff3",
+    "smooth/route.ts": "d5b00e972a7c0b4f",
     "css/view-transitions.css": "bfaa79267e7363c8",
     "css/view-transitions-mpa.css": "90ff035a0b7a9ec6",
     "scrolly-steps.ts": "70f8dde223dde2de",
