@@ -25,7 +25,8 @@ the newest release heading below, and the release tag.
   "entrances skip after following a link from a scrolled page". Folio's `smooth/route.ts` re-synced.
 - page-transitions §2: an entrance waits for the crossfade, and CSS can't hold transitions, Motion or GSAP.
 - scroll-authority §1 states the Lenis-or-ScrollSmoother trade-off for a GSAP-only route where Safari or 120 Hz
-  screens matter: Lenis's measured 60 fps cap in Safari, ScrollSmoother's unmeasured rate on the same ticker, and
+  screens matter: only native scrolling gets Safari's full-rate compositor scroll; Lenis's 60 fps cap there is
+  measured, ScrollSmoother's rate is not (likely capped too, on the same ticker); and
   native touch scrolling, where a GSAP pin or scrub lags iOS's compositor (skip ScrollSmoother when
   `ScrollTrigger.isTouch === 1`; CSS sticky and scroll timelines there). Preflight §3.2 asks for it before either is
   chosen.
