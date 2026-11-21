@@ -312,6 +312,28 @@
       },
       "reference": "references/page-transitions.md"
     },
+    "entrance-signal": {
+      "summary": "The page-load entrance's clock on the DOM: data-entrance=\"pending|running|tail|settled\" and a bubbling entrance:phase event, never backwards; publishEntrance and trackEntrance (CSS and WAAPI entrances, via getAnimations({ subtree: true })), settled at once under reduced motion or the failsafe. A live canvas, video, loops and embeds wait on it: the hero budget",
+      "clock": "trigger",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "agnostic": {
+          "files": [
+            "entrance-signal.ts"
+          ],
+          "requires": [
+            "config"
+          ],
+          "packages": []
+        }
+      },
+      "reference": "references/entrances.md"
+    },
     "reveal": {
       "summary": "Triggered entrances (rise, fade, clip, scale-in) on the measured curves, at the trigger line or on mount: a CSS resting state under the pre-JS gate, failsafe-safe, live reduced motion, a load veil, Activity-safe",
       "clock": "trigger",
@@ -330,6 +352,7 @@
           "requires": [
             "base-css",
             "config",
+            "entrance-signal",
             "motion-provider"
           ],
           "packages": [
@@ -344,6 +367,7 @@
           ],
           "requires": [
             "base-css",
+            "entrance-signal",
             "gsap-setup"
           ],
           "packages": [
@@ -357,7 +381,8 @@
           ],
           "requires": [
             "base-css",
-            "config"
+            "config",
+            "entrance-signal"
           ],
           "packages": []
         }
