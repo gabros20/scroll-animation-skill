@@ -263,12 +263,16 @@ export function splitReveal(el: HTMLElement, options: SplitRevealOptions = {}): 
   function arrive(self: ScrollTrigger) {
     // Off screen as it would start: jumped past (a reload's restored scroll position, an anchor; ScrollTrigger fires
     // onEnter for every trigger a jump passes), or created at the previous page's scrollY before a client navigation
-    // placed the scroll (gsap/reveal.ts). It stays split and waits for the reader.
-    const { top, bottom } = el.getBoundingClientRect()
-    if (bottom <= 0 || top >= window.innerHeight) return
-    self.kill()
-    arrived = true
-    timeline?.play()
+    // placed the scroll (gsap/reveal.ts). It stays split and waits for the reader. ScrollTrigger calls back
+    // synchronously as the trigger is created, inside useGSAP, so the rect is read a frame later.
+    requestAnimationFrame(() => {
+      if (destroyed || arrived) return
+      const { top, bottom } = el.getBoundingClientRect()
+      if (bottom <= 0 || top >= window.innerHeight) return
+      self.kill()
+      arrived = true
+      timeline?.play()
+    })
   }
 
   window.addEventListener('beforeprint', land)

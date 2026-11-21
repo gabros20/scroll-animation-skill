@@ -39,8 +39,8 @@
 //               and Lenis never smoothed the jump (no frame with isScrolling 'smooth')
 //   limit       on Streamed, Lenis's limit is the page's scroll height less the viewport, as streamed
 //
-// Arrival (F2), outside /vt with the contract on, each on a fresh page: load Home, scroll it to 2400 or Y1, link to
-// Reveals (native: gsap/reveal.ts items, gsap/split-reveal.ts headings) or Smoothed (the same under ScrollSmoother,
+// Arrival (F2), outside /vt with the contract on, each on a fresh page: load Home, scroll it to 1900, 2400 or Y1, link
+// to Reveals (native: gsap/reveal.ts items, gsap/split-reveal.ts headings) or Smoothed (the same under ScrollSmoother,
 // smooth/smoother.ts). The page's useGSAP creates the triggers before Next places the scroll, at Home's scrollY. Every
 // item's start (GSAP's first inline write on it) is recorded with its rectangle at that moment; a heading is read by
 // its handle's `done`, once an entrance has had time to end.
@@ -89,7 +89,7 @@ const HEADER_H = 64
 const Y1 = 3000
 const Y2 = 900
 // F2: where Home is scrolled before the link to a page of reveals.
-const ARRIVE_FROM = [2400, Y1]
+const ARRIVE_FROM = [1900, 2400, Y1]
 const ARRIVE_STEP = 400
 
 
