@@ -104,10 +104,10 @@ html[data-animation-ready] [data-reveal-veil] {
 }
 
 /* ── 5. A layer only while the group plays ─────────────────────────────────────────────────────────
- * Motion drives `y` and `scale` from JavaScript every frame (only opacity, clip-path, filter, transform and
- * background-color run on WAAPI, motion-dom 13.4) and its automatic will-change is dormant, so an item that moves
- * without a layer is repainted in place each frame, and display type was seen stepping in whole pixels through the
- * slow end of the ease (a field report). The engines set
+ * Motion before 14.2 drives `y` and `scale` from JavaScript every frame (only opacity, clip-path, filter, transform
+ * and background-color run on WAAPI, motion-dom 13.4; from 14.2 time-based ones can join a WAAPI transform) and its
+ * automatic will-change is dormant, so an item that moves without a layer is repainted in place each frame, and
+ * display type was seen stepping in whole pixels through the slow end of the ease (a field report). The engines set
  * data-reveal-playing on the group for the length of its entrance and drop it when the last item lands, so a rising
  * or scaling item holds a layer only then. Never permanent: a 400 x 120 word at DPR 3 is about 1.7 MB of layer, a
  * headline 10–20 MB for the page's life (references/performance.md §10). A nested group's items count as the outer

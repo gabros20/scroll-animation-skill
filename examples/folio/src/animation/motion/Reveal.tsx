@@ -41,8 +41,9 @@
  *   `settled`, a no-op from where its items are, and a reveal cut off mid-way resumes from where it stopped, so a
  *   finished reveal never plays twice.
  * - While the group plays (`visible`, after hydration) it carries data-reveal-playing, and css/reveal.css §5 gives its
- *   moving items `will-change: transform` until it lands. Motion runs `y` and `scale` from JavaScript, never on the
- *   compositor, and promotes nothing itself: without the layer, display type can step in whole pixels as it settles.
+ *   moving items `will-change: transform` until it lands. Motion before 14.2 runs `y` and `scale` from JavaScript, never
+ *   on the compositor, and promotes nothing itself: without the layer, display type can step in whole pixels as it
+ *   settles (references/performance.md §10).
  * - `entrance` publishes the page's entrance signal on <html> (entrance-signal.ts): running when the group plays, tail
  *   once its last item has run TAIL_AT of its move, settled when it lands, or at once under reduced motion or the
  *   failsafe. Put it on the hero's `mount` group, one per page. It is still a JavaScript-driven move: a hero headline

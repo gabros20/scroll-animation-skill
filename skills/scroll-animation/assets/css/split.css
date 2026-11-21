@@ -17,6 +17,10 @@
  * - Reduced motion: no animation at all. The animation is gated behind no-preference, so there is nothing to reset
  *   (S7e).
  * - The numbers mirror config.ts. tests/text.mjs reads them off the running animations and fails if they drift.
+ * - --split-distance stays a custom property inside the keyframes. A field build swapped it for a literal on the theory
+ *   that Safari won't composite keyframes holding var(); an A/B in headless WebKit and Chromium showed no difference
+ *   in frame times or positions. Headless can't see compositor stepping, so the theory is unproven, not disproven:
+ *   keep the property unless a real Safari capture says otherwise.
  * - The entrance signal (entrance-signal.ts) for a hero that has one: these words need no script, so the page tracks
  *   them from a client effect, `trackEntrance(heading)`: running at once, tail near the end of the last word's rise,
  *   settled when every word has landed. A live canvas, video or loop behind them waits on it.

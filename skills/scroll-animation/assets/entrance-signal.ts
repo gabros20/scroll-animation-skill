@@ -18,6 +18,9 @@
  *   the last-ending animation. A shorter move gets there sooner (40 px: 0.7); a later tail is the safe side.
  * - Reduced motion, or the failsafe already fired (css/animation.css): `settled` at once, nothing else. No JavaScript:
  *   the server's `pending` stays, and the consumers' own timeouts cover it.
+ * - The clocks: this file's timers run on the animation's own clock (its start time on document.timeline; Reveal's and
+ *   GSAP's start with their moves), never on a guess. A consumer's timeout counts from navigation start
+ *   (`performance.now()`), not from its mount: the entrance begins at first paint, the consumer runs at hydration.
  * - The other engines publish from their blocks: motion/Reveal.tsx (`entrance`), gsap/reveal.ts and reveal.ts
  *   (`{ entrance: true }`). What waits on it is the hero budget (references/performance.md §14): only compositor work
  *   while `running`; costly starts queue on `settled`, one per task.
