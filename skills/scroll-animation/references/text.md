@@ -84,11 +84,10 @@ reveal.split   reveal.done   reveal.destroy()
   rise out of their masks on the entrance curve over 1.3 s, 0.067 s apart, with the short late fade. It plays once.
   An element above the view at load, or jumped past, plays when the reader scrolls back up to it, and a split that
   lands after the element passed the line plays at once.
-- **A jump is not an arrival.** iOS Safari restores a reload's scroll position after the page's scripts ran, so every
-  trigger above it is passed in one step, and ScrollTrigger fires `onEnter` for each trigger a jump passes
-  (`limitCallbacks` is off by default; GSAP's docs: "the onEnter for elements 1-60 would all fire"). `splitReveal`
-  leaves a trigger that is already past its end for `onEnterBack`; before that, every heading above a reload's
-  position played at load, off-screen, and nothing happened on the way back up (measured on the iOS 18.6 simulator).
+- **A callback is not an arrival.** `splitReveal` plays only with the element on screen, and otherwise keeps its
+  trigger: a reload's restored position, an anchor and a client navigation all fire callbacks for text nobody sees
+  ([entrances.md](entrances.md) §5). Before the check, every heading above a reload's position played at load,
+  off-screen (measured on the iOS 18.6 simulator).
 - Options: `type` (`'lines,words'`, `'lines'` or `'words'`), `revertAfter` (§5), `margin`, `stagger`, `delay` and
   `locale`. SplitText ships in the `gsap` package (free since 3.13), and `splitReveal` registers it.
 - **Reduced motion is live.** The split is built inside `gsap.matchMedia(MOTION_CONDITIONS)`: under `reduce` nothing is

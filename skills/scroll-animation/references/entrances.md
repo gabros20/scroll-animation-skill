@@ -150,13 +150,21 @@ A trigger line is an IntersectionObserver `rootMargin`, never a fraction of the 
 - **GSAP fires on the same line.** `lineFromMargin()` (`gsap/setup.ts`) turns `TRIGGERS.reveal` into
   `start: 'top 80%'`, `end: 'bottom top'`.
 - An item already above the view at load, or jumped past, reveals when the reader scrolls back up to it.
-- **A jump is not an arrival.** iOS Safari restores a reload's scroll position after the page's scripts ran, so every
-  trigger above it is passed in one step; so does an anchor or a `scrollTo`. ScrollTrigger fires `onEnter` for each
-  trigger a jump passes: `limitCallbacks` is off by default, and GSAP's docs spell it out ("the onEnter for elements
-  1-60 would all fire"). `gsap/reveal.ts` and `split-reveal` leave a trigger that is already past its end for
-  `onEnterBack`. Before they did, every entrance above a reload's position played at load, off-screen, and nothing
-  happened on the way back up (measured on the iOS simulator and in Playwright's WebKit and Chromium).
-  IntersectionObserver never reports an element a jump carried past, so Motion and the engine-free path never did.
+- **A callback is not an arrival.** `gsap/reveal.ts` and `split-reveal` play an entrance only if its item is on screen
+  as it would start (`bottom > 0 && top < innerHeight`); otherwise the trigger stays, and the item plays when the
+  reader reaches it. Two things fire ScrollTrigger callbacks for items nobody sees:
+  - **A jump.** iOS Safari restores a reload's scroll position after the page's scripts ran; an anchor or a
+    `scrollTo` jumps too. ScrollTrigger fires `onEnter` for each trigger a jump passes: `limitCallbacks` is off by
+    default ("the onEnter for elements 1-60 would all fire", GSAP's docs). Every entrance above a reload's position
+    played at load, off-screen (measured on the iOS simulator and in Playwright's WebKit and Chromium).
+  - **A client navigation.** The page's `useGSAP` is a layout effect, and Next places the scroll in an ancestor's,
+    which React runs after it: the triggers are created at the previous page's `scrollY`. An item in that band
+    starts active, and one above it fires `onEnterBack` on the jump to the top. Linked from a page scrolled to 2400
+    or 3000 px, 4 to 12 of 13 entrances played below the fold, native and under ScrollSmoother, with and without
+    Cache Components (`route-hygiene`'s arrival check); a `progress < 1` test had let the second kind through.
+
+  IntersectionObserver reports after layout and never for an element a jump carried past, so Motion and the
+  engine-free path have neither problem.
 
 ## 6. Once, replay and exits
 
@@ -318,8 +326,8 @@ return Demo ? <Demo /> : <DemoPlaceholder />           // the placeholder holds 
       an item: check items and HTML by hand.
 - [ ] Motion: one `Reveal` per arrival, and no item with a trigger of its own (§3).
 - [ ] The last group, and any group resting below the line, takes `TRIGGERS.pageEnd` (§5).
-- [ ] On a phone-sized viewport, every entrance starts where it can be seen: scroll down through the page, then reload
-      mid-page and scroll back up (§3, §5).
+- [ ] On a phone-sized viewport, every entrance starts where it can be seen: scroll down through the page, reload
+      mid-page and scroll back up, and follow a link to it from a page scrolled well down (§3, §5).
 - [ ] No `transform` of your own on an item: `translate`, or a wrapper (§4).
 - [ ] One `transition` declaration per element: two `transition-*` utilities both set `transition-property`, and
       stylesheet order picks the winner.

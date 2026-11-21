@@ -259,6 +259,7 @@ Disciplines that cost real cycles when skipped:
 | --- | --- |
 | After a link the page lands at the new route's bottom, or back/forward lands at the wrong position, under Lenis | a glide outlived the navigation: [page-transitions.md](page-transitions.md) §4 |
 | A layout-level trigger (a reading progress) keeps the previous route's numbers | no refresh after the navigation, or a streamed route refreshed at its fallback: [page-transitions.md](page-transitions.md) §4 |
+| Entrances skip after following a link from a scrolled page: items below the fold are already shown when the reader gets there | GSAP triggers created at the previous page's scroll, before the router placed it: [entrances.md](entrances.md) §5 |
 | Back/forward in Chromium lands a few dozen px off | a scroll anchor still moving at restore: [page-transitions.md](page-transitions.md) §4 |
 | A page transition never runs, or the page just swaps | reduced motion, two `[data-header]`s, Firefox on a multi-page site, an MPA opt-in only in the bundled CSS: [page-transitions.md](page-transitions.md) §2–§3 |
 | A multi-page transition crossfades but never slides forward or back | a stripped `blocking="render"`: the direction type is lost, the transition still runs ([page-transitions.md](page-transitions.md) §3) |

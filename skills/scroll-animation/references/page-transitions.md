@@ -194,8 +194,11 @@ useGSAP(() => onRouteRefresh(ScrollTrigger.refresh))   // onRouteRefresh from '@
 - **`sync()`** per authority: native does nothing; Lenis runs `resize()`, then `stop()` and `start()`, which end a
   glide (measured on 1.3.26; the README only says pause and resume); ScrollSmoother jumps with
   `scrollTo(scrollY, false)` (documented, not measured in S9).
-- **Refresh once per navigation, never per block.** Route blocks measure themselves as they are created; the one
-  refresh covers what the navigation doesn't re-create. Fonts and images that land after the watch still need
+- **Refresh once per navigation, never per block.** Route blocks measure their start and end as they are created;
+  the one refresh covers what the navigation doesn't re-create. They are created before the router places the scroll
+  (the page's `useGSAP` runs before Next's own layout effect, an ancestor's), so a trigger's first state is the
+  previous page's position: an entrance checks its item is on screen before it plays ([entrances.md](entrances.md)
+  §5). Fonts and images that land after the watch still need
   `routeSettled()` (S5).
 - **Keep `history.scrollRestoration` at `'auto'`** on Next, which restores nothing itself. Route code never scrolls.
 - **Chromium restores back/forward against a scroll anchor**, so an anchor still moving at restore puts the reader off
