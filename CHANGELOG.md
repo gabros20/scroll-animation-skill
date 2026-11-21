@@ -10,6 +10,11 @@ the newest release heading below, and the release tag.
 ## [Unreleased]
 
 ### Added
+- Queue unreleased changes here.
+
+## [2.1.2] - 2026-11-21
+
+### Added
 - `test:route-hygiene` checks arrival (F2): Home scrolled to 1900, 2400 or 3000 px, then a link to a page of
   `gsap/reveal.ts` items and `split-reveal` headings, native and under ScrollSmoother, with and without Cache
   Components. No entrance starts with its item outside the viewport, nothing below the fold has played on arrival,
