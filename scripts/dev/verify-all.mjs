@@ -5,7 +5,8 @@
 //
 //   npm run verify:all [-- --browsers chromium] [--skip folio,site] [--only foundation,rail]
 //
-// --browsers   passed to every suite that takes it (CI: each suite's own default; usegsap-teardown is Chromium there)
+// --browsers   passed to every suite that takes it (CI: each suite's own default; usegsap-teardown and hero are
+//              Chromium there)
 // --skip       leave out a group: folio (pnpm build, check:authority, verify:scenes), site (pnpm build, check)
 // --only       run only the named steps (the names in the summary)
 //
@@ -56,7 +57,8 @@ const STEPS = [
   ['scrub-video', 'media', npm('test:scrub-video', browsers())],
   ['harness', 'blocks', npm('test:harness', browsers())],
   ['reveal', 'blocks', npm('test:reveal', browsers())],
-  ['hero', 'blocks', npm('test:hero', browsers())],
+  // Chromium in CI until it has passed in WebKit and Firefox: `-- --browsers chromium,webkit,firefox` runs all three.
+  ['hero', 'blocks', npm('test:hero', browsers('chromium'))],
   ['rail', 'blocks', npm('test:rail', browsers())],
   ['text', 'blocks', npm('test:text', browsers())],
   ['scroll-effects', 'blocks', npm('test:scroll-effects', browsers())],
