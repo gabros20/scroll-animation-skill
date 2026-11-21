@@ -35,8 +35,8 @@ const HELP = `scroll-animation ${version()} — copy-and-own scroll motion block
       copy blocks and their requires into src/animation (or the project's existing lock
       directory), record hashes in .scroll-animation.lock.json, and print the npm packages
       to install; refuses to overwrite a hand-edited or unrecorded file of a block you named
-      unless --force, and keeps one a require brought (config.ts) when the blocks need nothing
-      new from it
+      unless --force, and keeps an edited require (config.ts) that still exports every name
+      the blocks import
 
   scroll-animation list [--engine <e>] [--profile <p>] [--json]
       the block catalogue from registry.json

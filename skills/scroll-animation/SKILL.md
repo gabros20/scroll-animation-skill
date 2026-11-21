@@ -156,7 +156,7 @@ Break one and the motion breaks:
 | Artifact | Where | Owner |
 |---|---|---|
 | Decisions and the scene ledger | `ANIMATION.md` at the project root | preflight; updated when a decision changes |
-| Blocks | `src/animation/` (same layout as `assets/`), recorded in `.scroll-animation.lock.json` | `scroll-animation add`; hand edits are yours: `add` keeps an edited require (`config.ts`) the blocks need nothing new from, and refuses to overwrite the rest without `--force` |
+| Blocks | `src/animation/` (same layout as `assets/`), recorded in `.scroll-animation.lock.json` | `scroll-animation add`; hand edits are yours: `add` keeps an edited require (`config.ts`) that still exports every name the blocks import, and refuses to overwrite the rest without `--force` |
 | A block's markup and names | its file header: the HTML or JSX it expects, its `data-*` attributes, CSS variables, options and handle | the block; read it before wiring, never guess a name |
 | Names and numbers | `src/animation/config.ts` | edit values there, never inside a block |
 | The header's height | `--header-h` on `:root` (`var(--fluid-header-h)` on fluid-design) | the page sets it; anchors, `view()` ranges and sticky tops read it |

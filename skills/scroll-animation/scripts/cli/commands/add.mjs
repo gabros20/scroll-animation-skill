@@ -109,7 +109,7 @@ export async function cmdAdd(flags, ids) {
 
 function printKept(kept) {
   if (!kept.length) return
-  console.log(`${c.yellow('Kept')} your edits (the blocks you asked for need nothing new from them):`)
+  console.log(`${c.yellow('Kept')} your edits (each still exports every name the blocks import):`)
   for (const p of kept) console.log(`  ${p.rel} — ${p.was === 'unowned' ? 'not written by add' : 'edited by hand'}; the skill's copy differs`)
   console.log(c.dim(`  Compare them with the skill's assets when you update; --force takes the skill's copies.`))
 }
