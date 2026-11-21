@@ -1,0 +1,85 @@
+/* The busy hero's layout, as a field build had it: display type over a live canvas, a nav with backdrop-filter, a
+   looping strip. Nothing here sets will-change (tests/hero.mjs scans for any left after the entrance), and nothing
+   touches the reveal items' opacity, transform or clip-path: css/reveal.css owns them. */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #111;
+  color: #eee;
+  font: 16px/1.4 system-ui, sans-serif;
+}
+
+/* The stub scene: stands in for the 3d skill's canvas. stub-scene.ts writes data-scene-stage; it paints nothing. */
+.scene {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #1c2433;
+  opacity: 0;
+}
+.scene[data-scene-stage='reveal'],
+.scene[data-scene-stage='run'] {
+  opacity: 1;
+}
+
+/* A blurred nav is a fixed sampling window: it fades in place, never moves (references/ios-safari-motion.md). */
+.nav {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.1);
+  backdrop-filter: blur(12px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .nav {
+    animation: nav-in 0.4s linear both;
+  }
+}
+@keyframes nav-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.hero {
+  position: relative;
+  z-index: 1;
+  padding: 120px 32px 0;
+}
+.hero h1 {
+  margin: 0;
+  font-size: 96px;
+  line-height: 1;
+}
+.hero p {
+  margin: 24px 0 0;
+}
+
+/* The loop strip: a compositor loop, held until the entrance settles (the hero budget's start queue). A page with no
+   entrance (no data-entrance) runs it at once. */
+.strip {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .strip-track {
+    animation: strip 8s linear infinite;
+  }
+  html[data-entrance]:not([data-entrance='settled']) .strip-track {
+    animation-play-state: paused;
+  }
+}
+@keyframes strip {
+  to {
+    transform: translateX(-50%);
+  }
+}

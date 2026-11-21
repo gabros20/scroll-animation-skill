@@ -102,6 +102,9 @@ jobs:
       # The suites' shared library (tests/lib/harness.mjs) on its own pages, in all three engines.
       - run: npm run test:harness
       - run: npm run test:reveal
+      # The busy hero: the entrance signal from each publisher, scoped promotion, and a stub canvas and loop strip
+      # that wait on it.
+      - run: npm run test:hero
       - run: npm run test:rail
       - run: npm run test:text
       - run: npm run test:scroll-effects

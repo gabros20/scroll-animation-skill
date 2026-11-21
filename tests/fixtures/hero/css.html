@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en" data-entrance="pending">
+  <head>
+    <meta charset="utf-8" />
+    <title>busy hero fixture (css)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- tests/hero.mjs replaces this with <script>GATE_SCRIPT</script>, taken from config.ts -->
+    <!--gate-script-->
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/animation.css" />
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/reveal.css" />
+    <link rel="stylesheet" href="../../../skills/scroll-animation/assets/css/split.css" />
+    <link rel="stylesheet" href="./src/fixture.css" />
+  </head>
+  <body>
+    <nav class="nav" id="nav">Index · Work · About</nav>
+    <canvas class="scene" id="scene" width="16" height="9"></canvas>
+    <!-- tests/hero.mjs injects the hero for this page here (src/page.ts) -->
+    <main id="page"><!--hero--></main>
+    <div class="strip"><div class="strip-track" id="strip">one · two · three · four · five · six · seven · eight</div></div>
+    <script type="module" src="./src/css-entry.ts"></script>
+  </body>
+</html>

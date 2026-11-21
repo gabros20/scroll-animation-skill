@@ -20,6 +20,7 @@
     "test:sequence": "node tests/sequence.mjs",
     "test:scrub-video": "node tests/scrub-video.mjs",
     "test:reveal": "node tests/reveal.mjs",
+    "test:hero": "node tests/hero.mjs",
     "test:rail": "node tests/rail.mjs",
     "test:header-theme": "node tests/header-theme.mjs",
     "test:count-up": "node tests/count-up.mjs",

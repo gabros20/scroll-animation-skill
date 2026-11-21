@@ -56,6 +56,7 @@ const STEPS = [
   ['scrub-video', 'media', npm('test:scrub-video', browsers())],
   ['harness', 'blocks', npm('test:harness', browsers())],
   ['reveal', 'blocks', npm('test:reveal', browsers())],
+  ['hero', 'blocks', npm('test:hero', browsers())],
   ['rail', 'blocks', npm('test:rail', browsers())],
   ['text', 'blocks', npm('test:text', browsers())],
   ['scroll-effects', 'blocks', npm('test:scroll-effects', browsers())],
