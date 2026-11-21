@@ -14,12 +14,24 @@ the newest release heading below, and the release tag.
   `gsap/reveal.ts` items and `split-reveal` headings, native and under ScrollSmoother, with and without Cache
   Components. No entrance starts with its item outside the viewport, nothing below the fold has played on arrival,
   and every item plays on screen as the page is scrolled through. `--only sequence,arrival` runs one group.
+- `test:view-transitions` checks that split words committed under the root crossfade are paused while it runs and
+  still fade in from 0 once it ends. `test:cli` checks that `add` keeps a require's hand edit and refuses one that
+  dropped a name the blocks import.
 
 ### Changed
 - entrances §5, "A callback is not an arrival", is the one home for the on-screen rule (text §3 points to it);
   page-transitions §4 and `smooth/route.ts` no longer say route blocks measure themselves as they are created
   without adding that they are created before the router places the scroll; verification §7 has the symptom
   "entrances skip after following a link from a scrolled page". Folio's `smooth/route.ts` re-synced.
+- page-transitions §2: an entrance waits for the crossfade, and CSS can't hold transitions, Motion or GSAP.
+- scroll-authority §1 states the Lenis-or-ScrollSmoother trade-off for a GSAP-only route where Safari or 120 Hz
+  screens matter: Lenis's measured 60 fps cap in Safari, ScrollSmoother's unmeasured rate on the same ticker, and
+  native touch scrolling, where a GSAP pin or scrub lags iOS's compositor (skip ScrollSmoother when
+  `ScrollTrigger.isTouch === 1`; CSS sticky and scroll timelines there). Preflight §3.2 asks for it before either is
+  chosen.
+- verification §6: a phone jitter report is read from a screen recording cut into ffmpeg contact sheets.
+- css-scroll-effects §3: each keyframe animates one property, so Lightning CSS can't merge them into a `transform`.
+- scenes §11: a contrast scrim is anchored to the picture, never to the moving type.
 
 ### Fixed
 - `gsap/reveal.ts` and `split-reveal` play an entrance only if its item is on screen as it would start
@@ -29,6 +41,12 @@ the newest release heading below, and the release tag.
   `onEnterBack` on the jump to the top and passed the old `progress < 1` test. 4 to 12 of the check's 13 entrances
   were spent below the fold before the reader got there. Motion's `Reveal` and `mountReveals` observe with
   IntersectionObserver, which reports after layout, and are unaffected.
+- `css/split.css` pauses split words under `html:active-view-transition` (Chromium 125+, Safari 18+, Firefox 144+;
+  dropped elsewhere): a route's heading committed under the 0.24 s root crossfade ran its 0.17 s fade beneath it and
+  surfaced already opaque. Folio's copy re-synced.
+- `scroll-animation add` no longer refuses over a hand-edited file of a require (`config.ts`, which the skill tells
+  you to edit for a fluid layout): it keeps the file and its lock record, and says so, unless a file it copies imports
+  a name the edit dropped. The requested blocks' own files are still refused without `--force`.
 
 ## [2.1.1] - 2026-11-21
 
