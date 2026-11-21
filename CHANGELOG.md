@@ -30,8 +30,13 @@ the newest release heading below, and the release tag.
 - `tests/hero.mjs` (`npm run test:hero`, in `verify:all` and the CI blocks job): a busy hero per publisher with a stub
   live canvas, a blurred nav and a loop strip. It checks the phase order, settled only once landed, the playing
   marker and no `will-change` after, the stub's stages against the phases (early and late), the strip held until
-  settled, the nav never moving, and settled at once under reduced motion and the failsafe. A unit test covers
-  `publishEntrance`.
+  settled, the nav never moving, and settled at once under reduced motion and the failsafe. It measures `tail`'s
+  promise on every publisher: the first frame after it, the moving type sits within 1 px of rest (0.15–0.35 px in
+  Chromium). Where the engine has Long Animation Frames (Chromium), no long frame falls between `tail` and
+  `settled`, the window a live canvas reveals in (its rAF p95 is reported). Unit tests cover `publishEntrance`, and
+  pin that a tracker stopped before it settles publishes nothing more.
+- CI runs `test:hero` in Chromium only until it has passed in WebKit and Firefox locally, which it never has
+  (`verify:all` mirrors that; `-- --browsers chromium,webkit,firefox` runs all three).
 - References: `performance.md` §14 the hero budget (compositor-only while `running`, costly starts queued on
   `settled` one per task with timeouts, fonts before the entrance, one tick, 60 fps on 120 Hz, Long Animation
   Frames); `entrances.md` §11 the hero entrance and its signal; `webgl.md` §8 "On a trigger or route clock" (the
