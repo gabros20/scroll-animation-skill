@@ -18,7 +18,7 @@ Plain TypeScript for GSAP pages: Vite, Astro, a static page, or React through `u
 
 | File | Block | Call | Reference |
 | --- | --- | --- | --- |
-| `reveal.ts` | `reveal` | `reveal(root, options)`: every `[data-reveal]` group under `root` plays its `[data-reveal-item]`s at the trigger line or on mount, on ScrollTrigger.batch | `references/entrances.md` |
+| `reveal.ts` | `reveal` | `reveal(root, options)`: every `[data-reveal]` group under `root` plays its `[data-reveal-item]`s at the trigger line or on mount, on ScrollTrigger.batch; `{ entrance: true }` publishes the entrance signal (`entrance-signal.ts`) | `references/entrances.md` |
 | `split-reveal.ts` | `split-reveal` | `splitReveal(el, options)`: SplitText lines rise at the trigger line once the font is in; aria by element; the original nodes back after | `references/text.md` |
 | `horizontal-rail.ts` | `horizontal-rail` | `horizontalRail(root, options)`: a pinned scene sliding a track of panels sideways; RTL, focus that follows, a native scroller under reduced motion | `references/scenes.md` |
 | `pinned-scene.ts` | `pinned-scene` | `pinnedScene(root, options)`: exact progress, head/scrub/tail modes, acts made `inert`; `pin: 'gsap'` under ScrollSmoother | `references/scenes.md` |

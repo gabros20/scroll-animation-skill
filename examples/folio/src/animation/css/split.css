@@ -17,6 +17,9 @@
  * - Reduced motion: no animation at all. The animation is gated behind no-preference, so there is nothing to reset
  *   (S7e).
  * - The numbers mirror config.ts. tests/text.mjs reads them off the running animations and fails if they drift.
+ * - The entrance signal (entrance-signal.ts) for a hero that has one: these words need no script, so the page tracks
+ *   them from a client effect, `trackEntrance(heading)`: running at once, tail near the end of the last word's rise,
+ *   settled when every word has landed. A live canvas, video or loop behind them waits on it.
  */
 
 /* Visually hidden, still in the accessibility tree: the element's name. */

@@ -24,6 +24,8 @@
  * - Plain strings only. `text` is split by split-words.ts: at whitespace, and at Intl.Segmenter's word boundaries
  *   inside Chinese, Japanese and Thai, in `locale` when given, with punctuation kept on the word before it (S6e).
  *   A link or <em> inside a heading means split-reveal (gsap/split-reveal.ts) below the fold, or text left unsplit.
+ * - A hero whose canvas, video or loops wait on the entrance signal tracks the words from a client effect:
+ *   `useEffect(() => trackEntrance(document.querySelector('[data-split-words]')!), [])` (entrance-signal.ts).
  * - Render it as a Server Component (or into static HTML with splitWordsHTML). Inside a client component it renders
  *   in the browser too. Latin text comes out the same there, but Firefox 155 segments Chinese, Japanese and Thai
  *   differently from Node (S6e), so hydration would mismatch.
