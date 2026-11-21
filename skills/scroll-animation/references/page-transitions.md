@@ -260,7 +260,8 @@ Both run `MOTION.route`, the route morph's timing, so an in-route change and a p
   loads only metadata otherwise. Give it `muted playsinline`, or it waits out the 4 s maximum.
 - A 300 ms minimum (keep it at or under that), a 4 s maximum that shows the page anyway. The 4 s cap is the failsafe;
   the budget is about 2.6 s including the exit (`design` `choreography.md` "Continuity: loaders and page transitions"). Start the first screen's
-  entrances on `html[data-preloader-state="done"]`.
+  entrances on `html[data-preloader-state="done"]`. What is cued after it (a canvas, a demo) counts from navigation
+  start, never from a hydration-time effect, and never reveals through Suspense ([entrances.md](entrances.md) §11).
 - Show the overlay only behind `GATE_SCRIPT`, with its own CSS failsafe (the snippet is in `preloader.ts`'s header),
   so a page whose script never runs never stays covered.
 - **It keeps moving while the page builds.** Idle motion is a CSS animation on `transform` or `opacity`, which the

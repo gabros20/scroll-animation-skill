@@ -177,7 +177,8 @@ moving when it clears.
 
 - **It always delays the LCP element** (the largest thing in the first screen, which load speed is judged by): it
   holds back the whole first paint until the engine boots. That breaks invariant 8, so leave it out. A `SplitWords`
-  headline and a hero image paint at once, and the `mount` items join at hydration.
+  headline and a hero image paint at once (the image over the background colour, never a blur placeholder:
+  [performance.md](performance.md) §11), and the `mount` items join at hydration.
 - **The one exception** is an intro that must show nothing until it can play, such as an Immersive site's opening.
   Record it in `ANIMATION.md` with its reason and its cost to load speed.
 - It paints nothing itself: give it the page's first surface as a background class. Mount it high in `<body>`,
@@ -264,13 +265,11 @@ smooth on the compositor, and it publishes one clock that everything costly wait
 
 - **A hero entrance runs on the compositor:** `SplitWords` (CSS keyframes from the first frame, [text.md](text.md) §2),
   or in Motion an animated `transform` string (`animate={{ transform: 'translateY(0px)' }}`, no `transformTemplate`),
-  which runs on WAAPI. Never `x`/`y` for display type: Motion drives them from JavaScript every frame, so a busy main
-  thread stalls them and, with no layer, they step at the settle ([performance.md](performance.md) §10). `Reveal`
-  items rise on `y`; while a group plays it carries `data-reveal-playing`, and only its moving items hold a layer
-  until it lands (`css/reveal.css` §5).
-- **A blurred element fades in place** (`effect="fade"`): never translated in from off-screen, never under an
-  ancestor animating `opacity`, `filter`, `mask` or `clip-path`, no blur over live media until settled
-  ([ios-safari-motion.md](ios-safari-motion.md) §8).
+  which runs on WAAPI. No `x`/`y` for display type before Motion 14.2: Motion drives them from JavaScript every frame,
+  so a busy main thread stalls them and, with no layer, they step at the settle ([performance.md](performance.md)
+  §10). `Reveal` items rise on `y`; while a group plays it carries `data-reveal-playing`, and only its moving items
+  hold a layer until it lands (`css/reveal.css` §5).
+- **A blurred element fades in place** (`effect="fade"`; the rule: [ios-safari-motion.md](ios-safari-motion.md) §8).
 - **Publish the clock** (`entrance-signal.ts`; the `reveal` block brings it): write `data-entrance="pending"` on
   `<html>` in the server HTML, then give one publisher per page the entrance:
 
@@ -284,10 +283,30 @@ smooth on the compositor, and it publishes one clock that everything costly wait
 - **Phases** go `pending → running → tail → settled`, never backwards; each is written on the attribute before an
   `entrance:phase` event bubbles. `tail` means the display type is within about 1 px of rest (`TAIL_AT`). Reduced
   motion and the failsafe publish `settled` at once; with no JavaScript `pending` stays and the consumers' timeouts
-  cover it. A route with its own entrance after a client navigation publishes on its route root (the scope argument).
+  cover it, as they cover a publisher torn down before it settles (a teardown publishes nothing: StrictMode and
+  Activity re-run effects). A CSS entrance plays from first paint, before any script: its server HTML may say
+  `running` instead, so nothing prepares during it. A route with its own entrance after a client navigation publishes
+  on its route root (the scope argument).
 - **What waits on it** is the hero budget ([performance.md](performance.md) §14): the 3d skill's canvas prepares
   outside the entrance, reveals at `tail` and runs at `settled` ([webgl.md](webgl.md) §8); video, loops and embeds
-  start on `settled`.
+  start on `settled`. A heavy DOM layer (a product demo) takes the same stages: its box reserved at its final size
+  from first paint (no shift), `import()` it early, mount it with an opacity-only fade at `tail`, start its story at
+  `settled`.
+- **Cues on the entrance's clock.** A consumer runs at hydration, hundreds of ms after the entrance started at first
+  paint, so a timer started there fires late. Count from navigation start: `setTimeout(fn, Math.max(0, cueMs -
+  performance.now()))`, as the 3d skill's `whenEntrance` does with its timeout. And never reveal a cued layer through
+  Suspense: once a fallback has shown, React 19 reveals the boundary no sooner than ~300 ms after it
+  (`FALLBACK_THROTTLE_MS`, react-dom 19.3), however soon the chunk lands, and `next/dynamic` and `React.lazy` both
+  suspend. Keep the loaded module in state and render it; `import()` still splits the chunk. Measured on a demo: the
+  attach moved from 2.0–2.3 s to 1.9–2.0 s with the clock, then to 1.6–1.7 s without Suspense, on cue in WebKit and
+  Chromium.
+
+```tsx
+const load = () => import('./Demo')                      // prepare: void load()
+const [Demo, setDemo] = useState<ComponentType | null>(null)
+// attach at tail: load().then((m) => setDemo(() => m.Demo))
+return Demo ? <Demo /> : <DemoPlaceholder />           // the placeholder holds the final size
+```
 
 ## Traps
 
@@ -307,8 +326,9 @@ smooth on the compositor, and it publishes one clock that everything costly wait
 - [ ] `GATE_SCRIPT` is in `<head>` with the CSP nonce; `<html>` has `suppressHydrationWarning` (§9).
 - [ ] Nothing hides the LCP element: no `Reveal` on it, and no veil unless `ANIMATION.md` records the exception (§7,
       §9).
-- [ ] A hero headline moves on the compositor (CSS or Motion's `transform` string), never Motion `x`/`y`; a blurred
-      element only fades; the page publishes its entrance once (§11).
+- [ ] A hero headline moves on the compositor (CSS or Motion's `transform` string), never Motion `x`/`y` before 14.2;
+      a blurred element only fades; the page publishes its entrance once; cues count from navigation start and never
+      wait on Suspense (§11).
 - [ ] GSAP: `reveal()` runs outside your own `gsap.matchMedia()` callbacks. Observed on 3.15.0: creating or killing a
       ScrollTrigger during a matchMedia rebuild leaves the reader at scroll 0, so the block keeps its triggers outside.
 - [ ] Your own GSAP entrance never ends in `revert()` once GSAP folded the element's `translate`: observed on 3.15.0,

@@ -224,18 +224,14 @@ navigation). Scroll progress feeds nothing; the entrance's clock orders the canv
 entrance changes, so they survive only as timeouts.
 
 - **This skill owns the clock.** The entrance publishes `data-entrance` and `entrance:phase`
-  (`entrance-signal.ts`, [entrances.md](entrances.md) §11). **The 3d skill owns the stage cues** keyed off it:
-  `SceneCanvas startAfter="entrance"` writes `data-scene-stage` and waits through its own `whenEntrance()`. Neither
-  imports the other; the DOM is the interface, as with the bridge.
-
-| Stage | Starts when | Why |
-|---|---|---|
-| prepare | before the entrance starts (or in a worker, at once); else after `settled` | a compile or upload mid-entrance stalls the main thread and the GPU process the entrance's frames need |
-| reveal | prepared and proven, and the phase is `tail` or later | one still frame fades in while the type is within a pixel of rest |
-| run | `settled`, and revealed | the frame loop starts last |
-
-- Each wait has a timeout (2.5 s), so a page whose entrance never publishes still starts. No attribute means no
-  entrance: the canvas starts at once.
+  (`entrance-signal.ts`, [entrances.md](entrances.md) §11). **The 3d skill owns the stage cues** keyed off it
+  (its `threejs-orchestration.md` "Stages": prepare outside the entrance, reveal a still frame at `tail`, run at
+  `settled`): `SceneCanvas startAfter="entrance"` writes `data-scene-stage` and waits through its own
+  `whenEntrance()`. Neither imports the other; the DOM is the interface, as with the bridge.
+- Each wait has a timeout (2.5 s, counted from navigation start, not from the canvas's mount: entrances.md §11), so a
+  page whose entrance never publishes still starts. No attribute means no entrance: the canvas starts at once.
+- As a background behind the copy, the canvas sits below a copy wrapper with its own stacking level, or Safari can
+  draw it over the copy once the entrance ends ([ios-safari-motion.md](ios-safari-motion.md) §9).
 - **Before blaming the GPU**, rule out the entrance itself: a Motion `x`/`y` headline and hydration on the main
   thread, or a `backdrop-filter` nav recomputed over every canvas frame, also lag a scene. The entrance belongs on the
   compositor and the blur gets a fill until `settled` (§8 of [ios-safari-motion.md](ios-safari-motion.md)).

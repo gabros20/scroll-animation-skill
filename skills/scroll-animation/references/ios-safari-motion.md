@@ -29,7 +29,8 @@ real device or the matching iOS Simulator (§6).
 6. [Device discipline for video and scroll](#6-device-discipline-for-video-and-scroll)
 7. [Lines along media edges](#7-lines-along-media-edges)
 8. [A blurred element during an entrance](#8-a-blurred-element-during-an-entrance)
-9. [Traps](#traps)
+9. [Copy under a background layer after its entrance](#9-copy-under-a-background-layer-after-its-entrance)
+10. [Traps](#traps)
 
 ## 1. The pin and the toolbar
 
@@ -196,6 +197,18 @@ sets it: only a purely native page may add it, never one where ScrollTrigger or 
 - **In the blocks:** `effect="fade"` (`data-reveal-effect="fade"`) on a blurred item, never `rise` or `scale-in`
   ([entrances.md](entrances.md) §11).
 
+## 9. Copy under a background layer after its entrance
+
+- **The symptom** (a field build, WebKit): hero copy that faded in over a WebGL canvas in a `-z-10` background layer
+  faded out again once its load animation ended, under the canvas's own fade-in. While it animated, each block had
+  its own compositing layer; once painted back into its parent, the non-positioned text was drawn under the canvas's
+  layer. CSS paint order puts a negative-z layer below in-flow text, so this is WebKit's compositing, not the cascade:
+  observed, with no WebKit bug found. Any composited background layer can do it, a `<video>` too.
+- **The fix, verified in WebKit:** give the content its own stacking level above the background,
+  `position: relative; z-index: 1` on the copy's wrapper (Tailwind `relative z-10`). After the entrance,
+  `document.elementFromPoint` over the headline returns the text, not the canvas. The 3d skill's canvas
+  ([webgl.md](webgl.md) §8) needs it as a background.
+
 ## Traps
 
 - [ ] The pin is `lvh`, never `svh` or `dvh`; its margin matches (§1).
@@ -209,3 +222,4 @@ sets it: only a purely native page may add it, never one where ScrollTrigger or 
 - [ ] Every scene media layer (video, poster, sequence canvas, WebGL slot) is clipped 1 px in (§7).
 - [ ] A `backdrop-filter` element fades in place: no move, no animating ancestor, no blur over live media until
       settled (§8).
+- [ ] Copy over a composited background layer (canvas, video) sits on its own stacking level (§9).

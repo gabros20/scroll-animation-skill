@@ -67,7 +67,9 @@ Exactly one owner per page: native, Lenis or ScrollSmoother. Default by profile;
 [scroll-authority.md](scroll-authority.md). Record it per route (or route group), because a reading route and a
 cinematic home page often want different answers. **If the project already runs a smoother, that is a keep, adapt or
 replace question (§3.5), not a default to override.** Start ScrollSmoother with `createSmoother`, never by hand: the
-blocks read the owner from the stamp it writes ([scroll-authority.md](scroll-authority.md) §5).
+blocks read the owner from the stamp it writes ([scroll-authority.md](scroll-authority.md) §5). A Reading route that
+asks for smoothing anyway gets its Safari cost in the same message, before Lenis is chosen: the frame rate cap
+([scroll-authority.md](scroll-authority.md) §2).
 
 ### 3.3 Engines
 

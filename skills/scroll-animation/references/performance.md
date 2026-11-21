@@ -198,11 +198,14 @@ A layer while the motion runs, never for the element's life. Who promotes on the
 
 - **CSS animations and transitions, WAAPI and GSAP** (`force3D: 'auto'` writes `translate3d` mid-tween) hold a layer
   for a `transform` or `opacity` animation and drop it after. Add nothing.
-- **Motion never accelerates `x`, `y`, `scale` or `rotate`**, whatever the unit. Only `opacity`, `clipPath`,
-  `filter`, `transform` and `backgroundColor` run on WAAPI (motion-dom 13.4, `accelerated-values`), and its automatic
-  `will-change` is dormant: nothing sets the `MotionGlobalConfig.WillChange` it waits for. An independent transform is
-  written from JavaScript every frame with no layer, so it stalls with the main thread, and display type easing to
-  rest was seen stepping in whole pixels (a field report). For a hero, animate the `transform` string or use CSS
+- **Motion before 14.2 never accelerates `x`, `y`, `scale` or `rotate`**, whatever the unit: only `opacity`,
+  `clipPath`, `filter`, `transform` and `backgroundColor` run on WAAPI (motion-dom 13.4, `accelerated-values`; this
+  pack's blocks are on 13.4). From 14.2 a time-based one joins a WAAPI `transform` where the browser has CSS
+  `linear()` easing and nothing forces the main thread (`transformTemplate`, `onUpdate`, a literal `transform`, a
+  layout animation: motion-dom 14.2 `TransformAnimation`); scroll-linked values never do (§4). Its automatic
+  `will-change` is dormant through 14.2: nothing sets the `MotionGlobalConfig.WillChange` it waits for. A JS-driven
+  transform has no layer and stalls with the main thread, and display type easing to rest was seen stepping in whole
+  pixels (a field report). For a hero, animate the `transform` string or use CSS
   ([entrances.md](entrances.md) §11). Where `y` stays, scope the layer: `Reveal` marks its group
   `data-reveal-playing` while it plays and `css/reveal.css` §5 gives only its moving items `will-change: transform`,
   dropped on settle. A hand-written entrance does the same from its start and complete callbacks. `useWillChange()`
@@ -228,6 +231,14 @@ it under roughly 20px and specifically measure its cost on Safari, which handles
 surfaces worse than Chromium in practice. A blurred backdrop behind a floating nav bar (a common
 use) is a reasonable size to budget for; a blur applied to a large hero-scale surface is not, without
 measuring first.
+
+**A blur placeholder is a filter blur over the image's whole box: never on a full-bleed or hero image.**
+`next/image` renders `placeholder="blur"` as a `background-image` SVG with `feGaussianBlur` the size of the image,
+rasterised tile by tile while the entrance plays. Measured on one production hero (Chrome trace, Long Animation
+Frames, one CSS off-switch per suspect): about 3.5 s of raster in total, single raster tasks of 340–560 ms, and two
+frames near 360 ms with no script in them, over the headline's rise. With the placeholder off: about 120 ms of raster
+and no long frame; the hero's `mask-image` and the entrance animations cost nothing measurable. Let the section's
+background colour stand in while the image loads. The same holds for a poster under a live canvas.
 
 ## 12. Library weight: strict feature sets
 
@@ -273,18 +284,26 @@ in the same two seconds. Each is fine alone; the order is the budget, and the en
 - **While `running`, compositor work only:** the entrance on CSS or Motion's `transform` string, opacity fades.
   Nothing that compiles, decodes, lays out or evaluates a large chunk.
 - **On `settled`, costly starts queue one per task, about two frames apart:** 1. the WebGL run ([webgl.md](webgl.md)
-  §8); 2. video `play()`; 3. the loop strip; 4. embeds. Each also starts on a timeout (2.5 s), so a page whose
-  entrance never publishes still starts. A CSS loop needs no script:
-  `html[data-entrance]:not([data-entrance='settled']) .strip { animation-play-state: paused }`.
+  §8); 2. video `play()`; 3. the loop strip; 4. embeds. Each also starts on a timeout (2.5 s from navigation start,
+  never from its own mount: [entrances.md](entrances.md) §11), so a page whose entrance never publishes still starts.
+  A CSS loop needs no script: `html[data-entrance]:not([data-entrance='settled']) .strip { animation-play-state:
+  paused }`.
+- **A heavy client-only component mounts one composition,** picked by `matchMedia(DESKTOP_QUERY)` in its first
+  render (safe with no server render), never a desktop and a phone tree with one `display: none`: the hidden tree still
+  mounts and renders (measured in WebKit, its mount frame went from 113–122 ms to 73–98 ms). Server-rendered:
+  [entrances.md](entrances.md) §9.
 - **Fonts before the entrance:** preload the display font, give it a metric-matched fallback (`size-adjust`,
   `ascent-override`), and have a JavaScript entrance wait on `document.fonts.ready` with a short timeout. A swap
   mid-entrance re-lays-out split words and re-rasterises every word layer.
 - **One tick:** Lenis with `autoRaf: false`, driven by the page's clock, and the scene advanced from the same authority
   (the bridge's pattern, [webgl.md](webgl.md) §4). Three loops on three rAFs fight for one frame.
-- **On 120 Hz displays, cap the scene at 60 fps:** §2's budgets assume 60, and the headroom is the compositor's.
-- **No blur over live media until `settled`** ([ios-safari-motion.md](ios-safari-motion.md) §8).
+- **On 120 Hz displays the scene caps at 60 fps** (the 3d skill's frame budget assumes 60); the headroom is the
+  compositor's.
+- **No blur over live media until `settled`** ([ios-safari-motion.md](ios-safari-motion.md) §8), and no blur
+  placeholder on the hero's image (§11).
 - **Measure with Long Animation Frames** (`PerformanceObserver`, type `long-animation-frame`, Chromium only);
-  elsewhere sample rAF deltas. A long frame during `running` is the stutter, and the start inside it is the cause.
+  elsewhere sample rAF deltas. A long frame during `running` is the stutter; attribute it before fixing anything
+  ([verification.md](verification.md) §1).
 
 ## Traps
 
@@ -299,9 +318,9 @@ in the same two seconds. Each is fine alone; the order is the budget, and the en
 - [ ] Custom properties are set on the animated element, never a parent (§8).
 - [ ] No permanent `will-change`; the video `translateZ(0)` anchor is the standing exception, the rail's
   track holds its promotion only while its scene is awake, and a reveal's items only while their group plays (§10).
-- [ ] No Motion `x`/`y` on display type; the hero entrance runs on the compositor (§10).
-- [ ] On a busy hero, costly starts wait for `settled`, one per task, each with a timeout (§14).
-- [ ] `filter: blur()` stays small and is measured on Safari (§11).
+- [ ] The hero entrance runs on the compositor: no Motion `x`/`y` on display type before Motion 14.2 (§10).
+- [ ] On a busy hero, costly starts wait for `settled`, one per task, each with a timeout from navigation start (§14).
+- [ ] `filter: blur()` stays small and is measured on Safari; no blur placeholder on a full-bleed or hero image (§11).
 - [ ] At most one pinned, scrubbed scene per page.
 - [ ] Across all scroll-linked effects, no more than 1–3 intersect the viewport at once (§3).
 - [ ] `LazyMotion strict` with `m`, not `motion.*` (§12).

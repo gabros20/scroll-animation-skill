@@ -93,6 +93,14 @@ the state the scroll position implies without any scrolling; and under reduced m
   hide the copy and any fixed chrome, shoot the same frame, read the pixels under each line (clamped to the
   viewport), and grade light ink against the brightest patch, dark ink against the darkest. The worst frame decides.
   A stronger scrim that leaves the number unchanged isn't in the frame you measured.
+- **Page-load jank, by attribution, not guessing.** (1) Observe `long-animation-frame` from an init script and sum
+  each frame's `scripts[].duration`: a long frame with almost no script time is raster, paint or decode, not
+  JavaScript. (2) Trace with CDP (`Tracing.start`, categories `devtools.timeline,disabled-by-default-devtools.timeline`)
+  and sum the `RasterTask` durations. (3) Switch suspects off one at a time with an injected rule
+  (`img { background-image: none !important }`, `mask-image: none`, `animation: none`) and compare raster totals and
+  long frames: a cause with a number in minutes (it found a blur placeholder: [performance.md](performance.md) §11).
+  A per-frame `getBoundingClientRect()` is the main thread's view, so it can neither prove nor rule out a composited
+  animation stepping (§7).
 
 ## 2. The three bugs it caught
 
@@ -151,6 +159,11 @@ means stop. **Close the tab and open a new one**; if the symptom survives, clear
 restart the server. Closing the tab fixing it is proof the code is fine: a real bug doesn't care
 which tab you're in. (With the `fluid-design` skill installed, `fluid probe <url>` automates this
 check: a STALE verdict means the tab holds an old stylesheet.)
+
+**When a fresh browser is stale too, the server is.** A dev server can stop compiling CSS edits (seen on Next 16 with
+Turbopack: the old `@keyframes` kept being served, and touching the file woke nothing). Walk `document.styleSheets`
+in a fresh headless browser or a new profile for one selector you just added; if it is missing there too, the tab is
+innocent: restart the server with a clean build cache (`.next`).
 
 ## 5. The scripts
 
@@ -258,6 +271,9 @@ Disciplines that cost real cycles when skipped:
 | Display type wobbles or steps in whole pixels as an entrance settles | a JavaScript-driven move with no layer (Motion `x`/`y`): move it to the compositor, or scope the layer to the playing group ([performance.md](performance.md) §10). Check the precondition (computed `will-change` on the items while the group is `data-reveal-playing`, or a running animation in `el.getAnimations()`) and compare cropped screenshots of consecutive frames; `getBoundingClientRect()` reports the float either way and can't see it |
 | A blurred nav drags a white or yellow streak as it enters (Safari) | a `backdrop-filter` element moved in from off-screen, or under a fading ancestor: [ios-safari-motion.md](ios-safari-motion.md) §8 |
 | A live scene lags, or the headline jumps at its end, while the hero's entrance plays | costly starts inside the entrance (a compile, hydration, video, a blur over the canvas): the hero budget, [performance.md](performance.md) §14, and the canvas's cues, [webgl.md](webgl.md) §8 |
+| The hero entrance freezes for hundreds of ms with no script in the long frame | raster: a blur placeholder on the hero image is the usual one ([performance.md](performance.md) §11); attribute it first (§1) |
+| A cued layer (a canvas, a demo) lands hundreds of ms after its cue | a timer started at hydration, or a reveal through Suspense (`next/dynamic`, `React.lazy`): [entrances.md](entrances.md) §11 |
+| Hero copy fades out again in Safari once its entrance ends, over a background canvas or video | the copy has no stacking level above the background layer: [ios-safari-motion.md](ios-safari-motion.md) §9 |
 
 ## Traps
 

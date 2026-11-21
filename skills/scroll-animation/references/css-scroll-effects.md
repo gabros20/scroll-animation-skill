@@ -59,12 +59,14 @@ without it.
 ## 2. Timelines and ranges
 
 - **`view()`** follows one element's pass through the viewport. **`scroll(root block)`** follows the page's scroll
-  (the progress bar).
+  (the progress bar) and lifts a hero at the top, whose `view()` pass has begun at scroll 0. Verified in Chromium and
+  WebKit: `animation: hero-lift linear both; animation-timeline: scroll(root); animation-range: 0 calc(700 *
+  var(--fluid))` to `translate: 0 calc(-48 * var(--fluid))`.
 - **`animation-range`** picks a part of the pass: `cover` (first pixel in to last pixel out), `entry`, `exit`,
   `contain`, and `exit-crossing` (measured against the element's own height). Defaults: parallax `cover` 0–100%, so it
   sits at its layout position when centred; fade-in and scale-in `entry` 0–100%; exit-fade `exit-crossing` 10–35%.
   Ranges use the untransformed box, so the drift and the scale never move their own range (spike S7a: S1–S7 are the
-  skill's own browser measurements, September 2026).
+  skill's own measurements, September 2026).
 - **The top edge is the header's bottom edge.** `view()` measures inside the `scroll-padding`, which
   `css/animation.css` sets from `--header-h`.
 - **The bottom edge is the small viewport's**: every `view()` here is `view(block auto max(0px, 100% - 100svh))`, and
@@ -76,22 +78,16 @@ without it.
 - **Compositor properties.** Only `opacity`, `transform`, `translate`, `scale`, `rotate`, `filter`, `backdrop-filter`
   and motion path run off the main thread: on Chromium's compositor, and in Safari from 26.4 (26.0–26.3 run every
   timeline on the main thread, near 60 fps). `width` or `left` is always a frame late (S1, S7f), so the progress bar
-  scales.
-  A `backdrop-filter` element itself fades in place, never moves: [ios-safari-motion.md](ios-safari-motion.md) §8.
+  scales. A blurred element only fades ([ios-safari-motion.md](ios-safari-motion.md) §8).
 - **One clock per property group on an element.** In Safari 26.4–26.6 a time-based animation (a transition, a Motion
   reveal) beside a scroll-driven one on the same group (`opacity`; `transform`, `translate`, `scale`, `rotate`;
   `filter`) puts both on the main thread while both run. Put the entrance on a wrapper.
-- **Compose with `replace`, never `add`.** On an iPhone (iOS 26.6.2, with Low Power Mode on and off), the parallax
-  with `animation-composition: add` flicked vertically at every change of scroll direction. A device A/B (task 32,
-  2026-11-19) changed one thing per variant, and only `replace` and a sticky version with no animation were smooth.
-  These all still flicked:
-  - a promoted wrapper;
-  - a promoted image;
-  - a timeline on the frame;
-  - `scroll(root)` with px ranges that never changed;
-  - a third of the drift (the flick only shrank a little).
-
-  The page's geometry stayed steady: the main-thread translate matched the range maths to 0.0 px. So the fault is in
+- **Compose with `replace`, never `add`.** On an iPhone (iOS 26.6.2, Low Power Mode on and off) a parallax with
+  `animation-composition: add` flicked vertically at every change of scroll direction; in a device A/B changing one
+  thing per variant (2026-11-19), only `replace` and a sticky version with no animation were smooth.
+  These still flicked: a promoted wrapper or image, a timeline on the frame, `scroll(root)` with fixed px ranges, and
+  a third of the drift (it only shrank a little). The page's geometry stayed steady: the main-thread translate matched
+  the range maths to 0.0 px. So the fault is in
   how Safari runs an additive scroll-driven transform off the main thread (VERIFY: the mechanism inside WebKit is
   unconfirmed). Compose your own scroll-driven transforms with `replace` too.
 - **`timeline-scope`** lets a named `view-timeline` drive an element outside its own subtree. Declare it on a common
@@ -113,7 +109,7 @@ without it.
 - **Every scroll-driven rule sits inside `@supports (animation-timeline: view())`** and
   `@media screen and (prefers-reduced-motion: no-preference)`. Unguarded, Firefox 155 runs the keyframes on the
   document timeline: a recipe with a duration plays once at page load, even far below the fold (S7a). When Firefox
-  ships timelines, the guard switches it over by itself. `npm run test:scroll-effects` checks all three browsers.
+  ships timelines, the guard switches it over by itself.
 - **Lightning CSS**, the minifier in Vite 8 and the engine in Tailwind v4 (so in Next with Tailwind v4 too), keeps this
   file's keyframes and declaration order. Two rewrites matter:
   - For build targets older than Chrome 120 it rewrites `:dir(rtl)` as a `:lang(…)` list, so the progress bar's and
@@ -142,10 +138,8 @@ without it.
 
 - The block shows the static state, followed live. The marquee stands still; stack cards still stick, since sticky is
   layout and adds no scroll distance.
-- **Reset your own with `animation: none`.** The shorthand resets `animation-timeline` and `animation-range` too, in
-  all three engines (S7e).
-- **Never a duration reset** (`animation-duration: 0.01ms !important`): the animation keeps scrubbing. **Never
-  `animation-timeline: none`**: it stays attached, holding its last keyframe (S7e).
+- **Reset your own with `animation: none`**, never a near-zero duration or `animation-timeline: none`
+  ([accessibility.md](accessibility.md) §2 has why; S7e).
 
 ## 6. Clipping ancestors: `clip`, never `hidden`
 
