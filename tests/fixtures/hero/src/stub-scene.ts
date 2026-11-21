@@ -21,7 +21,10 @@ export interface StageRecord {
 const ORDER: Phase[] = ['pending', 'running', 'tail', 'settled']
 const rank = (phase: string | null) => ORDER.indexOf(phase as Phase)
 
-/** The contract's consumer: resolves once the phase is at or past `phase`, 'none' without an entrance. */
+/**
+ * The contract's consumer: resolves once the phase is at or past `phase`, 'none' without an entrance, 'timeout' once
+ * `timeoutMs` has passed since navigation start (the page's clock, not the call's).
+ */
 function whenEntrance(phase: Phase, timeoutMs: number): Promise<Wait> {
   const html = document.documentElement
   const now = html.getAttribute('data-entrance')
@@ -36,7 +39,7 @@ function whenEntrance(phase: Phase, timeoutMs: number): Promise<Wait> {
     const onPhase = (event: Event) => {
       if (rank((event as CustomEvent<{ phase: Phase }>).detail.phase) >= rank(phase)) done('phase')
     }
-    const timer = setTimeout(() => done('timeout'), timeoutMs)
+    const timer = setTimeout(() => done('timeout'), Math.max(0, timeoutMs - performance.now()))
     html.addEventListener('entrance:phase', onPhase)
   })
 }
