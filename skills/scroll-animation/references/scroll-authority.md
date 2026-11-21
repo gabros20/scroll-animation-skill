@@ -41,12 +41,12 @@ when the route goes away or is hidden.
   sticky, CSS scroll timelines, Motion or third-party React components.
 - **ScrollSmoother** when the page is GSAP-only, leans on `data-speed` / `data-lag` effects, and its fixed UI (the
   header) can live outside the content wrapper.
-- **GSAP-only, and Safari or 120 Hz screens matter:** a trade-off, never a default. Lenis is capped at 60 fps in Safari
-  (§2). ScrollSmoother's rate there is unmeasured, and it runs on the same `requestAnimationFrame` ticker, which Safari
-  holds near 60 fps by default. On a phone both scroll natively (ScrollSmoother never smooths touch), and a GSAP pin or
-  scrub on content that moves with the page paints a frame behind iOS's compositor scroll: jitter. Until the blocks
-  choose per device, a route that takes ScrollSmoother skips it when `ScrollTrigger.isTouch === 1`, and pins with CSS
-  sticky and scrubs with CSS scroll timelines there.
+- **GSAP-only, and Safari or 120 Hz screens matter:** a trade-off, never a default. Only native scrolling gets
+  Safari's full-rate compositor scroll. Lenis is capped at 60 fps there (§2); ScrollSmoother is unmeasured, and likely
+  capped too: it moves the content from the same `requestAnimationFrame` ticker. On a phone both scroll natively
+  (ScrollSmoother never smooths touch), and a GSAP pin or scrub on content that moves with the page paints a frame
+  behind iOS's compositor scroll: jitter. Until the blocks choose per device, a route that takes ScrollSmoother skips
+  it when `ScrollTrigger.isTouch === 1`, and pins with CSS sticky and scrubs with CSS scroll timelines there.
 
 ## 2. What each owner breaks (measured)
 
