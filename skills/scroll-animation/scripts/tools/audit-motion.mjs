@@ -179,6 +179,8 @@ function buildContext(files, contents) {
   let hasSmoothScrollBehavior = false
   let hasLenis = false
   let hasFluid = false
+  // Components that render the 2.1 <RouteChange> around their children: used self-closing, they wrap nothing.
+  const routeChangeWrappers = new Set()
 
   for (const f of files) {
     const ext = extname(f)
@@ -193,10 +195,13 @@ function buildContext(files, contents) {
     if (/<LazyMotion\b[^>]*\bstrict\b/.test(c)) hasLazyMotionStrict = true
     if (/\bnew\s+Lenis\s*\(/.test(c) || /from\s+['"](?:@studio-freight\/)?lenis['"]/.test(c)) hasLenis = true
     // A fluid-scaled page: the fluid-design units or utilities anywhere.
+    if (/<RouteChange\b[^>]*>\s*\{\s*(?:props\.)?children\s*\}/.test(c)) {
+      for (const m of c.matchAll(/export\s+(?:default\s+)?function\s+([A-Z]\w*)/g)) routeChangeWrappers.add(m[1])
+    }
     if (/var\(--fluid\b|\bfluid-(?:p|px|py|m|mt|mb|w|h|gap|display|copy|text|cap)-\d|\bfd\.fluid\(|\bfluid\(\s*\d/.test(c)) hasFluid = true
   }
 
-  return { hasLazyMotionStrict, hasSmoothScrollBehavior, hasLenis, hasFluid }
+  return { hasLazyMotionStrict, hasSmoothScrollBehavior, hasLenis, hasFluid, routeChangeWrappers }
 }
 
 // ── rule helpers ────────────────────────────────────────────────────────
@@ -409,6 +414,29 @@ const rules = [
           rule: this.id, file, content, index: tag.index, matchLen: tag.text.length, severity: 'error',
           why: 'This element carries a contents class alongside a reveal trigger (whileInView, data-reveal, Reveal; v1: data-stage, Stage). display: contents generates no box, so the trigger never fires — a whole stat grid has shipped stuck at opacity 0 this way.',
           fix: 'Drop contents from this element, or move the trigger (whileInView, data-reveal, Reveal) to a wrapping element that keeps a real box.'
+        })
+      }
+    }
+  },
+
+  {
+    // The 2.1 <RouteChange> works only as a wrapper around the page: its layout effect has to run after the
+    // router's, which React guarantees for an ancestor and for nothing else. Rendered self-closing (a sibling of
+    // the page, the usual result of putting a pathname reader in its own <Suspense> under Next's Cache
+    // Components), it runs before the router has placed the scroll and syncs the authority to the previous page's
+    // position: Lenis hides it, ScrollSmoother glides. <PageLifecycle> has no position to get wrong
+    // (references/lifecycle.md, "Route change").
+    id: 'route-change-before-page',
+    ext: (e) => ['.tsx', '.jsx'].includes(e),
+    run(content, file, ctx, acc) {
+      const names = ['RouteChange', ...ctx.routeChangeWrappers]
+      const re = new RegExp(`<(${names.join('|')})\\b[^<>]*?(?:/>|>\\s*</\\1>)`, 'g')
+      let m
+      while ((m = re.exec(content))) {
+        pushFinding(acc, {
+          rule: this.id, file, content, index: m.index, matchLen: m[0].length, severity: 'error',
+          why: `<${m[1]}> renders the 2.1 <RouteChange> with nothing inside it. RouteChange syncs the scroll authority in a layout effect that must run after the router placed the scroll, which holds only when it wraps the page. As a sibling it reads the previous page's position: under ScrollSmoother the new page glides in from there, and reveals measure against the old scroll.`,
+          fix: 'Replace it with <PageLifecycle route={usePathname()} /> (scroll-animation add page-react), in its own <Suspense> anywhere in the root layout: it needs no position in the tree. Keep each GSAP route\'s onRouteRefresh(ScrollTrigger.refresh).'
         })
       }
     }
