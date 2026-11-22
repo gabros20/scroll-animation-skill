@@ -62,7 +62,7 @@ interface ScrollSmootherInstance {
   paused(value: boolean): unknown
   kill(): void
   /** The smoother's own trigger: its scrub tween is the content's catch-up toward the native scroll. */
-  scrollTrigger?: { update(): void; getTween(): { progress(value: number): unknown } | undefined }
+  scrollTrigger?: { update(): void; getTween(): { progress(value: number): unknown } | 0 | undefined }
 }
 interface ScrollSmootherStatic {
   create(vars: Record<string, unknown>): ScrollSmootherInstance
@@ -213,8 +213,9 @@ export function createSmoother(ScrollSmoother: ScrollSmootherStatic, options: Sm
       const stale = Math.abs(cached - window.scrollY) >= 1
       if (paused || !trigger || stale) return smoother.scrollTo(window.scrollY, false)
       trigger.update()
-      // No tween: smooth 0 (reduced motion, touch), the content isn't transformed.
-      trigger.getTween()?.progress(1)
+      // No tween (ScrollTrigger returns 0, not undefined): smooth 0 (reduced motion, touch), nothing is transformed.
+      const catchUp = trigger.getTween()
+      if (catchUp) catchUp.progress(1)
     },
     sync() {
       handle.adopt()
