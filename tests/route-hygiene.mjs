@@ -159,7 +159,8 @@ function prepare(variant) {
   cpSync(fixture, app, { recursive: true })
   for (const file of BLOCKS) cpSync(join(assets, file), join(app, 'animation', file))
   if (variant === 'before') {
-    for (const file of BEFORE_BLOCKS) {
+    // RH_BEFORE narrows it to some blocks, to find which one a difference comes from.
+    for (const file of process.env.RH_BEFORE?.split(',') ?? BEFORE_BLOCKS) {
       const show = spawnSync('git', ['show', `${BEFORE_REF}:skills/scroll-animation/assets/${file}`], { cwd: repo, encoding: 'utf8' })
       if (show.status !== 0) throw new Error(`git show ${BEFORE_REF}:${file} failed (the 'before' variant needs the tag): ${show.stderr}`)
       writeFileSync(join(app, 'animation', file), show.stdout)
@@ -999,7 +1000,7 @@ async function lifecycleSequence({ browser, base, contract, line }) {
         const glide = glideOf(rec, path)
         line(
           s.y >= expectY - 1 && s.y <= expectY + slack + 1 && glide.off === 0,
-          `scrollY ${s.y} (expected ${expectY}${slack ? ` to ${expectY + slack}` : ''}) · ${glide.off}/${glide.frames} frames off the scroll position (worst ${glide.worst} px)`,
+          `scrollY ${s.y} (expected ${expectY}${slack ? ` to ${expectY + slack}` : ''}), seen ${[...new Set(rec.frames.map((f) => `${f.p.split('/').pop()}@${Math.round(f.y)}`))].slice(0, 8).join(' → ')} · ${glide.off}/${glide.frames} frames off the scroll position (worst ${glide.worst} px)`,
           `F5 ${name}: lands where it was, no glide`,
         )
       }

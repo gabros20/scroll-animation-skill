@@ -253,8 +253,13 @@ for 56 of 95 frames after a link (up to 1911 px), and for 53 of 94 after back, w
 - **Default.** 200 ms and 100 ms (`INTENT_MS`, `VISIT_WINDOW_MS`). Override when: a keyboard scroll is cut short
   (raise `INTENT_MS`). A scrollbar drag fires no input event in most browsers, so under ScrollSmoother the content
   follows the thumb unsmoothed (unverified per browser).
-- Measured in Chromium only. WebKit and Firefox: unverified; if the rule fails there, the fallback is a re-sync over
-  the two frames after a traverse.
+- Measured in Chromium, and in WebKit (Playwright build 2388, 2026-11: the same checks pass).
+- **Firefox, ScrollSmoother, back and forward: broken, cause not found.** In Firefox (Playwright build 1572) a
+  traverse between two pages under one smoother stays at the scroll position of the page it left; on 2.1.2's blocks
+  it restored (and glided). Links, hash links and the wheel behave; native and Lenis traverses restore. What is
+  known: with 2.1's sync and refresh inside the commit Firefox restored about 12 ms after `popstate`; with every
+  variation tried here it never did. Until it is fixed, a Firefox reader on a ScrollSmoother site loses their
+  place on back: another reason for the Lenis default (§1).
 - **Check.** `verify-motion.mjs <url> --nav`; `tests/route-hygiene.mjs` F4 and F5.
 
 - The authority belongs to the route: `SmoothScroll` in the route group's layout (`authority="native" | "lenis" |

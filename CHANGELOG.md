@@ -89,8 +89,13 @@ the newest release heading below, and the release tag.
   beside `translate`, `scale` or `rotate` in one block", measured on 1.32.0; the skill's own keyframes come out
   unchanged. lifecycle "The hero budget": a fallback matched for body text is not matched for display type.
 
+### Known issue
+- Firefox, ScrollSmoother: back and forward between two pages under one smoother stay at the scroll position of the
+  page left (2.1.2 restored it, with a glide). Cause not found; native and Lenis are not affected.
+
 ### Not verified
-- WebKit and Firefox were not run. bfcache (`restore`) is wired and untested. ScrollSmoother's frame rate in Safari
+- WebKit: the lifecycle checks and the full route sequence pass on Playwright's build 2388; the other suites were
+  not run there. Firefox: the route sequence passes except the known issue above. bfcache (`restore`) is wired and untested. ScrollSmoother's frame rate in Safari
   is unmeasured.
 
 ## [2.1.2] - 2026-11-21

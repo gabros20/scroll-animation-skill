@@ -16,8 +16,9 @@ any loader, the heavy layers on the first screen.
 
 Each topic reads: **Law** (a mechanism and its consequence, with its evidence), **Default** (a value, and when to
 override it), **Code** (the block, and what to keep if you rewrite it), **Check**. Evidence tags: `source
-<package@version>`, `measured <browser, date>`, `spec`, `unverified`. WebKit and Firefox were not run for anything
-dated 2026-11 here.
+<package@version>`, `measured <browser, date>`, `spec`, `unverified`. Numbers dated 2026-11 are Chromium's. The route checks (F3 to F5) also pass in WebKit (Playwright build
+2388), and in Firefox (build 1572) except one: back and forward under ScrollSmoother
+([scroll-authority.md](scroll-authority.md) "Placements and route changes").
 
 ## Contents
 
@@ -385,5 +386,5 @@ pathname reader cannot do under Cache Components, and rendered before the page t
 | `tests/route-hygiene.mjs` (repository) | F2 arrival, F3 entrance against the transition, F4 placement, F5 traverse; `--variants before` reruns F3 to F5 on 2.1.2's blocks |
 | `tests/unit/page.test.mjs` (repository) | visits, holds and caps, `when()`, the start queue |
 
-Not provable headlessly: WebKit and Firefox (not run for this file), a real phone, bfcache (`restore` is wired and
-untested), a hidden tab at load.
+Not proven: the suites other than the route checks in WebKit and Firefox, a real phone, bfcache (`restore` is wired
+and untested), a hidden tab at load.
