@@ -64,7 +64,10 @@ const repo = join(testsDir, '..')
 const fixture = join(testsDir, 'fixtures', 'route-hygiene')
 const scratch = join(testsDir, '.scratch', 'route-hygiene')
 const assets = join(repo, 'skills', 'scroll-animation', 'assets')
-const folioModules = join(repo, 'examples', 'folio', 'node_modules')
+// RH_MODULES: another install to build the fixture on (a second Next version), with RH_TURBO_ROOT a directory that
+// holds both it and this repository (Turbopack reads no file outside its root).
+const folioModules = process.env.RH_MODULES ?? join(repo, 'examples', 'folio', 'node_modules')
+const turboRoot = process.env.RH_TURBO_ROOT ?? repo
 // The blocks the fixture imports, copied to <app>/animation the way `scroll-animation add` copies them.
 const BLOCKS = [
   'config.ts',
@@ -183,7 +186,7 @@ function prepareFolio() {
   return app
 }
 
-const envFor = (variant) => ({ ...process.env, RH_ROOT: repo, RH_CACHE_COMPONENTS: VARIANTS[variant] ?? '0', NEXT_TELEMETRY_DISABLED: '1' })
+const envFor = (variant) => ({ ...process.env, RH_ROOT: turboRoot, RH_CACHE_COMPONENTS: VARIANTS[variant] ?? '0', NEXT_TELEMETRY_DISABLED: '1' })
 const nextBin = (app) => join(app, 'node_modules', 'next', 'dist', 'bin', 'next')
 
 function build(variant) {

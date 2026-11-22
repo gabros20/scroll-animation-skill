@@ -29,7 +29,9 @@ const frames = []
 globalThis.window = globalThis
 globalThis.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} })
 globalThis.location = { pathname: '/' }
-globalThis.addEventListener = () => {}
+// The window's listeners, in registration order, so a test can dispatch as the browser would.
+const windowListeners = []
+globalThis.addEventListener = (type, fn) => windowListeners.push([type, fn])
 globalThis.requestAnimationFrame = (fn) => frames.push(fn)
 globalThis.cancelAnimationFrame = (id) => (frames[id - 1] = () => {})
 globalThis.document = {
@@ -180,4 +182,28 @@ test('only what mounts with a traverse arrives settled', async () => {
   assert.equal(arrivesSettled(), false, 'a tab or a lazy section mounted later plays')
   page.begin('push')
   assert.equal(arrivesSettled(), false)
+})
+
+test('a traverse is read whichever popstate listener runs first', () => {
+  const back = (pathname, routerFirst) => {
+    location.pathname = pathname
+    const event = { type: 'popstate' }
+    globalThis.event = event
+    // The router commits the traverse synchronously inside its own handler (Next does), calling begin().
+    const router = () => kinds.push(page.begin().kind)
+    const ours = windowListeners.filter(([type]) => type === 'popstate').map(([, fn]) => fn)
+    for (const fn of routerFirst ? [router, ...ours] : [...ours, router]) fn(event)
+    globalThis.event = undefined
+    page.placed()
+  }
+  const kinds = []
+  page.begin('push')
+  page.placed()
+  back('/a', true) // the router listened before page.ts loaded (next@16.4.6)
+  back('/b', false) // page.ts listened first (next@16.3.6)
+  location.pathname = '/c'
+  kinds.push(page.begin().kind) // a link afterwards is a push: no flag is left over from either
+  page.placed()
+  assert.deepEqual(kinds, ['traverse', 'traverse', 'push'])
+  location.pathname = '/'
 })
