@@ -18,14 +18,21 @@
  * The driver is read once, when the authority starts: pass a stable value (module scope or useMemo).
  *
  * ScrollSmoother: pass the handle's factory, so this file imports no GSAP. It renders the wrapper and the content
- * element ScrollSmoother needs around the children; fixed UI (the header) stays outside this component.
+ * element ScrollSmoother needs around the children; fixed UI (the header) stays outside this component, and
+ * everything that scrolls stays inside, the footer too (`wrap={false}` when the layout renders the two elements).
  *
  *   import { ScrollSmoother } from 'gsap/ScrollSmoother'
  *   const smoother = () => createSmoother(ScrollSmoother, { smooth: 1 })      // smooth/smoother.ts; module scope
  *   <SmoothScroll authority="smoother" create={smoother}>{children}</SmoothScroll>
  *
- * The smoother starts in this component's layout effect, after the page's own (children first): ScrollSmoother
- * rebinds the triggers made before it, and no entrance plays before the lifecycle's `running` anyway.
+ * Every authority starts before the blocks below it build: the component that starts it is rendered first among the
+ * children, and React runs siblings' layout effects in order. A block reads the owner as it builds
+ * (`getScrollAuthority()`: gsap/parallax.ts and gsap/draw-on-scroll.ts pick their scrub from it), so an authority
+ * started after them left those blocks on native scrolling's catch-up for the life of the route.
+ *
+ * `authority` is read when the component mounts and may change between renders, but the server can't know the
+ * device: a page that picks its owner per device (native on touch) renders 'native' first and switches after
+ * hydration (`useSyncExternalStore` with a 'native' server snapshot).
  *
  * Route changes: render <PageLifecycle route={usePathname()} /> once in the root layout (react/PageLifecycle.tsx).
  * It needs no position in the tree. <RouteChange> below is the 2.1 component, kept so existing sites build.
@@ -51,10 +58,36 @@ export interface SmoothScrollProps {
   driver?: Driver
   lenis?: SmoothScrollOptions['lenis']
   anchors?: boolean
+  /**
+   * 'smoother': render `#smooth-wrapper` and `#smooth-content` around the children (default true). Everything that
+   * scrolls belongs inside them, the footer included: when the footer lives in a layout above this component, render
+   * the two elements there yourself and pass `wrap={false}`.
+   */
+  wrap?: boolean
   children?: ReactNode
 }
 
-export function SmoothScroll({ authority, create, driver, lenis, anchors, children }: SmoothScrollProps) {
+export function SmoothScroll({ wrap = true, children, ...authority }: SmoothScrollProps) {
+  // First among the children: React runs siblings' layout effects in order, so the authority exists, stamped, before
+  // any block below builds (a block reads the owner as it builds: gsap/parallax.ts picks its scrub from it).
+  const content = (
+    <>
+      <Authority {...authority} />
+      {children}
+    </>
+  )
+  if (authority.authority === 'smoother' && wrap) {
+    return (
+      <div id="smooth-wrapper">
+        <div id="smooth-content">{content}</div>
+      </div>
+    )
+  }
+  return content
+}
+
+/** Starts the authority in its layout effect and destroys it in the cleanup. Renders nothing. */
+function Authority({ authority, create, driver, lenis, anchors }: Omit<SmoothScrollProps, 'children' | 'wrap'>) {
   // Latest props for the authority effect, without restarting the authority when a driver object is recreated.
   // Written in an effect, never during render (react-hooks/refs).
   const config = useRef({ create, driver, lenis, anchors })
@@ -81,14 +114,7 @@ export function SmoothScroll({ authority, create, driver, lenis, anchors, childr
     return () => handle.destroy()
   }, [authority])
 
-  if (authority === 'smoother') {
-    return (
-      <div id="smooth-wrapper">
-        <div id="smooth-content">{children}</div>
-      </div>
-    )
-  }
-  return <>{children}</>
+  return null
 }
 
 export interface RouteChangeProps {

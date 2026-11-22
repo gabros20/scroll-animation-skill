@@ -65,6 +65,22 @@ the newest release heading below, and the release tag.
   all started about 250 ms before the transition ended).
 - Back or forward under ScrollSmoother no longer glides, with or without a flick of the wheel just before.
 
+- A back or forward is read as one whichever `popstate` listener runs first (on next@16.4.6 the router's ran before
+  `page.ts`'s and every traverse read as a push): `begin()` also reads a `popstate` in flight and the Navigation API.
+- A link to a hash on another page lands on it under ScrollSmoother (it ended 1150 px off). `smoother.ts` has no
+  triple-slash reference (eslint-config-next).
+- `<SmoothScroll>` starts its authority before the route's blocks build (parallax and draw-on-scroll read the owner
+  as they build and stayed on native scrolling's catch-up). `wrap={false}` for a wrapper the layout renders, so the
+  footer can sit inside the smoother.
+- `verify-motion --nav` no longer counts the outgoing page's fading reveals, and waits out fades before each step.
+- `audit-motion` `video-attrs`: a film with `controls` and no autoplay needs no `muted`.
+
+### Changed (guidance)
+- scroll-authority §1: Lenis is the default for a smoothed desktop page (one geometry: sticky and CSS timelines keep
+  working); ScrollSmoother is the override. css-scroll-effects §3: the Lightning CSS law is "never `transform`
+  beside `translate`, `scale` or `rotate` in one block", measured on 1.32.0; the skill's own keyframes come out
+  unchanged. lifecycle "The hero budget": a fallback matched for body text is not matched for display type.
+
 ### Not verified
 - WebKit and Firefox were not run. bfcache (`restore`) is wired and untested. ScrollSmoother's frame rate in Safari
   is unmeasured.

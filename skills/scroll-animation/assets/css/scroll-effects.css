@@ -228,6 +228,8 @@
   top: var(--header-h, 0px);
   transform-origin: 50% 0;
 }
+/* scale beside opacity: left as written by Lightning CSS, which merges only `transform` with the individual
+   properties (measured 1.32.0). Never add `transform` here. */
 @keyframes fx-stack-card {
   to {
     scale: var(--fx-scale-from, 0.9);

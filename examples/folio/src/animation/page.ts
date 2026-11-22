@@ -22,8 +22,9 @@
  * - Built-in holds: `placement` (until placed(), at most two frames), `transition` (while a view transition is
  *   active, at most 1 s), `fonts` (only with <html data-entrance-fonts>, at most 400 ms), and the tab being visible.
  *   Your own hold defaults to a 4 s cap. A hold never outlives its cap: `running` always comes.
- * - begin() with no argument reads the kind: a traverse when a popstate changed the path since the last visit was
- *   placed, else a push.
+ * - begin() with no argument reads the kind: a traverse when the browser is going back or forward (the Navigation
+ *   API, a popstate in flight or just heard), else a push. It does not depend on this module loading before the
+ *   router.
  * - A traverse and a restore arrive `settled`: the reader is back where they were, and nothing replays.
  * - A load: the server HTML says which. `running`: a CSS entrance that played from first paint; nothing can hold it,
  *   and its clock is first contentful paint. `pending`: an entrance a script starts; the lifecycle opens it one
@@ -156,14 +157,42 @@ const holds = new Map<symbol, string>()
 /** A popstate moved to another path and no visit has begun for it yet: the next one is a traverse. */
 let popped = false
 let path = typeof location === 'undefined' ? '' : location.pathname
-// Registered as the module loads, the one thing here that isn't dormant: it has to run before the router's own
-// popstate handler, and Next's commits the traverse synchronously inside it (measured, next@16.3.6), so a listener
-// added later hears the event after begin() has run. A router that listens before this module loads passes the
-// kind itself: page.begin('traverse').
+// A traverse is read three ways, so that it doesn't depend on which script listened first. Next commits a back or
+// forward synchronously inside its own popstate handler, and registers that handler at router bootstrap: on
+// next@16.3.6 a listener added as this module loaded ran first, on 16.4.6 it ran after begin() (a field report).
+// 1. The Navigation API's `navigate` event (Chromium 102, Safari 26.2, Firefox 147: unverified here) fires before
+//    popstate, whoever listens to that.
+// 2. begin() called inside a popstate dispatch reads it from `window.event`.
+// 3. A popstate listener, for a router that commits later (in a transition, after a fetch).
+// The first and third are registered as the module loads, the one thing here that isn't dormant.
+let handledPop: Event | null = null
 if (typeof window !== 'undefined' && typeof location !== 'undefined') {
-  window.addEventListener('popstate', () => {
-    if (location.pathname !== path) popped = true
+  const moved = (pathname: string) => {
+    if (pathname !== path) popped = true
+  }
+  window.addEventListener('popstate', (event) => {
+    // Already read by a begin() inside this dispatch: not the next visit's.
+    if (event !== handledPop) moved(location.pathname)
   })
+  const navigation = (window as Window & { navigation?: EventTarget }).navigation
+  navigation?.addEventListener?.('navigate', (event) => {
+    const { navigationType, destination } = event as Event & { navigationType?: string; destination?: { url: string } }
+    if (navigationType !== 'traverse' || !destination) return
+    try {
+      moved(new URL(destination.url).pathname)
+    } catch {
+      // An unparsable destination: the other two signals stand.
+    }
+  })
+}
+/** True, once, when the visit beginning now is a back or forward. */
+function traversing(): boolean {
+  const event = typeof window !== 'undefined' ? window.event : undefined
+  const inside = event?.type === 'popstate'
+  if (inside) handledPop = event!
+  const result = inside || popped
+  popped = false
+  return result
 }
 let placedFor = 0
 let transitionHeld = 0
@@ -302,9 +331,9 @@ function begin(kind?: VisitKind): Visit {
   endVisit = []
   holds.clear()
   clearTimeout(remeasureTimer)
-  const next: Visit = { id: last.id + 1, kind: kind ?? (popped ? 'traverse' : 'push'), startedAt: NaN }
+  const traverse = traversing()
+  const next: Visit = { id: last.id + 1, kind: kind ?? (traverse ? 'traverse' : 'push'), startedAt: NaN }
   visit = next
-  popped = false
   stamp(next)
   for (const name of ['data-entrance-claimed', 'data-entrance-started', 'data-visit-placed']) html().removeAttribute(name)
   const arrives = next.kind !== 'push' || window.matchMedia(REDUCED_MOTION_QUERY).matches || failsafeFired()

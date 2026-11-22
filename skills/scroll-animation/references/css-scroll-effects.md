@@ -115,9 +115,13 @@ without it.
   - For build targets older than Chrome 120 it rewrites `:dir(rtl)` as a `:lang(…)` list, so the progress bar's and
     the marquee's right-to-left rules follow the page's `lang`, not its `dir`. Set the build targets, or keep `lang`
     and `dir` in agreement.
-  - It merges `transform`, `translate` and `scale` set in one rule into one `transform: translate(0,0) scale(1)`, so a
-    reset of all three loses two and leaves an identity transform. That is why `animation.css` resets `transform`
-    alone, and why each keyframe of your own animates one property, through `translate`, `scale` or `rotate` alone.
+  - It merges `transform` with `translate` and `scale` when they share a rule, into one `transform: translate(0,0)
+    scale(1)`, so a reset of all three loses two and leaves an identity transform. That is why `animation.css` resets
+    `transform` alone. The law for keyframes of your own: never `transform` beside `translate`, `scale` or `rotate`
+    in one block. The individual properties together, or one of them beside `opacity`, come out as written (measured
+    lightningcss 1.32.0, with no targets and with Chrome 103 and Safari 14 as targets: `view-transitions.css`'s
+    slides and this file's `fx-stack-card` are unchanged). Default: one property per block, through `translate`,
+    `scale` or `rotate` alone. Override when: two must share one timing, as those do.
 
 ## 4. Under each scroll authority
 

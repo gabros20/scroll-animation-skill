@@ -96,6 +96,8 @@
   }
 }
 
+/* opacity beside one individual transform property: Lightning CSS merges only `transform` with them (measured
+   1.32.0; references/css-scroll-effects.md §3). Never add `transform` to one of these blocks. */
 @keyframes vt-slide-out-forward {
   to {
     opacity: 0;

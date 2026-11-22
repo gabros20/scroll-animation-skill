@@ -150,6 +150,12 @@ return Demo ? <Demo /> : <DemoPlaceholder />           // the placeholder holds 
 - **Fonts before the entrance:** preload the display font with a metric-matched fallback (`size-adjust`,
   `ascent-override`). A swap mid-entrance re-lays-out split words and re-rasterises every word layer. A JavaScript
   entrance may wait for them: [Holds](#holds).
+- **A fallback matched for body text is not matched for display type.** A generated fallback (`next/font`'s) is
+  fitted at text sizes; with an optical-size axis or a light weight it can be several percent off at display sizes
+  (field report, one serif at 104 px: the fallback about 8% too wide, the headline re-wrapped on the swap, CLS
+  0.367 on a slow load; a display-only fallback brought it to 0.0025). Check layout shift on a throttled first load
+  at the display size. If the headline moves, measure one display line in the font and in the fallback and give the
+  display face its own `@font-face` fallback with `size-adjust` set to that ratio.
 - **One tick:** Lenis with `autoRaf: false` on the page's clock, the scene advanced from the same authority
   ([webgl.md](webgl.md) §4).
 - **No blur over live media until `settled`**, and no blur placeholder on the hero's image
@@ -175,7 +181,10 @@ transition's `finished` (same source, `startViewTransition`), so nothing that mu
 may live in one.
 
 **Law 3.** Next commits a back or forward synchronously inside its own `popstate` handler (measured, next@16.3.6,
-Chromium 157). A listener added later hears the event after the commit.
+Chromium 157), and which `popstate` listener runs first depends on load order: on 16.4.6 the router's ran before
+one added as `page.ts` loaded, and every traverse read as a push (field report). So `begin()` reads the traverse
+three ways, none of them order-dependent: the Navigation API's `navigate` event, a `popstate` in flight
+(`window.event`), and a `popstate` already heard.
 
 **Law 4.** The router owns a push's position and the browser a traverse's. Nothing in this skill scrolls on a route
 change, and `history.scrollRestoration` stays `'auto'` (measured S9: `'manual'` left back at 900 instead of 3000).
@@ -226,11 +235,10 @@ What one push does, in order:
 - **Activity** (Cache Components keeps three routes mounted and hidden): `SmoothScroll` and `useGSAP` clean up on
   hide, and effects run again on show, so a kept route's blocks see the new visit like a mounted one.
 - **Other routers:** `page.begin()` after the swap and before the new page's blocks mount, from the router's own
-  hook (Astro `astro:after-swap`, SvelteKit `afterNavigate`, a vanilla router after its swap). Load `page.ts` before
-  the router starts listening, or pass the kind: `page.begin('traverse')`.
+  hook (Astro `astro:after-swap`, SvelteKit `afterNavigate`, a vanilla router after its swap). A router that knows
+  the kind passes it: `page.begin('traverse')`.
 
-**Default.** `begin()` reads the kind: a traverse when a `popstate` changed the path since the last placement, else
-a push. Override when: your router knows better; pass it.
+**Default.** `begin()` reads the kind: a traverse when the browser is going back or forward (Law 3), else a push. Override when: your router knows better; pass it.
 
 **Code.** `page-react` (`react/PageLifecycle.tsx`). Keep if you rewrite: `begin()` before the commit's layout
 effects; nothing in the adapter reads or writes the scroll position.
@@ -352,10 +360,12 @@ pathname reader cannot do under Cache Components, and rendered before the page t
 - **Begin in a passive effect:** the page's layout effects have already created entrances under the last visit's
   `settled`, and under a view transition the effect runs after the crossfade.
 - **Read the hold during render:** the visit begins after render. Read it in a layout effect (`motion/Reveal.tsx`).
-- **A `popstate` listener added after the router's:** every traverse reads as a push (Law 3).
+- **Deciding push or traverse from one `popstate` listener:** it depends on who listened first (Law 3).
 - **A hold taken after `running`:** a no-op. Take a loader's hold in the task that mounts it.
 - **A timeout counted from a consumer's own mount, or from navigation start:** see [The clock](#the-clock).
 - **A second publisher:** the first to settle wins. One claim per visit.
+- **A hash link under ScrollSmoother without the lifecycle:** the handle lands a push's hash only when a visit tells
+  it one began. On 2.1's `<RouteChange>` it stays where the router's `scrollIntoView()` left it.
 - **CSS can't tell when an element mounted.** On back and forward, `[data-split-word]` and `[data-enter]` don't
   animate for the whole visit (the rule keys on `data-visit-kind`; lifting it mid-visit would replay the arrival's
   words). A CSS entrance that mounts later in such a visit (a tab's heading) shows at rest. JavaScript reveals are
