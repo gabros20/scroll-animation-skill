@@ -195,8 +195,11 @@ function buildContext(files, contents) {
     if (/<LazyMotion\b[^>]*\bstrict\b/.test(c)) hasLazyMotionStrict = true
     if (/\bnew\s+Lenis\s*\(/.test(c) || /from\s+['"](?:@studio-freight\/)?lenis['"]/.test(c)) hasLenis = true
     // A fluid-scaled page: the fluid-design units or utilities anywhere.
-    if (/<RouteChange\b[^>]*>\s*\{\s*(?:props\.)?children\s*\}/.test(c)) {
-      for (const m of c.matchAll(/export\s+(?:default\s+)?function\s+([A-Z]\w*)/g)) routeChangeWrappers.add(m[1])
+    // Only the component the match sits in: the nearest function or const component declared before it.
+    for (const m of c.matchAll(/<RouteChange\b(?:=>|[^<>])*>\s*\{\s*(?:props\.)?children\s*\}/g)) {
+      const owners = [...c.slice(0, m.index).matchAll(/(?:function\s+|(?:const|let)\s+)([A-Z]\w*)\s*(?:[(<]|=)/g)]
+      const owner = owners[owners.length - 1]?.[1]
+      if (owner && owner !== 'RouteChange') routeChangeWrappers.add(owner)
     }
     if (/var\(--fluid\b|\bfluid-(?:p|px|py|m|mt|mb|w|h|gap|display|copy|text|cap)-\d|\bfd\.fluid\(|\bfluid\(\s*\d/.test(c)) hasFluid = true
   }
@@ -430,7 +433,8 @@ const rules = [
     ext: (e) => ['.tsx', '.jsx'].includes(e),
     run(content, file, ctx, acc) {
       const names = ['RouteChange', ...ctx.routeChangeWrappers]
-      const re = new RegExp(`<(${names.join('|')})\\b[^<>]*?(?:/>|>\\s*</\\1>)`, 'g')
+      // `=>` inside an attribute (route={() => …}) is not the tag's end.
+      const re = new RegExp(`<(${names.join('|')})\\b(?:=>|[^<>])*?(?:/>|>\\s*</\\1>)`, 'g')
       let m
       while ((m = re.exec(content))) {
         pushFinding(acc, {
