@@ -48,7 +48,7 @@
  *   folds them into the transform for the length of the entrance and they are handed back when it lands.
  */
 import { MOTION, TRIGGERS, failsafeFired } from '../config'
-import { TAIL_AT, claimEntrance, entranceHeld, publishEntrance, whenEntranceOpen } from '../entrance-signal'
+import { TAIL_AT, arrivesSettled, claimEntrance, entranceHeld, publishEntrance, whenEntranceOpen } from '../entrance-signal'
 import {
   EASES,
   MOTION_CONDITIONS,
@@ -188,6 +188,12 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
     // lifecycle's hold lifts (at once on a page that isn't held): a mount item never plays under a route transition.
     const cancelOpen = whenEntranceOpen(() => context.ignore(() => {
       if (destroyed) return
+      // Back or forward: the reader returns to a page they have seen, so the mount groups land without playing.
+      if (arrivesSettled()) {
+        for (const [group, els] of byGroup) if (group.trigger === 'mount') els.forEach(land)
+        if (options.entrance) publishEntrance('settled')
+        return
+      }
       let last = -1
       for (const [group, els] of byGroup) if (group.trigger === 'mount') last = Math.max(last, play(els))
       if (!options.entrance) return

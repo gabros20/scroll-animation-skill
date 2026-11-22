@@ -65,7 +65,7 @@ import {
 } from 'react'
 
 import { CURVES, MOTION, TRIGGERS, failsafeFired } from '../config'
-import { TAIL_AT, claimEntrance, entranceHeld, publishEntrance, whenEntranceOpen } from '../entrance-signal'
+import { TAIL_AT, arrivesSettled, claimEntrance, entranceHeld, publishEntrance, whenEntranceOpen } from '../entrance-signal'
 import { useReducedMotionLive } from './useReducedMotionLive'
 
 export type RevealEffect = 'rise' | 'fade' | 'clip' | 'scale-in'
@@ -236,6 +236,8 @@ export function Reveal({
   // later visit's hold must not send a group that has played back to `hidden` (see Phase).
   const [open, setOpen] = useState(true)
   useIsomorphicLayoutEffect(() => {
+    // Back or forward: the reader returns to a page they have seen, so a mount group lands without playing.
+    if (trigger === 'mount' && arrivesSettled()) setPhase('settled')
     if (!entranceHeld()) return
     setOpen(false)
     return whenEntranceOpen(() => setOpen(true))

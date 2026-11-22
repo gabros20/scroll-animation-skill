@@ -4,7 +4,8 @@
 // scroll (`--reveal`), a scroll-driven scene's mode/progress across its
 // range (`--scenes`), and a same-page anchor actually landing where it
 // should with smooth scrolling and any scroll well left ON (`--anchors`,
-// delegated to `anchor-check.mjs`).
+// delegated to `anchor-check.mjs`), and a navigation between two pages
+// (`--nav`): a link clicked from a scrolled position, then back and forward.
 //
 // This is the scroll-animation half of Tier 1 (references/verification.md
 // §1: "the browser harness" — drive a real page and read numbers out of it,
@@ -15,9 +16,11 @@
 // Usage:
 //   node verify-motion.mjs <url> [--out dir] [--viewports 1440x900,390x844]
 //     [--browser chromium|webkit|firefox] [--channel chrome] [--reveal] [--scenes] [--anchors]
+//     [--nav [href]] [--nav-from px]
 //   node verify-motion.mjs --help
 //
-// With none of --reveal/--scenes/--anchors given, all three run.
+// With none of --reveal/--scenes/--anchors/--nav given, the first three run.
+// --nav is asked for by name: it needs a second page.
 //
 // Exit codes: 0 = every requested check passed, 1 = at least one failed,
 // 2 = usage/invocation error (including "playwright not found").
@@ -37,6 +40,7 @@ scene state and anchor landings.
 Usage:
   node verify-motion.mjs <url> [--out dir] [--viewports 1440x900,390x844]
     [--browser chromium|webkit|firefox] [--channel chrome] [--reveal] [--scenes] [--anchors]
+    [--nav [href]] [--nav-from px]
 
 Options:
   --out <dir>         output directory for report.json / screenshots (default: verify-motion-out)
@@ -61,9 +65,20 @@ Options:
                        held clip shows a still sliding past
   --anchors           delegate to anchor-check.mjs (a REAL smooth scroll
                        through the page's own scroll-behavior/scroll well)
+  --nav [href]        a navigation between two pages, which a fresh load never tests: scroll
+                       the page down, click a link (the first visible same-site link to
+                       another path, or the one whose href is given), then go back and
+                       forward. Checks: the link lands at the top (or its hash target)
+                       and back/forward where the reader was, with no glide (the
+                       position, and a smoother's content, are there within two frames);
+                       no reveal starts with its item off screen; nothing on the new
+                       first screen enters while a view transition still covers it; and
+                       the first screen ends visible
+  --nav-from <px>     where to scroll before the click (default: 1.5 viewports, or the
+                       page's end)
   -h, --help          print this message and exit
 
-With none of --reveal/--scenes/--anchors given, all three run.
+With none of --reveal/--scenes/--anchors/--nav given, the first three run.
 
 A check with nothing to look at (no reveal items, no scenes) reports SKIP, never PASS.
 
@@ -80,6 +95,9 @@ function parseArgs(argv) {
     reveal: false,
     scenes: false,
     anchors: false,
+    nav: false,
+    navHref: null,
+    navFrom: null,
     help: false
   }
   for (let i = 0; i < argv.length; i++) {
@@ -92,6 +110,10 @@ function parseArgs(argv) {
     else if (a === '--reveal') out.reveal = true
     else if (a === '--scenes') out.scenes = true
     else if (a === '--anchors') out.anchors = true
+    else if (a === '--nav') {
+      out.nav = true
+      if (argv[i + 1] && !argv[i + 1].startsWith('--') && out._.length) out.navHref = argv[++i]
+    } else if (a === '--nav-from') out.navFrom = Number(argv[++i])
     else if (a.startsWith('--')) { console.error(`[verify-motion] unknown flag ${a}`); process.exit(2) }
     else out._.push(a)
   }
@@ -103,7 +125,7 @@ function parseArgs(argv) {
     console.error(`[verify-motion] --channel needs --browser chromium (got ${out.browser})`)
     process.exit(2)
   }
-  if (!out.reveal && !out.scenes && !out.anchors) {
+  if (!out.reveal && !out.scenes && !out.anchors && !out.nav) {
     out.reveal = true
     out.scenes = true
     out.anchors = true
@@ -384,14 +406,196 @@ function readScene(page, index) {
   }, index)
 }
 
+// ── --nav ───────────────────────────────────────────────────────────────
+
+const NAV_PX = 2
+/** Selectors of what enters on a first screen: reveals, server-split words, a page's own CSS entrance. */
+const NAV_ENTRANCES = '[data-reveal-item], [data-split-word], [data-enter]'
+
+/** Installed before the page's scripts: a frame log, and where each reveal item was when its entrance started. */
+function navProbe(entrances) {
+  const onScreen = (r) => r.bottom > 0 && r.top < window.innerHeight
+  const vtActive = () => {
+    try {
+      return document.documentElement.matches(':active-view-transition')
+    } catch {
+      return false
+    }
+  }
+  const state = { frames: null, starts: [], under: new Set() }
+  const started = new WeakSet()
+  new MutationObserver((records) => {
+    if (!state.frames) return
+    for (const { target: el } of records) {
+      if (!(el instanceof HTMLElement) || !el.hasAttribute('data-reveal-item') || started.has(el)) continue
+      if (!el.style.length && !el.hasAttribute('data-reveal-transition') && el.getAttribute('data-reveal-state') !== 'shown') continue
+      started.add(el)
+      const r = el.getBoundingClientRect()
+      if (r.width || r.height) state.starts.push({ id: el.id || el.tagName.toLowerCase(), top: Math.round(r.top), on: onScreen(r), path: location.pathname })
+    }
+  }).observe(document, { subtree: true, attributes: true, attributeFilter: ['style', 'data-reveal-state', 'data-reveal-transition'] })
+  const frame = () => {
+    if (!state.frames) return
+    const content = document.getElementById('smooth-content')
+    const vt = vtActive()
+    state.frames.push({ p: location.pathname, y: window.scrollY, c: content ? -content.getBoundingClientRect().top : null, vt })
+    if (vt) {
+      // Showing beneath the transition: its fade would be over before the reader sees the page.
+      for (const el of document.querySelectorAll(entrances)) {
+        const r = el.getBoundingClientRect()
+        // Part-way through its fade (a GSAP or Motion entrance has no WAAPI animation to ask).
+        const opacity = Number(getComputedStyle(el).opacity)
+        if (onScreen(r) && opacity > 0.05 && opacity < 0.99) {
+          state.under.add(el.id || (el.hasAttribute('data-split-word') ? 'split word' : el.tagName.toLowerCase()))
+        }
+      }
+    }
+    requestAnimationFrame(frame)
+  }
+  window.__verifyNav = {
+    record() {
+      state.frames = []
+      state.starts = []
+      state.under = new Set()
+      requestAnimationFrame(frame)
+    },
+    stop() {
+      const out = { frames: state.frames ?? [], starts: state.starts, under: [...state.under], sawVT: (state.frames ?? []).some((f) => f.vt) }
+      state.frames = null
+      return out
+    },
+    firstScreen() {
+      const hidden = []
+      for (const el of document.querySelectorAll(entrances)) {
+        const r = el.getBoundingClientRect()
+        if (!(r.width || r.height) || !onScreen(r)) continue
+        if (Number(getComputedStyle(el).opacity) < 0.99) hidden.push(el.id || el.textContent.trim().slice(0, 24) || el.tagName.toLowerCase())
+      }
+      return hidden
+    },
+  }
+}
+
+/** Resolves once the path shows, no view transition runs and scrollY has held still for 20 frames. */
+async function navSettle(page, path) {
+  await page.waitForFunction((p) => location.pathname === p, path, { timeout: 10000 }).catch(() => {})
+  await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        let last = -1
+        let still = 0
+        const end = performance.now() + 8000
+        const step = () => {
+          const y = window.scrollY
+          let vt = false
+          try {
+            vt = document.documentElement.matches(':active-view-transition')
+          } catch {
+            // no selector: no transition to wait for
+          }
+          still = y === last && !vt ? still + 1 : 0
+          last = y
+          if (still >= 20 || performance.now() > end) resolve(true)
+          else requestAnimationFrame(step)
+        }
+        requestAnimationFrame(step)
+      }),
+  )
+}
+
+/**
+ * The frames of `rec` on `path`. A placement shows two positions, where the page was and where it landed; a frame at
+ * a third is a glide. And once landed (two frames' grace: a placement's `scroll` event reaches the page a frame
+ * later), a smoother's content sits on the scroll position.
+ */
+function navGlide(rec, path, from, landing) {
+  const after = rec.frames.slice(rec.frames.findIndex((f) => f.p === path))
+  const moving = after.filter((f) => Math.abs(f.y - landing) > NAV_PX && Math.abs(f.y - from) > NAV_PX)
+  const landed = after.slice(after.findIndex((f) => Math.abs(f.y - landing) <= NAV_PX)).slice(2)
+  const trailing = landed.filter((f) => f.c !== null && Math.abs(f.c - f.y) > NAV_PX)
+  const worst = Math.max(0, ...moving.map((f) => Math.abs(f.y - landing)), ...trailing.map((f) => Math.abs(f.c - f.y)))
+  return { frames: after.length, moving: moving.length, trailing: trailing.length, worst: Math.round(worst) }
+}
+
+async function checkNav(browser, url, opts, vp) {
+  const { isMobile, hasTouch, ...viewport } = vp
+  const context = await browser.newContext({ viewport, isMobile, hasTouch })
+  await context.addInitScript(navProbe, NAV_ENTRANCES)
+  const page = await context.newPage()
+  const problems = []
+  const steps = []
+  try {
+    await page.goto(url, { waitUntil: 'networkidle' })
+    const from = new URL(page.url()).pathname
+    const link = await page.evaluate((href) => {
+      const links = Array.from(document.querySelectorAll('a[href]')).filter((a) => {
+        if (a.origin !== location.origin || a.target === '_blank' || a.hasAttribute('download')) return false
+        return href ? a.getAttribute('href') === href || a.pathname === href : a.pathname !== location.pathname
+      })
+      const pick = links.find((a) => a.getClientRects().length > 0) ?? links[0]
+      if (!pick) return null
+      pick.setAttribute('data-verify-nav', '')
+      return { path: pick.pathname, hash: pick.hash, href: pick.getAttribute('href') }
+    }, opts.navHref)
+    if (!link) return { verdict: 'skip', problems: [], steps: [], reason: opts.navHref ? `no link to ${opts.navHref}` : 'no link to another page' }
+
+    const max = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight)
+    const y1 = Math.max(0, Math.min(max, Number.isFinite(opts.navFrom) && opts.navFrom !== null ? opts.navFrom : Math.round(viewport.height * 1.5)))
+    await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y1)
+    await navSettle(page, from)
+    const at1 = await page.evaluate(() => window.scrollY)
+
+    const step = async (name, path, act, landing) => {
+      const before = await page.evaluate(() => window.scrollY)
+      await page.evaluate(() => window.__verifyNav.record())
+      await act()
+      await navSettle(page, path)
+      const rec = await page.evaluate(() => window.__verifyNav.stop())
+      const y = await page.evaluate(() => window.scrollY)
+      const expected = landing(y)
+      const glide = navGlide(rec, path, before, y)
+      const off = rec.starts.filter((s) => s.path === path && !s.on)
+      const entry = { name, path, scrollY: Math.round(y), expected, glide, startedOffScreen: off, sawViewTransition: rec.sawVT, underTransition: rec.under }
+      steps.push(entry)
+      if (expected !== null && Math.abs(y - expected) > NAV_PX) problems.push(`${name}: landed at ${Math.round(y)}, expected ${expected}`)
+      if (glide.moving) problems.push(`${name}: ${glide.moving} frames at a position between the old one and the landing (up to ${glide.worst} px off): a glide, not a placement`)
+      else if (glide.trailing) problems.push(`${name}: the smoothed content trailed the scroll position for ${glide.trailing} frames (up to ${glide.worst} px)`)
+      if (off.length) problems.push(`${name}: ${off.length} reveal(s) started off screen (${off.slice(0, 3).map((s) => `${s.id} at ${s.top}`).join(', ')})`)
+      if (rec.under.length) problems.push(`${name}: entering under the view transition: ${rec.under.slice(0, 3).join(', ')}`)
+      return entry
+    }
+
+    // The link: the top, or its hash target (wherever the page put it: only the glide is judged then).
+    await step(`link to ${link.href}`, link.path, () => page.evaluate(() => document.querySelector('[data-verify-nav]').click()), () => (link.hash ? null : 0))
+    // An entrance has time to end, then the first screen must be readable.
+    await page.waitForTimeout(2000)
+    const hidden = await page.evaluate(() => window.__verifyNav.firstScreen())
+    if (hidden.length) problems.push(`link to ${link.href}: on the first screen, still hidden 2 s after arriving: ${hidden.slice(0, 4).join(', ')}`)
+
+    const max2 = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight)
+    const y2 = Math.max(0, Math.min(max2, Math.round(viewport.height * 0.8)))
+    await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y2)
+    await navSettle(page, link.path)
+    const at2 = await page.evaluate(() => window.scrollY)
+
+    await step('back', from, () => page.evaluate(() => history.back()), () => Math.round(at1))
+    await step('forward', link.path, () => page.evaluate(() => history.forward()), () => Math.round(at2))
+  } finally {
+    await context.close()
+  }
+  return { verdict: problems.length ? 'fail' : 'pass', problems, steps }
+}
+
 // ── one viewport ────────────────────────────────────────────────────────
 
 async function runViewport(browser, url, opts, vp) {
   const { isMobile, hasTouch, ...viewport } = vp
   const context = await browser.newContext({ viewport, isMobile, hasTouch })
   const page = await context.newPage()
-  await page.goto(url, { waitUntil: 'networkidle' })
-  await page.waitForTimeout(300) // let fonts/CSS settle
+  if (opts.reveal || opts.scenes) {
+    await page.goto(url, { waitUntil: 'networkidle' })
+    await page.waitForTimeout(300) // let fonts/CSS settle
+  }
 
   const result = { width: viewport.width, height: viewport.height, mobile: isMobile, checks: {} }
   const outDir = opts.out ? join(opts.out, `${viewport.width}x${viewport.height}${isMobile ? '-mobile' : ''}`) : undefined
@@ -400,6 +604,7 @@ async function runViewport(browser, url, opts, vp) {
   if (opts.scenes) result.checks.scenes = await checkScenes(page, { out: outDir })
 
   await context.close()
+  if (opts.nav) result.checks.nav = await checkNav(browser, url, opts, vp)
   return result
 }
 
@@ -411,7 +616,7 @@ function viewportVerdict(v) {
 }
 
 function printSummary(viewports) {
-  console.log('width  height  mobile  reveal  scenes  overall')
+  console.log('width  height  mobile  reveal  scenes  nav     overall')
   for (const v of viewports) {
     const c = v.checks
     const cell = (verdict) => (verdict ? verdict.toUpperCase() : '-')
@@ -422,6 +627,7 @@ function printSummary(viewports) {
         (v.mobile ? 'yes' : 'no').padEnd(8),
         cell(c.reveal?.verdict).padEnd(8),
         cell(c.scenes?.verdict).padEnd(8),
+        cell(c.nav?.verdict).padEnd(8),
         cell(viewportVerdict(v))
       ].join('')
     )
@@ -430,7 +636,13 @@ function printSummary(viewports) {
   for (const v of viewports) {
     const at = `${v.width}x${v.height}${v.mobile ? ' (mobile)' : ''}`
     for (const [name, c] of Object.entries(v.checks)) {
-      if (c.verdict === 'skip') console.log(`SKIP ${name} at ${at}: nothing to check (${name === 'reveal' ? 'no [data-reveal-item]' : 'no [data-scene-root]'})`)
+      if (c.verdict === 'skip') {
+        const nothing = name === 'reveal' ? 'no [data-reveal-item]' : name === 'nav' ? c.reason : 'no [data-scene-root]'
+        console.log(`SKIP ${name} at ${at}: nothing to check (${nothing})`)
+      }
+    }
+    for (const step of v.checks.nav?.steps ?? []) {
+      console.log(`nav at ${at}: ${step.name} → scrollY ${step.scrollY}${step.expected === null ? '' : ` (expected ${step.expected})`}, ${step.glide.frames} frames watched${step.sawViewTransition ? ', view transition' : ''}`)
     }
     if (v.checks.scenes) {
       for (const s of v.checks.scenes.scenes) {
@@ -446,6 +658,7 @@ function printSummary(viewports) {
         console.log(`  reveal[${h.index}] ${h.selector} (${h.group ? `data-reveal="${h.group}"` : 'no group'}): ${h.reason}`)
       }
     }
+    for (const problem of v.checks.nav?.problems ?? []) console.log(`  nav: ${problem}`)
     console.log('')
   }
 }
@@ -474,7 +687,7 @@ async function main() {
   }
   const url = args._[0]
   if (!url) {
-    console.error('usage: node verify-motion.mjs <url> [--out dir] [--viewports W1xH1,W2xH2] [--browser chromium|webkit|firefox] [--channel chrome] [--reveal] [--scenes] [--anchors]')
+    console.error('usage: node verify-motion.mjs <url> [--out dir] [--viewports W1xH1,W2xH2] [--browser chromium|webkit|firefox] [--channel chrome] [--reveal] [--scenes] [--anchors] [--nav [href]]')
     console.error('       node verify-motion.mjs --help')
     process.exit(2)
   }
@@ -491,7 +704,7 @@ async function main() {
   let allSkipped = false
   let results = []
 
-  if (args.reveal || args.scenes) {
+  if (args.reveal || args.scenes || args.nav) {
     let engine
     try {
       engine = (await resolvePlaywrightModule())[args.browser]

@@ -325,7 +325,8 @@ function probes({ contract, place }) {
       if (!el || !el.getClientRects().length) continue
       const style = getComputedStyle(el)
       const ty = style.transform === 'none' ? 0 : new DOMMatrixReadOnly(style.transform).m42
-      const entry = (watched[selector] ??= { ty, seen: performance.now(), started: null })
+      const entry = (watched[selector] ??= { ty, seen: performance.now(), started: null, opaque: null })
+      if (entry.opaque === null && Number(style.opacity) >= 0.99) entry.opaque = performance.now()
       if (entry.started === null && (Number(style.opacity) > 0.01 || Math.abs(ty - entry.ty) > 0.5)) entry.started = performance.now()
     }
   }
@@ -926,7 +927,7 @@ async function lifecycleSequence({ browser, base, contract, line }) {
       if (contract === 'on') {
         await page.evaluate(() => window.__rh.click('home'))
         await settle(page, '/vt')
-        await page.evaluate((watch) => window.__rh.record(watch), [])
+        await page.evaluate((watch) => window.__rh.record(watch), F3_WATCH)
         await page.evaluate(() => history.back())
         await settle(page, '/vt/enter')
         const back = await page.evaluate(() => ({
@@ -935,10 +936,15 @@ async function lifecycleSequence({ browser, base, contract, line }) {
           kind: document.documentElement.dataset.visitKind,
           phase: document.documentElement.dataset.entrance,
         }))
+        // A mount reveal that replays fades in over its entrance; one that landed is opaque within a few frames.
+        const replayed = ['#e-gsap-mount', '#e-motion'].filter((selector) => {
+          const seen = back.rec.watched[selector]
+          return !seen || seen.opaque === null || seen.opaque - seen.seen > 100
+        })
         line(
-          back.kind === 'traverse' && back.phase === 'settled' && back.words === 0 && !back.rec.phases.some((ph) => ph.phase === 'pending'),
-          `kind ${back.kind}, phase ${back.phase}, ${back.words} word animations`,
-          'F3 back to /vt/enter: a traverse arrives settled, no replay',
+          back.kind === 'traverse' && back.phase === 'settled' && back.words === 0 && replayed.length === 0 && !back.rec.phases.some((ph) => ph.phase === 'pending'),
+          `kind ${back.kind}, phase ${back.phase}, ${back.words} word animations${replayed.length ? `, replayed: ${replayed.join(', ')}` : ''}`,
+          'F3 back to /vt/enter: a traverse arrives settled, no word or mount reveal replays',
         )
       }
     } finally {

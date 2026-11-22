@@ -18,7 +18,7 @@
  * - What page.ts writes beside the phase, all on <html>: `data-visit` (a counter) and `data-visit-kind` (load, push,
  *   traverse, restore); `data-entrance-held` while it holds the entrance (a route transition, a loader, fonts);
  *   `data-entrance-started`, performance.now() at `running`. A block reads them here: entranceHeld(),
- *   whenEntranceOpen(fn), entranceStartedAt().
+ *   whenEntranceOpen(fn), arrivesSettled(), entranceStartedAt().
  * - Held: publishEntrance('running') is a no-op while the lifecycle holds; it publishes `running` itself when the
  *   holds release. A block that plays an entrance waits with whenEntranceOpen().
  * - One publisher per visit. A block that publishes (trackEntrance, `{ entrance: true }`, Reveal's `entrance`) claims
@@ -110,6 +110,16 @@ export function claimEntrance(): void {
 /** True while the page lifecycle holds entrances: placement, a route transition, fonts, a loader. */
 export function entranceHeld(): boolean {
   return typeof document !== 'undefined' && root().getAttribute('data-entrance-held') !== null
+}
+
+/**
+ * True on a visit that arrives settled: back, forward or a bfcache restore (page.ts). The reader is back where they
+ * were, so a `mount` entrance lands without playing; a reveal at its line still plays when the reader reaches it.
+ */
+export function arrivesSettled(): boolean {
+  if (typeof document === 'undefined') return false
+  const kind = root().getAttribute('data-visit-kind')
+  return kind === 'traverse' || kind === 'restore'
 }
 
 /**

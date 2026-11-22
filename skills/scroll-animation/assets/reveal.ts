@@ -41,7 +41,7 @@
  *   mountReveals.
  */
 import { MOTION, REDUCED_MOTION_QUERY, TRIGGERS, failsafeFired, markAnimationReady } from './config'
-import { trackEntrance, whenEntranceOpen } from './entrance-signal'
+import { arrivesSettled, trackEntrance, whenEntranceOpen } from './entrance-signal'
 
 interface GroupOptions {
   trigger: 'mount' | 'view'
@@ -199,6 +199,8 @@ function start(root: ParentNode, reduced: boolean): () => void {
       line.observe(el)
       if (group.replay) gone.observe(el)
     }
+    // Back or forward: the reader returns to a page they have seen, so a mount group lands without playing.
+    if (mounting.length && arrivesSettled()) mounting.splice(0).forEach(markShown)
     if (mounting.length) {
       // A transition needs a computed before-state: resolve the resting style before flipping, in case the script
       // runs before the first style pass.
