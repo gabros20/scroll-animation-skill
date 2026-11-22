@@ -81,11 +81,12 @@ export function publishEntrance(phase: EntrancePhase, scope?: Element): void {
   if (el !== root()) return write(el, phase)
   // On <html>, a publisher owns this visit's tail and settle. While the lifecycle holds the visit the phase is its
   // to open: what a publisher says meanwhile (a 2.1 block that doesn't wait) is said when the hold lifts, if the
-  // visit is still the same one.
+  // visit is still the same one, in a microtask: the hold lifts inside the dispatch of `running`, and a write nested
+  // there would reach that event's later listeners as a phase past `running` before they had heard `running`.
   if (phase !== 'pending') claimEntrance()
   if (phase !== 'pending' && entranceHeld()) {
     const visit = el.getAttribute('data-visit')
-    whenEntranceOpen(() => el.getAttribute('data-visit') === visit && write(el, phase))
+    whenEntranceOpen(() => queueMicrotask(() => el.getAttribute('data-visit') === visit && write(el, phase)))
     return
   }
   write(el, phase)

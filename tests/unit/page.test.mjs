@@ -149,6 +149,9 @@ test('a block that publishes while the visit is held is heard when the hold lift
   assert.equal(phase(), 'pending', 'the phase is the lifecycle\'s to open')
   assert.equal(html.getAttribute('data-entrance-held'), 'pause')
   page.placed()
+  // Said after the lifecycle's own `running`, once that event's dispatch is over.
+  assert.equal(phase(), 'running')
+  await flush()
   assert.equal(phase(), 'settled')
   assert.equal(html.getAttribute('data-entrance-held'), null)
 
@@ -157,6 +160,7 @@ test('a block that publishes while the visit is held is heard when the hold lift
   publishEntrance('settled')
   page.begin('push')
   page.placed()
+  await flush()
   assert.equal(phase(), 'running')
 })
 
