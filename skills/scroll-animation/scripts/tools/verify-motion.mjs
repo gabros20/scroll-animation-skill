@@ -424,10 +424,17 @@ function navProbe(entrances) {
   }
   const state = { frames: null, starts: [], under: new Set() }
   const started = new WeakSet()
+  // What was on the page before the step: the outgoing page's own reveals, still fading from the scroll that came
+  // before the click, are not the new page entering.
+  let outgoing = new WeakSet()
+  const midFade = (el) => {
+    const opacity = Number(getComputedStyle(el).opacity)
+    return opacity > 0.05 && opacity < 0.99
+  }
   new MutationObserver((records) => {
     if (!state.frames) return
     for (const { target: el } of records) {
-      if (!(el instanceof HTMLElement) || !el.hasAttribute('data-reveal-item') || started.has(el)) continue
+      if (!(el instanceof HTMLElement) || !el.hasAttribute('data-reveal-item') || started.has(el) || outgoing.has(el)) continue
       if (!el.style.length && !el.hasAttribute('data-reveal-transition') && el.getAttribute('data-reveal-state') !== 'shown') continue
       started.add(el)
       const r = el.getBoundingClientRect()
@@ -442,10 +449,10 @@ function navProbe(entrances) {
     if (vt) {
       // Showing beneath the transition: its fade would be over before the reader sees the page.
       for (const el of document.querySelectorAll(entrances)) {
+        if (outgoing.has(el)) continue
         const r = el.getBoundingClientRect()
         // Part-way through its fade (a GSAP or Motion entrance has no WAAPI animation to ask).
-        const opacity = Number(getComputedStyle(el).opacity)
-        if (onScreen(r) && opacity > 0.05 && opacity < 0.99) {
+        if (onScreen(r) && midFade(el)) {
           state.under.add(el.id || (el.hasAttribute('data-split-word') ? 'split word' : el.tagName.toLowerCase()))
         }
       }
@@ -453,7 +460,23 @@ function navProbe(entrances) {
     requestAnimationFrame(frame)
   }
   window.__verifyNav = {
+    /** Resolves once nothing on screen has been part-way through a fade for 10 frames (3 s at most). */
+    quiet() {
+      return new Promise((resolve) => {
+        const end = performance.now() + 3000
+        let still = 0
+        const step = () => {
+          const fading = Array.from(document.querySelectorAll(entrances)).some((el) => onScreen(el.getBoundingClientRect()) && midFade(el))
+          still = fading ? 0 : still + 1
+          if (still >= 10 || performance.now() > end) resolve(true)
+          else requestAnimationFrame(step)
+        }
+        requestAnimationFrame(step)
+      })
+    },
     record() {
+      // Rendered ones only: a route the router kept mounted and hidden (Next's Activity) is the new page when shown.
+      outgoing = new WeakSet(Array.from(document.querySelectorAll(entrances)).filter((el) => el.getClientRects().length))
       state.frames = []
       state.starts = []
       state.under = new Set()
@@ -546,6 +569,8 @@ async function checkNav(browser, url, opts, vp) {
     const at1 = await page.evaluate(() => window.scrollY)
 
     const step = async (name, path, act, landing) => {
+      // The reveals the scroll before this step set off finish first: the step judges the navigation alone.
+      await page.evaluate(() => window.__verifyNav.quiet())
       const before = await page.evaluate(() => window.scrollY)
       await page.evaluate(() => window.__verifyNav.record())
       await act()

@@ -455,7 +455,10 @@ const rules = [
       while ((m = re.exec(content))) {
         const tag = m[0]
         const missing = []
-        if (!/\bmuted\b/.test(tag)) missing.push('muted')
+        // A film the visitor starts, with its sound: `controls` and no autoplay. Only a video the page starts itself
+        // (autoplay, a scrub, a loop) has to be muted to be allowed to play.
+        const visitorStarted = /\bcontrols\b/.test(tag) && !/\bautoplay\b/i.test(tag)
+        if (!visitorStarted && !/\bmuted\b/.test(tag)) missing.push('muted')
         if (!/\bplaysInline\b/i.test(tag)) missing.push('playsInline')
         if (!/\bpreload\s*=/.test(tag)) missing.push('preload')
         if (missing.length === 0) continue
