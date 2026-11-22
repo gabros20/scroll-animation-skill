@@ -41,7 +41,7 @@
  *   mountReveals.
  */
 import { MOTION, REDUCED_MOTION_QUERY, TRIGGERS, failsafeFired, markAnimationReady } from './config'
-import { trackEntrance } from './entrance-signal'
+import { trackEntrance, whenEntranceOpen } from './entrance-signal'
 
 interface GroupOptions {
   trigger: 'mount' | 'view'
@@ -168,42 +168,47 @@ function start(root: ParentNode, reduced: boolean): () => void {
     }
   })
 
-  const mounting: HTMLElement[] = []
-  for (const el of items) {
-    const group = groupOf(el)
-    if (group.trigger === 'mount') {
-      if (!isShown(el)) mounting.push(el)
-      continue
+  // Nothing is observed, and no mount item plays, while the page lifecycle holds entrances (a route transition, the
+  // router's scroll not placed yet, a loader): whenEntranceOpen runs this at once on a page that isn't held.
+  const cancelOpen = whenEntranceOpen(() => {
+    const mounting: HTMLElement[] = []
+    for (const el of items) {
+      const group = groupOf(el)
+      if (group.trigger === 'mount') {
+        if (!isShown(el)) mounting.push(el)
+        continue
+      }
+      if (isShown(el) && !group.replay) continue
+      let line = lines.get(group.margin)
+      if (!line) {
+        const observer: IntersectionObserver = new IntersectionObserver(
+          (entries) => {
+            const crossed: HTMLElement[] = []
+            for (const entry of latest(entries)) {
+              const target = entry.target as HTMLElement
+              if (!entry.isIntersecting || isShown(target)) continue
+              crossed.push(target)
+              if (!groupOf(target).replay) observer.unobserve(target)
+            }
+            if (crossed.length) reveal(crossed)
+          },
+          { rootMargin: group.margin },
+        )
+        lines.set(group.margin, (line = observer))
+      }
+      line.observe(el)
+      if (group.replay) gone.observe(el)
     }
-    if (isShown(el) && !group.replay) continue
-    let line = lines.get(group.margin)
-    if (!line) {
-      const observer: IntersectionObserver = new IntersectionObserver(
-        (entries) => {
-          const crossed: HTMLElement[] = []
-          for (const entry of latest(entries)) {
-            const target = entry.target as HTMLElement
-            if (!entry.isIntersecting || isShown(target)) continue
-            crossed.push(target)
-            if (!groupOf(target).replay) observer.unobserve(target)
-          }
-          if (crossed.length) reveal(crossed)
-        },
-        { rootMargin: group.margin },
-      )
-      lines.set(group.margin, (line = observer))
+    if (mounting.length) {
+      // A transition needs a computed before-state: resolve the resting style before flipping, in case the script
+      // runs before the first style pass.
+      for (const el of mounting) void getComputedStyle(el).opacity
+      reveal(mounting)
     }
-    line.observe(el)
-    if (group.replay) gone.observe(el)
-  }
-  if (mounting.length) {
-    // A transition needs a computed before-state: resolve the resting style before flipping, in case the script
-    // runs before the first style pass.
-    for (const el of mounting) void getComputedStyle(el).opacity
-    reveal(mounting)
-  }
+  })
 
   return () => {
+    cancelOpen()
     lines.forEach((line) => line.disconnect())
     gone.disconnect()
     Array.from(endings.keys()).forEach(land)

@@ -64,7 +64,7 @@ import {
 } from 'react'
 
 import { CURVES, MOTION, TRIGGERS, failsafeFired } from '../config'
-import { TAIL_AT, publishEntrance } from '../entrance-signal'
+import { TAIL_AT, claimEntrance, entranceHeld, publishEntrance } from '../entrance-signal'
 import { useReducedMotionLive } from './useReducedMotionLive'
 
 export type RevealEffect = 'rise' | 'fade' | 'clip' | 'scale-in'
@@ -179,6 +179,16 @@ function useFailsafeFired(): boolean {
   return useSyncExternalStore(subscribeFailsafe, failsafeFired, () => false)
 }
 
+function subscribeHeld(onChange: () => void) {
+  const observer = new MutationObserver(onChange)
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-entrance-held'] })
+  return () => observer.disconnect()
+}
+/** html[data-entrance-held]: the page lifecycle holds entrances (a route transition, the scroll not placed, a loader). */
+function useEntranceHeld(): boolean {
+  return useSyncExternalStore(subscribeHeld, entranceHeld, () => false)
+}
+
 export interface RevealProps {
   children?: ReactNode
   /** The element the layout already needs: a group should not add a wrapper. */
@@ -226,7 +236,14 @@ export function Reveal({
   const settle = hydrated && (reduced || failsafe)
   if (settle && phase !== 'settled') setPhase('settled')
 
-  const watching = hydrated && trigger === 'view' && !settle && (replay || phase === 'hidden')
+  // Nothing plays, and nothing is observed, while the page lifecycle holds entrances. Sticky: a later visit's hold
+  // must not send a group that has played back to `hidden` (see Phase).
+  const held = useEntranceHeld()
+  const [open, setOpen] = useState(false)
+  if (hydrated && !held && !open) setOpen(true)
+  const live = hydrated && open
+
+  const watching = live && trigger === 'view' && !settle && (replay || phase === 'hidden')
   useEffect(() => {
     const el = ref.current
     if (!watching || !el) return
@@ -275,9 +292,12 @@ export function Reveal({
 
   // The entrance signal follows the phase: `visible` is running (tail on a timer: Motion reports no progress), and
   // `settled` is settled, however it got there. Never backwards, so a replay's later phases publish nothing.
-  const playing = hydrated && phase === 'visible'
+  const playing = live && phase === 'visible'
   useEffect(() => {
-    if (!entrance || !hydrated) return
+    if (entrance) claimEntrance()
+  }, [entrance])
+  useEffect(() => {
+    if (!entrance || !live) return
     if (phase === 'settled') return publishEntrance('settled')
     if (phase !== 'visible') return
     publishEntrance('running')
@@ -286,7 +306,7 @@ export function Reveal({
     const last = Math.max(0, items.length - 1) * stagger
     const tail = window.setTimeout(() => publishEntrance('tail'), (last + TAIL_AT * MOTION.entrance.duration) * 1000)
     return () => clearTimeout(tail)
-  }, [entrance, hydrated, phase, ref, stagger])
+  }, [entrance, live, phase, ref, stagger])
 
   const variants = useMemo<Variants>(() => ({ visible: { transition: { delayChildren: staggerChildren(stagger) } } }), [stagger])
 
@@ -303,7 +323,7 @@ export function Reveal({
       aria-label={ariaLabel}
       variants={variants}
       initial="hidden"
-      animate={hydrated ? phase : 'hidden'}
+      animate={live ? phase : 'hidden'}
       // A landed reveal rests in `settled`: the state Motion replays when an Activity boundary shows again, and a
       // no-op from where the items already are.
       onAnimationComplete={(label) => {

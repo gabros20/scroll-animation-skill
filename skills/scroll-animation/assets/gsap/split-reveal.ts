@@ -61,6 +61,7 @@
 import { SplitText } from 'gsap/SplitText'
 
 import { MOTION, TRIGGERS, failsafeFired } from '../config'
+import { whenEntranceOpen } from '../entrance-signal'
 import { WORD_BOUNDARY, isUnspaced, markWordBoundaries } from '../split-words'
 import {
   EASES,
@@ -265,15 +266,20 @@ export function splitReveal(el: HTMLElement, options: SplitRevealOptions = {}): 
     // onEnter for every trigger a jump passes), or created at the previous page's scrollY before a client navigation
     // placed the scroll (gsap/reveal.ts). It stays split and waits for the reader. ScrollTrigger calls back
     // synchronously as the trigger is created, inside useGSAP, so the rect is read a frame later.
-    requestAnimationFrame(() => {
-      if (destroyed || arrived) return
-      const { top, bottom } = el.getBoundingClientRect()
-      if (bottom <= 0 || top >= window.innerHeight) return
-      self.kill()
-      arrived = true
-      timeline?.play()
-    })
+    // Under the page lifecycle's hold (a route transition, a loader) it waits for the hold to lift first.
+    cancelOpen()
+    cancelOpen = whenEntranceOpen(() =>
+      requestAnimationFrame(() => {
+        if (destroyed || arrived) return
+        const { top, bottom } = el.getBoundingClientRect()
+        if (bottom <= 0 || top >= window.innerHeight) return
+        self.kill()
+        arrived = true
+        timeline?.play()
+      }),
+    )
   }
+  let cancelOpen = () => {}
 
   window.addEventListener('beforeprint', land)
 
@@ -289,6 +295,7 @@ export function splitReveal(el: HTMLElement, options: SplitRevealOptions = {}): 
       if (destroyed) return
       destroyed = true
       window.removeEventListener('beforeprint', land)
+      cancelOpen()
       trigger?.kill()
       mm.revert()
       unsplit()

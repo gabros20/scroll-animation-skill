@@ -48,7 +48,7 @@
  *   folds them into the transform for the length of the entrance and they are handed back when it lands.
  */
 import { MOTION, TRIGGERS, failsafeFired } from '../config'
-import { TAIL_AT, publishEntrance } from '../entrance-signal'
+import { TAIL_AT, claimEntrance, entranceHeld, publishEntrance, whenEntranceOpen } from '../entrance-signal'
 import {
   EASES,
   MOTION_CONDITIONS,
@@ -183,8 +183,11 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
       if (options.entrance) publishEntrance('settled')
       return
     }
-    // Out of the context's record: its revert would timeline.revert() them (see release).
-    context.ignore(() => {
+    if (options.entrance) claimEntrance()
+    // Out of the context's record: its revert would timeline.revert() them (see release). And only once the page
+    // lifecycle's hold lifts (at once on a page that isn't held): a mount item never plays under a route transition.
+    const cancelOpen = whenEntranceOpen(() => context.ignore(() => {
+      if (destroyed) return
       let last = -1
       for (const [group, els] of byGroup) if (group.trigger === 'mount') last = Math.max(last, play(els))
       if (!options.entrance) return
@@ -192,15 +195,19 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
       if (!entering.size) return publishEntrance('settled')
       publishEntrance('running')
       tail = gsap.delayedCall(last + TAIL_AT * MOTION.entrance.duration, () => publishEntrance('tail'))
-    })
+    }))
     // A revert (reduced motion changing, destroy) lands every reveal in flight: triggered means shown.
-    return () => Array.from(running.keys()).forEach(land)
+    return () => {
+      cancelOpen()
+      Array.from(running.keys()).forEach(land)
+    }
   })
 
   // The triggers live outside the build, for the handle's life. GSAP 3.15 zeroes the page's recorded scroll when the
   // last ScrollTrigger on it is killed during a matchMedia revert (or one is created during a rebuild), and the
   // refresh after the change then leaves the reader at the top: measured on a page whose only triggers were these.
   const triggers: ScrollTrigger[] = []
+  const opens: Array<() => void> = []
   for (const [group, els] of byGroup) {
     if (group.trigger === 'mount') continue
     const watched = group.replay ? els : els.filter((el) => !isShown(el))
@@ -212,7 +219,13 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
     // triggers are created at the previous page's scrollY: an item in that band starts active, one above it fires
     // onEnterBack on the jump to the top, and either would play below the fold. An item off screen keeps its trigger
     // and reveals when the reader reaches it.
+    // Held by the page lifecycle (a route transition, the scroll not placed yet): the same triggers are asked again
+    // when the hold lifts, and the on-screen test then reads the placed page.
     const enter = (_batch: Element[], batchTriggers: ScrollTrigger[]) => {
+      if (entranceHeld()) {
+        opens.push(whenEntranceOpen(() => !destroyed && enter(_batch, batchTriggers.filter((trigger) => triggers.includes(trigger)))))
+        return
+      }
       const arrived = batchTriggers.filter((trigger) => onScreen(trigger.trigger as HTMLElement))
       if (!settled) play(arrived.map((trigger) => trigger.trigger as HTMLElement))
       if (!group.replay) arrived.forEach((trigger) => trigger.kill())
@@ -231,6 +244,7 @@ export function reveal(root: ParentNode, options: RevealOptions = {}): RevealHan
     destroy() {
       destroyed = true
       tail?.kill()
+      opens.forEach((cancel) => cancel())
       mm.revert()
       triggers.forEach((trigger) => trigger.kill())
     },
