@@ -491,7 +491,9 @@ const GROUPS = {
     await page.focus('#skip')
     await page.keyboard.press('Enter')
     const landed = await page.evaluate(() => ({ active: document.activeElement?.id, tabindex: document.getElementById('target').getAttribute('tabindex') }))
-    await page.keyboard.press('Tab')
+    // WebKit on macOS leaves links out of Tab by default (Safari's "Press Tab to highlight each item"); Option+Tab
+    // reaches them, as a keyboard reader there does.
+    await page.keyboard.press(t.browser === 'webkit' ? 'Alt+Tab' : 'Tab')
     const next = await page.evaluate(() => ({ active: document.activeElement?.id, tabindex: document.getElementById('target').getAttribute('tabindex') }))
     t.check('a skip link moves focus to its target: the next Tab continues inside it, and the tabindex goes with the focus', () => [
       landed.active === 'target' && landed.tabindex === '-1' && next.active === 'inside' && next.tabindex === null,
@@ -691,6 +693,7 @@ async function main() {
       const contexts = []
       const errors = []
       const t = {
+        browser: name,
         async open(path, { clock = false, ...options } = {}) {
           const context = await open.browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion: 'no-preference', ...options })
           contexts.push(context)
