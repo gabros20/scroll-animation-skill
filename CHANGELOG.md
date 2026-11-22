@@ -12,6 +12,19 @@ the newest release heading below, and the release tag.
 ### Added
 - Queue unreleased changes here.
 
+## [2.2.1] - 2026-11-22
+
+### Changed (documentation)
+- README rewritten for 2.2: what is new (the page lifecycle, entrances that never fire off screen or under a
+  crossfade, the scroll authority that follows the router, ScrollSmoother as legacy, `remove`, `--font-swap`), the
+  current layout of `assets/` (`react/`, `smooth/`, `media/`, the engine-free cores), the CLI, the Folio example, the
+  storefront and the test suites, and the system paragraph with all five clocks.
+- The storefront says ScrollSmoother is legacy: the guide recommends native scrolling, then Lenis, and keeps the
+  home page as the example of a site that already runs ScrollSmoother; the invariant count is 11.
+- The plugin description names native or Lenis as the scroll authority, ScrollSmoother for legacy sites, and the
+  page lifecycle.
+- Changelog link references cover every release.
+
 ## [2.2.0] - 2026-11-22
 
 ### Added
@@ -433,7 +446,12 @@ scrubbed-video scene per page, looping video, header ink that follows the sectio
 scroll wells, and brownfield coexistence with GSAP and Lenis, for Motion and GSAP, plus the
 static audit, the runtime verifier and the anchor check.
 
-[Unreleased]: https://github.com/gabros20/scroll-animation-skill/compare/v2.0.1...HEAD
+[Unreleased]: https://github.com/gabros20/scroll-animation-skill/compare/v2.2.1...HEAD
+[2.2.1]: https://github.com/gabros20/scroll-animation-skill/releases/tag/v2.2.1
+[2.2.0]: https://github.com/gabros20/scroll-animation-skill/releases/tag/v2.2.0
+[2.1.2]: https://github.com/gabros20/scroll-animation-skill/releases/tag/v2.1.2
+[2.1.1]: https://github.com/gabros20/scroll-animation-skill/releases/tag/v2.1.1
+[2.1.0]: https://github.com/gabros20/scroll-animation-skill/releases/tag/v2.1.0
 [2.0.1]: https://github.com/gabros20/scroll-animation-skill/releases/tag/v2.0.1
 [2.0.0]: https://github.com/gabros20/scroll-animation-skill/releases/tag/v2.0.0
 [1.0.0]: https://github.com/gabros20/scroll-animation-skill/commits/v1.0.0
