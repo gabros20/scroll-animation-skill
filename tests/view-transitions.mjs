@@ -666,9 +666,10 @@ const CHECKS = {
       const synced = (r) => r.samples.every(([y, l]) => y === 0 && l === 0)
       return [
         [
-          'control: a direct startViewTransition() leaves Lenis gliding back toward its old target',
-          raw.mid > 100 && maxY(raw) > 50,
-          `mid-scroll ${raw.mid}, scrollY after the jump up to ${maxY(raw)}`,
+          // Before the authority followed placements this glided back toward the old target (2.1: up to 2058 px).
+          'a direct startViewTransition(): Lenis takes up the jump by its own rule (a native position it did not write)',
+          raw.mid > 100 && synced(raw) && raw.scrolling !== 'smooth',
+          `mid-scroll ${raw.mid}, 30 frames after: scrollY ≤ ${maxY(raw)}, isScrolling ${raw.scrolling}`,
         ],
         [
           'transition(): after the jump to the top, Lenis equals scrollY (0) and no catch-up runs',

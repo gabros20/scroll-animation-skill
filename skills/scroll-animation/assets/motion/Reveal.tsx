@@ -65,7 +65,7 @@ import {
 } from 'react'
 
 import { CURVES, MOTION, TRIGGERS, failsafeFired } from '../config'
-import { TAIL_AT, claimEntrance, publishEntrance, whenEntranceOpen } from '../entrance-signal'
+import { TAIL_AT, claimEntrance, entranceHeld, publishEntrance, whenEntranceOpen } from '../entrance-signal'
 import { useReducedMotionLive } from './useReducedMotionLive'
 
 export type RevealEffect = 'rise' | 'fade' | 'clip' | 'scale-in'
@@ -230,11 +230,16 @@ export function Reveal({
   if (settle && phase !== 'settled') setPhase('settled')
 
   // Nothing plays, and nothing is observed, while the page lifecycle holds entrances (a route transition, the scroll
-  // not placed, a loader). Read in a layout effect, never in render: the lifecycle begins a visit in an insertion
-  // effect, after this render. Not held, it opens before the first paint. Sticky: a later visit's hold must not send
-  // a group that has played back to `hidden` (see Phase).
-  const [open, setOpen] = useState(false)
-  useIsomorphicLayoutEffect(() => whenEntranceOpen(() => setOpen(true)), [])
+  // not placed, a loader). The hold is read in a layout effect, never in render: the lifecycle begins a visit in an
+  // insertion effect, after this render. Not held (every load, most mounts), nothing changes and no render is added.
+  // Held, the group goes back to `hidden` before the first paint and opens when the hold lifts. Only at mount: a
+  // later visit's hold must not send a group that has played back to `hidden` (see Phase).
+  const [open, setOpen] = useState(true)
+  useIsomorphicLayoutEffect(() => {
+    if (!entranceHeld()) return
+    setOpen(false)
+    return whenEntranceOpen(() => setOpen(true))
+  }, [])
   const live = hydrated && open
 
   const watching = live && trigger === 'view' && !settle && (replay || phase === 'hidden')

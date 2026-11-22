@@ -159,5 +159,5 @@ function start(update: Update, types: string[] | undefined): ViewTransition | nu
 async function run(update: Update): Promise<void> {
   await update()
   // A smoothing authority takes up where `update` left the page, at once (the header comment says why).
-  currentSmoothScroll()?.sync()
+  currentSmoothScroll()?.adopt()
 }
