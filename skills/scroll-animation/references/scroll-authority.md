@@ -41,8 +41,8 @@ when the route goes away or is hidden.
   sticky, CSS scroll timelines, Motion or third-party React components.
 - **ScrollSmoother** when the page is GSAP-only, leans on `data-speed` / `data-lag` effects, and its fixed UI (the
   header) can live outside the content wrapper.
-- **Default for a smoothed desktop page: Lenis, with one geometry.** Touch and Safari scroll natively either way,
-  and there CSS sticky and CSS scroll timelines are the right tools. Lenis keeps them working on desktop too, so
+- **Default for a smoothed desktop page: Lenis, with one geometry.** Touch scrolls natively either way (and
+  Safari, when you keep it native for its full-rate scroll), and there CSS sticky and CSS scroll timelines are the right tools. Lenis keeps them working on desktop too, so
   the page is built once. ScrollSmoother turns sticky and CSS timelines off inside its wrapper, so every sticky
   element, scene and parallax needs a second, GSAP-written geometry for desktop alone. Measured on one production
   page that moved from ScrollSmoother to Lenis (Chrome desktop, 4× CPU, 2026-11): paint 310 → 114 ms, raster
@@ -51,7 +51,8 @@ when the route goes away or is hidden.
   elements to rebuild.
 - **The owner per device** (native on touch, a smoother on desktop) can't be known on the server. On React, render
   `<SmoothScroll authority="native">` first and switch after hydration (`useSyncExternalStore` with a `'native'`
-  server snapshot); the blocks don't choose it for you yet.
+  server snapshot); the blocks don't choose it for you yet. For `'smoother'`, render the two wrapper elements in the
+  layout and pass `wrap={false}`, so the switch doesn't remount the page.
 - **GSAP-only, and Safari or 120 Hz screens matter:** a trade-off, never a default. Only native scrolling gets
   Safari's full-rate compositor scroll. Lenis is capped at 60 fps there (§2); ScrollSmoother is unmeasured, and likely
   capped too: it moves the content from the same `requestAnimationFrame` ticker. On a phone both scroll natively
