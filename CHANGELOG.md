@@ -10,6 +10,11 @@ the newest release heading below, and the release tag.
 ## [Unreleased]
 
 ### Added
+- Queue unreleased changes here.
+
+## [2.2.0] - 2026-11-22
+
+### Added
 - **The page lifecycle** (`page`, `page.ts`): one owner of "is this page ready to animate" for the first load and for
   each route change. A visit (`load`, `push`, `traverse`, `restore`) and its phase are written on `<html>`
   (`data-visit-kind`, `data-entrance`, restarted per visit; `entrance:phase` carries `{ phase, visit, kind }`). Holds
