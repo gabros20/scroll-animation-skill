@@ -28,9 +28,17 @@
  * A page loaded with a hash (`/page#section`) lands on it: the browser's own fragment jump races the smoother (the
  * body has no scroll height until the first refresh, and a refresh puts back the scroll it recorded), so it would
  * stay at the top. The handle owns the landing, once, right after the first refresh.
+ *
+ * A link to a hash on another page (a client navigation) lands on it too. A router lands a fragment with
+ * scrollIntoView() (Next does), which here scrolls the fixed wrapper or the page against content that is still
+ * transformed to the old position: the page ended somewhere else (measured: the target 1150 px above the viewport).
+ * So when a push visit begins with a hash, the handle puts the wrapper's own scroll back to 0 and lands the page on
+ * the target itself, below scroll-padding-top like a native anchor, and once more after the visit's refresh. The
+ * wrapper is put back whenever anything scrolls it (a focus scroll does), the page moved by that much instead.
  */
-// gsap's index declares its plugin modules: 'gsap/ScrollTrigger' has no types of its own.
-/// <reference types="gsap" />
+// gsap's index declares its plugin modules: 'gsap/ScrollTrigger' has no types of its own. A type-only import, not a
+// triple-slash reference (eslint-config-next forbids those).
+import type {} from 'gsap'
 // No new bytes: ScrollSmoother runs only with ScrollTrigger registered, and this is the specifier gsap/setup.ts and
 // the usage above register. Register it from `gsap/ScrollTrigger` too: another path (`gsap/dist/…`) is a second copy,
 // whose `refresh` never fires here, and the hash landing silently never happens.
@@ -121,6 +129,40 @@ export function createSmoother(ScrollSmoother: ScrollSmootherStatic, options: Sm
   }
   if (hashTarget()) ScrollTrigger.addEventListener('refresh', landOnHash)
 
+  // The wrapper is a clipped, fixed box: nothing should scroll it, but scrollIntoView() and focus can.
+  const wrapperEl = typeof options.wrapper === 'object' ? options.wrapper : document.querySelector(options.wrapper ?? '#smooth-wrapper')
+  const resetWrapper = (): number => {
+    const moved = wrapperEl?.scrollTop ?? 0
+    if (wrapperEl && (moved || wrapperEl.scrollLeft)) {
+      wrapperEl.scrollTop = 0
+      wrapperEl.scrollLeft = 0
+    }
+    return moved
+  }
+  // A push visit that began with a hash still owes its landing (page.ts dispatches `entrance:phase` per visit).
+  let hashOwed = false
+  let lastVisit = document.documentElement.getAttribute('data-visit')
+  const relandOnRefresh = () => {
+    ScrollTrigger.removeEventListener('refresh', relandOnRefresh)
+    const el = hashTarget()
+    if (el && !destroyed) handle.scrollTo(el, { immediate: true })
+  }
+  const onVisit = (event: Event) => {
+    const detail = (event as CustomEvent<{ visit?: number; kind?: string }>).detail
+    const visit = String(detail?.visit ?? '')
+    if (visit === lastVisit) return
+    lastVisit = visit
+    ScrollTrigger.removeEventListener('refresh', relandOnRefresh)
+    hashOwed = detail?.kind === 'push' && !!hashTarget()
+  }
+  document.addEventListener('entrance:phase', onVisit)
+  const onWrapperScroll = () => {
+    if (hashOwed) return handle.adopt()
+    const moved = resetWrapper()
+    if (moved) smoother.scrollTo(window.scrollY + moved, false)
+  }
+  wrapperEl?.addEventListener('scroll', onWrapperScroll, { passive: true })
+
   const handle: SmoothScrollHandle = {
     authority: 'smoother',
     scrollTo(target, opts = {}) {
@@ -145,6 +187,16 @@ export function createSmoother(ScrollSmoother: ScrollSmootherStatic, options: Sm
       smoother.paused(false)
     },
     adopt() {
+      resetWrapper()
+      const el = hashOwed ? hashTarget() : null
+      if (el) {
+        // The visit's hash: the landing is this handle's, now and once more when the visit's refresh has measured
+        // the new page.
+        hashOwed = false
+        handle.scrollTo(el, { immediate: true })
+        ScrollTrigger.addEventListener('refresh', relandOnRefresh)
+        return
+      }
       // The content eases toward the native scroll over `smooth` seconds; a placement jumps it there instead
       // (`scrollTo(y, false)` jumps, and works while paused). Measured in Chromium: tests/route-hygiene.mjs.
       smoother.scrollTo(window.scrollY, false)
@@ -155,6 +207,9 @@ export function createSmoother(ScrollSmoother: ScrollSmootherStatic, options: Sm
     destroy() {
       destroyed = true
       stopFollowing()
+      document.removeEventListener('entrance:phase', onVisit)
+      wrapperEl?.removeEventListener('scroll', onWrapperScroll)
+      ScrollTrigger.removeEventListener('refresh', relandOnRefresh)
       ScrollTrigger.removeEventListener('refresh', landOnHash)
       reduced.removeEventListener('change', followReducedMotion)
       window.clearTimeout(resizeTimer)

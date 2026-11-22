@@ -1030,6 +1030,26 @@ async function lifecycleSequence({ browser, base, contract, line }) {
         `scrollY ${s.y} (0 to 750) · ${glide.off}/${glide.frames} frames off the scroll position (worst ${glide.worst} px)`,
         'F5 a flick of the wheel, then a link: lands at the top, no glide',
       )
+      // A link to a hash on another page. Next lands it with scrollIntoView(), which under ScrollSmoother scrolls the
+      // fixed wrapper, not the page: the handle puts the wrapper back and lands the page on the target.
+      await page.evaluate(() => history.back())
+      await settle(page, '/smoothed')
+      await contentStill(page)
+      await page.evaluate(() => window.__rh.click('smoothed-more-hash'))
+      const hashed = await settle(page, '/smoothed/more')
+      await contentStill(page)
+      const wrapperTop = await page.evaluate(() => document.getElementById('smooth-wrapper')?.scrollTop ?? null)
+      line(
+        near(hashed.hashTop, HEADER_H) && wrapperTop === 0 && hashed.y > 0,
+        `${hashed.hash} top at ${hashed.hashTop} px (header ${HEADER_H}) · scrollY ${hashed.y} · wrapper scrollTop ${wrapperTop}`,
+        'F5 a link to a hash on another page lands on it under ScrollSmoother',
+      )
+      await page.evaluate(() => history.back())
+      await settle(page, '/smoothed')
+      await contentStill(page)
+      await page.evaluate(() => window.__rh.click('smoothed-more'))
+      await settle(page, '/smoothed/more')
+      await contentStill(page)
       // The reader's own wheel is still smoothed afterwards: the rule adopts placements, not input.
       await page.evaluate(() => window.__rh.record())
       await wheel(page, 3)

@@ -90,9 +90,14 @@ export function Reveals({ route }: { route: 'reveals' | 'smoothed' }) {
           Home
         </Link>
         {route === 'smoothed' && (
-          <Link href="/smoothed/more" data-nav="smoothed-more">
-            More
-          </Link>
+          <>
+            <Link href="/smoothed/more" data-nav="smoothed-more">
+              More
+            </Link>
+            <Link href="/smoothed/more#p3" data-nav="smoothed-more-hash">
+              p3
+            </Link>
+          </>
         )}
       </nav>
       <section className="intro">{route}</section>
