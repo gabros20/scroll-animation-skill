@@ -21,6 +21,7 @@
     "../skills/scroll-animation/assets/*.ts",
     "../skills/scroll-animation/assets/smooth/**/*.ts",
     "../skills/scroll-animation/assets/smooth/**/*.tsx",
+    "../skills/scroll-animation/assets/react/**/*.tsx",
     "../skills/scroll-animation/assets/media/**/*.ts"
   ]
 }

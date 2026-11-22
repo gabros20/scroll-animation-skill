@@ -116,7 +116,7 @@
       "reference": "references/motion.md"
     },
     "scroll-authority": {
-      "summary": "One scroll owner per page: the handle (sync() takes up a route change at once), the <html data-scroll-authority> stamp, native scrolling as a handle, and routeChanged() for client navigations",
+      "summary": "One scroll owner per page: the handle (adopt() takes up a placement at once), followPlacements (the router's jump and a back/forward restore are followed by rule, not by a call), the <html data-scroll-authority> stamp, native scrolling as a handle, and the 2.1 routeChanged()",
       "clock": "none",
       "tier": "primitive",
       "profiles": [
@@ -131,7 +131,8 @@
             "smooth/route.ts"
           ],
           "requires": [
-            "config"
+            "config",
+            "page"
           ],
           "packages": []
         }
@@ -185,7 +186,7 @@
       "reference": "references/scroll-authority.md"
     },
     "smooth-react": {
-      "summary": "SmoothScroll: the scroll authority for one React route (native or Lenis), cleaned up on unmount and under Next's Activity; RouteChange runs routeChanged() once per navigation from the root layout",
+      "summary": "SmoothScroll: the scroll authority for one React route (native, Lenis or ScrollSmoother through `create`), cleaned up on unmount and under Next's Activity; RouteChange is the deprecated 2.1 route component (use page-react)",
       "clock": "none",
       "tier": "primitive",
       "profiles": [
@@ -313,7 +314,7 @@
       "reference": "references/page-transitions.md"
     },
     "entrance-signal": {
-      "summary": "The page-load entrance's clock on the DOM: data-entrance=\"pending|running|tail|settled\" and a bubbling entrance:phase event, never backwards; publishEntrance and trackEntrance (CSS and WAAPI entrances, via getAnimations({ subtree: true })), settled at once under reduced motion or the failsafe. A live canvas, video, loops and embeds wait on it: the hero budget",
+      "summary": "The entrance's clock on the DOM: data-entrance=\"pending|running|tail|settled\" and a bubbling entrance:phase event, never backwards within a visit; publishEntrance, trackEntrance, and what a block reads from the lifecycle (entranceHeld, whenEntranceOpen, entranceStartedAt). A live canvas, video, loops and embeds wait on it: the hero budget",
       "clock": "trigger",
       "tier": "primitive",
       "profiles": [
@@ -332,7 +333,54 @@
           "packages": []
         }
       },
-      "reference": "references/entrances.md"
+      "reference": "references/lifecycle.md"
+    },
+    "page": {
+      "summary": "The page lifecycle: one owner of readiness per visit (load, push, traverse, restore). Phases on <html>, holds with caps (placement, a view transition, fonts, a loader), when(), a start queue after settled, one refresh per visit",
+      "clock": "route",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "agnostic": {
+          "files": [
+            "page.ts"
+          ],
+          "requires": [
+            "config",
+            "entrance-signal"
+          ],
+          "packages": []
+        }
+      },
+      "reference": "references/lifecycle.md"
+    },
+    "page-react": {
+      "summary": "PageLifecycle: the lifecycle's route adapter for React. Renders nothing, sits anywhere in the root layout (its own Suspense under Cache Components), begins each visit before the commit's layout effects",
+      "clock": "route",
+      "tier": "primitive",
+      "profiles": [
+        "reading",
+        "expressive",
+        "immersive"
+      ],
+      "engines": {
+        "agnostic": {
+          "files": [
+            "react/PageLifecycle.tsx"
+          ],
+          "requires": [
+            "page"
+          ],
+          "packages": [
+            "react"
+          ]
+        }
+      },
+      "reference": "references/lifecycle.md"
     },
     "reveal": {
       "summary": "Triggered entrances (rise, fade, clip, scale-in) on the measured curves, at the trigger line or on mount: a CSS resting state under the pre-JS gate, failsafe-safe, live reduced motion, a load veil, Activity-safe",
@@ -437,7 +485,8 @@
           ],
           "requires": [
             "config",
-            "gsap-setup"
+            "gsap-setup",
+            "entrance-signal"
           ],
           "packages": [
             "gsap"
