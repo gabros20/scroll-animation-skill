@@ -22,6 +22,8 @@
  * - Built-in holds: `placement` (until placed(), at most two frames), `transition` (while a view transition is
  *   active, at most 1 s), `fonts` (only with <html data-entrance-fonts>, at most 400 ms), and the tab being visible.
  *   Your own hold defaults to a 4 s cap. A hold never outlives its cap: `running` always comes.
+ * - begin() with no argument reads the kind: a traverse when a popstate changed the path since the last visit was
+ *   placed, else a push.
  * - A traverse and a restore arrive `settled`: the reader is back where they were, and nothing replays.
  * - A load: the server HTML says which. `running`: a CSS entrance that played from first paint; nothing can hold it,
  *   and its clock is first contentful paint. `pending`: an entrance a script starts; the lifecycle opens it one
@@ -138,7 +140,8 @@ function remeasure(): void {
   clearTimeout(remeasureTimer)
   remeasureTimer = setTimeout(() => {
     refreshAll()
-    if (watching) watching.measured = html().scrollHeight
+    // And keep watching from here: what the caller announced (a search-param change, a client fetch) may still stream.
+    endVisit.push(watchSettle({}, true))
   }, SETTLE_DEBOUNCE_MS)
 }
 
@@ -150,7 +153,16 @@ let endVisit: Array<() => void> = []
 const holds = new Map<symbol, string>()
 /** A popstate moved to another path and no visit has begun for it yet: the next one is a traverse. */
 let popped = false
-let path = ''
+let path = typeof location === 'undefined' ? '' : location.pathname
+// Registered as the module loads, the one thing here that isn't dormant: it has to run before the router's own
+// popstate handler, and Next's commits the traverse synchronously inside it (measured, next@16.3.6), so a listener
+// added later hears the event after begin() has run. A router that listens before this module loads passes the
+// kind itself: page.begin('traverse').
+if (typeof window !== 'undefined' && typeof location !== 'undefined') {
+  window.addEventListener('popstate', () => {
+    if (location.pathname !== path) popped = true
+  })
+}
 let placedFor = 0
 let transitionHeld = 0
 
@@ -171,15 +183,6 @@ function ensure(): Visit {
   visit = { id: 1, kind: 'load', startedAt: NaN }
   if (!hasDom()) return visit
   stamp(visit)
-  path = location.pathname
-  // Capture, on window: before the router's own handler, which starts the render this flag is read in.
-  window.addEventListener(
-    'popstate',
-    () => {
-      if (location.pathname !== path) popped = true
-    },
-    true,
-  )
   window.addEventListener('pageshow', (event) => {
     if (event.persisted) begin('restore')
   })
@@ -292,7 +295,6 @@ function begin(kind?: VisitKind): Visit {
   const next: Visit = { id: last.id + 1, kind: kind ?? (popped ? 'traverse' : 'push'), startedAt: NaN }
   visit = next
   popped = false
-  path = location.pathname
   stamp(next)
   html().removeAttribute('data-entrance-claimed')
   html().removeAttribute('data-entrance-started')
@@ -318,6 +320,9 @@ function placed(): void {
   const v = ensure()
   if (!hasDom() || placedFor === v.id) return
   placedFor = v.id
+  // Read here, not in begin(): a router may write the URL in the same commit, after begin() (Next's history update is
+  // an insertion effect too).
+  path = location.pathname
   // A load is ScrollTrigger's own refresh (at `load`): only its streamed content is watched.
   if (v.kind !== 'load') refreshAll()
   const stop = watchSettle({}, v.kind !== 'load')
@@ -444,7 +449,7 @@ export const page = {
   entrance,
   /** A costly start (a video, a canvas loop, an embed): in `order`, one per task, after the entrance settled. */
   afterSettled,
-  /** Late content landed: run the registered refreshes, debounced. */
+  /** The page's content changed without a visit (search params, a client fetch): refresh, debounced, then watch it settle. */
   remeasure,
   /** Register a refresh (`ScrollTrigger.refresh`) for each visit's placement and for remeasure(). Returns the unregister. */
   onRemeasure,

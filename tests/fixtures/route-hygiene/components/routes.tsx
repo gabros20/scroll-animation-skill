@@ -9,10 +9,12 @@ import { useGSAP } from '@gsap/react'
 import type Lenis from 'lenis'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { useRef, useState, type ReactNode } from 'react'
+import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 
 import { gsap, ScrollTrigger, setupGsap } from '@/animation/gsap/setup'
+import { page } from '@/animation/page'
 import { gsapDriver, type Driver } from '@/animation/smooth/lenis'
+import { PageLifecycle } from '@/animation/react/PageLifecycle'
 import { onRouteRefresh } from '@/animation/smooth/route'
 import { RouteChange, SmoothScroll } from '@/animation/smooth/SmoothScroll'
 
@@ -41,18 +43,43 @@ const driver: Driver = (lenis) => {
   }
 }
 
-// The checks turn the route hygiene off through sessionStorage to measure what happens without it: a route that
-// never changes never runs it, and `settle={0}` keeps a fresh load from watching.
-const useContractOff = () => useState(() => typeof window !== 'undefined' && sessionStorage.getItem('rh:contract') === 'off')[0]
+// The checks choose the route contract through sessionStorage, per page load:
+//   rh:contract   on (default): the page lifecycle, <PageLifecycle> · legacy: 2.1's <RouteChange> · off: neither
+//   rh:place      where it sits in the root layout: before the page (the default), after it, or around it
+// A route that never changes never runs the legacy contract, and `settle={0}` keeps a fresh load from watching.
+type Contract = 'on' | 'legacy' | 'off'
+type Place = 'before' | 'after' | 'around'
+const read = (key: string) => (typeof window === 'undefined' ? null : sessionStorage.getItem(key))
+const useContract = () => useState<Contract>(() => (read('rh:contract') as Contract | null) ?? 'on')[0]
+const usePlace = () => useState<Place>(() => (read('rh:place') as Place | null) ?? 'before')[0]
 
-/** The route hygiene, around the root layout's children (smooth/route.ts). No refresh here: the routes register theirs. */
-export function RouteScroll({ children }: { children: ReactNode }) {
+function Contracted({ at, children }: { at: Place; children?: ReactNode }) {
   const pathname = usePathname()
-  const off = useContractOff()
+  const contract = useContract()
+  const active = usePlace() === at
+  if (!active || contract === 'off') return <>{children}</>
+  if (contract === 'on') {
+    return (
+      <>
+        {children}
+        <PageLifecycle route={pathname} />
+      </>
+    )
+  }
+  return <RouteChange route={pathname}>{children}</RouteChange>
+}
+
+/** The route contract around the root layout's children: 2.1's documented place for <RouteChange>. */
+export function RouteScroll({ children }: { children: ReactNode }) {
+  return <Contracted at="around">{children}</Contracted>
+}
+
+/** The route contract as a self-closing sibling of the page, in its own boundary (the Cache Components pattern). */
+export function RouteSlot({ at }: { at: 'before' | 'after' }) {
   return (
-    <RouteChange route={off ? 'off' : pathname} settle={off ? 0 : undefined}>
-      {children}
-    </RouteChange>
+    <Suspense fallback={null}>
+      <Contracted at={at} />
+    </Suspense>
   )
 }
 
@@ -139,6 +166,7 @@ export function Home({ base }: { base: string }) {
           ['journal', `${base}/journal`, 'Journal'],
           ['journal-hash', `${base}/journal#notes`, 'Notes'],
           ['more', `${base}/more`, 'More'],
+          ...(base ? ([['enter', `${base}/enter`, 'Enter']] as Array<[string, string, string]>) : []),
           ...(base
             ? []
             : ([
@@ -236,7 +264,12 @@ export function Streamed({ long, children }: { long: boolean; children: ReactNod
   const root = useRef<HTMLDivElement>(null)
   // The page's content follows its search params, so a change of them is a route change here (smooth/route.ts).
   const search = useSearchParams().toString()
-  const off = useContractOff()
+  const contract = useContract()
+  const off = contract !== 'legacy'
+  // The lifecycle: the same visit, so the page asks for a re-measure itself.
+  useEffect(() => {
+    if (contract === 'on') page.remeasure()
+  }, [contract, search])
   useGSAP(
     () => {
       // s2 sits below the streamed section and the `long` blocks, so both move it.
@@ -246,32 +279,37 @@ export function Streamed({ long, children }: { long: boolean; children: ReactNod
     },
     { scope: root },
   )
+  const content = (
+    <div ref={root} data-route="streamed" data-streamed={long ? 'long' : 'short'}>
+      <Nav
+        links={[
+          ['home', '/', 'Home'],
+          ['streamed-long', '/streamed?long=1', 'Long'],
+          ['streamed-short', '/streamed', 'Short'],
+        ]}
+      />
+      <section className="screen">Streamed</section>
+      <section className="block" id="s1">
+        s1
+      </section>
+      {children}
+      {long &&
+        ['l1', 'l2', 'l3'].map((id) => (
+          <section key={id} className="block">
+            {id} (?long=1)
+          </section>
+        ))}
+      <section className="block" id="s2">
+        s2
+      </section>
+      <section className="tail">end</section>
+    </div>
+  )
+  // 2.1: the page wraps its content in its own <RouteChange>, keyed on the search params.
+  if (contract === 'on') return content
   return (
     <RouteChange route={off ? 'off' : search} settle={off ? 0 : undefined}>
-      <div ref={root} data-route="streamed" data-streamed={long ? 'long' : 'short'}>
-        <Nav
-          links={[
-            ['home', '/', 'Home'],
-            ['streamed-long', '/streamed?long=1', 'Long'],
-            ['streamed-short', '/streamed', 'Short'],
-          ]}
-        />
-        <section className="screen">Streamed</section>
-        <section className="block" id="s1">
-          s1
-        </section>
-        {children}
-        {long &&
-          ['l1', 'l2', 'l3'].map((id) => (
-            <section key={id} className="block">
-              {id} (?long=1)
-            </section>
-          ))}
-        <section className="block" id="s2">
-          s2
-        </section>
-        <section className="tail">end</section>
-      </div>
+      {content}
     </RouteChange>
   )
 }

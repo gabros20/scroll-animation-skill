@@ -55,6 +55,7 @@ import { m, stagger as staggerChildren, type Transition, type Variants } from 'm
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -64,7 +65,7 @@ import {
 } from 'react'
 
 import { CURVES, MOTION, TRIGGERS, failsafeFired } from '../config'
-import { TAIL_AT, claimEntrance, entranceHeld, publishEntrance } from '../entrance-signal'
+import { TAIL_AT, claimEntrance, publishEntrance, whenEntranceOpen } from '../entrance-signal'
 import { useReducedMotionLive } from './useReducedMotionLive'
 
 export type RevealEffect = 'rise' | 'fade' | 'clip' | 'scale-in'
@@ -159,6 +160,8 @@ function useElementRef() {
   return [ref, attach] as const
 }
 
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect
+
 const subscribeNothing = () => () => {}
 /** False on the server and during hydration, true after: renders before it keep the server's markup and state. */
 function useHydrated(): boolean {
@@ -177,16 +180,6 @@ function subscribeFailsafe(onChange: () => void) {
 /** html[data-animation-failsafe]: the CSS failsafe revealed the page before the engine was ready. */
 function useFailsafeFired(): boolean {
   return useSyncExternalStore(subscribeFailsafe, failsafeFired, () => false)
-}
-
-function subscribeHeld(onChange: () => void) {
-  const observer = new MutationObserver(onChange)
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-entrance-held'] })
-  return () => observer.disconnect()
-}
-/** html[data-entrance-held]: the page lifecycle holds entrances (a route transition, the scroll not placed, a loader). */
-function useEntranceHeld(): boolean {
-  return useSyncExternalStore(subscribeHeld, entranceHeld, () => false)
 }
 
 export interface RevealProps {
@@ -236,11 +229,12 @@ export function Reveal({
   const settle = hydrated && (reduced || failsafe)
   if (settle && phase !== 'settled') setPhase('settled')
 
-  // Nothing plays, and nothing is observed, while the page lifecycle holds entrances. Sticky: a later visit's hold
-  // must not send a group that has played back to `hidden` (see Phase).
-  const held = useEntranceHeld()
+  // Nothing plays, and nothing is observed, while the page lifecycle holds entrances (a route transition, the scroll
+  // not placed, a loader). Read in a layout effect, never in render: the lifecycle begins a visit in an insertion
+  // effect, after this render. Not held, it opens before the first paint. Sticky: a later visit's hold must not send
+  // a group that has played back to `hidden` (see Phase).
   const [open, setOpen] = useState(false)
-  if (hydrated && !held && !open) setOpen(true)
+  useIsomorphicLayoutEffect(() => whenEntranceOpen(() => setOpen(true)), [])
   const live = hydrated && open
 
   const watching = live && trigger === 'view' && !settle && (replay || phase === 'hidden')

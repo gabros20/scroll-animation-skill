@@ -40,16 +40,34 @@ export function NativeRevealRoute({ children }: { children: ReactNode }) {
   return <SmoothScroll authority="native">{children}</SmoothScroll>
 }
 
-/** ScrollSmoother from the route's layout, as scroll-authority.md §5 starts it: createSmoother, the wrapper around the page. */
+const smoother = () => createSmoother(ScrollSmoother, { smooth: 1 })
+
+/** ScrollSmoother from the route's layout: <SmoothScroll authority="smoother">, which renders the wrapper. */
 export function SmootherRevealRoute({ children }: { children: ReactNode }) {
   useGSAP(() => onRouteRefresh(ScrollTrigger.refresh))
-  useGSAP(() => {
-    const handle = createSmoother(ScrollSmoother, { smooth: 1 })
-    return () => handle.destroy()
-  })
   return (
-    <div id="smooth-wrapper">
-      <div id="smooth-content">{children}</div>
+    <SmoothScroll authority="smoother" create={smoother}>
+      {children}
+    </SmoothScroll>
+  )
+}
+
+/** A second page under the same smoother, shorter than Smoothed: the smoother lives on across the navigation. */
+export function SmoothedMore() {
+  return (
+    <div data-route="smoothed-more">
+      <nav className="nav">
+        <Link href="/smoothed" data-nav="smoothed">
+          Smoothed
+        </Link>
+      </nav>
+      <section className="screen">smoothed more</section>
+      {['p1', 'p2', 'p3', 'p4', 'p5'].map((id) => (
+        <section key={id} className="block" id={id}>
+          {id}
+        </section>
+      ))}
+      <section className="tail">end</section>
     </div>
   )
 }
@@ -71,6 +89,11 @@ export function Reveals({ route }: { route: 'reveals' | 'smoothed' }) {
         <Link href="/" data-nav="home">
           Home
         </Link>
+        {route === 'smoothed' && (
+          <Link href="/smoothed/more" data-nav="smoothed-more">
+            More
+          </Link>
+        )}
       </nav>
       <section className="intro">{route}</section>
       <div data-reveal="view">

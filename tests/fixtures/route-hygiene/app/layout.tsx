@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { GATE_SCRIPT } from '@/animation/config'
-import { LayoutProgress, RouteScroll } from '@/components/routes'
+import { LayoutProgress, RouteScroll, RouteSlot } from '@/components/routes'
 
 import './fixture.css'
 
@@ -14,9 +14,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body>
         <RouteScroll>
+          <RouteSlot at="before" />
           <header className="bar">route-hygiene fixture</header>
           <LayoutProgress />
           <main>{children}</main>
+          <RouteSlot at="after" />
         </RouteScroll>
       </body>
     </html>

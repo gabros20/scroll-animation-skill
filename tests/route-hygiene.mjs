@@ -76,6 +76,14 @@ const BLOCKS = [
   'smooth/smoother.ts',
   'smooth/SmoothScroll.tsx',
   'smooth/route.ts',
+  'page.ts',
+  'react/PageLifecycle.tsx',
+  'reveal.ts',
+  'css/split.css',
+  'motion/SplitWords.tsx',
+  'motion/Reveal.tsx',
+  'motion/MotionProvider.tsx',
+  'motion/useReducedMotionLive.ts',
   'gsap/setup.ts',
   'gsap/reveal.ts',
   'gsap/split-reveal.ts',
@@ -83,7 +91,20 @@ const BLOCKS = [
 ]
 
 const BROWSERS = { chromium, webkit, firefox }
-const VARIANTS = { plain: '0', cache: '1' }
+// `before`: the plain app on 2.1.2's blocks (git show), for what F3 to F5 measured before the lifecycle.
+const VARIANTS = { plain: '0', cache: '1', before: '0' }
+const BEFORE_REF = 'v2.1.2'
+const BEFORE_BLOCKS = [
+  'smooth/authority.ts',
+  'smooth/lenis.ts',
+  'smooth/smoother.ts',
+  'gsap/reveal.ts',
+  'gsap/split-reveal.ts',
+  'reveal.ts',
+  'motion/Reveal.tsx',
+  'css/split.css',
+  'css/animation.css',
+]
 const VIEWPORT = { width: 1280, height: 800 }
 const HEADER_H = 64
 const Y1 = 3000
@@ -98,10 +119,10 @@ const ARRIVE_STEP = 400
 function parseArgs(argv) {
   const out = {
     browsers: Object.keys(BROWSERS),
-    variants: Object.keys(VARIANTS),
+    variants: ['plain', 'cache'],
     prefixes: ['', '/vt'],
-    contract: ['on', 'off'],
-    only: ['sequence', 'arrival'],
+    contract: ['on', 'legacy', 'off'],
+    only: ['sequence', 'arrival', 'lifecycle'],
     folio: false,
   }
   for (let i = 0; i < argv.length; i++) {
@@ -116,8 +137,8 @@ function parseArgs(argv) {
   }
   for (const b of out.browsers) if (!BROWSERS[b]) throw new Error(`unknown browser: ${b}`)
   for (const v of out.variants) if (!VARIANTS[v]) throw new Error(`unknown variant: ${v} (${Object.keys(VARIANTS).join(', ')})`)
-  for (const c of out.contract) if (c !== 'on' && c !== 'off') throw new Error(`unknown contract mode: ${c} (on, off)`)
-  for (const o of out.only) if (o !== 'sequence' && o !== 'arrival') throw new Error(`unknown group: ${o} (sequence, arrival)`)
+  for (const c of out.contract) if (!['on', 'legacy', 'off'].includes(c)) throw new Error(`unknown contract mode: ${c} (on, legacy, off)`)
+  for (const o of out.only) if (!['sequence', 'arrival', 'lifecycle'].includes(o)) throw new Error(`unknown group: ${o} (sequence, arrival, lifecycle)`)
   if (out.folio) {
     out.variants = ['folio']
     out.prefixes = ['']
@@ -134,6 +155,13 @@ function prepare(variant) {
   mkdirSync(app, { recursive: true })
   cpSync(fixture, app, { recursive: true })
   for (const file of BLOCKS) cpSync(join(assets, file), join(app, 'animation', file))
+  if (variant === 'before') {
+    for (const file of BEFORE_BLOCKS) {
+      const show = spawnSync('git', ['show', `${BEFORE_REF}:skills/scroll-animation/assets/${file}`], { cwd: repo, encoding: 'utf8' })
+      if (show.status !== 0) throw new Error(`git show ${BEFORE_REF}:${file} failed (the 'before' variant needs the tag): ${show.stderr}`)
+      writeFileSync(join(app, 'animation', file), show.stdout)
+    }
+  }
   symlinkSync(folioModules, join(app, 'node_modules'), 'dir')
   return app
 }
@@ -225,10 +253,10 @@ function stop(child) {
 // ── in the page ─────────────────────────────────────────────────────────
 
 /** Installed before any page script, on every document. */
-function probes(contractOff) {
+function probes({ contract, place }) {
   try {
-    if (contractOff) sessionStorage.setItem('rh:contract', 'off')
-    else sessionStorage.removeItem('rh:contract')
+    sessionStorage.setItem('rh:contract', contract)
+    sessionStorage.setItem('rh:place', place)
   } catch {
     // storage blocked: the contract stays on
   }
@@ -286,22 +314,51 @@ function probes(contractOff) {
     Array.from(document.querySelectorAll('[data-route]'))
       .filter((el) => el.getClientRects().length > 0)
       .map((el) => el.dataset.route)
+  // The lifecycle's phases, as the page publishes them.
+  window.__rhPhases = []
+  document.addEventListener('entrance:phase', (e) => window.__rhPhases.push({ ...e.detail, t: performance.now() }))
+  // F3: when each watched element first showed (opacity above 0, or moved off where it was first seen).
+  const watched = {}
+  const sample = (selectors) => {
+    for (const selector of selectors) {
+      const el = document.querySelector(selector)
+      if (!el || !el.getClientRects().length) continue
+      const style = getComputedStyle(el)
+      const ty = style.transform === 'none' ? 0 : new DOMMatrixReadOnly(style.transform).m42
+      const entry = (watched[selector] ??= { ty, seen: performance.now(), started: null })
+      if (entry.started === null && (Number(style.opacity) > 0.01 || Math.abs(ty - entry.ty) > 0.5)) entry.started = performance.now()
+    }
+  }
   let frames = null
+  let watching = []
   const frame = () => {
     if (!frames) return
     const lenis = window.__rhLenis
-    frames.push({ p: location.pathname, y: window.scrollY, ly: lenis ? lenis.animatedScroll : null, s: lenis ? lenis.isScrolling : null })
+    // Under ScrollSmoother the page is a transformed element: where it sits against where the scroll is.
+    const content = document.getElementById('smooth-content')
+    frames.push({
+      p: location.pathname,
+      y: window.scrollY,
+      ly: lenis ? lenis.animatedScroll : null,
+      s: lenis ? lenis.isScrolling : null,
+      c: content ? -content.getBoundingClientRect().top : null,
+      vt: window.__rhVT,
+    })
+    sample(watching)
     requestAnimationFrame(frame)
   }
   window.__rh = {
     liveLenis: () => live.size,
-    record() {
+    record(selectors = []) {
       frames = []
+      watching = selectors
+      for (const key of Object.keys(watched)) delete watched[key]
       window.__rhLog.length = 0
+      window.__rhPhases.length = 0
       requestAnimationFrame(frame)
     },
     stopRecord() {
-      const out = { frames: frames ?? [], log: window.__rhLog.slice() }
+      const out = { frames: frames ?? [], log: window.__rhLog.slice(), phases: window.__rhPhases.slice(), watched: { ...watched } }
       frames = null
       return out
     },
@@ -497,7 +554,7 @@ async function freshTriggers(context, base, prefix) {
 
 async function sequence({ browser, base, prefix, contract, line }) {
   const context = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion: 'no-preference' })
-  await context.addInitScript(probes, contract === 'off')
+  await context.addInitScript(probes, { contract, place: contract === 'legacy' ? 'around' : 'before' })
   const errors = []
   try {
     const fresh = await freshTriggers(context, base, prefix)
@@ -690,7 +747,7 @@ async function arrivalSequence({ browser, base, line }) {
     for (const from of ARRIVE_FROM) {
       const name = `link from Home at ${from} to ${path}`
       const context = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion: 'no-preference' })
-      await context.addInitScript(probes, false)
+      await context.addInitScript(probes, { contract: 'on', place: 'before' })
       const errors = []
       try {
         const page = await context.newPage()
@@ -758,9 +815,230 @@ async function arrivalSequence({ browser, base, line }) {
   }
 }
 
+
+// ── the lifecycle: F3, F4, F5 ───────────────────────────────────────────
+
+const F3_WATCH = ['[data-route="enter"] [data-split-word]', '#e-gsap-mount', '#e-gsap-view', '#e-free', '#e-motion']
+const GLIDE_PX = 2
+
+/** Resolves once the smoothed content (if the page has one) has held still for 10 frames. */
+async function contentStill(page) {
+  await page
+    .waitForFunction(
+      () =>
+        new Promise((resolve) => {
+          let last = null
+          let held = 0
+          const step = () => {
+            const top = document.getElementById('smooth-content')?.getBoundingClientRect().top ?? 0
+            held = top === last ? held + 1 : 0
+            last = top
+            if (held >= 10) resolve(true)
+            else requestAnimationFrame(step)
+          }
+          requestAnimationFrame(step)
+        }),
+      null,
+      { timeout: 10000 },
+    )
+    .catch(() => {})
+}
+
+/** A fresh page on `path` with the contract and its place set, scrolled to `y` and settled. */
+async function openAt(browser, base, { contract, place }, path, y, errors) {
+  const context = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion: 'no-preference' })
+  await context.addInitScript(probes, { contract, place })
+  const page = await context.newPage()
+  page.on('pageerror', (e) => errors.push(e.message))
+  await page.goto(`${base}${path}`, { waitUntil: 'load' })
+  await settle(page, path)
+  if (y) {
+    await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y)
+    await settle(page, path)
+    await contentStill(page)
+  }
+  return { context, page }
+}
+
+/**
+ * Frames after the route changed in which the smoothed content sat more than GLIDE_PX from the scroll position. The
+ * first frame of the new route is not counted: the placement's `scroll` event reaches the page at the next frame.
+ */
+function glideOf(rec, path) {
+  const after = rec.frames.slice(rec.frames.findIndex((f) => f.p === path)).filter((f) => f.c !== null)
+  const gaps = after.slice(1).map((f) => Math.abs(f.c - f.y))
+  const off = gaps.filter((gap) => gap > GLIDE_PX)
+  return { frames: after.length, off: off.length, worst: Math.round(Math.max(0, ...gaps)) }
+}
+
+/**
+ * F3: no entrance starts under the route transition. F4: the route contract placed before, after and around the
+ * page lands the same. F5: back and forward land without a glide, under ScrollSmoother (Lenis and native are the
+ * sequence's own traverse steps). `contract` is `on` (the lifecycle) or `legacy` (2.1's <RouteChange>), whose lines
+ * are INFO: what the lifecycle replaced.
+ */
+async function lifecycleSequence({ browser, base, contract, line }) {
+  const errors = []
+  const run = async (name, fn) => {
+    try {
+      await fn()
+    } catch (err) {
+      line(false, err.message.split('\n')[0], `${name}: ran to completion`)
+    }
+  }
+
+  await run('F3', async () => {
+    const { context, page } = await openAt(browser, base, { contract, place: contract === 'on' ? 'before' : 'around' }, '/vt', 2400, errors)
+    try {
+      await page.evaluate((watch) => window.__rh.record(watch), F3_WATCH)
+      await page.evaluate(() => window.__rh.click('enter'))
+      await settle(page, '/vt/enter')
+      // fixed-wait: an entrance (MOTION.entrance, 1.3 s, plus its stagger) has to end before it can be read as played
+      await sleep(1800)
+      const rec = await page.evaluate(() => window.__rh.stopRecord())
+      const state = await page.evaluate(() => ({ hasVT: typeof document.startViewTransition === 'function', phase: document.documentElement.dataset.entrance ?? null }))
+      const vtEnd = rec.log.find((e) => e.kind === 'vt-end')?.t ?? null
+      if (!state.hasVT || vtEnd === null) {
+        line(true, 'no view transition ran in this browser', 'F3 entrance against the transition: skipped')
+      } else {
+        const names = Object.fromEntries(F3_WATCH.map((selector) => [selector, selector.replace(/^.*\[data-split-word\]$/, 'split words')]))
+        const early = F3_WATCH.filter((selector) => rec.watched[selector]?.started != null && rec.watched[selector].started < vtEnd - 1)
+        const never = F3_WATCH.filter((selector) => rec.watched[selector]?.started == null)
+        line(
+          early.length === 0 && never.length === 0,
+          `transition ended at ${Math.round(vtEnd)} ms` +
+            (early.length ? ` · started under it: ${early.map((sel) => `${names[sel]} at ${Math.round(rec.watched[sel].started)}`).join(', ')}` : '') +
+            (never.length ? ` · never played: ${never.map((sel) => names[sel]).join(', ')}` : ''),
+          'F3 link to /vt/enter: no entrance starts while the view transition runs, and each plays after it',
+        )
+        if (contract === 'on') {
+          const phases = rec.phases.filter((ph) => ph.kind === 'push')
+          const running = phases.find((ph) => ph.phase === 'running')
+          const order = phases.map((ph) => ph.phase).join(' → ')
+          line(
+            phases[0]?.phase === 'pending' && phases[0].t < vtEnd && !!running && running.t >= vtEnd - 1 && state.phase === 'settled',
+            `${order || 'no phases'} · running at ${running ? Math.round(running.t) : '–'} ms, now ${state.phase}`,
+            'F3 the visit is pending through the transition, running after it, then settled',
+          )
+        }
+      }
+      // Back: a traverse arrives settled, and the heading's words don't replay.
+      if (contract === 'on') {
+        await page.evaluate(() => window.__rh.click('home'))
+        await settle(page, '/vt')
+        await page.evaluate((watch) => window.__rh.record(watch), [])
+        await page.evaluate(() => history.back())
+        await settle(page, '/vt/enter')
+        const back = await page.evaluate(() => ({
+          rec: window.__rh.stopRecord(),
+          words: Array.from(document.querySelectorAll('[data-route="enter"] [data-split-word]')).flatMap((el) => el.getAnimations()).length,
+          kind: document.documentElement.dataset.visitKind,
+          phase: document.documentElement.dataset.entrance,
+        }))
+        line(
+          back.kind === 'traverse' && back.phase === 'settled' && back.words === 0 && !back.rec.phases.some((ph) => ph.phase === 'pending'),
+          `kind ${back.kind}, phase ${back.phase}, ${back.words} word animations`,
+          'F3 back to /vt/enter: a traverse arrives settled, no replay',
+        )
+      }
+    } finally {
+      await context.close()
+    }
+  })
+
+  // F4: the same link, the contract in each place. Under ScrollSmoother a contract that syncs too early glides.
+  const landings = []
+  for (const place of ['before', 'after', 'around']) {
+    await run(`F4 ${place}`, async () => {
+      const { context, page } = await openAt(browser, base, { contract, place }, '/smoothed', 2400, errors)
+      try {
+        await page.evaluate(() => window.__rh.record())
+        await page.evaluate(() => window.__rh.click('smoothed-more'))
+        const s = await settle(page, '/smoothed/more')
+        await contentStill(page)
+        const rec = await page.evaluate(() => window.__rh.stopRecord())
+        const glide = glideOf(rec, '/smoothed/more')
+        const last = rec.frames[rec.frames.length - 1]
+        landings.push({ place, y: s.y, c: last ? Math.round(last.c) : null, off: glide.off })
+        line(
+          near(s.y, 0) && glide.off === 0,
+          `scrollY ${s.y}, content at ${last ? Math.round(last.c) : '–'} · ${glide.off}/${glide.frames} frames off the scroll position (worst ${glide.worst} px)`,
+          `F4 link from /smoothed at 2400, contract ${place} the page: lands at the top, no glide`,
+        )
+      } finally {
+        await context.close()
+      }
+    })
+  }
+  const same = landings.length === 3 && landings.every((l) => l.y === landings[0].y && l.c === landings[0].c && l.off === landings[0].off)
+  line(same, landings.map((l) => `${l.place}: y ${l.y}, content ${l.c}, ${l.off} off`).join(' · '), 'F4 one result in all three places')
+
+  // F5: back and forward under ScrollSmoother, and a link clicked right after a flick of the wheel.
+  await run('F5', async () => {
+    const { context, page } = await openAt(browser, base, { contract, place: contract === 'on' ? 'before' : 'around' }, '/smoothed', 2400, errors)
+    try {
+      // `slack`: a flick's last wheel events can land after the restore; they are the reader's, on the new page.
+      const traverse = async (name, path, act, expectY, slack = 0) => {
+        await page.evaluate(() => window.__rh.record())
+        await act()
+        const s = await settle(page, path)
+        await contentStill(page)
+        const rec = await page.evaluate(() => window.__rh.stopRecord())
+        const glide = glideOf(rec, path)
+        line(
+          s.y >= expectY - 1 && s.y <= expectY + slack + 1 && glide.off === 0,
+          `scrollY ${s.y} (expected ${expectY}${slack ? ` to ${expectY + slack}` : ''}) · ${glide.off}/${glide.frames} frames off the scroll position (worst ${glide.worst} px)`,
+          `F5 ${name}: lands where it was, no glide`,
+        )
+      }
+      await page.evaluate(() => window.__rh.click('smoothed-more'))
+      await settle(page, '/smoothed/more')
+      await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), 900)
+      await settle(page, '/smoothed/more')
+      await contentStill(page)
+      await traverse('back to /smoothed', '/smoothed', () => page.evaluate(() => history.back()), 2400)
+      await traverse('forward to /smoothed/more', '/smoothed/more', () => page.evaluate(() => history.forward()), 900)
+      await traverse(
+        'a flick of the wheel, then back',
+        '/smoothed',
+        async () => {
+          await page.mouse.move(VIEWPORT.width / 2, VIEWPORT.height / 2)
+          for (let i = 0; i < 3; i++) await page.mouse.wheel(0, 250)
+          await page.evaluate(() => history.back())
+        },
+        2400,
+        750,
+      )
+      await page.evaluate(() => window.__rh.record())
+      await page.mouse.move(VIEWPORT.width / 2, VIEWPORT.height / 2)
+      for (let i = 0; i < 3; i++) await page.mouse.wheel(0, 250)
+      await page.evaluate(() => window.__rh.click('smoothed-more'))
+      const s = await settle(page, '/smoothed/more')
+      await contentStill(page)
+      const glide = glideOf(await page.evaluate(() => window.__rh.stopRecord()), '/smoothed/more')
+      line(
+        s.y >= 0 && s.y <= 751 && glide.off === 0,
+        `scrollY ${s.y} (0 to 750) · ${glide.off}/${glide.frames} frames off the scroll position (worst ${glide.worst} px)`,
+        'F5 a flick of the wheel, then a link: lands at the top, no glide',
+      )
+      // The reader's own wheel is still smoothed afterwards: the rule adopts placements, not input.
+      await page.evaluate(() => window.__rh.record())
+      await wheel(page, 3)
+      const smoothed = await page.evaluate(() => window.__rh.stopRecord())
+      const lag = Math.max(0, ...smoothed.frames.filter((f) => f.c !== null).map((f) => Math.abs(f.c - f.y)))
+      if (contract === 'on') line(lag > GLIDE_PX, `content trailed the scroll by up to ${Math.round(lag)} px`, 'F5 a wheel after the navigation is still smoothed')
+    } finally {
+      await context.close()
+    }
+  })
+
+  const unique = [...new Set(errors)]
+  line(unique.length === 0, unique.slice(0, 3).join(' | '), 'lifecycle checks: no uncaught errors')
+}
+
 async function folioSequence({ browser, base, line }) {
   const context = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion: 'no-preference' })
-  await context.addInitScript(probes, false)
+  await context.addInitScript(probes, { contract: 'legacy', place: 'around' })
   const errors = []
   try {
     const fresh = {}
@@ -831,16 +1109,20 @@ async function main() {
     open.server = await start(build(variant), variant)
     for (const browserName of args.browsers) {
       open.browser = await launch(BROWSERS[browserName])
-      for (const prefix of args.prefixes) {
-        for (const contract of args.contract) {
-          const tag = `${variant}${prefix || ''}${contract === 'off' ? ' (no contract)' : ''}`
+      const before = variant === 'before'
+      for (const prefix of before ? [''] : args.prefixes) {
+        for (const contract of before ? ['legacy'] : args.contract) {
+          const tag = `${variant}${prefix || ''}${contract === 'off' ? ' (no contract)' : before ? ' (2.1.2 blocks)' : contract === 'legacy' ? ' (2.1)' : ''}`
+          // `off` measures the page with no contract; `legacy` is 2.1's, a failure only in its documented place.
+          let informative = contract === 'off'
           const line = (ok, detail, name) => {
-            const word = ok ? 'PASS' : contract === 'off' ? 'INFO' : 'FAIL'
-            if (!ok && contract === 'off') infos++
+            const word = ok ? 'PASS' : informative ? 'INFO' : 'FAIL'
+            if (!ok && informative) infos++
             else if (!ok) failures++
             console.log(`${word}  ${browserName.padEnd(8)}  ${tag.padEnd(22)}  ${name}${detail ? `  (${detail})` : ''}`)
           }
-          if (variant === 'folio' || args.only.includes('sequence')) {
+          if (before) informative = true
+          if (variant === 'folio' || (!before && args.only.includes('sequence'))) {
             try {
               const run = variant === 'folio' ? folioSequence : sequence
               await run({ browser: open.browser, base: open.server.base, prefix, contract, line })
@@ -848,7 +1130,12 @@ async function main() {
               line(false, err.message.split('\n')[0], 'the sequence ran to completion')
             }
           }
-          if (variant !== 'folio' && !prefix && contract === 'on' && args.only.includes('arrival')) {
+          if (variant !== 'folio' && !prefix && contract !== 'off' && args.only.includes('lifecycle')) {
+            informative = contract === 'legacy'
+            await lifecycleSequence({ browser: open.browser, base: open.server.base, contract, line })
+            informative = before
+          }
+          if (variant !== 'folio' && !before && !prefix && contract === 'on' && args.only.includes('arrival')) {
             try {
               await arrivalSequence({ browser: open.browser, base: open.server.base, line })
             } catch (err) {
@@ -865,7 +1152,7 @@ async function main() {
   }
   console.log(
     (failures ? `\n${failures} check(s) failed` : '\nall route-hygiene checks passed') +
-      (infos ? ` · ${infos} INFO line(s): what fails without the contract` : ''),
+      (infos ? ` · ${infos} INFO line(s): what fails without the contract, or with 2.1's` : ''),
   )
   return failures ? 1 : 0
 }

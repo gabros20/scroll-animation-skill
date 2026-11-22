@@ -57,3 +57,8 @@ section {
 .intro {
   height: 400px;
 }
+.line {
+  height: 60px;
+  margin: 0;
+  padding: 16px;
+}

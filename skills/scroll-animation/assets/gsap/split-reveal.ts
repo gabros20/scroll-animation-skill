@@ -252,6 +252,8 @@ export function splitReveal(el: HTMLElement, options: SplitRevealOptions = {}): 
     }
   })
 
+  // ScrollTrigger calls arrive() as the trigger is created, so this exists first.
+  let cancelOpen = () => {}
   // Outside the build, for the handle's life (see the header). Killed once it fires: the reveal plays once.
   const trigger = done
     ? null
@@ -279,7 +281,6 @@ export function splitReveal(el: HTMLElement, options: SplitRevealOptions = {}): 
       }),
     )
   }
-  let cancelOpen = () => {}
 
   window.addEventListener('beforeprint', land)
 
