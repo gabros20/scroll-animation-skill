@@ -289,16 +289,17 @@ when: the entrance is longer than about 2 s with its stagger (raise it).
 ## What the 3d skill reads
 
 **Law.** Neither skill imports the other; the DOM is the interface. The 3d skill's `SceneCanvas
-startAfter="entrance"` reads `data-entrance` on `<html>` and `entrance:phase`, per visit: an event whose
-`detail.visit` is newer than the one it started under restarts its wait, so after a client navigation it no longer
-sees the last page's `settled`.
+startAfter="entrance"` reads `data-entrance` on `<html>` and `entrance:phase`. Because the lifecycle restarts the
+phase before the new route's effects run, a canvas mounted by a client navigation reads that visit's `pending`, not
+the last page's `settled` (before per-visit phases it started at once on every route after the first).
 
 - **Stages** are the 3d skill's (`threejs-orchestration.md` "Stages"): prepare outside the entrance, reveal a still
   frame, run at `settled`. On the main thread a CSS entrance starts at first paint, so there is no "before" without a
   loader: the reveal lands after `settled`. Fetching and worker work may run during `running`.
 - **Its timeout** counts from `data-entrance-started`, else first contentful paint, else navigation start.
-- **Standalone,** the 3d skill carries a small publisher of its own. With this skill on the page, this skill's
-  lifecycle is the publisher and theirs stands down.
+- **Standalone,** the 3d skill carries a small publisher of its own (`trackEntranceAlone`). With this skill's
+  lifecycle on the page (`data-visit` on `<html>`), theirs stands down.
+- A route change held at `pending` counts as mid-entrance for it: its prepare waits for `settled`.
 - As a background behind the copy, the canvas sits below a copy wrapper with its own stacking level
   ([ios-safari-motion.md](ios-safari-motion.md) §9).
 
