@@ -137,3 +137,47 @@ test('afterSettled runs starts in order, one per task, only once settled', async
   mock.timers.tick(0)
   assert.deepEqual(ran, ['a', 'b'])
 })
+
+test('a block that publishes while the visit is held is heard when the hold lifts, and the hold never outlives it', async () => {
+  const { publishEntrance } = await import('../../skills/scroll-animation/assets/entrance-signal.ts')
+  page.begin('push')
+  // A 2.1 publisher that doesn't wait: it runs and settles its entrance under the hold.
+  publishEntrance('running')
+  publishEntrance('settled')
+  assert.equal(phase(), 'pending', 'the phase is the lifecycle\'s to open')
+  assert.equal(html.getAttribute('data-entrance-held'), 'pause')
+  page.placed()
+  assert.equal(phase(), 'settled')
+  assert.equal(html.getAttribute('data-entrance-held'), null)
+
+  // Said in one visit, never heard in the next.
+  page.begin('push')
+  publishEntrance('settled')
+  page.begin('push')
+  page.placed()
+  assert.equal(phase(), 'running')
+})
+
+test('a visit begins with its attributes written at once and its event after the commit', async () => {
+  const seen = []
+  const onPhase = (event) => seen.push(event.detail.phase)
+  html.addEventListener('entrance:phase', onPhase)
+  page.begin('push')
+  assert.equal(phase(), 'pending')
+  assert.deepEqual(seen, [], 'no listener runs inside begin()')
+  await flush()
+  assert.deepEqual(seen, ['pending'])
+  html.removeEventListener('entrance:phase', onPhase)
+})
+
+test('only what mounts with a traverse arrives settled', async () => {
+  const { arrivesSettled } = await import('../../skills/scroll-animation/assets/entrance-signal.ts')
+  page.begin('traverse')
+  assert.equal(arrivesSettled(), true)
+  page.placed()
+  assert.equal(arrivesSettled(), true, 'through the task that placed it: the commit\'s other effects')
+  mock.timers.tick(0)
+  assert.equal(arrivesSettled(), false, 'a tab or a lazy section mounted later plays')
+  page.begin('push')
+  assert.equal(arrivesSettled(), false)
+})

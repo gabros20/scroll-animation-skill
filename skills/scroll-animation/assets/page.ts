@@ -29,8 +29,9 @@
  *   and its clock is first contentful paint. `pending`: an entrance a script starts; the lifecycle opens it one
  *   frame after its first call unless something holds it (a loader), and a hold on a load restarts CSS entrances
  *   when it lifts (they ran unseen under the loader). No attribute: no entrance.
- * - With no claim (claimEntrance(), a reveal's `entrance` option, page.entrance()), `tail` and `settled` come from
- *   the animations under [data-entrance-root], else <body>.
+ * - One publisher per visit. Unless a block is it (one flag, `data-entrance-claimed`: a reveal's `entrance` option,
+ *   trackEntrance(), page.entrance()), `tail` and `settled` come from the animations under [data-entrance-root],
+ *   else <body>.
  * - The lifecycle never scrolls and never reads the scroll position. The router owns a push's position, the browser a
  *   traverse's; the scroll authority follows both by its own rule (smooth/authority.ts).
  *
@@ -41,8 +42,9 @@
 import { REDUCED_MOTION_QUERY, failsafeFired } from './config'
 import {
   ENTRANCE_TIMEOUT_MS,
-  claimEntrance,
+  entranceClaimed,
   readEntrance,
+  trackAnimations,
   trackEntrance,
   writeEntrance,
   type EntrancePhase,
@@ -213,8 +215,9 @@ function start(v: Visit, at = performance.now()): void {
   html().removeAttribute('data-entrance-held')
   writeEntrance('running')
   if (visit !== v) return
+  // The page's own animations are the entrance unless a block is its publisher (the one flag: entranceClaimed()).
   const root = document.querySelector('[data-entrance-root]') ?? document.body
-  if (root) endVisit.push(trackEntrance(root, { claim: false }))
+  if (root) endVisit.push(trackAnimations(root, (phase) => !entranceClaimed() && visit === v && writeEntrance(phase)))
 }
 
 function addHold(
@@ -261,7 +264,9 @@ const transitionActive = (): boolean => {
 /** Every hold released? Then the tab must be visible and no view transition active; then `running`. */
 function open(): void {
   const v = visit
-  if (!v || holds.size || readEntrance() !== 'pending') return
+  if (!v || holds.size) return
+  // Past pending already (a visit that arrives settled): nothing to open, and no hold may outlive that.
+  if (readEntrance() !== 'pending') return void html().removeAttribute('data-entrance-held')
   if (document.visibilityState === 'hidden' && v.kind !== 'load') {
     const onVisible = () => {
       document.removeEventListener('visibilitychange', onVisible)
@@ -286,25 +291,29 @@ function open(): void {
   start(v)
 }
 
+// A visit begins inside the commit (React: an insertion effect): the attributes are written at once, the event is
+// dispatched in a microtask, after the commit, where a listener may set state.
+const WRITE_BEGIN = { restart: true, defer: true } as const
+
 function begin(kind?: VisitKind): Visit {
   const last = ensure()
   if (!hasDom()) return last
   endVisit.forEach((end) => end())
   endVisit = []
   holds.clear()
+  clearTimeout(remeasureTimer)
   const next: Visit = { id: last.id + 1, kind: kind ?? (popped ? 'traverse' : 'push'), startedAt: NaN }
   visit = next
   popped = false
   stamp(next)
-  html().removeAttribute('data-entrance-claimed')
-  html().removeAttribute('data-entrance-started')
+  for (const name of ['data-entrance-claimed', 'data-entrance-started', 'data-visit-placed']) html().removeAttribute(name)
   const arrives = next.kind !== 'push' || window.matchMedia(REDUCED_MOTION_QUERY).matches || failsafeFired()
   if (arrives) {
     html().removeAttribute('data-entrance-held')
-    writeEntrance('settled', true)
+    writeEntrance('settled', WRITE_BEGIN)
   } else {
     html().setAttribute('data-entrance-held', 'pause')
-    writeEntrance('pending', true)
+    writeEntrance('pending', WRITE_BEGIN)
     builtinHolds()
   }
   // Placement: placed() from the adapter, else two frames (the router placed the scroll in this commit), else the
@@ -326,7 +335,10 @@ function placed(): void {
   // A load is ScrollTrigger's own refresh (at `load`): only its streamed content is watched.
   if (v.kind !== 'load') refreshAll()
   const stop = watchSettle({}, v.kind !== 'load')
-  endVisit.push(stop)
+  // After this task: every effect of the commit has mounted its blocks, and they read the visit as it arrived
+  // (arrivesSettled()). What mounts later in the visit is not part of the arrival.
+  const stamped = setTimeout(() => visit === v && html().setAttribute('data-visit-placed', ''), 0)
+  endVisit.push(stop, () => clearTimeout(stamped))
   for (const [key, reason] of holds) {
     if (reason !== 'placement') continue
     holds.delete(key)
@@ -384,7 +396,6 @@ function when(
 function entrance(root: Element, options: { tailAt?: number } = {}): () => void {
   ensure()
   if (!hasDom()) return () => {}
-  claimEntrance()
   return trackEntrance(root, { tailAt: options.tailAt })
 }
 
@@ -392,6 +403,8 @@ function entrance(root: Element, options: { tailAt?: number } = {}): () => void 
 
 const queue: Array<{ start: () => void; order: number }> = []
 let draining = false
+/** One when() serves every queued start. */
+let armed = false
 
 /** One start per task, two frames apart (rAF also waits out a hidden tab), only while the visit is settled. */
 function drain(): void {
@@ -401,7 +414,7 @@ function drain(): void {
   const next = () => {
     if (visit !== v || page.phase() !== 'settled' || !queue.length) {
       draining = false
-      if (queue.length) arm()
+      arm()
       return
     }
     queue.shift()!.start()
@@ -412,7 +425,10 @@ function drain(): void {
 
 /** Drain at this visit's `settled`, or when its entrance has run ENTRANCE_TIMEOUT_MS without settling. */
 function arm(): void {
+  if (armed || draining || !queue.length) return
+  armed = true
   when('settled', { timeoutMs: ENTRANCE_TIMEOUT_MS }).then((result) => {
+    armed = false
     if (result === 'stale') return arm()
     if (result === 'timeout') writeEntrance('settled')
     drain()
@@ -421,15 +437,23 @@ function arm(): void {
 
 function afterSettled(start: () => void, options: { order?: number; signal?: AbortSignal } = {}): void {
   ensure()
-  if (!hasDom()) return
-  const entry = { start, order: options.order ?? 0 }
-  const at = queue.findIndex((queued) => queued.order > entry.order)
-  queue.splice(at < 0 ? queue.length : at, 0, entry)
-  options.signal?.addEventListener('abort', () => {
+  const { signal } = options
+  if (!hasDom() || signal?.aborted) return
+  const drop = () => {
     const i = queue.indexOf(entry)
     if (i >= 0) queue.splice(i, 1)
-  })
-  if (!draining) arm()
+  }
+  const entry = {
+    order: options.order ?? 0,
+    start: () => {
+      signal?.removeEventListener('abort', drop)
+      start()
+    },
+  }
+  const at = queue.findIndex((queued) => queued.order > entry.order)
+  queue.splice(at < 0 ? queue.length : at, 0, entry)
+  signal?.addEventListener('abort', drop, { once: true })
+  arm()
 }
 
 export const page = {
