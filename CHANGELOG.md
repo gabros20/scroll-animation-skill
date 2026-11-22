@@ -69,8 +69,9 @@ the newest release heading below, and the release tag.
 ### Fixed
 - An entrance no longer starts under the route's crossfade (measured on 2.1.2: GSAP, engine-free and Motion reveals
   all started about 250 ms before the transition ended).
-- Back or forward under ScrollSmoother no longer glides, with or without a flick of the wheel just before. The
-  handle takes up a placement without writing the scroll, so Firefox's pending back/forward restore lands (a write
+- Back or forward under ScrollSmoother no longer glides, with or without a flick of the wheel just before. In
+  Firefox the reader's place is kept again: the handle takes up a placement only when its content is off the
+  scroll, so it no longer writes the scroll while the browser's back/forward restore is pending (the write
   cancelled it, and the reader stayed where the page they left was).
 
 - A back or forward is read as one whichever `popstate` listener runs first (on next@16.4.6 the router's ran before

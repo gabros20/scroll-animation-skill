@@ -254,13 +254,13 @@ for 56 of 95 frames after a link (up to 1911 px), and for 53 of 94 after back, w
 - **Default.** 200 ms and 100 ms (`INTENT_MS`, `VISIT_WINDOW_MS`). Override when: a keyboard scroll is cut short
   (raise `INTENT_MS`). A scrollbar drag fires no input event in most browsers, so under ScrollSmoother the content
   follows the thumb unsmoothed (unverified per browser).
-- **Adopting never writes the scroll.** ScrollSmoother's handle jumps its content to the native position by
-  finishing its own catch-up (its trigger re-reads the scroll, its scrub tween ends), not with `scrollTo(y, false)`,
-  which writes the scroll back. Firefox keeps a back or forward restore pending while the page it leaves is too short
-  for the position, and any scroll written meanwhile cancels it: the reader stayed where the page they left was
-  (measured, Playwright Firefox build 1572, 2026-11; 2.1.2's sync wrote it from inside the commit, before the
-  restore was pending). The write remains for a paused smoother and for a scroll ScrollTrigger hasn't read yet
-  (inside a commit, after the router moved it: no restore is pending then).
+- **Adopt only what is off.** ScrollSmoother's handle jumps its content with `scrollTo(y, false)`, which also
+  writes the scroll back, so it jumps only when the content is somewhere else. Firefox keeps a back or forward
+  restore pending while the page it leaves is too short for the position, and any scroll written meanwhile cancels
+  it: the adopt two frames after a traverse began found the content where the scroll was, wrote it anyway, and the
+  reader stayed where the page they left was (measured, Playwright Firefox build 1572, 2026-11). Finishing the
+  smoother's own catch-up instead (its trigger's `update()`, then its scrub tween's `progress(1)`) sometimes left
+  the content where it was in WebKit, then glided: no.
 - Measured in Chromium, WebKit (Playwright build 2388) and Firefox (build 1572), 2026-11: the same checks pass.
 - **Check.** `verify-motion.mjs <url> --nav`; `tests/route-hygiene.mjs` F4 and F5.
 
