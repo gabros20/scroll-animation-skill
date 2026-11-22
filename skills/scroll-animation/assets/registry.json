@@ -163,7 +163,7 @@
       "reference": "references/scroll-authority.md"
     },
     "smooth-smoother": {
-      "summary": "GSAP ScrollSmoother as the scroll authority, for GSAP-only pages that want data-speed and data-lag",
+      "summary": "GSAP ScrollSmoother as the scroll authority: legacy, for a site that already runs it (new builds take native or Lenis)",
       "clock": "none",
       "tier": "primitive",
       "profiles": [

@@ -39,27 +39,28 @@ when the route goes away or is hidden.
 - **Native** for reading-first and accessibility-first pages. Smooth the consumer instead (§3).
 - **Lenis** when the design wants inertial scroll, when WebGL must line up with DOM elements, or when the page mixes
   sticky, CSS scroll timelines, Motion or third-party React components.
-- **ScrollSmoother** when the page is GSAP-only, leans on `data-speed` / `data-lag` effects, and its fixed UI (the
-  header) can live outside the content wrapper.
-- **Default for a smoothed desktop page: Lenis, with one geometry.** Touch scrolls natively either way (and
-  Safari, when you keep it native for its full-rate scroll), and there CSS sticky and CSS scroll timelines are the right tools. Lenis keeps them working on desktop too, so
-  the page is built once. ScrollSmoother turns sticky and CSS timelines off inside its wrapper, so every sticky
-  element, scene and parallax needs a second, GSAP-written geometry for desktop alone. Measured on one production
-  page that moved from ScrollSmoother to Lenis (Chrome desktop, 4× CPU, 2026-11): paint 310 → 114 ms, raster
-  32 → 11 ms, slowest frame 33 → 17 ms. One site; the direction, not the numbers, is the rule. Override when: the
-  design depends on `data-speed` / `data-lag` or another ScrollSmoother-only effect, and the page has few sticky
-  elements to rebuild.
+- **ScrollSmoother: legacy, opt-in.** Never recommended for a new build. Keep it on a site that already runs it,
+  or use it when the user asks for it by name. Where it runs: desktop only (native on touch), and every pin through
+  ScrollTrigger, never CSS sticky or fixed inside its wrapper. Its known issues, with their cause, are in §5.
+- **New builds: native first; Lenis when desktop smoothing is wanted, with one geometry.** Touch scrolls natively
+  either way (and Safari, when you keep it native for its full-rate scroll), and there CSS sticky and CSS scroll
+  timelines are the right tools. Lenis keeps them working on desktop too, so the page is built once. ScrollSmoother
+  turns sticky and CSS timelines off inside its wrapper, so every sticky element, scene and parallax needs a second,
+  GSAP-written geometry for desktop alone. Measured on one production page that moved from ScrollSmoother to Lenis
+  (Chrome desktop, 4× CPU, 2026-11): paint 310 → 114 ms, raster 32 → 11 ms, slowest frame 33 → 17 ms. One site; the
+  direction, not the numbers, is the rule. `data-speed` / `data-lag` alone is no reason to take ScrollSmoother: build
+  the parallax on Lenis (the `parallax` block, `layered-visuals.md` §2).
 - **The owner per device** (native on touch, a smoother on desktop) can't be known on the server. On React, render
   `<SmoothScroll authority="native">` first and switch after hydration (`useSyncExternalStore` with a `'native'`
   server snapshot); the blocks don't choose it for you yet. For `'smoother'`, render the two wrapper elements in the
   layout and pass `wrap={false}`, so the switch doesn't remount the page.
-- **GSAP-only, and Safari or 120 Hz screens matter:** a trade-off, never a default. Only native scrolling gets
-  Safari's full-rate compositor scroll. Lenis is capped at 60 fps there (§2); ScrollSmoother is unmeasured, and likely
-  capped too: it moves the content from the same `requestAnimationFrame` ticker. On a phone both scroll natively
-  (ScrollSmoother doesn't smooth touch by default, `smoothTouch`), and a GSAP pin or scrub on content that moves with
-  the page paints a frame behind iOS's compositor scroll: jitter. Until the blocks choose the scroller per device, a
-  route that takes ScrollSmoother can skip it when `ScrollTrigger.isTouch === 1` and pin with CSS sticky there; keep
-  GSAP scrubs off content that moves with the page.
+- **A site that already runs ScrollSmoother, and Safari or 120 Hz screens matter:** a trade-off, never a default. Only
+  native scrolling gets Safari's full-rate compositor scroll. Lenis is capped at 60 fps there (§2); ScrollSmoother is
+  unmeasured, and likely capped too: it moves the content from the same `requestAnimationFrame` ticker. On a phone
+  both scroll natively (ScrollSmoother doesn't smooth touch by default, `smoothTouch`), and a GSAP pin or scrub on
+  content that moves with the page paints a frame behind iOS's compositor scroll: jitter. Until the blocks choose the
+  scroller per device, a route on ScrollSmoother skips it when `ScrollTrigger.isTouch === 1` and pins with CSS sticky
+  there; keep GSAP scrubs off content that moves with the page.
 
 ## 2. What each owner breaks (measured)
 
@@ -139,6 +140,22 @@ React: `<SmoothScroll authority="lenis" driver={gsapDriver(gsap, ScrollTrigger)}
   to 1), takes over and `lerp` is ignored, whatever the README says.
 
 ## 5. ScrollSmoother
+
+**Legacy, opt-in** (§1): for a site that already runs it, or a user who asks for it. No new blocks are built for it.
+
+**Known issues.** One cause behind all three: it moves the page by transforming a content element inside a fixed
+wrapper, while the browser's own scroll position only drives it.
+1. **Sticky and fixed break inside the wrapper.** A transformed ancestor is the containing block for `fixed`, and
+   `sticky` measures against the wrapper, which never scrolls: a platform limit, not a bug GSAP can fix (measured
+   here, §2; GSAP staff on the vendor forum). Pin with ScrollTrigger; keep fixed UI outside.
+2. **iOS jitter on JavaScript-driven pins.** Touch scrolls natively, and a pin or scrub written from the main thread
+   paints a frame behind the compositor's scroll (§1). The vendor's mitigation is `ScrollTrigger.normalizeScroll()`,
+   which takes over touch scrolling and has its own side effects (field reports / vendor forum). Desktop only.
+3. **It fights the browser's scroll restoration.** Back, forward and a Next page change move the native position,
+   and the content has to be told (§8). Measured here: on 2.1.2's blocks the content glided for 56 of 95 frames after
+   a link (Chromium); in Firefox a scroll written while a back/forward restore was pending cancelled it, and the
+   reader lost their place (fixed in 2.2: the handle writes only when the content is off, §8). Other routers and
+   browsers: unmeasured.
 
 ```html
 <header class="site-header">…</header>            <!-- fixed UI outside the wrapper -->

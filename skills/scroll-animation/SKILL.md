@@ -131,7 +131,7 @@ First pick the lane, then the reference:
 | trigger | a change of view inside one route: grid to detail, reorder, filter | recipes `flip-transition` (gsap: `flipTransition`), `layout-morph` (motion: `LayoutMorph`, `Morph`) |
 | route | a page change: crossfade, shared elements, slides | `view-transitions` (css: React's `<ViewTransition>` with the classes; agnostic: `transition`, `mountCrossDocumentTransitions`) |
 | route | a first screen held until its assets load | recipe `preloader` (agnostic: `mountPreloader`) |
-| — | scroll owner for a route | `smooth-lenis` + `smooth-react`, or `smooth-smoother` (GSAP-only pages; start it with `createSmoother`) |
+| — | scroll owner for a route | `smooth-lenis` + `smooth-react`; `smooth-smoother` is legacy, for a site already on ScrollSmoother (`createSmoother`) |
 | — | foundation | `config`, `base-css`, `gsap-setup` (plus `mount` on a vanilla GSAP page) or `motion-provider` |
 
 A route that loads GSAP uses GSAP for its entrances rather than adding Motion, and the reverse. One engine per element

@@ -52,7 +52,7 @@ Each has a default. Ask only when detection is inconclusive **and** the answer c
 | | Reading | Expressive | Immersive |
 |---|---|---|---|
 | Looks like | magazines, product marketing, docs | studios, launches, award sites | WebGL-led brand worlds |
-| Scroll authority | native | Lenis, or ScrollSmoother on GSAP-only pages | Lenis or ScrollSmoother |
+| Scroll authority | native | native, or Lenis for desktop smoothing | Lenis |
 | Engines | CSS + Motion (React) or CSS + GSAP core | GSAP timelines and plugins, Motion for React components, CSS decoration | Three/R3F + GSAP, Motion for React UI |
 | Scenes | at most one pinned scene | several pinned acts, rails, sequences | one persistent world in chapters |
 | Page transitions | none, or cross-document CSS | view transitions, shared elements | the canvas persists across routes |
@@ -63,15 +63,15 @@ tool per router is in [page-transitions.md](page-transitions.md) §1.
 
 ### 3.2 Scroll authority, per route
 
-Exactly one owner per page: native, Lenis or ScrollSmoother. Default by profile; the table of trade-offs is in
+Exactly one owner per page: native, Lenis or ScrollSmoother. Default by profile; ScrollSmoother is legacy, offered
+only to a site that already runs it or a user who asks for it by name. The table of trade-offs is in
 [scroll-authority.md](scroll-authority.md). Record it per route (or route group), because a reading route and a
 cinematic home page often want different answers. **If the project already runs a smoother, that is a keep, adapt or
 replace question (§3.5), not a default to override.** Start ScrollSmoother with `createSmoother`, never by hand: the
 blocks read the owner from the stamp it writes ([scroll-authority.md](scroll-authority.md) §5). A Reading route that
 asks for smoothing anyway gets its Safari cost in the same message, before Lenis is chosen: the frame rate cap
-([scroll-authority.md](scroll-authority.md) §2). A GSAP-only route where Safari or 120 Hz screens matter gets the
-Lenis-or-ScrollSmoother trade-off, touch included, stated before either is chosen ([scroll-authority.md](scroll-authority.md)
-§1).
+([scroll-authority.md](scroll-authority.md) §2). A route kept on ScrollSmoother where Safari or 120 Hz screens matter gets
+its trade-off, touch included, stated before it stays ([scroll-authority.md](scroll-authority.md) §1).
 
 ### 3.3 Engines
 

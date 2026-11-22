@@ -87,6 +87,11 @@ the newest release heading below, and the release tag.
   refused when the blocks import a name it lost; `add config --force` takes the skill's copy.
 
 ### Changed (guidance)
+- **ScrollSmoother is legacy / opt-in: not recommended for new builds.** New builds scroll natively, with Lenis when
+  desktop smoothing is wanted. ScrollSmoother stays for sites that already run it, or a user who asks for it:
+  desktop only, pins through ScrollTrigger. scroll-authority §5 states its known issues and their one cause (sticky
+  and fixed inside the transformed wrapper, iOS jitter on JavaScript pins, fighting scroll restoration); preflight
+  offers it only as legacy. `authority="smoother"` keeps working; no new ScrollSmoother blocks.
 - scroll-authority §1: Lenis is the default for a smoothed desktop page (one geometry: sticky and CSS timelines keep
   working); ScrollSmoother is the override. css-scroll-effects §3: the Lightning CSS law is "never `transform`
   beside `translate`, `scale` or `rotate` in one block", measured on 1.32.0; the skill's own keyframes come out
