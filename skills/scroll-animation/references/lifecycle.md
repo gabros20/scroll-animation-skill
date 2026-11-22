@@ -6,7 +6,8 @@ server HTML says, what holds an entrance back, when costly things start, who pla
 **Read when:** building any page with a load entrance or a client-side router; a hero shares its first seconds with
 a canvas, video or loops; entrances play under a page transition, off screen after a link, or again on back; a
 navigation lands with a glide; a consumer starts too early or too late.
-**Skip when:** one effect on a static page with no router and nothing costly beside it.
+**Skip when:** a page with no client-side router, no loader and nothing costly beside its entrance. The lifecycle is
+opt-in: without `page.ts` every block behaves as it did in 2.1.
 
 **Inputs:** the router, the scroll authority per route, whether the first screen's entrance is CSS or a script's,
 any loader, the heavy layers on the first screen.
@@ -49,7 +50,8 @@ below the fold after one link). One owner answers once, and the rest read it.
 | `data-visit`, `data-visit-kind` | `page.ts` | a counter, and `load`, `push` (a link), `traverse` (back, forward) or `restore` (bfcache) |
 | `data-entrance-held` | `page.ts` | entrances wait: `pause` on a route change, `restart` under a loader on a load |
 | `data-entrance-started` | `page.ts` | `performance.now()` at `running`: the clock consumers count from |
-| `data-entrance-claimed` | a block that publishes | this visit's `tail` and `settled` come from that block |
+| `data-entrance-claimed` | a block that publishes | the one publisher flag: this visit's `tail` and `settled` come from that block, and the lifecycle writes neither |
+| `data-visit-placed` | `page.ts` | the router has placed the scroll and the arrival's blocks have mounted |
 | event `entrance:phase` | whoever writes the phase | bubbles; `detail` is `{ phase, visit, kind }`; the attribute is set first |
 
 - **Phases** go `pending → running → tail → settled` and never backwards within a visit. A new visit restarts them.
@@ -63,12 +65,11 @@ below the fold after one link). One owner answers once, and the rest read it.
 |---|---|---|---|---|
 | `load` | plays | play | play on arrival | the browser |
 | `push` | held, then plays | held, then play | play on arrival | the router |
-| `traverse`, `restore` | arrives `settled` | land without playing | play on arrival | the browser's restoration |
+| `traverse`, `restore` | arrives `settled` | those that mount with the arrival land without playing; later ones (a tab, a dialog, a lazy section) play | play on arrival | the browser's restoration |
 
 **Default.** A push replays the first screen's entrance; back and forward do not. Override when: the design wants an
 entrance on every arrival (call `page.begin('push')` yourself), or none after the first (`page.begin('traverse')`).
-Record the choice in `ANIMATION.md`. Reveals already shown on a route Next kept mounted stay shown (a later PR makes
-that a recorded choice too).
+Record the choice in `ANIMATION.md`. Reveals already shown on a route Next kept mounted stay shown.
 
 **Code.** `scroll-animation add page` (and `page-react` on React). `page.ts`:
 
@@ -206,6 +207,12 @@ What one push does, in order:
 5. **`tail`, `settled`:** from the claimed publisher, or the page's own animations. The start queue drains.
 
 - **A traverse** arrives `settled`: no hold, no replay; the same one refresh at placement.
+- **A streamed route** (`loading.tsx`, a Suspense fallback) commits its skeleton first, under the new pathname: the
+  visit would run and settle on the skeleton, and the streamed first screen would enter after `settled`. Hold the
+  visit from the skeleton: `useLayoutEffect(() => page.hold('stream', undefined, { capMs: 2000 }), [])` in a client
+  component the fallback renders. The cleanup releases it when the content replaces the skeleton (the hold's
+  return is its release). Unverified in a browser: reasoned from the commit order above.
+- **A phase published under the hold** (a 2.1 block that doesn't wait) is published when the hold lifts.
 - **Search params** keep the pathname and the visit. A page whose content follows them calls `page.remeasure()` in an
   effect keyed on them: one debounced refresh, then the same settle watch.
 - **One refresh per visit, never per block.** Route blocks measure themselves as they are created; the refresh covers
@@ -349,6 +356,12 @@ pathname reader cannot do under Cache Components, and rendered before the page t
 - **A hold taken after `running`:** a no-op. Take a loader's hold in the task that mounts it.
 - **A timeout counted from a consumer's own mount, or from navigation start:** see [The clock](#the-clock).
 - **A second publisher:** the first to settle wins. One claim per visit.
+- **CSS can't tell when an element mounted.** On back and forward, `[data-split-word]` and `[data-enter]` don't
+  animate for the whole visit (the rule keys on `data-visit-kind`; lifting it mid-visit would replay the arrival's
+  words). A CSS entrance that mounts later in such a visit (a tab's heading) shows at rest. JavaScript reveals are
+  exact: only what mounts before `data-visit-placed` lands without playing.
+- **A listener that sets React state on `entrance:phase`:** safe. A visit's first event is dispatched in a
+  microtask after the commit, never inside the insertion effect that began it.
 - **`suppressHydrationWarning` missing on `<html>`:** the attributes above are written before and after hydration.
 
 ## Checks

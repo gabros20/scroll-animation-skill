@@ -231,8 +231,13 @@ for 56 of 95 frames after a link (up to 1911 px), and for 53 of 94 after back, w
 | Lenis | Lenis is mid-glide and the native position is more than 2 px from the one it last wrote | Lenis writes the position every frame; any other is someone else's. Not gliding, Lenis takes a native scroll as its own already (source lenis@1.3.26, `onNativeScroll`) |
 | ScrollSmoother | no scroll input (wheel, touch, a scroll key) came in the last 200 ms, or a visit began in the last 100 ms | it leaves the native scroll to the browser, so position can't tell; input can. A reader who flicks the wheel and clicks a link has recent input, and the router's jump is still a placement: the lifecycle's visit says so |
 
-- Both adopt once more two frames after a visit begins: a route change that doesn't move the scroll still changes
-  the page's height (Lenis's limit).
+- **Three mechanisms, and what each is for.** (1) The tests in the table follow any placement, with or without a
+  lifecycle: in-page ones (an anchor, find-in-page, a focus scroll, a late back/forward restore) have nothing else.
+  (2) A visit resets the input clock and opens a 100 ms window, for ScrollSmoother only: wheel events still
+  arriving between the route's commit and its placement's `scroll` event would otherwise make the router's jump
+  look like input. (3) Both authorities adopt once more two frames after a visit begins, for a route change that
+  doesn't move the scroll and so fires no event, but still changes the page's height (Lenis's limit). (2) could be
+  dropped at the cost of up to two frames of glide before (3) corrects it; that cost is reasoned, not measured.
 - The handle's own animated `scrollTo` is neither input nor placement.
 - **Default.** 200 ms and 100 ms (`INTENT_MS`, `VISIT_WINDOW_MS`). Override when: a keyboard scroll is cut short
   (raise `INTENT_MS`). A scrollbar drag fires no input event in most browsers, so under ScrollSmoother the content

@@ -12,6 +12,7 @@
  *   // app/layout.tsx, anywhere in <body>. With Cache Components a pathname reader needs its own boundary:
  *   <Suspense fallback={null}><Lifecycle /></Suspense>
  *
+ * - Render one, in the root layout, so it is mounted for the first load: the first route it sees is the load.
  * - `route` is the visit's identity: the pathname. Each change is one visit (page.begin(), then page.placed()). A
  *   page whose content follows its search params calls page.remeasure() when they change; it is the same visit.
  * - begin() runs in an insertion effect. React runs every insertion effect of a commit in its mutation phase, before
@@ -30,7 +31,7 @@
  *
  * Keep if you rewrite: begin() before the commit's layout effects; nothing here reads or writes the scroll position.
  */
-import { useEffect, useInsertionEffect, useRef } from 'react'
+import { useEffect, useInsertionEffect } from 'react'
 
 import { page } from '../page'
 
@@ -39,14 +40,17 @@ export interface PageLifecycleProps {
   route: string
 }
 
+// The route the last visit began for. Module-level, not a ref: mounted in a nested layout, the component remounts
+// on a route it has not seen, and a ref would start equal to it. The first value is the load (the lifecycle's own
+// `load` visit); StrictMode's second effect isn't a navigation.
+let lastRoute: string | undefined
+
 export function PageLifecycle({ route }: PageLifecycleProps) {
-  // The route the last visit began for: a fresh load is the lifecycle's own `load` visit, and StrictMode's second
-  // effect isn't a navigation.
-  const begun = useRef(route)
   useInsertionEffect(() => {
-    if (begun.current === route) return
-    begun.current = route
-    page.begin()
+    if (lastRoute === route) return
+    const first = lastRoute === undefined
+    lastRoute = route
+    if (!first) page.begin()
   }, [route])
   useEffect(() => {
     // On the first render this starts the lifecycle (the `load` visit) and its settle watch.

@@ -40,8 +40,8 @@ the newest release heading below, and the release tag.
   (Chromium). A direct `document.startViewTransition()` that jumps the page under Lenis is followed too.
 - **Entrances wait while the lifecycle holds the visit.** The engine-free, GSAP and Motion reveals and
   `splitReveal` start through `whenEntranceOpen()`; split words and `[data-enter]` are paused through a route
-  change, restarted after a loader's hold, and not replayed on back or forward. `mount` reveals land without playing
-  on back and forward. Without the lifecycle on the page nothing changes.
+  change, restarted after a loader's hold, and not replayed on back or forward. `mount` reveals that mount with the
+  arrival land without playing on back and forward (until `data-visit-placed`); ones that mount later play. Without the lifecycle on the page nothing changes.
 - **2.1.2's view-transition pause** for split words now applies only on a page without the lifecycle; with it, the
   words are held for route changes only, not for in-page transitions.
 - **A consumer's timeout counts from the entrance's start** (`entranceStartedAt()`: the lifecycle's stamp at

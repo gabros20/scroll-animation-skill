@@ -230,7 +230,8 @@ export function createSmoothScroll(options: SmoothScrollOptions): SmoothScrollHa
   // Mid-glide Lenis writes the position every frame: a native position other than its last write is someone else's.
   const stopFollowing = followPlacements(
     handle,
-    () => !!lenis && lenis.isScrolling === 'smooth' && Math.abs(window.scrollY - lenis.animatedScroll) > FOREIGN_PX,
+    // actualScroll and scroll are Lenis's own readings: the wrapper's axis, and its position wrapped when infinite.
+    () => !!lenis && lenis.isScrolling === 'smooth' && Math.abs(lenis.actualScroll - lenis.scroll) > FOREIGN_PX,
   )
   registerHandle(handle)
   return handle

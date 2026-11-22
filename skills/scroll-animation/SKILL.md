@@ -19,7 +19,8 @@ references say which. Copy the
 prepared blocks; never rewrite them from memory.
 
 Not this skill: UI micro-interactions and component motion (buttons, toasts, menus, hovers, springs, gestures, layout
-animation: `frontend` `ui-motion.md`, "Enter and exit" and "Hover and press"), layout scaling (fluid-design's; this
+animation: `frontend` `ui-motion.md`, "Enter and exit" and "Hover and press", from `design`'s motion spec), layout
+scaling (fluid-design's; this
 skill reads its breakpoint, header height and units), colour systems.
 
 ## Standalone context check
@@ -52,22 +53,23 @@ questions".
 
 ## The page lifecycle
 
-Every page and site build reads this; [lifecycle.md](references/lifecycle.md) is its home. One owner (`page.ts`)
-answers "is this page ready to animate" per visit, on `<html>`; blocks read it.
+A page with a router, a busy hero or a loader adds `page` (`page-react` on React);
+[lifecycle.md](references/lifecycle.md) is its home. One owner (`page.ts`) answers "is this page ready to animate"
+per visit, on `<html>`; blocks read it. Without it they behave as before.
 
 - **Visit:** one arrival, `data-visit-kind`: `load`, `push` (a link), `traverse` (back, forward), `restore`.
-- **Phase:** `data-entrance`, `pending → running → tail → settled`, restarted by each visit; `entrance:phase` bubbles.
-- **Server HTML:** `running` for a CSS first screen (it plays at first paint, with or without JavaScript); `pending`
-  when a script starts the entrance (a JS reveal, a loader); no attribute, no entrance.
-- **Holds** keep a visit `pending`, each with a cap: the router placing the scroll, a view transition, fonts (opt
-  in), a loader (`page.hold`). Held, CSS entrances pause and reveals wait.
-- **Costly starts** (canvas, video, loops, embeds) wait for `settled`, one per task (`page.afterSettled`). Fetch at
-  once; evaluate after. A timeout counts from the entrance's start, never navigation start.
-- **A push replays the first screen's entrance; back and forward arrive settled.**
+- **Phase:** `data-entrance`, `pending → running → tail → settled`, restarted per visit.
+- **Server HTML:** `running` for a CSS first screen (it plays at first paint); `pending` when a script starts the
+  entrance (a JS reveal, a loader); no attribute, no entrance.
+- **Holds** keep a visit `pending`, each capped: the router placing the scroll, a view transition, a loader
+  (`page.hold`). Held, CSS entrances pause and reveals wait.
+- **Costly starts** (canvas, video, loops, embeds) wait for `settled`, one per task (`page.afterSettled`); fetch at
+  once. A timeout counts from the entrance's start, never navigation start.
+- **A push replays the first screen's entrance;** back and forward arrive settled.
 - **Route changes:** `<PageLifecycle route={usePathname()} />` anywhere in the root layout (its own `<Suspense>`
-  under Cache Components), or `page.begin()` from another router. It never scrolls or syncs: the router and the
-  browser place the scroll, and the authority follows.
-- **Check:** `verify-motion.mjs <url> --nav`: a fresh load proves nothing about a navigation.
+  under Cache Components), or `page.begin()` elsewhere. It never scrolls: the router and the browser place the
+  scroll, and the authority follows.
+- **Check:** `verify-motion.mjs <url> --nav`.
 
 ## Route before acting
 
@@ -154,7 +156,8 @@ Break one and the motion breaks:
 9. **Reduced motion is an alternate scene in every engine and API;** auto-moving content over 5 s can be paused.
 10. **Per-frame work stops off-screen, in hidden tabs and in hidden routes;** heavy media is prepared at build time
     and probed, never assumed.
-11. **Nothing plays before the visit is `running`:** the router places the scroll after a page's layout effects.
+11. **With the lifecycle, nothing plays before the visit is `running`:** the router places the scroll after a page's
+    layout effects.
 
 ## Core workflow
 
@@ -162,13 +165,14 @@ Break one and the motion breaks:
 2. **Preflight.** Detect first, then settle profile, authority per route, engines, budgets and layout scale; write
    `ANIMATION.md` with a scene ledger (per section: clock, block, runway, reduced-motion alternative).
 3. **Foundation.** `scroll-animation add config base-css` plus `gsap-setup` or `motion-provider`; import
-   `css/animation.css`; put `GATE_SCRIPT` from `config.ts` in the document head; add the route's scroll authority;
-   `add page page-react` and write `data-entrance` in the server HTML.
+   `css/animation.css`; put `GATE_SCRIPT` from `config.ts` in the document head; add the route's scroll authority.
+   With a router, a busy hero or a loader: `add page page-react`, and `data-entrance` in the server HTML.
 4. **Blocks by clock.** Trigger first; promote to scroll or media only where the reader should drive the motion.
    Media goes through `scroll-animation media probe|scrub|loop|sequence|poster` before it ships.
 5. **Accessibility.** Build each ledger row's reduced-motion alternative, pause controls, focus handling.
 6. **Verify.** `node <skill>/scripts/tools/audit-motion.mjs src`, then
-   `verify-motion.mjs <url>` (and `--nav`) and, with anchors or a scroll well, `anchor-check.mjs <url>`.
+   `verify-motion.mjs <url>` (and `--nav`) and, with anchors or a scroll well, `anchor-check.mjs <url>`. Rule out a stale
+   stylesheet before debugging a scrub.
 
 ## Artifact contract
 
