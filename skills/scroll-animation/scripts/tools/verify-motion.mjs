@@ -639,6 +639,11 @@ async function checkFontSwap(browser, url, vp) {
       await route.continue().catch(() => {})
     })
     await page.addInitScript(() => {
+      // Observing an unsupported entry type throws nowhere (it warns), and an empty list would read as a pass.
+      if (!PerformanceObserver.supportedEntryTypes?.includes('layout-shift')) {
+        window.__verifyShifts = null
+        return
+      }
       window.__verifyShifts = []
       try {
         new PerformanceObserver((list) => {
