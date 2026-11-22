@@ -253,13 +253,14 @@ for 56 of 95 frames after a link (up to 1911 px), and for 53 of 94 after back, w
 - **Default.** 200 ms and 100 ms (`INTENT_MS`, `VISIT_WINDOW_MS`). Override when: a keyboard scroll is cut short
   (raise `INTENT_MS`). A scrollbar drag fires no input event in most browsers, so under ScrollSmoother the content
   follows the thumb unsmoothed (unverified per browser).
-- Measured in Chromium, and in WebKit (Playwright build 2388, 2026-11: the same checks pass).
-- **Firefox, ScrollSmoother, back and forward: broken, cause not found.** In Firefox (Playwright build 1572) a
-  traverse between two pages under one smoother stays at the scroll position of the page it left; on 2.1.2's blocks
-  it restored (and glided). Links, hash links and the wheel behave; native and Lenis traverses restore. What is
-  known: with 2.1's sync and refresh inside the commit Firefox restored about 12 ms after `popstate`; with every
-  variation tried here it never did. Until it is fixed, a Firefox reader on a ScrollSmoother site loses their
-  place on back: another reason for the Lenis default (§1).
+- **Adopting never writes the scroll.** ScrollSmoother's handle jumps its content to the native position by
+  finishing its own catch-up (its trigger re-reads the scroll, its scrub tween ends), not with `scrollTo(y, false)`,
+  which writes the scroll back. Firefox keeps a back or forward restore pending while the page it leaves is too short
+  for the position, and any scroll written meanwhile cancels it: the reader stayed where the page they left was
+  (measured, Playwright Firefox build 1572, 2026-11; 2.1.2's sync wrote it from inside the commit, before the
+  restore was pending). The write remains for a paused smoother and for a scroll ScrollTrigger hasn't read yet
+  (inside a commit, after the router moved it: no restore is pending then).
+- Measured in Chromium, WebKit (Playwright build 2388) and Firefox (build 1572), 2026-11: the same checks pass.
 - **Check.** `verify-motion.mjs <url> --nav`; `tests/route-hygiene.mjs` F4 and F5.
 
 - The authority belongs to the route: `SmoothScroll` in the route group's layout (`authority="native" | "lenis" |

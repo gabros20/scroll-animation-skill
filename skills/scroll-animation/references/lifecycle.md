@@ -17,8 +17,7 @@ any loader, the heavy layers on the first screen.
 Each topic reads: **Law** (a mechanism and its consequence, with its evidence), **Default** (a value, and when to
 override it), **Code** (the block, and what to keep if you rewrite it), **Check**. Evidence tags: `source
 <package@version>`, `measured <browser, date>`, `spec`, `unverified`. Numbers dated 2026-11 are Chromium's. The route checks (F3 to F5) also pass in WebKit (Playwright build
-2388), and in Firefox (build 1572) except one: back and forward under ScrollSmoother
-([scroll-authority.md](scroll-authority.md) "Placements and route changes").
+2388) and Firefox (build 1572).
 
 ## Contents
 

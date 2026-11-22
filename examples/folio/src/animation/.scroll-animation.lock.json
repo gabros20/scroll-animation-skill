@@ -14,7 +14,7 @@
     "css/animation.css": "4d1a0ad382d493b2",
     "gsap/setup.ts": "a4a589fa32a2b922",
     "motion/MotionProvider.tsx": "b3e3b8a7fe746942",
-    "smooth/authority.ts": "46f717afaccc8f40",
+    "smooth/authority.ts": "3f69df3f4c473cb5",
     "smooth/lenis.ts": "8abac2800177a568",
     "smooth/SmoothScroll.tsx": "1a96bc8e638be13a",
     "scene.ts": "a941566c8e85a58f",

@@ -19,7 +19,7 @@
  *   jump is still a placement). The handle's own animated scrollTo is neither.
  * - Both adopt once more two frames after a visit begins: a route change that doesn't move the scroll still changes
  *   the page's height.
- * Measured in Chromium (tests/route-hygiene.mjs, the placement and traverse checks); WebKit and Firefox not run.
+ * Measured in Chromium, WebKit and Firefox (tests/route-hygiene.mjs, the placement and traverse checks).
  * A scrollbar drag fires no input event, so under ScrollSmoother the content follows the thumb unsmoothed.
  */
 import { prefersReducedMotion } from '../config'

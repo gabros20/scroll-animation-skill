@@ -69,7 +69,9 @@ the newest release heading below, and the release tag.
 ### Fixed
 - An entrance no longer starts under the route's crossfade (measured on 2.1.2: GSAP, engine-free and Motion reveals
   all started about 250 ms before the transition ended).
-- Back or forward under ScrollSmoother no longer glides, with or without a flick of the wheel just before.
+- Back or forward under ScrollSmoother no longer glides, with or without a flick of the wheel just before. The
+  handle takes up a placement without writing the scroll, so Firefox's pending back/forward restore lands (a write
+  cancelled it, and the reader stayed where the page they left was).
 
 - A back or forward is read as one whichever `popstate` listener runs first (on next@16.4.6 the router's ran before
   `page.ts`'s and every traverse read as a push): `begin()` also reads a `popstate` in flight and the Navigation API.
@@ -89,13 +91,9 @@ the newest release heading below, and the release tag.
   beside `translate`, `scale` or `rotate` in one block", measured on 1.32.0; the skill's own keyframes come out
   unchanged. lifecycle "The hero budget": a fallback matched for body text is not matched for display type.
 
-### Known issue
-- Firefox, ScrollSmoother: back and forward between two pages under one smoother stay at the scroll position of the
-  page left (2.1.2 restored it, with a glide). Cause not found; native and Lenis are not affected.
-
 ### Not verified
 - WebKit: the lifecycle checks and the full route sequence pass on Playwright's build 2388; the other suites were
-  not run there. Firefox: the route sequence passes except the known issue above. bfcache (`restore`) is wired and untested. ScrollSmoother's frame rate in Safari
+  not run there. Firefox (Playwright build 1572): the route sequence and the lifecycle checks pass. bfcache (`restore`) is wired and untested. ScrollSmoother's frame rate in Safari
   is unmeasured.
 
 ## [2.1.2] - 2026-11-21

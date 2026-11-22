@@ -61,6 +61,8 @@ interface ScrollSmootherInstance {
   scrollTo(target: unknown, smooth?: boolean, position?: string): void
   paused(value: boolean): unknown
   kill(): void
+  /** The smoother's own trigger: its scrub tween is the content's catch-up toward the native scroll. */
+  scrollTrigger?: { update(): void; getTween(): { progress(value: number): unknown } | undefined }
 }
 interface ScrollSmootherStatic {
   create(vars: Record<string, unknown>): ScrollSmootherInstance
@@ -197,9 +199,22 @@ export function createSmoother(ScrollSmoother: ScrollSmootherStatic, options: Sm
         ScrollTrigger.addEventListener('refresh', relandOnRefresh)
         return
       }
-      // The content eases toward the native scroll over `smooth` seconds; a placement jumps it there instead
-      // (`scrollTo(y, false)` jumps, and works while paused). Measured in Chromium: tests/route-hygiene.mjs.
-      smoother.scrollTo(window.scrollY, false)
+      // The content eases toward the native scroll over `smooth` seconds; a placement jumps it there instead, by
+      // finishing that catch-up (the smoother's own trigger reads the scroll, its scrub tween ends), never by writing
+      // the scroll: in Firefox a scroll written while back or forward's restore is still pending (the page left was
+      // too short for it) cancels the restore, and the reader lost their place. The trigger reads the scroll ScrollTrigger
+      // cached at the last scroll event; called inside a commit after the router moved the scroll (2.1's sync()), that
+      // reading is stale, and `scrollTo(y, false)` jumps instead (the scroll moved, so no restore is pending). It also
+      // jumps while paused, which has no catch-up running. Measured in Chromium, WebKit and Firefox:
+      // tests/route-hygiene.mjs F4 and F5.
+      const trigger = smoother.scrollTrigger
+      // Called with no value, the scroll function returns that cached reading (gsap's types declare only the setter).
+      const cached = (ScrollTrigger.getScrollFunc(window) as unknown as () => number)()
+      const stale = Math.abs(cached - window.scrollY) >= 1
+      if (paused || !trigger || stale) return smoother.scrollTo(window.scrollY, false)
+      trigger.update()
+      // No tween: smooth 0 (reduced motion, touch), the content isn't transformed.
+      trigger.getTween()?.progress(1)
     },
     sync() {
       handle.adopt()
