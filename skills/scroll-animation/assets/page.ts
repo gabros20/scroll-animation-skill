@@ -364,7 +364,7 @@ function placed(): void {
   // A load is ScrollTrigger's own refresh (at `load`): only its streamed content is watched.
   if (v.kind !== 'load') refreshAll()
   const stop = watchSettle({}, v.kind !== 'load')
-  // After this task: every effect of the commit has mounted its blocks, and they read the visit as it arrived
+  // After this task: every layout effect of the commit has mounted its blocks, and they read the visit as it arrived
   // (arrivesSettled()). What mounts later in the visit is not part of the arrival.
   const stamped = setTimeout(() => visit === v && html().setAttribute('data-visit-placed', ''), 0)
   endVisit.push(stop, () => clearTimeout(stamped))

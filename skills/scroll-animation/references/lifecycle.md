@@ -371,7 +371,9 @@ pathname reader cannot do under Cache Components, and rendered before the page t
 - **CSS can't tell when an element mounted.** On back and forward, `[data-split-word]` and `[data-enter]` don't
   animate for the whole visit (the rule keys on `data-visit-kind`; lifting it mid-visit would replay the arrival's
   words). A CSS entrance that mounts later in such a visit (a tab's heading) shows at rest. JavaScript reveals are
-  exact: only what mounts before `data-visit-placed` lands without playing.
+  exact: only what mounts before `data-visit-placed` lands without playing. Mount a block in a layout effect
+  (`useGSAP` / `useLayoutEffect`) for it to count as part of the arrival: passive effects under a `<ViewTransition>`
+  run at `finished`, after the stamp.
 - **A listener that sets React state on `entrance:phase`:** safe. A visit's first event is dispatched in a
   microtask after the commit, never inside the insertion effect that began it.
 - **`suppressHydrationWarning` missing on `<html>`:** the attributes above are written before and after hydration.

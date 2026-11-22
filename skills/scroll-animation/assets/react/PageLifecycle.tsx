@@ -40,9 +40,10 @@ export interface PageLifecycleProps {
   route: string
 }
 
-// The route the last visit began for. Module-level, not a ref: mounted in a nested layout, the component remounts
-// on a route it has not seen, and a ref would start equal to it. The first value is the load (the lifecycle's own
-// `load` visit); StrictMode's second effect isn't a navigation.
+// The route the last visit began for. Module-level, not a ref: rendered once in the root layout it never remounts,
+// but if it ever does (its boundary re-mounted, a copy rendered below the root layout against the rule) a ref
+// would start equal to the new route and that navigation would begin no visit. The first value is the load (the
+// lifecycle's own `load` visit); StrictMode's second effect isn't a navigation.
 let lastRoute: string | undefined
 
 export function PageLifecycle({ route }: PageLifecycleProps) {
