@@ -766,6 +766,9 @@ async function arrivalSequence({ browser, base, line }) {
         // fixed-wait: a heading's entrance (MOTION.entrance, 1.3 s) ends before `done` can say it played
         await sleep(1600)
 
+        const atBuild = await page.evaluate(() => window.__rhAuthorityAtBuild)
+        const owner = route === 'smoothed' ? 'smoother' : 'native'
+        line(atBuild === owner, `data-scroll-authority read ${atBuild} as the page's blocks built`, `${name}: the ${owner} authority exists before the page's blocks build`)
         const arrived = await page.evaluate(readReveals, route)
         const early = arrived.starts.filter(offScreen)
         line(

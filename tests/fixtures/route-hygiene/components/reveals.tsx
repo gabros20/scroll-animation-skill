@@ -22,6 +22,7 @@ import { onRouteRefresh } from '@/animation/smooth/route'
 declare global {
   interface Window {
     __rhSplits?: SplitRevealHandle[]
+    __rhAuthorityAtBuild?: string | null
   }
 }
 
@@ -75,6 +76,8 @@ export function SmoothedMore() {
 export function Reveals({ route }: { route: 'reveals' | 'smoothed' }) {
   const root = useRef<HTMLDivElement>(null)
   useGSAP(() => {
+    // What a block reads as it builds (gsap/parallax.ts picks its scrub from it).
+    window.__rhAuthorityAtBuild = document.documentElement.dataset.scrollAuthority ?? null
     const handle = reveal(root.current!)
     const splits = Array.from(root.current!.querySelectorAll<HTMLElement>('[data-split]')).map((el) => splitReveal(el))
     window.__rhSplits = splits
