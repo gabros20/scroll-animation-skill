@@ -2,7 +2,7 @@
   "name": "scroll-animation-site",
   "version": "0.0.0",
   "private": true,
-  "description": "The scroll-animation skill's storefront, and its vanilla GSAP + ScrollSmoother example: a Vite multi-page site with no framework.",
+  "description": "The scroll-animation skill's storefront, and its vanilla GSAP example (ScrollSmoother kept as the legacy case): a Vite multi-page site with no framework.",
   "type": "module",
   "engines": {
     "node": ">=22.12.0"

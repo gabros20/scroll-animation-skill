@@ -31,8 +31,9 @@
           <p class="eyebrow">Guide</p>
           <h1 class="guide__title">How this storefront moves</h1>
           <p class="guide__lede">
-            The home page is Expressive: ScrollSmoother, a pinned scene, a rail. This page is Reading: native
-            scrolling, decoration on CSS timelines, entrances that play once. Both are built from the same blocks.
+            The home page is Expressive: a pinned scene, a rail, and ScrollSmoother, kept as the skill's example for a
+            site that already runs it. This page is Reading: native scrolling, decoration on CSS timelines, entrances
+            that play once. Both are built from the same blocks.
           </p>
         </header>
 
@@ -44,9 +45,11 @@
             frame.
           </p>
           <p data-reveal-item>
-            Native is the default for reading-first and accessibility-first pages, like this one. ScrollSmoother suits
-            a page that is GSAP only and leans on <code>data-speed</code> and <code>data-lag</code>, with its fixed UI
-            outside the content wrapper: the home page. Lenis is the choice whenever a page mixes engines.
+            Native is the default, and the right choice for reading-first and accessibility-first pages like this one.
+            When a desktop page wants smoothing, Lenis smooths the real scroll position, so sticky, fixed and CSS
+            scroll timelines keep working. ScrollSmoother is legacy: its transformed wrapper breaks sticky and fixed
+            elements, jitters on iOS and fights scroll restoration, so it stays only for sites that already run it,
+            like the home page, with its fixed UI outside the wrapper.
           </p>
           <p data-reveal-item>
             The owner stamps itself on <code>&lt;html data-scroll-authority&gt;</code>. Here it reads

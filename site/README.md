@@ -1,7 +1,8 @@
 # site
 
-The scroll-animation skill's storefront, and its vanilla GSAP + ScrollSmoother example: a Vite multi-page site in
-plain TypeScript, no framework. The copy is placeholder facts about the skill; the design pass comes later.
+The scroll-animation skill's storefront, and its vanilla GSAP example: a Vite multi-page site in plain TypeScript,
+no framework. The home page runs ScrollSmoother as the skill's example for a site that already has it; from 2.2.0
+ScrollSmoother is legacy, and new builds scroll natively or with Lenis. The copy is placeholder facts about the skill; the design pass comes later.
 
 | Page | Profile | Scroll authority | What moves |
 |---|---|---|---|

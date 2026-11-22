@@ -156,8 +156,8 @@
                   <p class="engine__name">GSAP</p>
                   <h3 class="engine__job">Timelines and plugins</h3>
                   <p>
-                    ScrollTrigger pins, SplitText, ScrollSmoother. This page is GSAP only: the smoother owns scrolling,
-                    and ScrollTrigger pins the clocks and this rail.
+                    ScrollTrigger pins, SplitText, and ScrollSmoother on a legacy site. This page keeps the smoother as
+                    that example: it owns scrolling, and ScrollTrigger pins the clocks and this rail.
                   </p>
                   <a href="/guide/#authority">One scroll authority per page</a>
                 </article>
@@ -183,10 +183,10 @@
               </li>
               <li class="stat">
                 <span class="stat__value"><span data-count-up>3</span></span>
-                <span class="stat__label">scroll authorities: native, Lenis, ScrollSmoother</span>
+                <span class="stat__label">scroll authorities: native, Lenis, and ScrollSmoother for legacy sites</span>
               </li>
               <li class="stat">
-                <span class="stat__value"><span data-count-up>10</span></span>
+                <span class="stat__value"><span data-count-up>11</span></span>
                 <span class="stat__label">universal invariants: break one and the motion breaks</span>
               </li>
               <li class="stat">
@@ -204,7 +204,7 @@
                 file. The page only wires them.
               </p>
               <ul class="blocks__list">
-                <li data-reveal-item><code>smooth-smoother</code> ScrollSmoother owns the scroll; reduced motion runs it in native mode</li>
+                <li data-reveal-item><code>smooth-smoother</code> ScrollSmoother owns the scroll (legacy; new builds take native or Lenis); reduced motion runs it in native mode</li>
                 <li data-reveal-item><code>pinned-scene</code> the five clocks, pinned by ScrollTrigger</li>
                 <li data-reveal-item><code>horizontal-rail</code> the engine map; a native snap scroller under reduced motion</li>
                 <li data-reveal-item><code>split-words</code> the headline, split into words when the site is built</li>
@@ -221,9 +221,9 @@
           <section class="closing" data-header-theme="light" data-reveal data-reveal-margin="0px">
             <h2 class="section-title" data-split-reveal>One scroll authority per page</h2>
             <p class="intro__text" data-reveal-item>
-              This page runs ScrollSmoother, so sticky, fixed and CSS scroll timelines are out inside its content: the
-              pins are ScrollTrigger's, and the header lives outside the wrapper. The guide scrolls natively and runs
-              its decoration on CSS timelines.
+              This page runs ScrollSmoother, the legacy owner, so sticky, fixed and CSS scroll timelines are out inside
+              its content: the pins are ScrollTrigger's, and the header lives outside the wrapper. The guide scrolls
+              natively and runs its decoration on CSS timelines, which is where a new build starts.
             </p>
             <p data-reveal-item><a class="button" href="/guide/">Read the guide</a></p>
           </section>
