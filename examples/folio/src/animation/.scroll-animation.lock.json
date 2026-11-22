@@ -1,5 +1,5 @@
 {
-  "skillVersion": "2.1.1",
+  "skillVersion": "2.1.2",
   "dir": "src/animation",
   "engines": [
     "agnostic",
@@ -11,12 +11,12 @@
   "files": {
     "config.ts": "d293c08f2ccf5dd6",
     "scale.ts": "322b05138c6a47d1",
-    "css/animation.css": "174d9e54fac99bcf",
+    "css/animation.css": "4d1a0ad382d493b2",
     "gsap/setup.ts": "a4a589fa32a2b922",
     "motion/MotionProvider.tsx": "b3e3b8a7fe746942",
-    "smooth/authority.ts": "48a641d3e6f88b8a",
-    "smooth/lenis.ts": "91a2dab10245e9b9",
-    "smooth/SmoothScroll.tsx": "e9399a86e1bb1e56",
+    "smooth/authority.ts": "46f717afaccc8f40",
+    "smooth/lenis.ts": "576e06d4a3394ea6",
+    "smooth/SmoothScroll.tsx": "e5793720a2350751",
     "scene.ts": "a941566c8e85a58f",
     "css/scene.css": "d77d2b44a0081ae6",
     "gsap/pinned-scene.ts": "bae9b12a1f2b9606",
@@ -30,11 +30,11 @@
     "motion/ScrubVideo.tsx": "f92871fff7c6ee43",
     "motion/LoopVideo.tsx": "e371fc0a8488d76b",
     "motion/useReducedMotionLive.ts": "f16b298eb3d9321e",
-    "motion/Reveal.tsx": "f8dc9cc50f92bf34",
+    "motion/Reveal.tsx": "011dbe90f9d86b91",
     "css/reveal.css": "68e6a5ccb6f2c0d0",
     "motion/SplitWords.tsx": "724ae0a4af4f403d",
     "split-words.ts": "d76af3671f7a3f06",
-    "css/split.css": "0558597605076deb",
+    "css/split.css": "27b3914f1354c2c6",
     "count-up.ts": "fc01d059966850e7",
     "motion/CountUp.tsx": "23d23fb0521f6ae4",
     "header-theme.ts": "a2aca41e57b93801",
@@ -44,7 +44,7 @@
     "css/rail.css": "6682d3bf5ae42a9e",
     "css/scroll-effects.css": "2f66964ed3d27709",
     "image-ink.ts": "4815e855ec0337cb",
-    "smooth/route.ts": "d5b00e972a7c0b4f",
+    "smooth/route.ts": "9a4fadf5fc205c7c",
     "css/view-transitions.css": "bfaa79267e7363c8",
     "css/view-transitions-mpa.css": "90ff035a0b7a9ec6",
     "scrolly-steps.ts": "70f8dde223dde2de",
@@ -52,6 +52,8 @@
     "css/scrolly.css": "3b38c5114011adaa",
     "render-bridge.ts": "c2544ae40763f287",
     "gsap/pinned-scene-render.ts": "f6c55eec1d80a16f",
-    "entrance-signal.ts": "2419b154caaa93ef"
+    "entrance-signal.ts": "9ee821ea07912efd",
+    "page.ts": "641378b9bb534ae7",
+    "react/PageLifecycle.tsx": "02b668b6e0842e81"
   }
 }

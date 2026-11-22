@@ -1,9 +1,10 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Archivo, Fraunces } from "next/font/google";
 import { GATE_SCRIPT } from "@/animation/config";
 import { MotionProvider } from "@/animation/motion/MotionProvider";
 import { SiteFooter } from "@/components/site-footer";
-import { RouteScroll } from "@/components/route-scroll";
+import { Lifecycle } from "@/components/lifecycle";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 import "@/animation/css/animation.css";
@@ -37,7 +38,7 @@ export const metadata: Metadata = {
 };
 
 // The scroll authority is per route, so it lives in the route-group layouts,
-// not here; RouteScroll runs the route contract for whichever one is live.
+// not here; Lifecycle begins a visit of the page lifecycle per navigation.
 // Page changes are React <ViewTransition>s (the journal's cover morph);
 // view-transitions.css is their look, and anchors the [data-header]. <html> carries attributes React doesn't render (GATE_SCRIPT's
 // data-animation, the engines' data-animation-ready, SmoothScroll's
@@ -58,10 +59,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           body's top padding is the room it used to take in the flow. */}
       <body className="flex min-h-screen flex-col pt-(--header-h) font-sans antialiased">
         <MotionProvider>
+          {/* Anywhere in the tree: it renders nothing and needs no position. */}
+          <Suspense fallback={null}>
+            <Lifecycle />
+          </Suspense>
           <SiteHeader />
-          <main className="flex-1">
-            <RouteScroll>{children}</RouteScroll>
-          </main>
+          <main className="flex-1">{children}</main>
           <SiteFooter />
         </MotionProvider>
       </body>

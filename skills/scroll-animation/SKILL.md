@@ -14,14 +14,13 @@ it decides the cost, the engine and which traps apply. Each job goes to the engi
 decoration, Motion for React section and scroll motion, GSAP for timelines and its plugins.
 
 The skill ships tested, copy-and-own blocks (`scroll-animation list`), the references that explain every decision,
-and a CLI that copies blocks, prepares media and checks the result. It was extracted from a production site whose
-motion layer was built three times: most rules were paid for by a real bug, and the references say which. Copy the
+and a CLI that copies blocks, prepares media and checks the result. Most rules were paid for by a real bug, and the
+references say which. Copy the
 prepared blocks; never rewrite them from memory.
 
-Not this skill: UI micro-interactions and component motion (buttons, toasts, menus, hovers, enter and exit, springs,
-gestures, layout animation: `frontend` `ui-motion.md`, "Enter and exit" and "Hover and press", from `design`'s motion
-spec), layout scaling and viewport-unit sizing (fluid-design's job; this skill reads its breakpoint, header height and
-units when a project uses it), colour systems.
+Not this skill: UI micro-interactions and component motion (buttons, toasts, menus, hovers, springs, gestures, layout
+animation: `frontend` `ui-motion.md`, "Enter and exit" and "Hover and press"), layout scaling (fluid-design's; this
+skill reads its breakpoint, header height and units), colour systems.
 
 ## Standalone context check
 
@@ -51,71 +50,90 @@ Technical choices (smoothing, engines, existing motion) are detected, or stated 
 the same message, never counted among the four: [Preflight](references/preflight.md) "5. Asking the
 questions".
 
+## The page lifecycle
+
+Every page and site build reads this; [lifecycle.md](references/lifecycle.md) is its home. One owner (`page.ts`)
+answers "is this page ready to animate" per visit, on `<html>`; blocks read it.
+
+- **Visit:** one arrival, `data-visit-kind`: `load`, `push` (a link), `traverse` (back, forward), `restore`.
+- **Phase:** `data-entrance`, `pending → running → tail → settled`, restarted by each visit; `entrance:phase` bubbles.
+- **Server HTML:** `running` for a CSS first screen (it plays at first paint, with or without JavaScript); `pending`
+  when a script starts the entrance (a JS reveal, a loader); no attribute, no entrance.
+- **Holds** keep a visit `pending`, each with a cap: the router placing the scroll, a view transition, fonts (opt
+  in), a loader (`page.hold`). Held, CSS entrances pause and reveals wait.
+- **Costly starts** (canvas, video, loops, embeds) wait for `settled`, one per task (`page.afterSettled`). Fetch at
+  once; evaluate after. A timeout counts from the entrance's start, never navigation start.
+- **A push replays the first screen's entrance; back and forward arrive settled.**
+- **Route changes:** `<PageLifecycle route={usePathname()} />` anywhere in the root layout (its own `<Suspense>`
+  under Cache Components), or `page.begin()` from another router. It never scrolls or syncs: the router and the
+  browser place the scroll, and the authority follows.
+- **Check:** `verify-motion.mjs <url> --nav`: a fresh load proves nothing about a navigation.
+
 ## Route before acting
 
 First pick the lane, then the reference:
 
 | Lane | Path |
 |---|---|
-| Debug a symptom | [verification.md](references/verification.md) (§4 first: a stale stylesheet causes most "broken scrub" reports), then the one reference it points to |
+| Debug a symptom | [verification.md](references/verification.md) (§4 first: a stale stylesheet), then the reference it points to |
 | Add one effect | the engine map below → `scroll-animation add <block>` → that block's reference |
 | Build or redesign a page or site | [preflight.md](references/preflight.md) → `ANIMATION.md` with a scene ledger → blocks by clock → verify |
 
 | User intent | Read | Contribution |
 |---|---|---|
-| Any new page, site or motion system | [preflight.md](references/preflight.md) | profile, scroll authority per route, engines, budgets, layout scale, `ANIMATION.md` |
-| Smooth or inertial scroll; Lenis or ScrollSmoother already present; anchors or modals under a smoother | [scroll-authority.md](references/scroll-authority.md) | the owner per route, one clock, what each owner breaks |
-| Page transitions, a shared element from card to detail page, a grid opening in place, a preloader; a navigation that lands at the wrong scroll position or leaves triggers stale | [page-transitions.md](references/page-transitions.md) | which tool per router, `view-transitions`, `<RouteChange>` / `routeChanged()`, framework hooks, Flip and `layoutId`, preloaders |
-| Scrollytelling: a sticky graphic or chart beside text steps, a data story or visual essay | [scrollytelling.md](references/scrollytelling.md) | story beats, the five techniques and four layouts mapped to blocks, `scrolly-steps`, phones, accessibility |
-| Content that animates in (sections, cards, images, stats, a number counting up) | [entrances.md](references/entrances.md) | triage by clock, `Reveal` per engine, trigger lines, once or replay, the load veil, count-up, the gate and SSR |
-| A busy hero: a load entrance beside a live canvas, video or loops; type stepping at the settle | [entrances.md](references/entrances.md) §11, [performance.md](references/performance.md) §14 | a compositor entrance (CSS or Motion's `transform` string; Motion `x`/`y` only from 14.2), the entrance signal, the hero budget |
+| Any new page, site or motion system | [preflight.md](references/preflight.md) | profile, authority per route, engines, budgets, `ANIMATION.md` |
+| Smooth scroll; Lenis or ScrollSmoother present; anchors or modals under a smoother | [scroll-authority.md](references/scroll-authority.md) | the owner per route, one clock, what each owner breaks |
+| A busy hero; any client-side router; entrances under a page transition, off screen after a link or again on back; a navigation that glides, lands wrong or leaves triggers stale | [lifecycle.md](references/lifecycle.md) | the contract, first load, the hero budget, route change, holds, the clock, migrating from `<RouteChange>` |
+| Page transitions, a shared element from card to detail page, a grid opening in place, a preloader | [page-transitions.md](references/page-transitions.md) | the tool per router, `view-transitions`, Flip and `layoutId`, preloaders |
+| Scrollytelling: a sticky graphic or chart beside text steps, a data story or visual essay | [scrollytelling.md](references/scrollytelling.md) | story beats, techniques and layouts mapped to blocks, `scrolly-steps`, phones |
+| Content that animates in (sections, cards, images, a count-up) | [entrances.md](references/entrances.md) | triage by clock, `Reveal` per engine, trigger lines, replay, the veil, count-up, the gate |
 | A headline or paragraph revealed by word or line | [text.md](references/text.md) | `SplitWords` on the server or SplitText below the fold, fonts first, aria, React keys, CJK and Thai |
-| Motion (React) code: `useScroll`, springs, `LazyMotion`, Motion under Lenis | [motion.md](references/motion.md) | `m` under strict, live reduced motion, hand-written scroll styles, the `frame` driver |
-| GSAP code: `useGSAP`, a vanilla page's `mount`, section timelines, triggers that fire early or stack up, plugins | [gsap.md](references/gsap.md) | setup, cleanup per route, page order and `refreshPriority`, the matchMedia trap, `quickTo`, the 11 mistakes |
-| Choreography, timing and taste; motion that feels generic or busy | [craft.md](references/craft.md) | order, durations, eases, staggers, pacing, replay, one idea per viewport, anti-slop checks |
-| A pinned or scrubbed section, stacked acts, a horizontal rail, a scroll well, copy riding over a pin | [scenes.md](references/scenes.md) | range wrapper, sticky or GSAP pin, acts, latches, manual writes, camera, scaled travel, rails |
-| CSS decoration on scroll: parallax, fades, a sticky card stack, a marquee, a progress bar; `view()` or `timeline-scope` trouble | [css-scroll-effects.md](references/css-scroll-effects.md) | `data-scroll-fx`, ranges, the Firefox fallback, each authority, reduced motion, `overflow: clip` |
-| Layers: a layered hero, parallax in JS, colour tracks, a velocity marquee, cursor media, drawn lines, blend text, header ink per section, stepped sections, particles | [layered-visuals.md](references/layered-visuals.md) | the cheapest engine per effect, the recipes, the header's IntersectionObserver probe |
-| Any `<video>`: scrub, loop, conditional autoplay | [video.md](references/video.md) | encoding, loop seams, seeks, preload tiers, posters, serving, pause controls, tab-sleep recovery |
-| An image sequence on scroll (Apple-style), or Lottie or Rive driven by scroll | [sequences.md](references/sequences.md) | sequence or video, the frame manifest, decode window, byte budgets |
-| A 3D model, camera or world (three.js, R3F) moving with scroll in a pinned section; a canvas that lags the copy, sweeps on reload or leaks contexts | [webgl.md](references/webgl.md) | real-time or rendered, the boundary with the 3d skill, `render-bridge` on the authority's tick, lifecycle, checks |
-| Reduced motion, auto-moving content, keyboard, split text, no-JS, print | [accessibility.md](references/accessibility.md) | the alternate scene per engine, pause controls, focus, screen readers |
-| A site that already animates (header scripts, GSAP, Lenis, AOS) | [brownfield-coexistence.md](references/brownfield-coexistence.md) | keep, adapt or replace; one writer per property |
-| A scene or video misbehaving on iPhone or Safari | [ios-safari-motion.md](references/ios-safari-motion.md) | toolbar, pin units, play watchdog, mask sweeps |
-| Jank, budgets, before shipping | [performance.md](references/performance.md) | cost order, per-frame budgets, gating |
-| Proving it works; any "it doesn't fire / holds / snaps" | [verification.md](references/verification.md) | the harness, the scripts, device checks |
-| A viewport-scaled layout (fluid-design or similar) | [preflight.md](references/preflight.md) §3.6 | breakpoint, header and unit sources; scaled travel is `scenes.md` §12 |
-| Where a rule or number came from; whether a source's text may be reused | [SOURCES.md](references/SOURCES.md) | provenance and licence per outside source |
+| Motion (React) code: `useScroll`, springs, `LazyMotion` | [motion.md](references/motion.md) | `m` under strict, live reduced motion, hand-written scroll styles, the `frame` driver |
+| GSAP code: `useGSAP`, `mount`, section timelines, triggers that fire early or stack up, plugins | [gsap.md](references/gsap.md) | setup, cleanup per route, page order, the matchMedia trap, the 11 mistakes |
+| Choreography, timing, taste; motion that feels generic | [craft.md](references/craft.md) | order, durations, eases, staggers, pacing, replay, one idea per viewport, anti-slop checks |
+| A pinned or scrubbed section, stacked acts, a horizontal rail, a scroll well, copy riding over a pin | [scenes.md](references/scenes.md) | range wrapper, sticky or GSAP pin, acts, latches, camera, scaled travel, rails |
+| CSS decoration on scroll: parallax, fades, a card stack, a marquee, a progress bar; `view()` trouble | [css-scroll-effects.md](references/css-scroll-effects.md) | `data-scroll-fx`, ranges, the Firefox fallback, each authority, reduced motion, `overflow: clip` |
+| Layers: a layered hero, JS parallax, colour tracks, a velocity marquee, cursor media, drawn lines, blend text, header ink, stepped sections, particles | [layered-visuals.md](references/layered-visuals.md) | the cheapest engine per effect, the recipes, the header's IntersectionObserver probe |
+| Any `<video>`: scrub, loop, conditional autoplay | [video.md](references/video.md) | encoding, loop seams, seeks, preload tiers, posters, pause controls |
+| An image sequence on scroll, or Lottie or Rive driven by scroll | [sequences.md](references/sequences.md) | sequence or video, the frame manifest, decode window, byte budgets |
+| 3D (three.js, R3F) moving with scroll in a pinned section; a canvas that lags the copy or leaks contexts | [webgl.md](references/webgl.md) | real-time or rendered, the 3d skill's boundary, `render-bridge` on the authority's tick |
+| Reduced motion, auto-moving content, keyboard, no-JS, print | [accessibility.md](references/accessibility.md) | the alternate scene per engine, pause controls, focus, screen readers |
+| A site that already animates (GSAP, Lenis, AOS) | [brownfield-coexistence.md](references/brownfield-coexistence.md) | keep, adapt or replace; one writer per property |
+| A scene or video misbehaving in Safari | [ios-safari-motion.md](references/ios-safari-motion.md) | toolbar, pin units, play watchdog, mask sweeps |
+| Jank, budgets | [performance.md](references/performance.md) | cost order, per-frame budgets, gating |
+| Proving it works; "it doesn't fire / holds / snaps" | [verification.md](references/verification.md) | the harness, the scripts, device checks |
+| A viewport-scaled layout (fluid-design) | [preflight.md](references/preflight.md) §3.6 | breakpoint, header and unit sources |
+| Where a rule or number came from | [SOURCES.md](references/SOURCES.md) | provenance and licence per source |
 
 ## Engine map
 
 | Clock | Job | Block (engine) |
 |---|---|---|
-| trigger | content entrance; a load veil only as a recorded exception (it delays the LCP element) | `reveal` (motion: `Reveal`/`RevealItem`/`RevealVeil`; gsap: `reveal`; agnostic: `mountReveals`) |
-| trigger | the load entrance's clock, which a live canvas, video and loops wait on | `entrance-signal` (agnostic: `publishEntrance`, `trackEntrance`; `Reveal`'s `entrance`, `{ entrance: true }`) |
+| trigger | content entrance; a load veil only as a recorded exception | `reveal` (motion: `Reveal`/`RevealItem`/`RevealVeil`; gsap: `reveal`; agnostic: `mountReveals`) |
+| route | the page lifecycle, and what blocks read from it | `page` (agnostic: `page`), `page-react` (`PageLifecycle`), `entrance-signal` (agnostic: `whenEntranceOpen`, `trackEntrance`; `Reveal`'s `entrance`, `{ entrance: true }`) |
 | trigger | an above-the-fold headline, its words in from the first frame | `split-words` (motion: `SplitWords`, a Server Component; agnostic: `splitWordsHTML`) |
 | trigger | a heading or paragraph revealed line by line below the fold | `split-reveal` (gsap: `splitReveal`, SplitText) |
 | trigger | a number counting up | `count-up` (motion: `CountUp`; agnostic: `mountCountUps`) |
-| scroll | parallax, fade and scale in, exit fade, reading progress, sticky stack, marquee | `scroll-effects` (css: `data-scroll-fx`; decoration; its `view()` effects are off under ScrollSmoother) |
-| scroll | JS layers: parallax where CSS can't run, a colour handed between sections, lines drawn on scroll | recipes `parallax` (gsap: `parallax`; motion: `Parallax`), `colour-track` (gsap: `colourTrack`), `draw-on-scroll` (gsap: `drawOnScroll`) |
-| render, trigger | a marquee that follows scroll speed, media that follows the pointer; one section per notch for a presentation | recipes `marquee-velocity` (gsap: `marqueeVelocity`), `cursor-media` (gsap: `cursorMedia`), `stepped-sections` (gsap: `steppedSections`) |
+| scroll | parallax, fades, reading progress, sticky stack, marquee | `scroll-effects` (css: `data-scroll-fx`; decoration; `view()` is off under ScrollSmoother) |
+| scroll | JS layers: parallax where CSS can't run, a colour track, drawn lines | recipes `parallax` (gsap: `parallax`; motion: `Parallax`), `colour-track` (gsap: `colourTrack`), `draw-on-scroll` (gsap: `drawOnScroll`) |
+| render, trigger | a velocity marquee, pointer media, one section per notch | recipes `marquee-velocity` (gsap: `marqueeVelocity`), `cursor-media` (gsap: `cursorMedia`), `stepped-sections` (gsap: `steppedSections`) |
 | scroll | header ink per section | `header-theme` (motion: `useHeaderTheme`; agnostic: `mountHeaderTheme`) |
 | scroll | a horizontal rail of panels | `horizontal-rail` (gsap: `horizontalRail`, on `pinned-scene`) |
 | scroll | a section pulled to rest | `scroll-well` (motion: `ScrollWell`; gsap: `scrollWell`; agnostic: `createScrollWell`; native scrolling only) |
 | scroll | a pinned scene: stacked acts, a scroll-driven timeline | `pinned-scene` (motion: `PinnedScene`; gsap: `pinnedScene`) |
-| render | a real-time 3D canvas (three, R3F) in a pinned scene, fed by the pin; the 3D itself is the 3d skill's | `render-bridge` (motion: `usePinnedSceneRender`; gsap: `pinnedSceneRender`; on `pinned-scene`) |
+| render | a real-time 3D canvas in a pinned scene, fed by the pin (the 3D is the 3d skill's) | `render-bridge` (motion: `usePinnedSceneRender`; gsap: `pinnedSceneRender`; on `pinned-scene`) |
 | media | a scrubbed video on a pinned scene | `scrub-video` (motion: `ScrubVideo`; gsap: `scrubVideo`) |
 | media | an image sequence scrubbed on a canvas | `frame-sequence` (motion: `FrameSequence`; gsap: `frameSequence`) |
 | media | an in-view background loop with a pause control | `loop-video` (motion: `LoopVideo`; gsap: `loopVideo`) |
-| trigger | a sticky graphic beside natively scrolling steps, one state per step (scrollytelling) | `scrolly-steps` (motion: `ScrollySteps`, `useScrollySteps`; agnostic: `mountScrollySteps`) |
-| trigger | a change of view inside one route: grid to detail, reorder, filter; a card opening into a panel | recipes `flip-transition` (gsap: `flipTransition`), `layout-morph` (motion: `LayoutMorph`, `Morph`) |
-| route | a page change: the root crossfade, shared elements, directional slides | `view-transitions` (css: React's `<ViewTransition>` with the classes; agnostic: `transition`, `mountCrossDocumentTransitions`) |
-| route | an Immersive first screen held until its assets load, with real progress | recipe `preloader` (agnostic: `mountPreloader`) |
-| — | scroll owner for a route | `smooth-lenis` + `smooth-react`, or `smooth-smoother` (GSAP-only pages; start it with `createSmoother`); `<RouteChange>` / `routeChanged()` after each client navigation |
+| trigger | a sticky graphic beside scrolling steps (scrollytelling) | `scrolly-steps` (motion: `ScrollySteps`, `useScrollySteps`; agnostic: `mountScrollySteps`) |
+| trigger | a change of view inside one route: grid to detail, reorder, filter | recipes `flip-transition` (gsap: `flipTransition`), `layout-morph` (motion: `LayoutMorph`, `Morph`) |
+| route | a page change: crossfade, shared elements, slides | `view-transitions` (css: React's `<ViewTransition>` with the classes; agnostic: `transition`, `mountCrossDocumentTransitions`) |
+| route | a first screen held until its assets load | recipe `preloader` (agnostic: `mountPreloader`) |
+| — | scroll owner for a route | `smooth-lenis` + `smooth-react`, or `smooth-smoother` (GSAP-only pages; start it with `createSmoother`) |
 | — | foundation | `config`, `base-css`, `gsap-setup` (plus `mount` on a vanilla GSAP page) or `motion-provider` |
 
-When a route already loads GSAP, its entrances use GSAP rather than adding Motion, and the reverse. One engine per
-element and per scene.
+A route that loads GSAP uses GSAP for its entrances rather than adding Motion, and the reverse. One engine per element
+and per scene.
 
 ## Universal invariants
 
@@ -136,40 +154,40 @@ Break one and the motion breaks:
 9. **Reduced motion is an alternate scene in every engine and API;** auto-moving content over 5 s can be paused.
 10. **Per-frame work stops off-screen, in hidden tabs and in hidden routes;** heavy media is prepared at build time
     and probed, never assumed.
+11. **Nothing plays before the visit is `running`:** the router places the scroll after a page's layout effects.
 
 ## Core workflow
 
-1. **Lane.** Debug and single-effect tasks skip to their reference. A page or site starts with preflight.
+1. **Lane.** Debug and single-effect tasks skip to their reference; a page or site starts with preflight.
 2. **Preflight.** Detect first, then settle profile, authority per route, engines, budgets and layout scale; write
-   `ANIMATION.md` with a scene ledger (one row per section: clock, block, runway, reduced-motion alternative).
+   `ANIMATION.md` with a scene ledger (per section: clock, block, runway, reduced-motion alternative).
 3. **Foundation.** `scroll-animation add config base-css` plus `gsap-setup` or `motion-provider`; import
-   `css/animation.css`; put `GATE_SCRIPT` from `config.ts` in the document head; add the route's scroll authority.
+   `css/animation.css`; put `GATE_SCRIPT` from `config.ts` in the document head; add the route's scroll authority;
+   `add page page-react` and write `data-entrance` in the server HTML.
 4. **Blocks by clock.** Trigger first; promote to scroll or media only where the reader should drive the motion.
    Media goes through `scroll-animation media probe|scrub|loop|sequence|poster` before it ships.
 5. **Accessibility.** Build each ledger row's reduced-motion alternative, pause controls, focus handling.
-6. **Verify.** `node <skill>/scripts/tools/audit-motion.mjs src` (fix every error), then
-   `verify-motion.mjs <url>` and, with anchors or a scroll well, `anchor-check.mjs <url>`. Rule out a stale
-   stylesheet before debugging a scrub.
+6. **Verify.** `node <skill>/scripts/tools/audit-motion.mjs src`, then
+   `verify-motion.mjs <url>` (and `--nav`) and, with anchors or a scroll well, `anchor-check.mjs <url>`.
 
 ## Artifact contract
 
 | Artifact | Where | Owner |
 |---|---|---|
-| Decisions and the scene ledger | `ANIMATION.md` at the project root | preflight; updated when a decision changes |
-| Blocks | `src/animation/` (same layout as `assets/`), recorded in `.scroll-animation.lock.json` | `scroll-animation add`; hand edits are yours: `add` keeps an edited require (`config.ts`) that still exports every name the blocks import, and refuses to overwrite the rest without `--force` |
-| A block's markup and names | its file header: the HTML or JSX it expects, its `data-*` attributes, CSS variables, options and handle | the block; read it before wiring, never guess a name |
+| Decisions and the scene ledger | `ANIMATION.md` at the project root | preflight |
+| Blocks | `src/animation/` (same layout as `assets/`), recorded in `.scroll-animation.lock.json` | `scroll-animation add`; hand edits are yours: it keeps an edited `config.ts` and overwrites nothing else without `--force` |
+| A block's markup and names | its file header: markup, `data-*` attributes, CSS variables, options, handle | the block; read it before wiring |
 | Names and numbers | `src/animation/config.ts` | edit values there, never inside a block |
-| The header's height | `--header-h` on `:root` (`var(--fluid-header-h)` on fluid-design) | the page sets it; anchors, `view()` ranges and sticky tops read it |
-| Base CSS | `src/animation/css/animation.css`, imported once after the reset | shared by every engine |
-| The pre-JS gate | `GATE_SCRIPT` inline in `<head>` (with the CSP nonce; `suppressHydrationWarning` on `<html>` in React): `html[data-animation="on"]`, then `data-animation-ready` once an engine boots | required for hidden entrance states |
+| The header's height | `--header-h` on `:root` (`var(--fluid-header-h)` on fluid-design) | the page sets it; anchors and sticky tops read it |
+| Base CSS | `src/animation/css/animation.css`, imported once after the reset | every engine |
+| The pre-JS gate | `GATE_SCRIPT` inline in `<head>` (CSP nonce; `suppressHydrationWarning` on `<html>` in React) | required for hidden entrance states |
 | Scroll owner at runtime | `<html data-scroll-authority>` | stamped by the smooth blocks, never authored |
 
-Agents run the CLI as `node <skill>/bin/scroll-animation <command>`; people run `npx scroll-animation-cli <command>`
-once it is published.
+Agents run the CLI as `node <skill>/bin/scroll-animation <command>`.
 
 ## Completion and handoff
 
-Done means: the audit reports no errors, `verify-motion` passes reveals and scene states at the ledger's viewports,
-the reduced-motion run shows every alternative, and `ANIMATION.md` matches what shipped. Report which checks ran and
-which remain (real iPhone and Android passes for video, pins and smoothing can't be proven headlessly). Hand layout
-problems (sizing, fluid scale, a stylesheet stale after a restart) to the layout owner.
+Done means: the audit reports no errors, `verify-motion` passes reveals, scene states and `--nav` at the ledger's
+viewports, the reduced-motion run shows every alternative, and `ANIMATION.md` matches what shipped. Report which
+checks ran and which remain (real iPhone and Android passes can't be proven headlessly). Hand layout problems to the
+layout owner.

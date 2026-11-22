@@ -20,7 +20,7 @@ misbehave under a smoother.
 5. [ScrollSmoother](#5-scrollsmoother)
 6. [One tick](#6-one-tick)
 7. [Mobile](#7-mobile)
-8. [Route changes](#8-route-changes)
+8. [Placements and route changes](#8-placements-and-route-changes)
 9. [Traps](#traps)
 
 ## 1. One owner per page
@@ -118,7 +118,7 @@ React: `<SmoothScroll authority="lenis" driver={gsapDriver(gsap, ScrollTrigger)}
   `native`. When the visitor changes the setting mid-visit, Lenis is torn down, or started again at the reader's
   position. The handle stays the same object, and a modal's `stop()` holds across the switch.
 - **Two Lenis routes under one layout** keep one Lenis alive across the navigation, and a glide in flight overrides
-  the router (S9: the new route landed at its bottom). `<RouteChange>` is required there (§8).
+  the router (S9: the new route landed at its bottom). The handle takes up the router's position itself (§8).
 - **Reload mid-page**: the browser restores the scroll position before Lenis starts; `createSmoothScroll` starts
   Lenis there instead of jumping to 0.
 - **Velocity**: `lenis.velocity` is the smoothed velocity. Logic that branches on scroll speed sees the lerp's
@@ -136,6 +136,13 @@ React: `<SmoothScroll authority="lenis" driver={gsapDriver(gsap, ScrollTrigger)}
 import { ScrollSmoother } from 'gsap/ScrollSmoother'
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother)
 const scroll = createSmoother(ScrollSmoother, { smooth: 1, effects: true })
+```
+
+On React, `SmoothScroll` renders the wrapper and starts it (it imports no GSAP: you pass the factory):
+
+```tsx
+const smoother = () => createSmoother(ScrollSmoother, { smooth: 1 })   // module scope
+<SmoothScroll authority="smoother" create={smoother}>{children}</SmoothScroll>
 ```
 
 - **Start it with `createSmoother`**, never `ScrollSmoother.create()` by hand. The blocks read the owner from the
@@ -209,20 +216,42 @@ elements. A canvas in a pinned scene renders on this tick through `render-bridge
 - Lenis leaves touch scrolling native (`syncTouch: false`): keep it that way unless the design needs synced touch.
 - Size pins in `lvh` (never `dvh`, which re-lays out while the toolbar animates).
 
-## 8. Route changes
+## 8. Placements and route changes
 
-- The authority belongs to the route: `SmoothScroll` in the route group's layout, created in a layout effect and
-  destroyed in its cleanup. Under Next's Cache Components that cleanup also runs when a route is hidden by
-  `<Activity>`, so a hidden route never keeps a Lenis instance or a stale stamp.
+**Law.** An authority smooths the reader's input and nothing else. A scroll it did not cause (the router's jump to
+the top or a hash, the browser's back/forward restore, an anchor, find-in-page, a focus scroll) is a placement: the
+handle takes it up at once (`adopt()`), never gliding toward it. Before this rule the route called `sync()` once,
+from a component whose position in the tree decided whether the scroll was placed yet; measured on 2.1.2's blocks,
+Chromium 157, 2026-11: with that component before the page, ScrollSmoother's content sat off the scroll position
+for 56 of 95 frames after a link (up to 1911 px), and for 53 of 94 after back, wherever it sat.
+
+| Authority | A scroll is a placement when | Why that test |
+|---|---|---|
+| native | always | the native position is the position |
+| Lenis | Lenis is mid-glide and the native position is more than 2 px from the one it last wrote | Lenis writes the position every frame; any other is someone else's. Not gliding, Lenis takes a native scroll as its own already (source lenis@1.3.26, `onNativeScroll`) |
+| ScrollSmoother | no scroll input (wheel, touch, a scroll key) came in the last 200 ms, or a visit began in the last 100 ms | it leaves the native scroll to the browser, so position can't tell; input can. A reader who flicks the wheel and clicks a link has recent input, and the router's jump is still a placement: the lifecycle's visit says so |
+
+- Both adopt once more two frames after a visit begins: a route change that doesn't move the scroll still changes
+  the page's height (Lenis's limit).
+- The handle's own animated `scrollTo` is neither input nor placement.
+- **Default.** 200 ms and 100 ms (`INTENT_MS`, `VISIT_WINDOW_MS`). Override when: a keyboard scroll is cut short
+  (raise `INTENT_MS`). A scrollbar drag fires no input event in most browsers, so under ScrollSmoother the content
+  follows the thumb unsmoothed (unverified per browser).
+- Measured in Chromium only. WebKit and Firefox: unverified; if the rule fails there, the fallback is a re-sync over
+  the two frames after a traverse.
+- **Check.** `verify-motion.mjs <url> --nav`; `tests/route-hygiene.mjs` F4 and F5.
+
+- The authority belongs to the route: `SmoothScroll` in the route group's layout (`authority="native" | "lenis" |
+  "smoother"`), created in a layout effect and destroyed in its cleanup. Under Next's Cache Components that cleanup
+  also runs when a route is hidden by `<Activity>`, so a hidden route never keeps a Lenis instance or a stale stamp.
 - GSAP work on a route lives in `useGSAP(() => …, { scope })`, which reverts it on unmount and on hide.
-- **After each client navigation**, `<RouteChange route={usePathname()}>` around the root layout's children, or
-  `routeChanged()` on a vanilla page, syncs the authority (`handle.sync()`: a Lenis glide would override the router)
-  and runs the refreshes the GSAP routes registered (`onRouteRefresh`) once, for triggers the navigation doesn't
-  re-create (S9), then again as a streamed route settles. The router owns the position:
-  never scroll from route code, and keep `history.scrollRestoration` at `'auto'` (`'manual'` lost every back/forward
-  in Next). The verdicts and each framework's hook are in [page-transitions.md](page-transitions.md) §4–§5.
-- Late fonts and images still need a refresh once they settle: a ScrollTrigger read before it is up to 300 px off
-  after content above it moves (S5).
+- **Each client navigation is a visit of the page lifecycle** (`<PageLifecycle route={usePathname()} />` anywhere in
+  the root layout, or `page.begin()` from another router's hook): it runs the refreshes the GSAP routes registered
+  once, after the router placed the scroll, and again as a streamed route settles. Nothing syncs the authority: it
+  follows. The router owns the position: never scroll from route code, and keep `history.scrollRestoration` at
+  `'auto'`. [lifecycle.md](lifecycle.md) "Route change".
+- Late fonts and images still need a refresh once they settle (`page.remeasure()`): a ScrollTrigger read before it
+  is up to 300 px off after content above it moves (S5).
 - A scene re-created above the viewport (a route shown again) brings its runway back there. WebKit's scroll anchoring
   then moves the page by the runway's height to keep what the reader sees in place (measured 1708 → 3645 px on a
   rail's re-create); Chromium and Firefox keep the offset. Restore the reader's place after the re-create.
@@ -239,4 +268,5 @@ elements. A canvas in a pinned scene renders on this tick through `render-bridge
 - [ ] Under Lenis in Safari: CSS timelines only for decoration.
 - [ ] Modals call `stop()` / `start()`; nested scrollers carry `data-lenis-prevent`.
 - [ ] Nothing kills a ScrollSmoother without re-creating it: its triggers are bound to the wrapper.
-- [ ] Each client navigation runs `<RouteChange>` or `routeChanged()` once; `scrollRestoration` stays `'auto'`.
+- [ ] Each client navigation begins one visit (`<PageLifecycle>` or `page.begin()`); no route code syncs or scrolls;
+      `scrollRestoration` stays `'auto'`.

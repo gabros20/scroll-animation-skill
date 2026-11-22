@@ -218,26 +218,9 @@ a real hidden tab, a real bfcache return, and iOS with the toolbars shown, where
 
 ## 8. On a trigger or route clock
 
-The common hero has no pin: a live canvas behind a page-load entrance (or a route's own entrance after a client
-navigation). Scroll progress feeds nothing; the entrance's clock orders the canvas's costs. Fixed cues (prepare at
-0.3 s, reveal at 1.0 s, run at 1.8 s) encode one machine's hydration and compile time and break silently when the
-entrance changes, so they survive only as timeouts.
-
-- **This skill owns the clock.** The entrance publishes `data-entrance` and `entrance:phase`
-  (`entrance-signal.ts`, [entrances.md](entrances.md) §11). **The 3d skill owns the stage cues** keyed off it
-  (its `threejs-orchestration.md` "Stages": prepare outside the entrance, reveal a still frame at `tail`, run at
-  `settled`): `SceneCanvas startAfter="entrance"` writes `data-scene-stage` and waits through its own
-  `whenEntrance()`. Neither imports the other; the DOM is the interface, as with the bridge.
-- Each wait has a timeout (2.5 s, counted from navigation start, not from the canvas's mount: entrances.md §11), so a
-  page whose entrance never publishes still starts. No attribute means no entrance: the canvas starts at once.
-- As a background behind the copy, the canvas sits below a copy wrapper with its own stacking level, or Safari can
-  draw it over the copy once the entrance ends ([ios-safari-motion.md](ios-safari-motion.md) §9).
-- **Before blaming the GPU**, rule out the entrance itself: a Motion `x`/`y` headline and hydration on the main
-  thread, or a `backdrop-filter` nav recomputed over every canvas frame, also lag a scene. The entrance belongs on the
-  compositor and the blur gets a fill until `settled` (§8 of [ios-safari-motion.md](ios-safari-motion.md)).
-- The rest of the hero's costly starts (video, loops, embeds) queue after the canvas's run: the hero budget,
-  [performance.md](performance.md) §14. Record the cue in the scene ledger: `clock: trigger`, the publisher, the
-  canvas's stages ([preflight.md](preflight.md) §4).
+A live canvas behind a page's entrance, with no pin, takes its cues from the entrance's clock, per visit: [lifecycle.md](lifecycle.md) "What
+the 3d skill reads" (and "The hero budget" for what queues after it). Record the cue in the scene ledger: `clock:
+trigger`, the publisher, the canvas's stages ([preflight.md](preflight.md) §4).
 
 ## Traps
 

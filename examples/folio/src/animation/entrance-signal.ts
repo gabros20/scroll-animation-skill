@@ -1,31 +1,40 @@
 /**
- * entrance-signal.ts: the page-load entrance's clock, published once on the DOM, so everything costly on a busy hero
- * (a live canvas, video, a loop strip, embeds) can wait for it instead of guessing a time. Engine-free; it imports no
- * consumer, and no consumer imports it: the attribute and the event are the whole interface, as with render-bridge.ts.
+ * entrance-signal.ts: the entrance's clock on the DOM, so everything costly on a busy hero (a live canvas, video, a
+ * loop strip, embeds) can wait for it instead of guessing a time. Engine-free; it imports no consumer and no consumer
+ * imports it: the attributes and the event are the whole interface. page.ts (the page lifecycle) is built on it and
+ * owns the phase per visit when a page runs it; without page.ts this file works alone, as in 2.1.
  *
- *   <html data-entrance="pending">                  the author writes it into the server HTML when the page has a
- *                                                   load entrance; absent means "no entrance": consumers start at once
+ *   <html data-entrance="running">                  server HTML, a CSS entrance that plays at first paint
+ *   <html data-entrance="pending">                  server HTML, an entrance a script starts (a JS reveal, a loader)
+ *                                                   absent: "no entrance", consumers start at once
  *   publishEntrance('running')                      on <html>, or publishEntrance(phase, routeRoot)
  *   const stop = trackEntrance(heroEl)              CSS and WAAPI entrances (css/split.css, reveal.ts): running now,
  *                                                   settled once every finite animation under heroEl has finished
- *   addEventListener('entrance:phase', (e) => e.detail.phase)     bubbles from the scope; the attribute is already set
+ *   addEventListener('entrance:phase', (e) => e.detail)     { phase, visit, kind }; bubbles; the attribute is set first
  *
- * - Phases, in order: pending → running → tail → settled. A phase never goes backwards: publishing one at or before the
- *   current is a no-op, so two publishers can't rewind each other (but the first to settle wins: one publisher per
- *   scope, the entrance's last group). `tail` is optional and may be skipped.
+ * - Phases, in order: pending → running → tail → settled. A phase never goes backwards within a visit: publishing
+ *   one at or before the current is a no-op, so two publishers can't rewind each other. Only page.ts starts a new
+ *   visit, which restarts the phase. `tail` is optional and may be skipped.
+ * - What page.ts writes beside the phase, all on <html>: `data-visit` (a counter) and `data-visit-kind` (load, push,
+ *   traverse, restore); `data-entrance-held` while it holds the entrance (a route transition, a loader, fonts);
+ *   `data-entrance-started`, performance.now() at `running`. A block reads them here: entranceHeld(),
+ *   whenEntranceOpen(fn), arrivesSettled(), entranceStartedAt().
+ * - Held: publishEntrance('running') is a no-op while the lifecycle holds; it publishes `running` itself when the
+ *   holds release. A block that plays an entrance waits with whenEntranceOpen().
+ * - One publisher per visit. A block that publishes (trackEntrance, `{ entrance: true }`, Reveal's `entrance`) claims
+ *   the entrance (claimEntrance()), and the lifecycle then leaves `tail` and `settled` to it. With no claim the
+ *   lifecycle tracks the page's own animations.
  * - `tail`: the display type is within about 1 px of rest. On CURVES.entrance a move of up to 100 px is within 1 px at
  *   TAIL_AT (0.8) of its duration (the curve's y reaches 0.99 there), so trackEntrance's default is that fraction of
  *   the last-ending animation. A shorter move gets there sooner (40 px: 0.7); a later tail is the safe side.
  * - Reduced motion, or the failsafe already fired (css/animation.css): `settled` at once, nothing else. No JavaScript:
- *   the server's `pending` stays, and the consumers' own timeouts cover it.
+ *   the server's phase stays, and the consumers' own timeouts cover it.
  * - The clocks: this file's timers run on the animation's own clock (its start time on document.timeline; Reveal's and
- *   GSAP's start with their moves), never on a guess. A consumer's timeout counts from navigation start
- *   (`performance.now()`), not from its mount: the entrance begins at first paint, the consumer runs at hydration.
- * - The other engines publish from their blocks: motion/Reveal.tsx (`entrance`), gsap/reveal.ts and reveal.ts
- *   (`{ entrance: true }`). What waits on it is the hero budget (references/performance.md §14): only compositor work
- *   while `running`; costly starts queue on `settled`, one per task.
- * - Client-side navigation keeps <html>, and a settled scope never runs again: a route with its own entrance publishes
- *   on its route root instead (the scope argument), and its consumers read that.
+ *   GSAP's start with their moves), never on a guess. A consumer's timeout counts from the entrance's start,
+ *   entranceStartedAt(): the lifecycle's stamp at `running`, else first contentful paint, else navigation start. Not
+ *   from navigation start alone: that includes the network, and on a slow phone it ends mid-entrance.
+ * - What waits on it is the hero budget (references/lifecycle.md, "The hero budget"): only compositor work while
+ *   `running`; costly starts queue on `settled`, one per task (page.afterSettled).
  */
 import { REDUCED_MOTION_QUERY, failsafeFired } from './config'
 
@@ -43,14 +52,105 @@ export function readEntrance(scope?: Element): EntrancePhase | null {
   return ORDER.includes(value as EntrancePhase) ? (value as EntrancePhase) : null
 }
 
+/** How long a consumer waits for `settled` before starting anyway, counted from entranceStartedAt(). */
+export const ENTRANCE_TIMEOUT_MS = 2500
+
+export interface EntranceDetail {
+  phase: EntrancePhase
+  /** The lifecycle's visit counter and kind; 0 and 'load' on a page that doesn't run page.ts. */
+  visit: number
+  kind: string
+}
+
+const root = () => document.documentElement
+
+/** @internal The event's detail, from what the lifecycle stamped on <html>. */
+export function entranceDetail(phase: EntrancePhase): EntranceDetail {
+  return {
+    phase,
+    visit: Number(root().getAttribute('data-visit')) || 0,
+    kind: root().getAttribute('data-visit-kind') ?? 'load',
+  }
+}
+
 /** Writes the phase on the scope (default <html>), then dispatches `entrance:phase`. Never backwards. */
 export function publishEntrance(phase: EntrancePhase, scope?: Element): void {
+  publish(phase, scope, true)
+}
+
+/**
+ * @internal The lifecycle's own write: no claim, and `restart` lets a new visit begin again at an earlier phase.
+ * Blocks call publishEntrance.
+ */
+export function writeEntrance(phase: EntrancePhase, restart = false): void {
   if (typeof document === 'undefined') return
-  const el = scope ?? document.documentElement
+  if (restart) root().removeAttribute('data-entrance')
+  publish(phase, undefined, false, true)
+}
+
+function publish(phase: EntrancePhase, scope: Element | undefined, claim: boolean, owner = false): void {
+  if (typeof document === 'undefined') return
+  const el = scope ?? root()
+  // On <html>, a publisher owns this visit's tail and settle; while the lifecycle holds, `running` is its to publish.
+  if (el === root() && !owner) {
+    if (claim && phase !== 'pending') claimEntrance()
+    if (phase === 'running' && entranceHeld()) return
+  }
   const current = readEntrance(el)
   if (current && ORDER.indexOf(current) >= ORDER.indexOf(phase)) return
   el.setAttribute('data-entrance', phase)
-  el.dispatchEvent(new CustomEvent('entrance:phase', { bubbles: true, detail: { phase } }))
+  el.dispatchEvent(new CustomEvent('entrance:phase', { bubbles: true, detail: entranceDetail(phase) }))
+}
+
+/** This visit's entrance has a publisher: the lifecycle leaves `tail` and `settled` to it. Call it when the block mounts. */
+export function claimEntrance(): void {
+  if (typeof document !== 'undefined') root().setAttribute('data-entrance-claimed', '')
+}
+
+/** True while the page lifecycle holds entrances: placement, a route transition, fonts, a loader. */
+export function entranceHeld(): boolean {
+  return typeof document !== 'undefined' && root().getAttribute('data-entrance-held') !== null
+}
+
+/**
+ * True on a visit that arrives settled: back, forward or a bfcache restore (page.ts). The reader is back where they
+ * were, so a `mount` entrance lands without playing; a reveal at its line still plays when the reader reaches it.
+ */
+export function arrivesSettled(): boolean {
+  if (typeof document === 'undefined') return false
+  const kind = root().getAttribute('data-visit-kind')
+  return kind === 'traverse' || kind === 'restore'
+}
+
+/**
+ * Runs `fn` now, or once the lifecycle's hold lifts (its next `entrance:phase`). Returns the cancel. Every block
+ * that plays an entrance starts through it, so nothing plays under a route transition or before the scroll is placed.
+ */
+export function whenEntranceOpen(fn: () => void): () => void {
+  if (!entranceHeld()) {
+    fn()
+    return () => {}
+  }
+  const el = root()
+  const onPhase = () => {
+    if (entranceHeld()) return
+    el.removeEventListener('entrance:phase', onPhase)
+    fn()
+  }
+  el.addEventListener('entrance:phase', onPhase)
+  return () => el.removeEventListener('entrance:phase', onPhase)
+}
+
+/**
+ * performance.now() at which this visit's entrance started: the lifecycle's stamp, else first contentful paint (a
+ * CSS entrance starts there), else 0 (navigation start). A consumer's timeout counts from it.
+ */
+export function entranceStartedAt(): number {
+  if (typeof document === 'undefined') return 0
+  const stamped = Number.parseFloat(root().getAttribute('data-entrance-started') ?? '')
+  if (Number.isFinite(stamped)) return stamped
+  const paint = typeof performance !== 'undefined' ? performance.getEntriesByName?.('first-contentful-paint')[0] : undefined
+  return paint ? paint.startTime : 0
 }
 
 /**
@@ -64,14 +164,19 @@ export function publishEntrance(phase: EntrancePhase, scope?: Element): void {
  * the tracking and publishes nothing: React's StrictMode runs an effect's cleanup and the effect again in
  * development, and a settle there would start everything early. An entrance torn down mid-way leaves its consumers
  * to their timeouts.
+ *
+ * On <html> it claims the visit's entrance, and under the lifecycle's hold it starts when the hold lifts.
+ * `claim: false` is the lifecycle's own tracker: it stops, publishing nothing, as soon as a block claims the entrance.
  */
-export function trackEntrance(root: Element, opts: { scope?: Element; tailAt?: number } = {}): () => void {
-  const { scope, tailAt = TAIL_AT } = opts
+export function trackEntrance(root: Element, opts: { scope?: Element; tailAt?: number; claim?: boolean } = {}): () => void {
+  const { scope, tailAt = TAIL_AT, claim = true } = opts
+  const onPage = !scope || scope === document.documentElement
+  if (claim && onPage) claimEntrance()
+  const yielded = () => !claim && document.documentElement.getAttribute('data-entrance-claimed') !== null
   if (window.matchMedia(REDUCED_MOTION_QUERY).matches || failsafeFired()) {
-    publishEntrance('settled', scope)
+    publish('settled', scope, claim)
     return () => {}
   }
-  publishEntrance('running', scope)
   let live = true
   let tailTimer = 0
   let frame = 0
@@ -82,7 +187,7 @@ export function trackEntrance(root: Element, opts: { scope?: Element; tailAt?: n
     live = false
     clearTimeout(tailTimer)
     cancelAnimationFrame(frame)
-    publishEntrance('settled', scope)
+    if (!yielded()) publish('settled', scope, claim)
   }
 
   // Two frames first: an animation started by this frame's style change exists only after it.
@@ -92,6 +197,7 @@ export function trackEntrance(root: Element, opts: { scope?: Element; tailAt?: n
 
   const check = () => {
     if (!live) return
+    if (yielded()) return void (live = false)
     const running = entranceAnimations(root)
     if (!running.length) return settle()
     if (!tailScheduled) {
@@ -101,20 +207,27 @@ export function trackEntrance(root: Element, opts: { scope?: Element; tailAt?: n
         const at = tailTime(running, tailAt)
         const now = document.timeline.currentTime
         if (!live || at === null || typeof now !== 'number') return
-        tailTimer = window.setTimeout(() => live && publishEntrance('tail', scope), Math.max(0, at - now))
+        tailTimer = window.setTimeout(() => live && !yielded() && publish('tail', scope, claim), Math.max(0, at - now))
       })
     }
     // A cancelled animation rejects `finished`; either way it no longer holds the entrance.
     Promise.allSettled(running.map((a) => a.finished)).then(() => live && afterTwoFrames(check))
   }
-  afterTwoFrames(check)
+  const cancelOpen = (onPage ? whenEntranceOpen : now)(() => {
+    if (!live) return
+    publish('running', scope, claim)
+    afterTwoFrames(check)
+  })
 
   return () => {
     live = false
+    cancelOpen()
     clearTimeout(tailTimer)
     cancelAnimationFrame(frame)
   }
 }
+
+const now = (fn: () => void) => (fn(), () => {})
 
 function entranceAnimations(root: Element): Animation[] {
   return root.getAnimations({ subtree: true }).filter((a) => {

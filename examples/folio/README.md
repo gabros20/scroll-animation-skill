@@ -88,8 +88,9 @@ foundation (`config`, `base-css`, `gsap-setup`, `motion-provider`, `smooth-lenis
 
 The scroll authority is set per route group. `/` and `/lab` run Lenis on GSAP's ticker
 (`src/components/lenis-scroll.tsx`); `/journal` and `/blocks` keep native scrolling. The root
-layout wraps every route in `RouteScroll` (`src/components/route-scroll.tsx`): after each client
-navigation the live authority takes up the router's position, then ScrollTrigger refreshes once.
+layout renders `Lifecycle` (`src/components/lifecycle.tsx`), the page lifecycle's route adapter: each
+client navigation is a visit, the new page's entrances wait for the router's scroll and the view
+transition, ScrollTrigger refreshes once, and the live authority follows the router by its own rule.
 `pnpm check:authority` starts `next start` and checks that each route stamps the right authority,
 that client navigation swaps it without leaving a second Lenis, and that a reload keeps the
 scroll position.

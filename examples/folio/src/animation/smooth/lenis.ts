@@ -25,12 +25,16 @@ import Lenis, { type LenisOptions } from 'lenis'
 import { REDUCED_MOTION_QUERY } from '../config'
 import {
   clearAuthority,
+  followPlacements,
   nativeHandle,
   registerHandle,
   stampAuthority,
   unregisterHandle,
   type SmoothScrollHandle,
 } from './authority'
+
+/** A native position this far from Lenis's last write is not Lenis's (its own differ by sub-pixel rounding). */
+const FOREIGN_PX = 2
 
 /** Hooks Lenis to a frame source; returns the detach function. */
 export type Driver = (lenis: Lenis) => () => void
@@ -188,11 +192,15 @@ export function createSmoothScroll(options: SmoothScrollOptions): SmoothScrollHa
       else native?.start()
     },
     sync() {
+      handle.adopt()
+    },
+    adopt() {
       if (!lenis) return
       // resize() takes the new route's height and the native position as Lenis's own. A glide still heading for the
-      // old route's target ignores the native scroll, so it would carry on and override the router (S9: a link
-      // clicked mid-glide lands at the bottom of the next page); stop() and start() end it (both reset Lenis,
-      // measured on 1.3.26). A modal's stop() already ended any glide and stays in force.
+      // old route's target ignores the native scroll (Lenis takes a native scroll as its own only when it isn't
+      // smoothing: lenis@1.3.26 onNativeScroll), so it would carry on and override the router (S9: a link clicked
+      // mid-glide lands at the bottom of the next page); stop() and start() end it (both reset Lenis, measured on
+      // 1.3.26). A modal's stop() already ended any glide and stays in force.
       lenis.resize()
       if (!stopped) {
         lenis.stop()
@@ -200,6 +208,7 @@ export function createSmoothScroll(options: SmoothScrollOptions): SmoothScrollHa
       }
     },
     destroy() {
+      stopFollowing()
       reduced.removeEventListener('change', onReducedChange)
       if (lenis) {
         offAnchors()
@@ -218,6 +227,11 @@ export function createSmoothScroll(options: SmoothScrollOptions): SmoothScrollHa
   reduced.addEventListener('change', onReducedChange)
   if (reduced.matches) stopLenis()
   else startLenis()
+  // Mid-glide Lenis writes the position every frame: a native position other than its last write is someone else's.
+  const stopFollowing = followPlacements(
+    handle,
+    () => !!lenis && lenis.isScrolling === 'smooth' && Math.abs(window.scrollY - lenis.animatedScroll) > FOREIGN_PX,
+  )
   registerHandle(handle)
   return handle
 }

@@ -42,7 +42,10 @@ match v2's `<ScrollWell />`, `data-scroll-well` and `scrollWell()`, and v1's
 same file as a scene (`PinnedScene`, `ScrubVideo`, `pinnedScene()`, `data-scene-*`, or v1's
 `ScrubStage`/`data-scrub-stage`); the scene's pin is CSS `position: sticky` by default, never nest
 it in a GSAP pin), `fractional-amount` (warn),
-`contents-reveal` (error), `video-attrs` (warn), `fixed-travel-on-fluid` (warn — on a
+`contents-reveal` (error), `video-attrs` (warn), `route-change-before-page` (error — a 2.1
+`<RouteChange>`, or a component that renders one around its children, used with nothing inside it:
+as a sibling of the page it syncs to the previous page's scroll position; use `<PageLifecycle>`,
+`references/lifecycle.md` "Route change"), `fixed-travel-on-fluid` (warn — on a
 fluid-scaled project, a GSAP `x`/`y` or ScrollTrigger `start`/`end` offset or a Motion
 `useTransform` output typed as a plain number of 80+ px; drawn travel must scale,
 `references/scenes.md` §12).
@@ -60,14 +63,27 @@ finding, `2` usage error. `--selftest` exits `0`/`1` on pass/fail.
 ```
 node verify-motion.mjs <url> [--out dir] [--viewports 1440x900,390x844]
   [--browser chromium|webkit|firefox] [--channel chrome] [--reveal] [--scenes] [--anchors]
+  [--nav [href]] [--nav-from px]
 node verify-motion.mjs --help
 ```
 
-With none of `--reveal`/`--scenes`/`--anchors` given, all three run. Drives
+With none of `--reveal`/`--scenes`/`--anchors`/`--nav` given, the first three run; `--nav`
+is asked for by name, since it needs a second page. Drives
 every `--viewports` WxH pair (a width `<= 480` is emulated as touch/mobile) in the
 `--browser` engine (default `chromium`). A check with nothing to look at (no reveal
 items, no scenes) reports `SKIP`, never `PASS`, so a page without the markup can't
 pass by accident:
+
+- **`--nav [href]`** — a navigation, which a fresh load never tests. Scrolls the page to
+  `--nav-from` (default 1.5 viewports), clicks a link (the first visible same-site link to
+  another path, or the one whose `href` is given), then `history.back()` and
+  `history.forward()`. Per step it checks the landing (the top for a link, the reader's place
+  for back and forward), that no frame shows a position between the old one and the landing
+  and that a smoother's `#smooth-content` sits on the scroll position two frames after it
+  lands (no glide), that no `[data-reveal-item]` starts off screen, and that nothing matching
+  `[data-reveal-item], [data-split-word], [data-enter]` is part-way through its fade while
+  `html:active-view-transition` matches. After the link, the first screen's entrances must be
+  opaque within 2 s. No link to another page: `SKIP`.
 
 - **`--reveal`** — step-scrolls to the bottom using rAF + 200ms per step (a
   fast scroll outruns `IntersectionObserver` and gives false blanks), with

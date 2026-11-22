@@ -55,6 +55,7 @@ import { m, stagger as staggerChildren, type Transition, type Variants } from 'm
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -64,7 +65,7 @@ import {
 } from 'react'
 
 import { CURVES, MOTION, TRIGGERS, failsafeFired } from '../config'
-import { TAIL_AT, publishEntrance } from '../entrance-signal'
+import { TAIL_AT, arrivesSettled, claimEntrance, entranceHeld, publishEntrance, whenEntranceOpen } from '../entrance-signal'
 import { useReducedMotionLive } from './useReducedMotionLive'
 
 export type RevealEffect = 'rise' | 'fade' | 'clip' | 'scale-in'
@@ -159,6 +160,8 @@ function useElementRef() {
   return [ref, attach] as const
 }
 
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect
+
 const subscribeNothing = () => () => {}
 /** False on the server and during hydration, true after: renders before it keep the server's markup and state. */
 function useHydrated(): boolean {
@@ -226,7 +229,22 @@ export function Reveal({
   const settle = hydrated && (reduced || failsafe)
   if (settle && phase !== 'settled') setPhase('settled')
 
-  const watching = hydrated && trigger === 'view' && !settle && (replay || phase === 'hidden')
+  // Nothing plays, and nothing is observed, while the page lifecycle holds entrances (a route transition, the scroll
+  // not placed, a loader). The hold is read in a layout effect, never in render: the lifecycle begins a visit in an
+  // insertion effect, after this render. Not held (every load, most mounts), nothing changes and no render is added.
+  // Held, the group goes back to `hidden` before the first paint and opens when the hold lifts. Only at mount: a
+  // later visit's hold must not send a group that has played back to `hidden` (see Phase).
+  const [open, setOpen] = useState(true)
+  useIsomorphicLayoutEffect(() => {
+    // Back or forward: the reader returns to a page they have seen, so a mount group lands without playing.
+    if (trigger === 'mount' && arrivesSettled()) setPhase('settled')
+    if (!entranceHeld()) return
+    setOpen(false)
+    return whenEntranceOpen(() => setOpen(true))
+  }, [])
+  const live = hydrated && open
+
+  const watching = live && trigger === 'view' && !settle && (replay || phase === 'hidden')
   useEffect(() => {
     const el = ref.current
     if (!watching || !el) return
@@ -275,9 +293,12 @@ export function Reveal({
 
   // The entrance signal follows the phase: `visible` is running (tail on a timer: Motion reports no progress), and
   // `settled` is settled, however it got there. Never backwards, so a replay's later phases publish nothing.
-  const playing = hydrated && phase === 'visible'
+  const playing = live && phase === 'visible'
   useEffect(() => {
-    if (!entrance || !hydrated) return
+    if (entrance) claimEntrance()
+  }, [entrance])
+  useEffect(() => {
+    if (!entrance || !live) return
     if (phase === 'settled') return publishEntrance('settled')
     if (phase !== 'visible') return
     publishEntrance('running')
@@ -286,7 +307,7 @@ export function Reveal({
     const last = Math.max(0, items.length - 1) * stagger
     const tail = window.setTimeout(() => publishEntrance('tail'), (last + TAIL_AT * MOTION.entrance.duration) * 1000)
     return () => clearTimeout(tail)
-  }, [entrance, hydrated, phase, ref, stagger])
+  }, [entrance, live, phase, ref, stagger])
 
   const variants = useMemo<Variants>(() => ({ visible: { transition: { delayChildren: staggerChildren(stagger) } } }), [stagger])
 
@@ -303,7 +324,7 @@ export function Reveal({
       aria-label={ariaLabel}
       variants={variants}
       initial="hidden"
-      animate={hydrated ? phase : 'hidden'}
+      animate={live ? phase : 'hidden'}
       // A landed reveal rests in `settled`: the state Motion replays when an Activity boundary shows again, and a
       // no-op from where the items already are.
       onAnimationComplete={(label) => {

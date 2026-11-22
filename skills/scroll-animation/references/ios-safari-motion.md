@@ -193,9 +193,9 @@ sets it: only a purely native page may add it, never one where ScrollTrigger or 
     spec's Backdrop Root that ancestor cuts off what the blur can sample, in every engine, so a pill inside a fading
     wrapper blurs nothing until the fade ends.
   - Over a live canvas or video the blur is recomputed on every frame of the media. Give it a translucent fill until
-    the entrance settles (`html[data-entrance='settled']`, [performance.md](performance.md) §14), or keep it small.
+    the entrance settles (`html[data-entrance='settled']`, [lifecycle.md](lifecycle.md) "The hero budget"), or keep it small.
 - **In the blocks:** `effect="fade"` (`data-reveal-effect="fade"`) on a blurred item, never `rise` or `scale-in`
-  ([entrances.md](entrances.md) §11).
+  ([lifecycle.md](lifecycle.md) "First load").
 
 ## 9. Copy under a background layer after its entrance
 

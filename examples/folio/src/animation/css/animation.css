@@ -51,6 +51,17 @@ html[data-animation-failsafe] [data-reveal-veil] {
   display: none !important;
 }
 
+/* Your own CSS entrance joins the page lifecycle (page.ts) with [data-enter] on the animated element: paused while
+   the lifecycle holds a route change, restarted after a loader's hold, and not replayed on back or forward.
+   css/split.css carries the same three rules for its words. No JavaScript: none of these attributes exists. */
+html[data-entrance-held='pause'] [data-enter] {
+  animation-play-state: paused;
+}
+html[data-entrance-held='restart'] [data-enter],
+html:is([data-visit-kind='traverse'], [data-visit-kind='restore']) [data-enter] {
+  animation-name: none;
+}
+
 /* ── 2. Smooth-scroll base ─────────────────────────────────────────────────────────────────────────
  * No global `scroll-behavior: smooth`: with ScrollTrigger or a smoother on the page it corrupts ScrollTrigger's
  * refresh pass (which scrolls to measure) and double-smooths anchor jumps. A purely native page may add it itself

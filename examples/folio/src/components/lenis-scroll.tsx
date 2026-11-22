@@ -25,7 +25,7 @@ const driver = gsapDriver(gsap, ScrollTrigger);
  * Lenis as the scroll authority for the routes it wraps, on GSAP's ticker:
  * the ticker drives Lenis, then ScrollTrigger reads the new position in the
  * same frame. Leaving the route destroys Lenis and its stamp. While the
- * route is shown, RouteScroll's contract refreshes ScrollTrigger on each
+ * route is shown, the page lifecycle refreshes ScrollTrigger on each
  * navigation (registered here, so the root layout needs no GSAP).
  */
 export function LenisScroll({ children }: { children: ReactNode }) {

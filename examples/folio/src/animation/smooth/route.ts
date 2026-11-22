@@ -1,6 +1,11 @@
 /**
- * smooth/route.ts — what a client-side route change owes the page's scroll: one call, after the new route's blocks
- * mounted and the router placed the scroll (the top, a hash target, a back/forward restore).
+ * smooth/route.ts — the 2.1 route contract, kept for sites that wired it. New work uses the page lifecycle
+ * (page.ts; react: <PageLifecycle /> in smooth/SmoothScroll.tsx), which needs no position in the tree, holds the new
+ * page's entrances through the route transition, and lets the scroll authority follow the router by its own rule.
+ * The refresh registry and the settle watch live in page.ts now; this file adds the 2.1 call on top of them:
+ *
+ * What a client-side route change owes the page's scroll: one call, after the new route's blocks mounted and the
+ * router placed the scroll (the top, a hash target, a back/forward restore).
  *
  *   routeChanged()                                      the authority syncs, the registered refreshes run once
  *   watchRouteSettle()                                  a fresh load: re-measure only as streamed content lands
@@ -51,12 +56,10 @@
  * One watch runs at a time: a new one (the next change, a nested <RouteChange>) ends the one before and keeps the
  * height it last measured, so a change still pending refreshes once.
  */
+import { SETTLE_DEBOUNCE_MS, SETTLE_MS, page, refreshAll, watchSettle } from '../page'
 import { currentSmoothScroll } from './authority'
 
-/** How long after a route change its late content (streamed sections, images) still re-measures the page. */
-export const SETTLE_MS = 5000
-/** One refresh per burst of height changes. */
-export const SETTLE_DEBOUNCE_MS = 150
+export { SETTLE_DEBOUNCE_MS, SETTLE_MS }
 
 export interface RouteChangeOptions {
   /** Re-measure the page's scroll-linked triggers: runs with the registered refreshes (each function once). */
@@ -65,30 +68,11 @@ export interface RouteChangeOptions {
   settle?: number
 }
 
-// Each registered function with its count: two registrations of one function run it once, and unregister apart.
-const registered = new Map<() => void, number>()
-
 /**
  * Re-measure on every route change while this is registered: `ScrollTrigger.refresh` from a GSAP route's layout.
- * Returns the unregister. One function registered twice runs once per change.
+ * Returns the unregister. One function registered twice runs once per change. (page.onRemeasure.)
  */
-export function onRouteRefresh(refresh: () => void): () => void {
-  registered.set(refresh, (registered.get(refresh) ?? 0) + 1)
-  let live = true
-  return () => {
-    if (!live) return
-    live = false
-    const count = (registered.get(refresh) ?? 1) - 1
-    if (count > 0) registered.set(refresh, count)
-    else registered.delete(refresh)
-  }
-}
-
-function refreshAll(refresh: (() => void) | undefined): void {
-  const run = new Set(registered.keys())
-  if (refresh) run.add(refresh)
-  for (const fn of run) fn()
-}
+export const onRouteRefresh = page.onRemeasure
 
 /** The route's late content landed: run the refreshes once more, without touching the scroll. */
 export function routeSettled(options: Pick<RouteChangeOptions, 'refresh'> = {}): void {
@@ -99,7 +83,7 @@ export function routeSettled(options: Pick<RouteChangeOptions, 'refresh'> = {}):
 export function routeChanged(options: RouteChangeOptions = {}): () => void {
   currentSmoothScroll()?.sync()
   refreshAll(options.refresh)
-  return watch(options, true)
+  return watchSettle(options, true)
 }
 
 /**
@@ -107,41 +91,5 @@ export function routeChanged(options: RouteChangeOptions = {}): () => void {
  * runs now: a fresh load's own refresh (ScrollTrigger's, at `load`) or routeChanged()'s already did. Returns its stop.
  */
 export function watchRouteSettle(options: RouteChangeOptions = {}): () => void {
-  return watch(options, false)
-}
-
-// The watch running now, and the height its last refresh measured. A new watch (the next change, a nested
-// <RouteChange> at the same commit) ends it and, unless it just refreshed, takes that height over: a height change
-// the old watch hadn't refreshed yet still runs once, and two watches never refresh one change twice.
-let watching: { stop: () => void; measured: number } | undefined
-
-function watch({ refresh, settle = SETTLE_MS }: RouteChangeOptions, refreshed: boolean): () => void {
-  const before = watching
-  before?.stop()
-  if (!(settle > 0) || typeof document === 'undefined' || typeof ResizeObserver === 'undefined') return () => {}
-  const root = document.documentElement
-  let pending: ReturnType<typeof setTimeout> | undefined
-  const stop = () => {
-    observer.disconnect()
-    clearTimeout(pending)
-    clearTimeout(end)
-    if (watching === self) watching = undefined
-  }
-  // The observer's first report, and a refresh's own pin spacing, match `measured`: nothing runs for them.
-  const self = { stop, measured: refreshed || !before ? root.scrollHeight : before.measured }
-  const check = () => {
-    pending = undefined
-    if (root.scrollHeight === self.measured) return
-    refreshAll(refresh)
-    self.measured = root.scrollHeight
-  }
-  const observer = new ResizeObserver(() => {
-    clearTimeout(pending)
-    pending = setTimeout(check, SETTLE_DEBOUNCE_MS)
-  })
-  observer.observe(root)
-  if (document.body) observer.observe(document.body)
-  const end = setTimeout(stop, settle)
-  watching = self
-  return stop
+  return watchSettle(options, false)
 }

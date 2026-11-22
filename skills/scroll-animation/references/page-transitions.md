@@ -12,8 +12,8 @@ that opens into a panel in place is the content itself opening, so it stays here
 
 **Inputs:** the framework and its router (Next App Router, Astro, SvelteKit, a vanilla page, a multi-page site), the
 scroll authority per route, the profile from `ANIMATION.md`.
-**Produces:** the `view-transitions` block wired for that router, route hygiene through `<RouteChange>` or
-`routeChanged()`, and `flip-transition`, `layout-morph` or `preloader` where the brief calls for them.
+**Produces:** the `view-transitions` block wired for that router, a visit of the page lifecycle per navigation
+(`<PageLifecycle>` or `page.begin()`), and `flip-transition`, `layout-morph` or `preloader` where the brief calls for them.
 
 ## Contents
 
@@ -38,7 +38,7 @@ scroll authority per route, the profile from `ANIMATION.md`.
 | A card opening into a panel inside one React route | Motion `layoutId` | `layout-morph` (motion) |
 | An Immersive first screen that can't work until its assets arrive | real loading progress | `preloader` |
 
-Barba, Taxi and swup are legacy vanilla routers: where one already runs, keep it and give it §4's hygiene after
+Barba, Taxi and swup are legacy vanilla routers: where one already runs, keep it and call `page.begin()` after
 its swap; never add one to a new project. **One driver per navigation**: a custom curtain and React's
 `<ViewTransition>` never drive the same one, and no route-level `loading.tsx` sits under a curtain: the curtain
 lifts onto its skeleton. A canvas that persists across routes (Immersive, [preflight.md](preflight.md)
@@ -119,8 +119,9 @@ transition(update).finished                                           // the ani
   call), a hidden tab, or a transition already running; a second call never starts a second one (the last wins). It
   rejects only with `update`'s own error.
 - **Scroll inside `update`.** A scroll left to a later frame lands after the new snapshot. After `update`, the page's
-  handle syncs (`currentSmoothScroll()?.sync()`), so a Lenis glide can't carry on toward the old page's target.
-  (A raw `startViewTransition` under Lenis glided back to 2722–2940 px; `transition()` held 0.) A Lenis the site started itself has no handle: end `update` with `lenis.resize()` and
+  handle takes up the position (`currentSmoothScroll()?.adopt()`), so a Lenis glide can't carry on toward the old
+  page's target. The authority's own rule now catches a raw `startViewTransition` too (on 2.1 it glided back to
+  2722–2940 px; [scroll-authority.md](scroll-authority.md) "Placements and route changes"). A Lenis the site started itself has no handle: end `update` with `lenis.resize()` and
   `lenis.scrollTo(window.scrollY, { immediate: true })`.
 
 **A multi-page site** opts in on every page (both documents must, or the navigation just loads), with the text of
@@ -145,83 +146,20 @@ each transition its direction from a render-blocking script:
 
 ## 4. Route scroll hygiene
 
-S9 measured Next 16.3.6 in Chromium 153, WebKit 26.6 and Firefox 155, with and without Cache Components and
-`<ViewTransition>` (identical results):
-
-| Navigation | Without the contract | With it |
-|---|---|---|
-| a link | the top, or its hash target at 64 px (`scroll-padding-top`) | same |
-| back / forward | restored exactly, in one step, native and Lenis | same |
-| a link mid-glide, one Lenis living on (two routes in one Lenis layout) | lands at the new route's bottom (1664 of 1664 px); the next link at 3750 instead of 0 | the top |
-| back mid-glide, Lenis living on | 750 instead of 3000 | 3000 |
-| a trigger in the persistent layout (`end: 'max'`) | keeps the previous route's numbers (0–5664 against a fresh 0–2264) | fresh |
-| `history.scrollRestoration = 'manual'` | back stays at 900 instead of 3000 in all three | keep `'auto'` |
-| Activity hide (Cache Components) | 0 triggers and no Lenis left on the hidden route | same |
-
-**The contract** (`smooth/route.ts`, in the `scroll-authority` block): after each client navigation, once the new
-route's blocks mounted and the router placed the scroll, the authority takes up the router's position at once
-(`handle.sync()`) and the registered refreshes run once. Nothing in it scrolls: the router owns the position.
-
-```tsx
-'use client'   // components/route-scroll.tsx, rendered by app/layout.tsx around {children}; imports no GSAP
-import { usePathname } from 'next/navigation'
-import { RouteChange } from '@/animation/smooth/SmoothScroll'
-export function RouteScroll({ children }) {
-  return <RouteChange route={usePathname()}>{children}</RouteChange>
-}
-// each GSAP route group's layout (a client component, next to its SmoothScroll); unregistered when the route goes
-useGSAP(() => onRouteRefresh(ScrollTrigger.refresh))   // onRouteRefresh from '@/animation/smooth/route'
-```
-
-- **`<RouteChange>` wraps the ROOT layout's children**, so its layout effect runs after every route's own (their
-  `useGSAP` blocks and registrations, Next's scroll, `SmoothScroll`), inside the update under `<ViewTransition>`. A
-  fresh load (ScrollTrigger refreshes at `load`) and StrictMode's second effect aren't changes: no sync, no refresh.
-- **The GSAP routes register the refresh** (`onRouteRefresh(fn)` returns the unregister; a function registered twice
-  runs once), so the root imports no GSAP and a Reading route never loads it. A `refresh` passed to the root's
-  `<RouteChange>` put about 17 kB gzipped of GSAP on Folio's journal routes: /journal 248.6 kB with it, 231.8 kB
-  registered (gzip -9 of every script the prerendered HTML loads). Motion-only and CSS routes register nothing, so no
-  refresh starts ScrollTrigger's listeners on a page with nothing to measure.
-- **A navigation is a change of `route`: the pathname.** A search-param navigation keeps the page mounted and ran no
-  refresh (measured); a page whose content follows its search params (a filter, a tab) wraps that content in its own
-  `<RouteChange route={useSearchParams().toString()}>`.
-- **Streamed routes settle late.** Next commits a `loading.tsx` or Suspense fallback under the new pathname first.
-  Refreshed then, a layout-level `end: 'max'` measured the skeleton (0–64 against a fresh 0–3464) and a trigger below
-  the streamed section kept its pre-stream start (1424–2664 against 2624–3864). So for `settle` ms after a change
-  (`SETTLE_MS`, 5000) the contract watches the page's height (a ResizeObserver on `<html>` and `<body>`, debounced
-  `SETTLE_DEBOUNCE_MS`, 150) and runs the refreshes again, without `sync()` (the reader may be scrolling), only when it
-  changed. A fresh load watches too: `<RouteChange>`'s first render runs `watchRouteSettle()`, because Chromium
-  revealed streamed content after `load`, past ScrollTrigger's own refresh, on 6 of 6 loads (WebKit and Firefox on
-  none). `settle={0}` turns the watch off; content that lands after it (a client fetch) calls `routeSettled()`.
-- **Vanilla:** unmount the old route, swap, let the router scroll, call `routeChanged()` (register nothing), then
-  `mount()` the new route, which refreshes once itself ([gsap.md](gsap.md) §3). After the first `mount()`,
-  `watchRouteSettle({ refresh: ScrollTrigger.refresh })`; when late content lands,
-  `routeSettled({ refresh: ScrollTrigger.refresh })`.
-- **`sync()`** per authority: native does nothing; Lenis runs `resize()`, then `stop()` and `start()`, which end a
-  glide (measured on 1.3.26; the README only says pause and resume); ScrollSmoother jumps with
-  `scrollTo(scrollY, false)` (documented, not measured in S9).
-- **Refresh once per navigation, never per block.** Route blocks measure their start and end as they are created;
-  the one refresh covers what the navigation doesn't re-create. They are created before the router places the scroll
-  (the page's `useGSAP` runs before Next's own layout effect, an ancestor's), so a trigger's first state is the
-  previous page's position: an entrance checks its item is on screen before it plays ([entrances.md](entrances.md)
-  §5). Fonts and images that land after the watch still need
-  `routeSettled()` (S5).
-- **Keep `history.scrollRestoration` at `'auto'`** on Next, which restores nothing itself. Route code never scrolls.
-- **Chromium restores back/forward against a scroll anchor**, so an anchor still moving at restore puts the reader off
-  by its drift (measured on the site: a reveal item before its entrance, 1965 → 1997; a parallax on its view timeline,
-  1500 → 1454). `css/reveal.css` and `css/scroll-effects.css` set `overflow-anchor: none` on exactly those states;
-  give the same to any element of your own that moves with the scroll.
-- **Activity** already behaves: `SmoothScroll` and `useGSAP` clean up on hide (a hidden route's registration too).
-  A hidden canvas route keeps its WebGL context; never give it `frameloop="always"` ([webgl.md](webgl.md) §6).
+Moved to [lifecycle.md](lifecycle.md) "Route change" (who owns the position, the adapter, one refresh per visit, streamed routes, scroll
+anchors) and [scroll-authority.md](scroll-authority.md) "Placements and route changes" (how the authority follows).
+2.1's `<RouteChange>` and `routeChanged()` still work: [lifecycle.md](lifecycle.md) "Migrating from RouteChange".
 
 ## 5. Framework lifecycles
 
-The rule is the same everywhere: tear the old route down before the swap, call `routeChanged()` once the router has
-placed the scroll, then mount the new route.
+The rule is the same everywhere: tear the old route down before the swap, begin the visit (`page.begin()`) after the
+swap and before the new route's blocks mount, then mount them. The lifecycle refreshes once the router has placed
+the scroll ([lifecycle.md](lifecycle.md) "Route change").
 
-- **Next App Router:** §4.
+- **Next App Router:** `<PageLifecycle>`, [lifecycle.md](lifecycle.md) "Route change".
 - **Astro `<ClientRouter />`** (docs.astro.build, view transitions guide): it runs the view transition itself, so
   style it with the block's CSS and don't call `transition()`. Unmount on `astro:before-swap`; `astro:after-swap`
-  fires after the history update and the scroll position are set, so call `routeChanged()` there; mount on
+  fires after the history update and the scroll position are set, so call `page.begin()` there; mount on
   `astro:page-load`, which also fires on the first load. Bundled module scripts run once only, so they listen for
   these events. An element with `transition:persist` keeps its DOM across navigations: mount its blocks once, never
   per route.
@@ -231,10 +169,12 @@ placed the scroll, then mount the new route.
   onNavigate((navigation) => new Promise((resolve) => {
     transition(async () => { resolve(); await navigation.complete })
   }))
-  afterNavigate(() => routeChanged({ refresh: () => ScrollTrigger.refresh() }))
+  page.onRemeasure(() => ScrollTrigger.refresh())
+  afterNavigate(() => page.begin())
   ```
   `afterNavigate`'s `to.scroll` is the position applied after the navigation completed, so the scroll is placed by
-  then. The `'auto'` rule above is S9's, on Next: a router that restores scroll itself keeps its own setting.
+  then. Its blocks mount before `afterNavigate`, so an entrance created in `onMount` is not held: unverified on
+  SvelteKit; begin the visit in `onNavigate`'s callback if it must be. The `'auto'` rule is S9's, on Next: a router that restores scroll itself keeps its own setting.
 - **Nuxt:** `page:finish` runs before Nuxt's own scroll (its default `scrollBehavior` scrolls a frame after
   `page:loading:end`: `router.options.ts` on main), and no public hook follows it. Nothing here is measured on Nuxt.
 
@@ -267,9 +207,9 @@ Both run `MOTION.route`, the route morph's timing, so an in-route change and a p
 - A video still without a frame 200 ms after its metadata is primed once (a muted `play()`, paused at once): iOS
   loads only metadata otherwise. Give it `muted playsinline`, or it waits out the 4 s maximum.
 - A 300 ms minimum (keep it at or under that), a 4 s maximum that shows the page anyway. The 4 s cap is the failsafe;
-  the budget is about 2.6 s including the exit (`design` `choreography.md` "Continuity: loaders and page transitions"). Start the first screen's
-  entrances on `html[data-preloader-state="done"]`. What is cued after it (a canvas, a demo) counts from navigation
-  start, never from a hydration-time effect, and never reveals through Suspense ([entrances.md](entrances.md) §11).
+  the budget is about 2.6 s including the exit (`design` `choreography.md` "Continuity: loaders and page transitions"). The loader is a hold on the page
+  lifecycle (`page.hold('loader', loading.done, { capMs: 4000 })`): the first screen's entrances start when it lifts,
+  and what is cued after it waits for a phase ([lifecycle.md](lifecycle.md) "Loaders", "The clock").
 - Show the overlay only behind `GATE_SCRIPT`, with its own CSS failsafe (the snippet is in `preloader.ts`'s header),
   so a page whose script never runs never stays covered.
 - **It keeps moving while the page builds.** Idle motion is a CSS animation on `transform` or `opacity`, which the
@@ -295,6 +235,6 @@ Both run `MOTION.route`, the route morph's timing, so an in-route change and a p
 - [ ] Shared elements carry the same name on both states and `vt-morph`; one `[data-header]` rendered (§2).
 - [ ] The React slide is on each `page.tsx`, never a layout; back/forward runs no React view transition (§2).
 - [ ] An MPA has its opt-in inline in every page's `<head>` and its direction script render-blocking through the build (§3).
-- [ ] `<RouteChange>` wraps the root layout's children, or `routeChanged()` runs after the router's scroll (§4, §5).
-- [ ] One refresh per navigation; `scrollRestoration` stays `'auto'`; no route code scrolls (§4).
+- [ ] Each navigation begins one visit, before the new route's blocks mount (`<PageLifecycle>`, `page.begin()`; §5).
+- [ ] One refresh per visit; `scrollRestoration` stays `'auto'`; no route code scrolls or syncs ([lifecycle.md](lifecycle.md) "Route change").
 - [ ] A preloader only on an Immersive first screen, driven by real assets, behind the gate (§7).

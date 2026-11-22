@@ -182,6 +182,13 @@ contract.
   `scrubVideo()` or v1's), and `fixed-travel-on-fluid` (a drawn distance of 80 px or more typed as a
   plain number on a fluid layout, `scenes.md` §12). `--selftest` runs every rule over its positive and
   negative fixtures and asserts each trips (or doesn't).
+- **`scripts/tools/verify-motion.mjs <url> --nav [href]`**: a navigation between two pages, which a fresh load never
+  tests (three route bugs once passed every other check). It scrolls the page down, clicks a link (the first visible
+  same-site link to another path, or the one given), then goes back and forward. It fails when a landing is wrong,
+  when the page shows a position between the old one and the landing or a smoother's content trails the scroll (a
+  glide), when a reveal starts with its item off screen, when something on the new first screen is part-way through
+  its fade while a view transition still covers it, or when the first screen is still hidden 2 s after arriving.
+  Asked for by name: it needs a second page ([lifecycle.md](lifecycle.md) "Route change").
 - **`scripts/tools/verify-motion.mjs <url>`**: the runtime check. It step-scrolls the page with rAF plus a
   pause per step (a fast scroll outruns `IntersectionObserver` and gives false blanks), then gives the
   last entrances up to 6 s to land. Every `[data-reveal-item]` must reach `data-reveal-state="shown"` and
@@ -261,10 +268,10 @@ Disciplines that cost real cycles when skipped:
 
 | Symptom | Where |
 | --- | --- |
-| After a link the page lands at the new route's bottom, or back/forward lands at the wrong position, under Lenis | a glide outlived the navigation: [page-transitions.md](page-transitions.md) §4 |
-| A layout-level trigger (a reading progress) keeps the previous route's numbers | no refresh after the navigation, or a streamed route refreshed at its fallback: [page-transitions.md](page-transitions.md) §4 |
+| After a link the page lands at the new route's bottom, or back/forward lands at the wrong position, under Lenis | a glide outlived the navigation: [scroll-authority.md](scroll-authority.md) "Placements and route changes"; `verify-motion --nav` |
+| A layout-level trigger (a reading progress) keeps the previous route's numbers | no refresh after the navigation, or a streamed route refreshed at its fallback: [lifecycle.md](lifecycle.md) "Route change" |
 | Entrances skip after following a link from a scrolled page: items below the fold are already shown when the reader gets there | GSAP triggers created at the previous page's scroll, before the router placed it: [entrances.md](entrances.md) §5 |
-| Back/forward in Chromium lands a few dozen px off | a scroll anchor still moving at restore: [page-transitions.md](page-transitions.md) §4 |
+| Back/forward in Chromium lands a few dozen px off | a scroll anchor still moving at restore: [lifecycle.md](lifecycle.md) "Route change" |
 | A page transition never runs, or the page just swaps | reduced motion, two `[data-header]`s, Firefox on a multi-page site, an MPA opt-in only in the bundled CSS: [page-transitions.md](page-transitions.md) §2–§3 |
 | A multi-page transition crossfades but never slides forward or back | a stripped `blocking="render"`: the direction type is lost, the transition still runs ([page-transitions.md](page-transitions.md) §3) |
 | A Motion `layoutId` swap sticks on the old box | reduced motion under Motion 13.4: [motion.md](motion.md) §8 |
@@ -275,9 +282,9 @@ Disciplines that cost real cycles when skipped:
 | WebGL contexts pile up across routes | a canvas kept mounted on leave or a renderer never disposed; under Cache Components, one per kept route: [webgl.md](webgl.md) §6 |
 | Display type wobbles or steps in whole pixels as an entrance settles | a JavaScript-driven move with no layer (Motion `x`/`y`): move it to the compositor, or scope the layer to the playing group ([performance.md](performance.md) §10). Check the precondition (computed `will-change` on the items while the group is `data-reveal-playing`, or a running animation in `el.getAnimations()`) and compare cropped screenshots of consecutive frames; `getBoundingClientRect()` reports the float either way and can't see it |
 | A blurred nav drags a white or yellow streak as it enters (Safari) | a `backdrop-filter` element moved in from off-screen, or under a fading ancestor: [ios-safari-motion.md](ios-safari-motion.md) §8 |
-| A live scene lags, or the headline jumps at its end, while the hero's entrance plays | costly starts inside the entrance (a compile, hydration, video, a blur over the canvas): the hero budget, [performance.md](performance.md) §14, and the canvas's cues, [webgl.md](webgl.md) §8 |
+| A live scene lags, or the headline jumps at its end, while the hero's entrance plays | costly starts inside the entrance (a compile, hydration, video, a blur over the canvas): [lifecycle.md](lifecycle.md) "The hero budget" and "What the 3d skill reads" |
 | The hero entrance freezes for hundreds of ms with no script in the long frame | raster: a blur placeholder on the hero image is the usual one ([performance.md](performance.md) §11); attribute it first (§1) |
-| A cued layer (a canvas, a demo) lands hundreds of ms after its cue | a timer started at hydration, or a reveal through Suspense (`next/dynamic`, `React.lazy`): [entrances.md](entrances.md) §11 |
+| A cued layer (a canvas, a demo) lands hundreds of ms after its cue | a timer started at hydration, or a reveal through Suspense (`next/dynamic`, `React.lazy`): [lifecycle.md](lifecycle.md) "The hero budget", "The clock" |
 | Hero copy fades out again in Safari once its entrance ends, over a background canvas or video | the copy has no stacking level above the background layer: [ios-safari-motion.md](ios-safari-motion.md) §9 |
 
 ## Traps

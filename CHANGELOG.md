@@ -10,7 +10,64 @@ the newest release heading below, and the release tag.
 ## [Unreleased]
 
 ### Added
-- Queue unreleased changes here.
+- **The page lifecycle** (`page`, `page.ts`): one owner of "is this page ready to animate" for the first load and for
+  each route change. A visit (`load`, `push`, `traverse`, `restore`) and its phase are written on `<html>`
+  (`data-visit-kind`, `data-entrance`, restarted per visit; `entrance:phase` carries `{ phase, visit, kind }`). Holds
+  with caps keep a visit `pending`: the router placing the scroll, a view transition, fonts (opt in), a loader
+  (`page.hold`). `page.when()`, `page.afterSettled()` (costly starts, one per task), `page.onRemeasure()` and
+  `page.remeasure()` (one refresh per visit, then a settle watch).
+- **`PageLifecycle`** (`page-react`, `react/PageLifecycle.tsx`): the route adapter for React. It renders nothing and
+  sits anywhere in the root layout, in its own `<Suspense>` under Cache Components: `begin()` runs in an insertion
+  effect, before any layout effect of the commit, and `placed()` in a passive one.
+- **`<SmoothScroll authority="smoother" create={…}>`**: ScrollSmoother from the route layout, wrapper included.
+- **`verify-motion.mjs --nav [href]`**: scrolls the page, clicks a link, then goes back and forward. It checks the
+  landings, that nothing glides, that no reveal starts off screen, that nothing enters under a view transition and
+  that the first screen ends visible.
+- **`audit-motion` rule `route-change-before-page`**: a 2.1 `<RouteChange>` (or a component that renders one) used
+  with nothing inside it.
+- `references/lifecycle.md`: the one home for the contract, first load, the hero budget, route change, holds, the
+  clock and the migration from `<RouteChange>`.
+- `test:route-hygiene` runs on the lifecycle and checks F3 (no entrance starts under a React view transition: CSS
+  words, GSAP, engine-free, Motion), F4 (one landing with the adapter before, after and around the page, under
+  ScrollSmoother) and F5 (back, forward and a flick-then-navigate land without a glide). `--contract legacy` runs
+  2.1's `<RouteChange>`; `--variants before` reruns F3 to F5 on 2.1.2's blocks. `tests/unit/page.test.mjs`.
+
+### Changed
+- **The scroll authority follows placements by rule.** The handle has `adopt()`; nothing calls it per route. Lenis
+  takes up a native position it did not write; ScrollSmoother takes up a scroll with no scroll input in the last
+  200 ms, or one in the 100 ms after a visit began. On 2.1.2's blocks, with the route component before the page,
+  ScrollSmoother's content sat off the scroll position for 56 of 95 frames after a link, and for 53 of 94 after back
+  (Chromium). A direct `document.startViewTransition()` that jumps the page under Lenis is followed too.
+- **Entrances wait while the lifecycle holds the visit.** The engine-free, GSAP and Motion reveals and
+  `splitReveal` start through `whenEntranceOpen()`; split words and `[data-enter]` are paused through a route
+  change, restarted after a loader's hold, and not replayed on back or forward. `mount` reveals land without playing
+  on back and forward. Without the lifecycle on the page nothing changes.
+- **2.1.2's view-transition pause** for split words now applies only on a page without the lifecycle; with it, the
+  words are held for route changes only, not for in-page transitions.
+- **A consumer's timeout counts from the entrance's start** (`entranceStartedAt()`: the lifecycle's stamp at
+  `running`, else first contentful paint, else navigation start), not from navigation start.
+  `ENTRANCE_TIMEOUT_MS` is 2500.
+- Server HTML: a CSS first screen writes `data-entrance="running"`. `pending` with `trackEntrance()` from a client
+  effect still works.
+- `smooth/route.ts` is the 2.1 call on top of the lifecycle's registry and settle watch; `scroll-authority` now
+  requires `page`, and `split-reveal` requires `entrance-signal`.
+- entrances "The hero entrance and its signal", performance "The hero budget", webgl "On a trigger or route clock"
+  and page-transitions "Route scroll hygiene" are stubs that point to `lifecycle.md` by heading.
+  scroll-authority §8 is "Placements and route changes".
+- Folio renders `<PageLifecycle>` (`src/components/lifecycle.tsx`); its copies were re-synced through the CLI.
+
+### Deprecated
+- `<RouteChange>`, `routeChanged()`, `watchRouteSettle()`, `routeSettled()` and the handle's `sync()`. They still
+  work. Migration: `references/lifecycle.md` "Migrating from RouteChange".
+
+### Fixed
+- An entrance no longer starts under the route's crossfade (measured on 2.1.2: GSAP, engine-free and Motion reveals
+  all started about 250 ms before the transition ended).
+- Back or forward under ScrollSmoother no longer glides, with or without a flick of the wheel just before.
+
+### Not verified
+- WebKit and Firefox were not run. bfcache (`restore`) is wired and untested. ScrollSmoother's frame rate in Safari
+  is unmeasured.
 
 ## [2.1.2] - 2026-11-21
 

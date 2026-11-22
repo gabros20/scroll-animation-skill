@@ -206,7 +206,7 @@ A layer while the motion runs, never for the element's life. Who promotes on the
   `will-change` is dormant through 14.2: nothing sets the `MotionGlobalConfig.WillChange` it waits for. A JS-driven
   transform has no layer and stalls with the main thread, and display type easing to rest was seen stepping in whole
   pixels (a field report). For a hero, animate the `transform` string or use CSS
-  ([entrances.md](entrances.md) §11). Where `y` stays, scope the layer: `Reveal` marks its group
+  ([lifecycle.md](lifecycle.md) "First load"). Where `y` stays, scope the layer: `Reveal` marks its group
   `data-reveal-playing` while it plays and `css/reveal.css` §5 gives only its moving items `will-change: transform`,
   dropped on settle. A hand-written entrance does the same from its start and complete callbacks. `useWillChange()`
   is not this: once it holds `transform` it keeps it.
@@ -277,33 +277,8 @@ mount them per route; a page with just count-up numbers has no reason to pull in
 
 ## 14. The hero budget
 
-A busy hero starts hydration, a JavaScript entrance, a shader compile, video decode, blur over live pixels and loops
-in the same two seconds. Each is fine alone; the order is the budget, and the entrance owns the clock
-(`entrance-signal.ts`: `data-entrance` goes `pending → running → tail → settled`, [entrances.md](entrances.md) §11).
-
-- **While `running`, compositor work only:** the entrance on CSS or Motion's `transform` string, opacity fades.
-  Nothing that compiles, decodes, lays out or evaluates a large chunk.
-- **On `settled`, costly starts queue one per task, about two frames apart:** 1. the WebGL run ([webgl.md](webgl.md)
-  §8); 2. video `play()`; 3. the loop strip; 4. embeds. Each also starts on a timeout (2.5 s from navigation start,
-  never from its own mount: [entrances.md](entrances.md) §11), so a page whose entrance never publishes still starts.
-  A CSS loop needs no script: `html[data-entrance]:not([data-entrance='settled']) .strip { animation-play-state:
-  paused }`.
-- **A heavy client-only component mounts one composition,** picked by `matchMedia(DESKTOP_QUERY)` in its first
-  render (safe with no server render), never a desktop and a phone tree with one `display: none`: the hidden tree still
-  mounts and renders (measured in WebKit, its mount frame went from 113–122 ms to 73–98 ms). Server-rendered:
-  [entrances.md](entrances.md) §9.
-- **Fonts before the entrance:** preload the display font, give it a metric-matched fallback (`size-adjust`,
-  `ascent-override`), and have a JavaScript entrance wait on `document.fonts.ready` with a short timeout. A swap
-  mid-entrance re-lays-out split words and re-rasterises every word layer.
-- **One tick:** Lenis with `autoRaf: false`, driven by the page's clock, and the scene advanced from the same authority
-  (the bridge's pattern, [webgl.md](webgl.md) §4). Three loops on three rAFs fight for one frame.
-- **On 120 Hz displays the scene caps at 60 fps** (the 3d skill's frame budget assumes 60); the headroom is the
-  compositor's.
-- **No blur over live media until `settled`** ([ios-safari-motion.md](ios-safari-motion.md) §8), and no blur
-  placeholder on the hero's image (§11).
-- **Measure with Long Animation Frames** (`PerformanceObserver`, type `long-animation-frame`, Chromium only);
-  elsewhere sample rAF deltas. A long frame during `running` is the stutter; attribute it before fixing anything
-  ([verification.md](verification.md) §1).
+Moved to [lifecycle.md](lifecycle.md) "The hero budget": compositor work only while the entrance runs, costly starts queued on `settled`
+(`page.afterSettled`), fonts, one tick, and how to measure it.
 
 ## Traps
 
@@ -319,7 +294,8 @@ in the same two seconds. Each is fine alone; the order is the budget, and the en
 - [ ] No permanent `will-change`; the video `translateZ(0)` anchor is the standing exception, the rail's
   track holds its promotion only while its scene is awake, and a reveal's items only while their group plays (§10).
 - [ ] The hero entrance runs on the compositor: no Motion `x`/`y` on display type before Motion 14.2 (§10).
-- [ ] On a busy hero, costly starts wait for `settled`, one per task, each with a timeout from navigation start (§14).
+- [ ] On a busy hero, costly starts wait for `settled`, one per task, each with a timeout counted from the entrance's
+      start ([lifecycle.md](lifecycle.md) "The hero budget", "The clock").
 - [ ] `filter: blur()` stays small and is measured on Safari; no blur placeholder on a full-bleed or hero image (§11).
 - [ ] At most one pinned, scrubbed scene per page.
 - [ ] Across all scroll-linked effects, no more than 1–3 intersect the viewport at once (§3).
