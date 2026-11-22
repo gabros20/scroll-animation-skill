@@ -3,6 +3,7 @@
 // bin/scroll-animation runs this.
 //
 //   commands/add.mjs      scroll-animation add <block…>
+//   commands/remove.mjs   scroll-animation remove <block…>
 //   commands/list.mjs     scroll-animation list
 //   commands/media.mjs    scroll-animation media probe|scrub|loop|sequence|poster
 //
@@ -20,6 +21,7 @@ import { parse, wantsHelp } from './args.mjs'
 import { cmdAdd } from './commands/add.mjs'
 import { cmdList } from './commands/list.mjs'
 import { cmdMedia, MEDIA_USAGE } from './commands/media.mjs'
+import { cmdRemove } from './commands/remove.mjs'
 
 function version() {
   try {
@@ -36,7 +38,12 @@ const HELP = `scroll-animation ${version()} — copy-and-own scroll motion block
       directory), record hashes in .scroll-animation.lock.json, and print the npm packages
       to install; refuses to overwrite a hand-edited or unrecorded file of a block you named
       unless --force, and keeps an edited require (config.ts) that still exports every name
-      the blocks import
+      the blocks import. --force never takes a require: name its block to do that
+
+  scroll-animation remove <block…> [--dir path] [--dry-run] [--force]
+      delete a block's copied files and their lock records; keeps a file another installed
+      block uses, and refuses a block another one requires, or a hand-edited file, unless
+      --force. The requires it pulled in stay until you remove them by name
 
   scroll-animation list [--engine <e>] [--profile <p>] [--json]
       the block catalogue from registry.json
@@ -69,6 +76,8 @@ export async function main(argv = process.argv.slice(2)) {
   switch (cmd) {
     case 'add':
       return cmdAdd(flags, _)
+    case 'remove':
+      return cmdRemove(flags, _)
     case 'list':
       return cmdList(flags)
     case 'media':

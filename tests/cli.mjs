@@ -185,8 +185,34 @@ try {
   writeFileSync(config, readFileSync(config, 'utf8').replace('export const REDUCED_MOTION_QUERY', 'const REDUCED_MOTION_QUERY'))
   r = run(g, 'add', 'smooth-smoother')
   expect(r.code === 1 && r.out.includes('Refusing to overwrite') && /config\.ts.*REDUCED_MOTION_QUERY/.test(r.out), 'add refuses a require whose edit dropped a name the blocks import, and says which', r.out)
+  // --force is for the blocks named: it never takes a require, edited safely or not.
   r = run(g, 'add', 'smooth-smoother', '--force')
-  expect(r.code === 0 && !readFileSync(config, 'utf8').includes('// mine'), '--force takes the skill\'s copy of a kept file too', r.out)
+  expect(r.code === 1 && /add config --force/.test(r.out) && readFileSync(config, 'utf8').includes('// mine'), '--force on a block refuses its broken require and names the block to force', r.out)
+  writeFileSync(config, readFileSync(config, 'utf8').replace('const REDUCED_MOTION_QUERY', 'export const REDUCED_MOTION_QUERY'))
+  r = run(g, 'add', 'smooth-smoother', '--force')
+  expect(r.code === 0 && readFileSync(config, 'utf8').includes('// mine') && /Kept[\s\S]*config\.ts/.test(r.out), '--force on a block keeps its hand-edited require', r.out)
+  r = run(g, 'add', 'config', '--force')
+  expect(r.code === 0 && !readFileSync(config, 'utf8').includes('// mine'), 'naming the require with --force takes the skill\'s copy', r.out)
+
+  // ── remove ───────────────────────────────────────────────────────────
+  const lockPath = join(g, 'lib/motion/.scroll-animation.lock.json')
+  const smoother = join(g, 'lib/motion/smooth/smoother.ts')
+  r = run(g, 'remove', 'scroll-authority')
+  expect(r.code === 1 && /smooth-smoother .* requires scroll-authority/.test(r.out) && existsSync(join(g, 'lib/motion/smooth/authority.ts')), 'remove refuses a block another installed block requires', r.out)
+  r = run(g, 'remove', 'smooth-smoother', '--dry-run')
+  expect(r.code === 0 && /remove\s+smooth\/smoother\.ts/.test(r.out) && existsSync(smoother), 'remove --dry-run lists the files and removes nothing', r.out)
+  appendFileSync(smoother, '// mine\n')
+  r = run(g, 'remove', 'smooth-smoother')
+  expect(r.code === 1 && r.out.includes('edited by hand') && existsSync(smoother), 'remove refuses a hand-edited file without --force', r.out)
+  r = run(g, 'remove', 'smooth-smoother', '--force')
+  const lock4 = JSON.parse(readFileSync(lockPath, 'utf8'))
+  expect(
+    r.code === 0 && !existsSync(smoother) && !('smooth/smoother.ts' in lock4.files) && existsSync(join(g, 'lib/motion/smooth/authority.ts')) && 'config.ts' in lock4.files,
+    'remove deletes the block\'s files and lock records, and leaves its requires',
+    r.out,
+  )
+  r = run(g, 'remove', 'smooth-smoother')
+  expect(r.code === 1 && r.out.includes('not installed'), 'remove says so when the block is not installed', r.out)
 
   // ── add: engine disambiguation ───────────────────────────────────────
   const amb = join(root, 'ambiguous')

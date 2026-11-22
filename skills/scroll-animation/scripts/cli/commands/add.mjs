@@ -1,4 +1,5 @@
 // add.mjs — scroll-animation add <block…> [--engine <e>] [--dir <path>] [--dry-run] [--force]
+// --force overwrites the files of the blocks named on the command line, never a require they pull in.
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, posix, relative } from 'node:path'
@@ -53,25 +54,30 @@ export async function cmdAdd(flags, ids) {
 
   // A file of a block the user didn't ask for (config.ts, a shared stylesheet, pulled in as a require) that they
   // changed is theirs: the skill tells them to edit config.ts. It stays as it is, unless a file this add copies
-  // imports a name from it that it no longer exports. Only the requested blocks' own files are refused.
-  if (!flags.force) {
-    const requested = new Set(ids)
-    for (const p of plan) {
-      if ((p.state !== 'hand-edited' && p.state !== 'unowned') || requested.has(p.id)) continue
-      p.missing = missingImports(p, plan, destDir)
-      if (!p.missing.length) Object.assign(p, { was: p.state, state: 'kept' })
-    }
+  // imports a name from it that it no longer exports. Only the requested blocks' own files are refused, and --force
+  // overwrites only those: an edited require is never taken by forcing a block that happens to need it. To take the
+  // skill's copy of a require, name its block.
+  const requested = new Set(ids)
+  for (const p of plan) {
+    if ((p.state !== 'hand-edited' && p.state !== 'unowned') || requested.has(p.id)) continue
+    p.missing = missingImports(p, plan, destDir)
+    if (!p.missing.length) Object.assign(p, { was: p.state, state: 'kept' })
+    else p.require = true
   }
 
   const why = (p) =>
     (p.state === 'hand-edited' ? 'edited by hand since add wrote it' : `exists, and ${LOCK_FILE} has no record of it`) +
     (p.missing?.length ? `, and the blocks import ${p.missing.join(', ')} from it, which it doesn't export` : '')
   const kept = plan.filter((p) => p.state === 'kept')
-  const blocking = plan.filter((p) => p.state === 'hand-edited' || p.state === 'unowned')
-  if (blocking.length && !flags.force) {
+  const blocking = plan.filter((p) => (p.state === 'hand-edited' || p.state === 'unowned') && (!flags.force || p.require))
+  if (blocking.length) {
     console.log(`${c.red('Refusing to overwrite')} in ${relative(root, destDir) || '.'}:`)
     for (const p of blocking) console.log(`  ${p.rel} — ${why(p)}`)
-    console.log(`Nothing was written. Re-run with ${c.bold('--force')} to overwrite.`)
+    const requires = [...new Set(blocking.filter((p) => p.require).map((p) => p.id))]
+    const own = blocking.some((p) => !p.require)
+    console.log('Nothing was written.')
+    if (own) console.log(`Re-run with ${c.bold('--force')} to overwrite the files of the blocks you named.`)
+    if (requires.length) console.log(`A require is yours until you name it: put the missing names back, or take the skill's copy with ${c.bold(`add ${requires.join(' ')} --force`)}.`)
     process.exitCode = 1
     return
   }
@@ -111,7 +117,7 @@ function printKept(kept) {
   if (!kept.length) return
   console.log(`${c.yellow('Kept')} your edits (each still exports every name the blocks import):`)
   for (const p of kept) console.log(`  ${p.rel} — ${p.was === 'unowned' ? 'not written by add' : 'edited by hand'}; the skill's copy differs`)
-  console.log(c.dim(`  Compare them with the skill's assets when you update; --force takes the skill's copies.`))
+  console.log(c.dim(`  Compare them with the skill's assets when you update; \`add ${[...new Set(kept.map((p) => p.id))].join(' ')} --force\` takes the skill's copies.`))
 }
 
 /**
