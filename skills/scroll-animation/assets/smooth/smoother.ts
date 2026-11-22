@@ -40,6 +40,8 @@ import { REDUCED_MOTION_QUERY } from '../config'
 import {
   anchorInset,
   clearAuthority,
+  followPlacements,
+  markOwnScroll,
   nativeHandle,
   registerHandle,
   stampAuthority,
@@ -123,6 +125,7 @@ export function createSmoother(ScrollSmoother: ScrollSmootherStatic, options: Sm
     authority: 'smoother',
     scrollTo(target, opts = {}) {
       const animate = !opts.immediate && !reduced.matches
+      if (animate) markOwnScroll()
       if (typeof target === 'number') {
         smoother.scrollTo(target + (opts.offset ?? 0), animate)
       } else {
@@ -141,13 +144,17 @@ export function createSmoother(ScrollSmoother: ScrollSmootherStatic, options: Sm
       paused = false
       smoother.paused(false)
     },
-    sync() {
-      // The content eases toward the native scroll over `smooth` seconds; after a route change it jumps there instead
-      // (GSAP docs: `scrollTo(y, false)` jumps, and works while paused). S9 measured Lenis and native, not this.
+    adopt() {
+      // The content eases toward the native scroll over `smooth` seconds; a placement jumps it there instead
+      // (`scrollTo(y, false)` jumps, and works while paused). Measured in Chromium: tests/route-hygiene.mjs.
       smoother.scrollTo(window.scrollY, false)
+    },
+    sync() {
+      handle.adopt()
     },
     destroy() {
       destroyed = true
+      stopFollowing()
       ScrollTrigger.removeEventListener('refresh', landOnHash)
       reduced.removeEventListener('change', followReducedMotion)
       window.clearTimeout(resizeTimer)
@@ -157,6 +164,7 @@ export function createSmoother(ScrollSmoother: ScrollSmootherStatic, options: Sm
       unregisterHandle(handle)
     },
   }
+  const stopFollowing = followPlacements(handle)
   registerHandle(handle)
   return handle
 }
