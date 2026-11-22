@@ -98,9 +98,12 @@ the newest release heading below, and the release tag.
   unchanged. lifecycle "The hero budget": a fallback matched for body text is not matched for display type.
 
 ### Not verified
-- WebKit: the lifecycle checks and the full route sequence pass on Playwright's build 2388; the other suites were
-  not run there. Firefox (Playwright build 1572): the route sequence and the lifecycle checks pass. bfcache (`restore`) is wired and untested. ScrollSmoother's frame rate in Safari
-  is unmeasured.
+- WebKit (Playwright build 2359): route-hygiene (plain, cache) and the reveal, text, hero, view-transitions,
+  scroll-effects, foundation and usegsap-teardown suites pass. One flake predates this release: the engine-free hero
+  in `tests/hero.mjs` fails about one run in three, also on 2.1.2, because WebKit runs the built fixture's module
+  before its stylesheet applies, so the items have no hidden state to transition from (they show, unplayed).
+- Firefox (Playwright build 1572): route-hygiene plain passes; its other suites were not run. bfcache (`restore`)
+  is wired and untested. ScrollSmoother's frame rate in Safari is unmeasured.
 
 ## [2.1.2] - 2026-11-21
 
