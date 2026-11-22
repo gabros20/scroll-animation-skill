@@ -101,6 +101,13 @@ scene's first frame and after a reload. `onAct` fires on transitions only, never
 also applies `scene.act()` in `onRehydrate`. Use `opacity` or `visibility`, never `display: none`: the print rules force
 the first two back. Under reduced motion no act is inert.
 
+**An act's copy has its own timing.** A picture may crossfade; two readable texts crossfading over a second read as
+broken, overlapping type (a field report: 1.1 s). Mark the copy inside each stacked act `data-scene-act-copy`:
+`css/scene.css` takes the outgoing copy away in `--scene-copy-out` (0.3 s) and holds the incoming copy that long
+before it arrives over `--scene-copy-in` (0.4 s), whatever fade the act itself has. The rule is `design`'s
+(`choreography.md`, "Exits, swaps and direction"); this is where a scene applies it. `verify-motion --scenes` shoots
+each step right after the scroll, mid-change: two half-opaque lines in one screenshot are this.
+
 The marked acts are paced evenly over progress (one viewport each lines them up); the active one is the
 nearest, switching `actHysteresis` (0.1 acts) past the midpoint so a resting scroll can't flap it. Never mark acts in
 the content layer: they scroll into view themselves, and `inert` would trap keyboard users above.

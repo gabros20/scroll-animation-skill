@@ -63,7 +63,7 @@ finding, `2` usage error. `--selftest` exits `0`/`1` on pass/fail.
 ```
 node verify-motion.mjs <url> [--out dir] [--viewports 1440x900,390x844]
   [--browser chromium|webkit|firefox] [--channel chrome] [--reveal] [--scenes] [--anchors]
-  [--nav [href]] [--nav-from px]
+  [--nav [href]] [--nav-from px] [--font-swap]
 node verify-motion.mjs --help
 ```
 
@@ -84,6 +84,12 @@ pass by accident:
   `[data-reveal-item], [data-split-word], [data-enter]` is part-way through its fade while
   `html:active-view-transition` matches. After the link, the first screen's entrances must be
   opaque within 2 s. No link to another page: `SKIP`.
+
+- **`--font-swap`** — a fresh load with every font request held back 1.5 s, so the page paints
+  in its fallbacks and swaps late. It sums the Layout Instability entries from the swap on and
+  fails above 0.01, naming the element that moved most. A fallback fitted for body text can be
+  several percent off at display sizes, and the headline re-wraps. Chromium only; `SKIP` where
+  the API is missing or the page requests no font. Asked for by name.
 
 - **`--reveal`** — step-scrolls to the bottom using rAF + 200ms per step (a
   fast scroll outruns `IntersectionObserver` and gives false blanks), with

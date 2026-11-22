@@ -23,6 +23,12 @@ the newest release heading below, and the release tag.
 - **`verify-motion.mjs --nav [href]`**: scrolls the page, clicks a link, then goes back and forward. It checks the
   landings, that nothing glides, that no reveal starts off screen, that nothing enters under a view transition and
   that the first screen ends visible.
+- **`scroll-animation remove <block…>`**: deletes a block's copies and lock records; keeps a file another installed
+  block uses, refuses a block another one requires or a hand-edited file without `--force`.
+- **`verify-motion.mjs --font-swap`**: a fresh load with the fonts held back 1.5 s; fails when the layout shifts as
+  they land (Chromium).
+- **`[data-scene-act-copy]`** in `css/scene.css`: an act's copy leaves fast and arrives late, so two acts' texts never
+  show together.
 - **`audit-motion` rule `route-change-before-page`**: a 2.1 `<RouteChange>` (or a component that renders one) used
   with nothing inside it.
 - `references/lifecycle.md`: the one home for the contract, first load, the hero budget, route change, holds, the
@@ -74,6 +80,8 @@ the newest release heading below, and the release tag.
   footer can sit inside the smoother.
 - `verify-motion --nav` no longer counts the outgoing page's fading reveals, and waits out fades before each step.
 - `audit-motion` `video-attrs`: a film with `controls` and no autoplay needs no `muted`.
+- `add --force` overwrites only the blocks named on the command line. An edited require (`config.ts`) is kept, or
+  refused when the blocks import a name it lost; `add config --force` takes the skill's copy.
 
 ### Changed (guidance)
 - scroll-authority §1: Lenis is the default for a smoothed desktop page (one geometry: sticky and CSS timelines keep

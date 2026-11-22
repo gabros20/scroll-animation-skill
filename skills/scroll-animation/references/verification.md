@@ -189,6 +189,8 @@ contract.
   glide), when a reveal starts with its item off screen, when something on the new first screen is part-way through
   its fade while a view transition still covers it, or when the first screen is still hidden 2 s after arriving.
   Asked for by name: it needs a second page ([lifecycle.md](lifecycle.md) "Route change").
+- **`scripts/tools/verify-motion.mjs <url> --font-swap`**: a fresh load with the fonts held back 1.5 s; fails when
+  the layout shifts as they land ([lifecycle.md](lifecycle.md) "The hero budget"). Chromium only.
 - **`scripts/tools/verify-motion.mjs <url>`**: the runtime check. It step-scrolls the page with rAF plus a
   pause per step (a fast scroll outruns `IntersectionObserver` and gives false blanks), then gives the
   last entrances up to 6 s to land. Every `[data-reveal-item]` must reach `data-reveal-state="shown"` and

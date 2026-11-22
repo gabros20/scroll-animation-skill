@@ -5,7 +5,8 @@
 // range (`--scenes`), and a same-page anchor actually landing where it
 // should with smooth scrolling and any scroll well left ON (`--anchors`,
 // delegated to `anchor-check.mjs`), and a navigation between two pages
-// (`--nav`): a link clicked from a scrolled position, then back and forward.
+// (`--nav`): a link clicked from a scrolled position, then back and forward,
+// and a late font swap on a fresh load (`--font-swap`).
 //
 // This is the scroll-animation half of Tier 1 (references/verification.md
 // §1: "the browser harness" — drive a real page and read numbers out of it,
@@ -16,11 +17,11 @@
 // Usage:
 //   node verify-motion.mjs <url> [--out dir] [--viewports 1440x900,390x844]
 //     [--browser chromium|webkit|firefox] [--channel chrome] [--reveal] [--scenes] [--anchors]
-//     [--nav [href]] [--nav-from px]
+//     [--nav [href]] [--nav-from px] [--font-swap]
 //   node verify-motion.mjs --help
 //
-// With none of --reveal/--scenes/--anchors/--nav given, the first three run.
-// --nav is asked for by name: it needs a second page.
+// With none of the check flags given, --reveal, --scenes and --anchors run.
+// --nav is asked for by name (it needs a second page), and so is --font-swap.
 //
 // Exit codes: 0 = every requested check passed, 1 = at least one failed,
 // 2 = usage/invocation error (including "playwright not found").
@@ -40,7 +41,7 @@ scene state and anchor landings.
 Usage:
   node verify-motion.mjs <url> [--out dir] [--viewports 1440x900,390x844]
     [--browser chromium|webkit|firefox] [--channel chrome] [--reveal] [--scenes] [--anchors]
-    [--nav [href]] [--nav-from px]
+    [--nav [href]] [--nav-from px] [--font-swap]
 
 Options:
   --out <dir>         output directory for report.json / screenshots (default: verify-motion-out)
@@ -76,9 +77,14 @@ Options:
                        the first screen ends visible
   --nav-from <px>     where to scroll before the click (default: 1.5 viewports, or the
                        page's end)
+  --font-swap         a fresh load with every font held back 1.5 s, so the page paints in its
+                       fallbacks and swaps late: fails when the layout shifts as the fonts
+                       land (a fallback that fits body text can be several percent off at
+                       display sizes, and a headline re-wraps). Chromium only: it reads the
+                       Layout Instability API; elsewhere, or with no font requested, SKIP
   -h, --help          print this message and exit
 
-With none of --reveal/--scenes/--anchors/--nav given, the first three run.
+With none of the check flags given, --reveal, --scenes and --anchors run.
 
 A check with nothing to look at (no reveal items, no scenes) reports SKIP, never PASS.
 
@@ -98,6 +104,7 @@ function parseArgs(argv) {
     nav: false,
     navHref: null,
     navFrom: null,
+    fontSwap: false,
     help: false
   }
   for (let i = 0; i < argv.length; i++) {
@@ -114,6 +121,7 @@ function parseArgs(argv) {
       out.nav = true
       if (argv[i + 1] && !argv[i + 1].startsWith('--') && out._.length) out.navHref = argv[++i]
     } else if (a === '--nav-from') out.navFrom = Number(argv[++i])
+    else if (a === '--font-swap') out.fontSwap = true
     else if (a.startsWith('--')) { console.error(`[verify-motion] unknown flag ${a}`); process.exit(2) }
     else out._.push(a)
   }
@@ -125,7 +133,7 @@ function parseArgs(argv) {
     console.error(`[verify-motion] --channel needs --browser chromium (got ${out.browser})`)
     process.exit(2)
   }
-  if (!out.reveal && !out.scenes && !out.anchors && !out.nav) {
+  if (!out.reveal && !out.scenes && !out.anchors && !out.nav && !out.fontSwap) {
     out.reveal = true
     out.scenes = true
     out.anchors = true
@@ -611,6 +619,61 @@ async function checkNav(browser, url, opts, vp) {
   return { verdict: problems.length ? 'fail' : 'pass', problems, steps }
 }
 
+// ── --font-swap ─────────────────────────────────────────────────────────
+
+const FONT_DELAY_MS = 1500
+/** A shift this small is sub-pixel noise; the Web Vitals "good" line is 0.1, and a re-wrapped headline is far past it. */
+const FONT_SHIFT_MAX = 0.01
+
+async function checkFontSwap(browser, url, vp) {
+  const { isMobile, hasTouch, ...viewport } = vp
+  const context = await browser.newContext({ viewport, isMobile, hasTouch })
+  try {
+    const page = await context.newPage()
+    let fonts = 0
+    let landedAt = null
+    await page.route('**/*', async (route) => {
+      if (route.request().resourceType() !== 'font') return route.continue()
+      fonts++
+      await new Promise((resolve) => setTimeout(resolve, FONT_DELAY_MS))
+      await route.continue().catch(() => {})
+    })
+    await page.addInitScript(() => {
+      window.__verifyShifts = []
+      try {
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries()) {
+            if (entry.hadRecentInput) continue
+            const node = entry.sources?.[0]?.node
+            const name = node instanceof Element ? node.id || node.tagName.toLowerCase() + (node.className && typeof node.className === 'string' ? '.' + node.className.split(' ')[0] : '') : null
+            window.__verifyShifts.push({ t: entry.startTime, value: entry.value, node: name, phase: document.documentElement.dataset.entrance ?? null })
+          }
+        }).observe({ type: 'layout-shift', buffered: true })
+      } catch {
+        window.__verifyShifts = null
+      }
+    })
+    await page.goto(url, { waitUntil: 'load' })
+    await page.evaluate(() => document.fonts.ready)
+    landedAt = await page.evaluate(() => performance.now())
+    await page.waitForTimeout(500) // the swap's own layout, and the shift entries it reports
+    const shifts = await page.evaluate(() => window.__verifyShifts)
+    if (shifts === null) return { verdict: 'skip', reason: 'this browser has no Layout Instability API', problems: [] }
+    if (!fonts) return { verdict: 'skip', reason: 'the page requested no font', problems: [] }
+    // The shifts of the swap: from when the first held font could land.
+    const swap = shifts.filter((shift) => shift.t >= FONT_DELAY_MS - 100)
+    const total = swap.reduce((sum, shift) => sum + shift.value, 0)
+    const worst = swap.slice().sort((a, b) => b.value - a.value)[0]
+    const problems =
+      total > FONT_SHIFT_MAX
+        ? [`layout shifted by ${total.toFixed(4)} as ${fonts} font(s) landed ${FONT_DELAY_MS} ms late${worst?.node ? ` (largest: ${worst.node}${worst.phase ? `, entrance ${worst.phase}` : ''})` : ''}: the fallback's metrics don't match at this size`]
+        : []
+    return { verdict: problems.length ? 'fail' : 'pass', problems, fonts, shift: Number(total.toFixed(4)), landedAt: Math.round(landedAt) }
+  } finally {
+    await context.close()
+  }
+}
+
 // ── one viewport ────────────────────────────────────────────────────────
 
 async function runViewport(browser, url, opts, vp) {
@@ -630,6 +693,7 @@ async function runViewport(browser, url, opts, vp) {
 
   await context.close()
   if (opts.nav) result.checks.nav = await checkNav(browser, url, opts, vp)
+  if (opts.fontSwap) result.checks.fontSwap = await checkFontSwap(browser, url, vp)
   return result
 }
 
@@ -641,7 +705,7 @@ function viewportVerdict(v) {
 }
 
 function printSummary(viewports) {
-  console.log('width  height  mobile  reveal  scenes  nav     overall')
+  console.log('width  height  mobile  reveal  scenes  nav     fonts   overall')
   for (const v of viewports) {
     const c = v.checks
     const cell = (verdict) => (verdict ? verdict.toUpperCase() : '-')
@@ -653,6 +717,7 @@ function printSummary(viewports) {
         cell(c.reveal?.verdict).padEnd(8),
         cell(c.scenes?.verdict).padEnd(8),
         cell(c.nav?.verdict).padEnd(8),
+        cell(c.fontSwap?.verdict).padEnd(8),
         cell(viewportVerdict(v))
       ].join('')
     )
@@ -662,7 +727,7 @@ function printSummary(viewports) {
     const at = `${v.width}x${v.height}${v.mobile ? ' (mobile)' : ''}`
     for (const [name, c] of Object.entries(v.checks)) {
       if (c.verdict === 'skip') {
-        const nothing = name === 'reveal' ? 'no [data-reveal-item]' : name === 'nav' ? c.reason : 'no [data-scene-root]'
+        const nothing = name === 'reveal' ? 'no [data-reveal-item]' : c.reason ?? 'no [data-scene-root]'
         console.log(`SKIP ${name} at ${at}: nothing to check (${nothing})`)
       }
     }
@@ -684,6 +749,7 @@ function printSummary(viewports) {
       }
     }
     for (const problem of v.checks.nav?.problems ?? []) console.log(`  nav: ${problem}`)
+    for (const problem of v.checks.fontSwap?.problems ?? []) console.log(`  font-swap: ${problem}`)
     console.log('')
   }
 }
@@ -729,7 +795,7 @@ async function main() {
   let allSkipped = false
   let results = []
 
-  if (args.reveal || args.scenes || args.nav) {
+  if (args.reveal || args.scenes || args.nav || args.fontSwap) {
     let engine
     try {
       engine = (await resolvePlaywrightModule())[args.browser]

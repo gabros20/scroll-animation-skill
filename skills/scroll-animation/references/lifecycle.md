@@ -155,7 +155,9 @@ return Demo ? <Demo /> : <DemoPlaceholder />           // the placeholder holds 
   (field report, one serif at 104 px: the fallback about 8% too wide, the headline re-wrapped on the swap, CLS
   0.367 on a slow load; a display-only fallback brought it to 0.0025). Check layout shift on a throttled first load
   at the display size. If the headline moves, measure one display line in the font and in the fallback and give the
-  display face its own `@font-face` fallback with `size-adjust` set to that ratio.
+  display face its own `@font-face` fallback with `size-adjust` set to that ratio. `verify-motion.mjs <url>
+  --font-swap` holds every font back 1.5 s on a fresh load and fails when the layout shifts as they land (Chromium:
+  it reads the Layout Instability API).
 - **One tick:** Lenis with `autoRaf: false` on the page's clock, the scene advanced from the same authority
   ([webgl.md](webgl.md) §4).
 - **No blur over live media until `settled`**, and no blur placeholder on the hero's image

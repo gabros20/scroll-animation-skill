@@ -20,7 +20,9 @@
  * The scene writes data-scene-state="head|scrub|tail" on the root, data-scene-awake while it is within its wake margin
  * of the viewport (one write per transition: scope a layer promotion or a CSS loop to it), and `inert` on every
  * [data-scene-act] that is not the active act. Mark only acts that are HIDDEN when inactive (stacked in the pin): an act in the content layer
- * scrolls into view on its own, and making it inert would trap keyboard users above it.
+ * scrolls into view on its own, and making it inert would trap keyboard users above it. Copy inside a stacked act:
+ * [data-scene-act-copy], which leaves fast and arrives late (--scene-copy-out, --scene-copy-in) so two acts' texts
+ * never show together.
  *
  * Nothing may animate a transform on the root, the pin or their ancestors, and no ancestor may set `overflow: hidden`
  * (use `clip`): either turns the ancestor into the pin's containing block or scroll container, and the pin stops
@@ -154,6 +156,22 @@
 @media (prefers-reduced-motion: no-preference) {
   [data-scene-media='live'] + [data-scene-poster] {
     transition: opacity 0.12s linear;
+  }
+}
+
+/* An act's copy on its own clock. Acts usually crossfade, and a picture may: two readable texts fading through each
+   other read as broken, overlapping type. Mark the copy inside an act [data-scene-act-copy]: the outgoing copy is
+   gone in --scene-copy-out, and the incoming copy waits that long before it arrives over --scene-copy-in, so the two
+   never show together whatever the act's own fade is. Only opacity, only on a change of act: the active act's copy is
+   opaque from the first frame and after a reload. The rule for swaps is design's (choreography.md, "Exits, swaps and
+   direction"); these are its defaults. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-scene-act] [data-scene-act-copy] {
+    transition: opacity var(--scene-copy-in, 0.4s) linear var(--scene-copy-out, 0.3s);
+  }
+  [data-scene-act][inert] [data-scene-act-copy] {
+    opacity: 0;
+    transition: opacity var(--scene-copy-out, 0.3s) linear;
   }
 }
 

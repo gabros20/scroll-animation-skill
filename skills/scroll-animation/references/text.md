@@ -68,6 +68,10 @@ It renders, byte for byte, what `splitWordsHTML(text, options)` from `split-word
   paint and these animations to 2 s in every engine.
 - **No layout shift.** Only `transform` and `opacity` move, and the words are inline-block with or without the
   animation, so reduced motion lays out the same. Layout shift measured 0.
+- **The font swap can still re-wrap it.** The words are laid out in the fallback at first paint. A generated
+  fallback (`next/font`'s) is matched at text sizes, not display sizes, so a headline can wrap differently when the
+  display font lands, mid-entrance. The check and the display-only `size-adjust` fallback:
+  [lifecycle.md](lifecycle.md) "The hero budget"; `verify-motion.mjs <url> --font-swap`.
 - **Reduced motion:** no animation at all; the keyframes sit behind `prefers-reduced-motion: no-preference`. A
   printed page shows every word at rest.
 - **Render it on the server**, as a Server Component or into static HTML. Inside a client component it renders in the
